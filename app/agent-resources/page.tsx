@@ -1,7 +1,6 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
 import { Suspense } from "react"
 import Loading from "./loading"
 import {
@@ -13,8 +12,6 @@ import {
   Calendar,
   Search,
   ExternalLink,
-  Download,
-  Play,
   BookOpen,
 } from "lucide-react"
 
