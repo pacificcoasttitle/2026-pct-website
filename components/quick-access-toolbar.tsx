@@ -2,35 +2,36 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Calculator, Home, FileText, Wrench, MessageSquare, ChevronUp } from "lucide-react"
+import { Calculator, Home, FileText, Wrench, Sparkles, ChevronUp } from "lucide-react"
+import { useTessa } from "@/contexts/TessaContext"
 
 const tools = [
   {
     icon: Calculator,
     label: "Rate Calc",
-    href: "https://www.pct.com/calculators/rate-calculator",
+    href: "https://www.pct.com/calculator/",
     external: true,
   },
   {
     icon: Home,
     label: "Prop 19",
-    href: "https://www.pct.com/calculators/prop-19-calculator",
+    href: "https://pct.com/prop-19-calculator.html",
     external: true,
   },
   {
     icon: FileText,
     label: "Forms",
-    href: "/agent-resources/blank-forms",
+    href: "/resources/blank-forms",
     external: false,
   },
   {
     icon: Wrench,
     label: "Toolbox",
-    href: "https://www.pct.com/pct-title-toolbox",
+    href: "https://www.pcttitletoolbox.com/",
     external: true,
   },
   {
-    icon: MessageSquare,
+    icon: Sparkles,
     label: "TESSA",
     href: "#",
     external: false,
@@ -41,6 +42,7 @@ const tools = [
 export function QuickAccessToolbar() {
   const [isVisible, setIsVisible] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const { openChat } = useTessa()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -99,10 +101,7 @@ export function QuickAccessToolbar() {
             return (
               <button
                 key={tool.label}
-                onClick={() => {
-                  const tessaButton = document.querySelector("[data-tessa-trigger]") as HTMLButtonElement
-                  if (tessaButton) tessaButton.click()
-                }}
+                onClick={openChat}
               >
                 {content}
               </button>

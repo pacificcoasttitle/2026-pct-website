@@ -2,6 +2,8 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Poppins } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { TessaProvider } from "@/contexts/TessaContext"
+import { TessaChatWidget } from "@/components/tessa/TessaChatWidget"
 import "./globals.css"
 
 const poppins = Poppins({
@@ -25,7 +27,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.variable} font-sans antialiased`}>
-        {children}
+        <TessaProvider>
+          {children}
+          <TessaChatWidget />
+        </TessaProvider>
         <Analytics />
       </body>
     </html>

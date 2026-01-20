@@ -46,6 +46,15 @@ You are building a website for Pacific Coast Title Company, a California title a
 - PCT Toolbox: https://www.pcttitletoolbox.com/
 - TitlePro 247: https://www.pct247.com/
 - Pacific Coast Agent: https://www.pacificcoastagent.com/
+- TESSA API: https://tessa-proxy.onrender.com/api/ask-tessa
+- Transfer Tax Data: https://tessa-proxy.onrender.com/data.json
+
+## TESSA AI Assistant
+- TESSA is the AI chat assistant - must be integrated
+- Uses proxy at tessa-proxy.onrender.com
+- Floating chat widget in bottom-right corner
+- Can analyze Preliminary Title Report PDFs
+- See TESSA_INTEGRATION_GUIDE.md for implementation
 
 ## Priority Pages to Build
 1. /resources (Agent Resource Center) - MOST IMPORTANT
@@ -54,6 +63,7 @@ You are building a website for Pacific Coast Title Company, a California title a
 4. /tsg (TSG Division)
 5. /about pages
 6. /learn (educational content)
+7. TESSA integration (floating chat widget)
 
 ## Component Patterns
 

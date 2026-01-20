@@ -352,13 +352,53 @@ docs: update README with setup instructions
 
 ---
 
+---
+
+## TESSA AI Integration
+
+TESSA is PCT's AI assistant. See `TESSA_INTEGRATION_GUIDE.md` for full implementation details.
+
+### Quick Overview
+- **Chat API**: `https://tessa-proxy.onrender.com/api/ask-tessa`
+- **Transfer Tax Data**: `https://tessa-proxy.onrender.com/data.json`
+- **PDF Processing**: Client-side with PDF.js
+
+### Files to Create
+```
+components/tessa/
+├── TessaChatWidget.tsx    # Floating chat button + panel
+├── TessaPdfAnalyzer.tsx   # PDF upload & analysis
+└── TessaMessageContent.tsx # Message formatting
+
+contexts/
+└── TessaContext.tsx       # State management
+
+hooks/
+└── useTransferTax.ts      # Transfer tax lookup
+```
+
+### Key Integration Points
+1. Add `TessaProvider` to root layout
+2. Add `TessaChatWidget` to root layout (renders floating button)
+3. Add `TessaPdfAnalyzer` to Resources page
+4. Wire up transfer tax lookup to Rate Calculator page
+
+### Dependencies
+```bash
+npm install pdfjs-dist lucide-react
+```
+
+---
+
 ## Getting Started
 
 1. Review the V0 prototype code structure
-2. Set up the data files (locations, services, resources)
-3. Build the Agent Resource Center first (highest priority)
-4. Create location pages with real data
-5. Iterate on homepage with real content
-6. Build out remaining pages
+2. **Read TESSA_INTEGRATION_GUIDE.md** for AI assistant setup
+3. Set up the data files (locations, services, resources)
+4. Build the Agent Resource Center first (highest priority)
+5. Integrate TESSA chat widget
+6. Create location pages with real data
+7. Iterate on homepage with real content
+8. Build out remaining pages
 
 **Start with**: `npm run dev` and navigate to each page to understand what V0 generated, then systematically enhance and add missing pieces.
