@@ -102,34 +102,36 @@ export function Navigation() {
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-8">
+            <div className="hidden md:flex items-center gap-6">
               {navigationItems.map((item) => (
                 <div
                   key={item.label}
-                  className="relative"
+                  className="relative group"
                   onMouseEnter={() => setOpenDropdown(item.label)}
                   onMouseLeave={() => setOpenDropdown(null)}
                 >
                   <Link
                     href={item.href}
-                    className="flex items-center gap-1 text-secondary hover:text-primary transition-colors font-medium"
+                    className="flex items-center gap-1 text-secondary hover:text-primary transition-colors font-medium py-6"
                   >
                     {item.label}
-                    <ChevronDown className="w-4 h-4" />
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${openDropdown === item.label ? 'rotate-180' : ''}`} />
                   </Link>
 
-                  {/* Dropdown Menu */}
+                  {/* Dropdown Menu - using padding instead of margin for seamless hover */}
                   {openDropdown === item.label && (
-                    <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                      {item.dropdown.map((subItem) => (
-                        <Link
-                          key={subItem.label}
-                          href={subItem.href}
-                          className="block px-4 py-2.5 text-sm text-secondary hover:bg-gray-50 hover:text-primary transition-colors"
-                        >
-                          {subItem.label}
-                        </Link>
-                      ))}
+                    <div className="absolute top-full left-0 pt-1">
+                      <div className="w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                        {item.dropdown.map((subItem) => (
+                          <Link
+                            key={subItem.label}
+                            href={subItem.href}
+                            className="block px-4 py-2.5 text-sm text-secondary hover:bg-gray-50 hover:text-primary transition-colors"
+                          >
+                            {subItem.label}
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
