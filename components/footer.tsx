@@ -1,0 +1,136 @@
+"use client"
+
+import { Button } from "@/components/ui/button"
+import { Facebook, Twitter, Linkedin, Instagram, Mail, Phone, MapPin } from "lucide-react"
+import Link from "next/link"
+
+export function Footer() {
+  const services = [
+    "Residential Title",
+    "Commercial Title",
+    "1031 Exchanges",
+    "Escrow Services",
+    "Nationwide Coverage",
+    "View All Services",
+  ]
+
+  const resources = ["Calculators", "Forms & Documents", "Educational Center", "Blog", "FAQs", "Contact Us"]
+
+  const company = ["About Us", "Our Team", "Careers", "Press", "Partners", "Locations"]
+
+  return (
+    <footer id="contact" className="bg-secondary text-secondary-foreground">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+          {/* About Column */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-xl">PCT</span>
+              </div>
+              <div>
+                <div className="font-bold text-lg text-white">Pacific Coast Title</div>
+              </div>
+            </div>
+            <p className="text-white/70 text-sm leading-relaxed">AI-Powered Title Excellence</p>
+            <div className="flex gap-3">
+              <Button size="icon" variant="ghost" className="text-white/70 hover:text-primary hover:bg-white/10">
+                <Facebook className="w-5 h-5" />
+              </Button>
+              <Button size="icon" variant="ghost" className="text-white/70 hover:text-primary hover:bg-white/10">
+                <Twitter className="w-5 h-5" />
+              </Button>
+              <Button size="icon" variant="ghost" className="text-white/70 hover:text-primary hover:bg-white/10">
+                <Linkedin className="w-5 h-5" />
+              </Button>
+              <Button size="icon" variant="ghost" className="text-white/70 hover:text-primary hover:bg-white/10">
+                <Instagram className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Services Column */}
+          <div>
+            <h3 className="font-bold text-white text-lg mb-4">Services</h3>
+            <ul className="space-y-3">
+              {services.map((service, index) => (
+                <li key={index}>
+                  <Link href="#" className="text-white/70 hover:text-primary transition-colors text-sm">
+                    {service}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Resources Column */}
+          <div>
+            <h3 className="font-bold text-white text-lg mb-4">Resources</h3>
+            <ul className="space-y-3">
+              {resources.map((resource, index) => (
+                <li key={index}>
+                  <Link href="#" className="text-white/70 hover:text-primary transition-colors text-sm">
+                    {resource}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Connect Column */}
+          <div>
+            <h3 className="font-bold text-white text-lg mb-4">Connect</h3>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <Phone className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <div>
+                  <a
+                    href="tel:8005551234"
+                    className="text-white hover:text-primary transition-colors font-semibold text-lg"
+                  >
+                    (800) 555-1234
+                  </a>
+                  <p className="text-white/70 text-xs">Mon-Fri 8am-6pm PST</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Mail className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <a
+                  href="mailto:info@pacificcoasttitle.com"
+                  className="text-white/70 hover:text-primary transition-colors text-sm"
+                >
+                  info@pacificcoasttitle.com
+                </a>
+              </div>
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <p className="text-white/70 text-sm">Multiple locations across California</p>
+              </div>
+              <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mt-4">
+                Schedule Consultation
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-white/10">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-white/60">
+            <p>© 2025 Pacific Coast Title Company. All rights reserved.</p>
+            <div className="flex gap-6">
+              <Link href="#" className="hover:text-primary transition-colors">
+                Privacy Policy
+              </Link>
+              <Link href="#" className="hover:text-primary transition-colors">
+                Terms of Service
+              </Link>
+              <Link href="#" className="hover:text-primary transition-colors">
+                Accessibility
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  )
+}

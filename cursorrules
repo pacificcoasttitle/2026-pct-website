@@ -1,0 +1,98 @@
+# Pacific Coast Title - Cursor Rules
+
+You are building a website for Pacific Coast Title Company, a California title and escrow company.
+
+## Project Facts
+- Company: Pacific Coast Title Company (pct.com)
+- Founded: 2006
+- HQ: Orange, CA
+- Phone: (714) 516-6700 / (866) 724-1050
+- Email: info@pct.com
+- Offices: Downey, Fresno, Glendale, Inland Empire, Orange (HQ), San Diego
+- Key differentiator: TESSA AI assistant
+
+## Tech Stack
+- Next.js 14+ with App Router
+- TypeScript (strict mode)
+- Tailwind CSS
+- React Server Components where possible
+- Lucide React for icons
+
+## Code Style
+- Use functional components with TypeScript
+- Prefer named exports
+- Use 'use client' directive only when necessary
+- Keep components small and focused
+- Extract reusable logic into hooks
+- Use Tailwind for styling; avoid inline styles
+- Mobile-first responsive design
+
+## Color Palette
+- Primary Navy: #1E3A5F
+- Secondary Blue: #3B82F6  
+- Accent Orange: #F97316
+- Use semantic Tailwind classes (text-pct-navy, bg-pct-orange, etc.)
+
+## Content Guidelines
+- Professional, trustworthy tone
+- Avoid placeholder text - use real content from pct.com
+- All phone numbers: (714) 516-6700 or (866) 724-1050
+- All emails: info@pct.com or location-specific
+- Never use lorem ipsum
+
+## Important External URLs
+- Rate Calculator: https://www.pct.com/calculator/
+- Prop 19 Calculator: https://pct.com/prop-19-calculator.html
+- PCT Toolbox: https://www.pcttitletoolbox.com/
+- TitlePro 247: https://www.pct247.com/
+- Pacific Coast Agent: https://www.pacificcoastagent.com/
+
+## Priority Pages to Build
+1. /resources (Agent Resource Center) - MOST IMPORTANT
+2. /locations/[slug] (6 office pages)
+3. /services/[slug] (6 service pages)
+4. /tsg (TSG Division)
+5. /about pages
+6. /learn (educational content)
+
+## Component Patterns
+
+### Page Layout
+```tsx
+export default function PageName() {
+  return (
+    <main className="min-h-screen">
+      <section className="py-16 md:py-24">
+        <div className="container mx-auto px-4">
+          {/* Content */}
+        </div>
+      </section>
+    </main>
+  )
+}
+```
+
+### Data Fetching
+- Use server components for static data
+- Keep data in /data/*.ts files for easy management
+- Type all data with interfaces
+
+### Forms
+- Use react-hook-form with zod validation
+- Server actions for form submission
+- Show loading states and success/error feedback
+
+## Don't
+- Use placeholder phone numbers (555-xxxx)
+- Create components without TypeScript types
+- Forget mobile responsiveness
+- Skip alt text on images
+- Use client components unnecessarily
+- Over-animate; keep it subtle and professional
+
+## Do
+- Reference pct.com for accurate content
+- Test at mobile breakpoints
+- Add proper metadata to each page
+- Keep the Agent Resource Center as the priority
+- Match the professional, trustworthy aesthetic of financial services
