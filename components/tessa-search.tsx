@@ -37,8 +37,8 @@ export function TessaSearch({ onSubmit }: TessaSearchProps) {
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="w-full max-w-3xl mx-auto">
+      <form onSubmit={handleSubmit} className="space-y-3">
         <div className="flex items-center gap-3">
           {/* Question Input - Show in 'question' mode */}
           {mode === "question" && (
@@ -47,7 +47,7 @@ export function TessaSearch({ onSubmit }: TessaSearchProps) {
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="What would you like to know about title or escrow?"
-              className="flex-1 px-6 py-6 text-lg border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white text-gray-900 placeholder-gray-500 shadow-lg"
+              className="flex-1 px-5 py-4 text-base border border-gray-200 rounded-xl focus:border-secondary/40 focus:outline-none focus:ring-2 focus:ring-secondary/10 bg-white text-gray-700 placeholder-gray-400 shadow-sm"
               required
             />
           )}
@@ -59,7 +59,7 @@ export function TessaSearch({ onSubmit }: TessaSearchProps) {
               <button
                 type="button"
                 onClick={handleFileButtonClick}
-                className="w-full px-6 py-6 text-lg border-2 border-green-500 rounded-lg bg-gradient-to-r from-green-500 to-green-400 text-white font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                className="w-full px-5 py-4 text-base border border-emerald-200 rounded-xl bg-emerald-50 text-emerald-700 font-medium shadow-sm hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"
               >
                 <FileText className="w-5 h-5" />
                 {selectedFile ? `✓ ${selectedFile.name}` : "Choose PDF File"}
@@ -69,21 +69,21 @@ export function TessaSearch({ onSubmit }: TessaSearchProps) {
         </div>
 
         {/* Mode Selector and Submit Button */}
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center justify-center gap-3">
           <Button
             type="submit"
             size="lg"
-            className="bg-primary hover:bg-primary/90 text-white font-semibold px-10 h-14 shadow-lg hover:shadow-xl transition-all hover:scale-105 text-lg"
+            className="bg-secondary hover:bg-secondary/90 text-white font-medium px-8 h-12 shadow-sm transition-all text-base rounded-xl"
           >
-            <Sparkles className="w-5 h-5 mr-2" />
-            {mode === "question" ? "Ask TESSA™" : "Summarize Report"}
+            <Sparkles className="w-4 h-4 mr-2" />
+            {mode === "question" ? "Ask TESSA" : "Summarize Report"}
           </Button>
 
           {/* Mode Selector */}
           <select
             value={mode}
             onChange={(e) => setMode(e.target.value as "question" | "analyze")}
-            className="px-6 h-14 text-lg border-2 border-gray-300 rounded-lg bg-white text-gray-900 font-medium cursor-pointer shadow-lg hover:border-primary/80 transition-colors"
+            className="px-4 h-12 text-base border border-gray-200 rounded-xl bg-white text-gray-600 font-medium cursor-pointer shadow-sm hover:border-gray-300 transition-colors"
           >
             <option value="question">Ask</option>
             <option value="analyze">Summarize</option>
@@ -92,7 +92,7 @@ export function TessaSearch({ onSubmit }: TessaSearchProps) {
 
         {/* Status Message */}
         {selectedFile && mode === "analyze" && (
-          <p className="text-center text-sm text-green-600 font-medium">
+          <p className="text-center text-sm text-emerald-600 font-medium">
             ✓ Ready to summarize: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
           </p>
         )}

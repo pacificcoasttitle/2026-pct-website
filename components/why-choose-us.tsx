@@ -31,25 +31,30 @@ export function WhyChooseUs() {
   ]
 
   return (
-    <section className="py-24 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-20 bg-white">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column - Content */}
-          <div className="space-y-6">
-            <h2 className="text-4xl sm:text-5xl font-bold text-secondary leading-tight">
-              Why Choose Pacific Coast Title?
-            </h2>
-            <p className="text-xl text-gray-600 leading-relaxed">
-              We specialize in Residential & Commercial Title Insurance and work hard behind the scenes to make sure
-              your experience with us is a satisfying one.
+          <div className="space-y-5">
+            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">
+              Why Pacific Coast Title
             </p>
-            <div className="space-y-4 pt-4">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-secondary leading-snug">
+              Dependable service backed by
+              <br />
+              <span className="text-secondary/70">decades of experience</span>
+            </h2>
+            <p className="text-gray-500 leading-relaxed">
+              We specialize in residential and commercial title insurance, working behind the scenes 
+              to ensure every transaction closes smoothly.
+            </p>
+            <div className="space-y-3 pt-2">
               {reasons.map((reason, index) => (
                 <div key={index} className="flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-5 h-5 text-secondary/50 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-bold text-secondary mb-1">{reason.title}</h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">{reason.description}</p>
+                    <h3 className="font-medium text-secondary text-sm">{reason.title}</h3>
+                    <p className="text-gray-500 text-sm leading-relaxed">{reason.description}</p>
                   </div>
                 </div>
               ))}
@@ -58,15 +63,13 @@ export function WhyChooseUs() {
 
           {/* Right Column - Image */}
           <div className="relative">
-            <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
+            <div className="aspect-[4/3] rounded-xl overflow-hidden">
               <img
                 src="/professional-title-company-office-team-meeting.jpg"
                 alt="Pacific Coast Title Team"
                 className="w-full h-full object-cover"
               />
             </div>
-            {/* Accent Element */}
-            <div className="absolute -bottom-6 -right-6 w-48 h-48 bg-primary/10 rounded-2xl -z-10" />
           </div>
         </div>
       </div>
