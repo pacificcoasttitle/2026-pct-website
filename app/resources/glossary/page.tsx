@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react"
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
+import { PageHero } from "@/components/page-hero"
 import Link from "next/link"
 import { ChevronRight, Search, X, BookOpen } from "lucide-react"
 import { glossaryTerms } from "@/data/resources"
@@ -79,36 +80,16 @@ export default function GlossaryPage() {
     <main className="min-h-screen bg-white">
       <Navigation variant="light" />
 
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-gray-50">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-gray-600">
-            <Link href="/" className="hover:text-primary">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/resources" className="hover:text-primary">Resources</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-primary font-medium">Glossary</span>
-          </nav>
-        </div>
-      </div>
+      <PageHero
+        label="200+ Terms"
+        title="Common Title Terminology"
+        subtitle="Real estate and title industry terms explained in plain language. Use the search or jump to any letter to find what you need."
+      />
 
-      {/* Hero */}
-      <section className="py-12 bg-gray-50 border-b border-gray-100">
+      {/* Search */}
+      <section className="py-8 bg-gray-50 border-b border-gray-100">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
-            <span className="inline-block bg-primary/10 text-primary px-4 py-1 rounded-full text-sm font-medium mb-4">
-              200+ Terms
-            </span>
-            <h1 className="text-4xl md:text-5xl font-bold text-secondary mb-4">
-              Common Title Terminology
-            </h1>
-            <p className="text-xl text-gray-600">
-              Real estate and title industry terms explained in plain language. Use the search or jump to any letter to find what you need.
-            </p>
-          </div>
-
-          {/* Search */}
-          <div className="mt-8 max-w-xl">
+          <div className="max-w-xl">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input

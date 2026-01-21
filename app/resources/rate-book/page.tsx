@@ -1,5 +1,6 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
+import { PageHero } from "@/components/page-hero"
 import Link from "next/link"
 import { Download, ChevronRight, FileText, Calculator, RefreshCw } from "lucide-react"
 
@@ -13,35 +14,11 @@ export default function RateBookPage() {
     <main className="min-h-screen bg-white">
       <Navigation variant="light" />
 
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-gray-50">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-gray-600">
-            <Link href="/" className="hover:text-primary">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/resources" className="hover:text-primary">Resources</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-primary font-medium">Rate Book</span>
-          </nav>
-        </div>
-      </div>
-
-      {/* Hero */}
-      <section className="py-12 bg-gray-50 border-b border-gray-100">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
-            <span className="inline-block bg-primary/10 text-primary px-4 py-1 rounded-full text-sm font-medium mb-4">
-              Rate Information
-            </span>
-            <h1 className="text-4xl md:text-5xl font-bold text-secondary mb-4">
-              Rate Book
-            </h1>
-            <p className="text-xl text-gray-600">
-              Our rates at your fingertips. Download our complete Schedule of Title Fees and quick reference Refinance Ratesheet.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        label="Rate Information"
+        title="Rate Book"
+        subtitle="Our rates at your fingertips. Download our complete Schedule of Title Fees and quick reference Refinance Ratesheet."
+      />
 
       {/* Downloads */}
       <section className="py-16">

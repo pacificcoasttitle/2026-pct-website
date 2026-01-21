@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { PageHero } from "@/components/page-hero"
 import { 
   Calendar, ChevronRight, Download, AlertCircle, Phone, Mail, ArrowRight
 } from "lucide-react"
@@ -27,36 +28,11 @@ const holidays2026 = [
 export default function RecordersCalendarPage() {
   return (
     <>
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-gradient-to-br from-secondary via-secondary/95 to-secondary">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-white/70">
-            <Link href="/" className="hover:text-white">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/notices" className="hover:text-white">Notices</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-white font-medium">Recorders Calendar</span>
-          </nav>
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-br from-secondary via-secondary/95 to-secondary">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white/90 text-sm font-medium mb-6">
-              <Calendar className="w-4 h-4 text-accent" />
-              2026 Calendar
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              2026 County Recorders Holiday Calendar
-            </h1>
-            <p className="text-xl text-white/80">
-              Plan your recordings around county office closures.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        label="2026 Calendar"
+        title="2026 County Recorders Holiday Calendar"
+        subtitle="Plan your recordings around county office closures."
+      />
 
       {/* Intro */}
       <section className="py-12">

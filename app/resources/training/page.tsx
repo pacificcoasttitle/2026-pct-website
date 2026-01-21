@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
+import { PageHero } from "@/components/page-hero"
 import Link from "next/link"
 import { ChevronRight, Play, ExternalLink, Video } from "lucide-react"
 
@@ -110,36 +111,16 @@ export default function TrainingPage() {
     <main className="min-h-screen bg-white">
       <Navigation variant="light" />
 
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-gray-50">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-gray-600">
-            <Link href="/" className="hover:text-primary">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/resources" className="hover:text-primary">Resources</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-primary font-medium">Training</span>
-          </nav>
-        </div>
-      </div>
+      <PageHero
+        label="Video Tutorials"
+        title="Training Center"
+        subtitle="Learning on demand. Video tutorials to help you get the most out of PCT's tools and services."
+      />
 
-      {/* Hero */}
-      <section className="py-12 bg-gray-50 border-b border-gray-100">
+      {/* Filter Tabs */}
+      <section className="py-8 bg-gray-50 border-b border-gray-100">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
-            <span className="inline-block bg-primary/10 text-primary px-4 py-1 rounded-full text-sm font-medium mb-4">
-              Video Tutorials
-            </span>
-            <h1 className="text-4xl md:text-5xl font-bold text-secondary mb-4">
-              Training Center
-            </h1>
-            <p className="text-xl text-gray-600">
-              Learning on demand. Video tutorials to help you get the most out of PCT's tools and services.
-            </p>
-          </div>
-
-          {/* Filter Tabs */}
-          <div className="mt-8 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             {(Object.keys(filterLabels) as FilterType[]).map((filter) => (
               <button
                 key={filter}

@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react"
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
+import { PageHero } from "@/components/page-hero"
 import Link from "next/link"
 import { ChevronRight, Search, X, AlertCircle, Info, MapPin } from "lucide-react"
 import { cityTransferTax } from "@/data/resources"
@@ -34,37 +35,16 @@ export default function TransferTaxPage() {
     <main className="min-h-screen bg-white">
       <Navigation variant="light" />
 
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-gray-50">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-gray-600">
-            <Link href="/" className="hover:text-primary">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/resources" className="hover:text-primary">Resources</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-primary font-medium">Transfer Tax</span>
-          </nav>
-        </div>
-      </div>
+      <PageHero
+        label="Reference Guide"
+        title="City Transfer Tax"
+        subtitle="Transfer tax rates for California counties and cities. While the standard county tax is $1.10 per $1,000, many cities impose additional transfer taxes."
+      />
 
-      {/* Hero */}
-      <section className="py-12 bg-gray-50 border-b border-gray-100">
+      {/* Search & Filter */}
+      <section className="py-8 bg-gray-50 border-b border-gray-100">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
-            <span className="inline-block bg-primary/10 text-primary px-4 py-1 rounded-full text-sm font-medium mb-4">
-              Reference Guide
-            </span>
-            <h1 className="text-4xl md:text-5xl font-bold text-secondary mb-4">
-              City Transfer Tax
-            </h1>
-            <p className="text-xl text-gray-600">
-              Transfer tax rates for California counties and cities. While the standard county tax is $1.10 per $1,000, 
-              many cities impose additional transfer taxes.
-            </p>
-          </div>
-
-          {/* Search & Filter */}
-          <div className="mt-8 flex flex-col sm:flex-row gap-4 max-w-2xl">
+          <div className="flex flex-col sm:flex-row gap-4 max-w-2xl">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { PageHero } from "@/components/page-hero"
 import { 
   CalendarDays, ChevronRight, Download, AlertCircle, CheckCircle, 
   XCircle, Phone, Mail, Clock, CalendarCheck
@@ -32,36 +33,11 @@ const federalHolidays2026 = [
 export default function RescissionCalendarPage() {
   return (
     <>
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-gradient-to-br from-secondary via-secondary/95 to-secondary">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-white/70">
-            <Link href="/" className="hover:text-white">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/notices" className="hover:text-white">Notices</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-white font-medium">Rescission Calendar</span>
-          </nav>
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-br from-secondary via-secondary/95 to-secondary">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white/90 text-sm font-medium mb-6">
-              <CalendarDays className="w-4 h-4 text-accent" />
-              Refinance Compliance
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Right of Rescission Calendar
-            </h1>
-            <p className="text-xl text-white/80">
-              Calculate rescission deadlines for refinance transactions.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        label="Refinance Compliance"
+        title="Right of Rescission Calendar"
+        subtitle="Calculate rescission deadlines for refinance transactions."
+      />
 
       {/* What is Rescission */}
       <section className="py-16">

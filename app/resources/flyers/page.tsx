@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react"
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
+import { PageHero } from "@/components/page-hero"
 import Link from "next/link"
 import { FileText, Download, ChevronRight, Search, X } from "lucide-react"
 import { flyers } from "@/data/resources"
@@ -53,36 +54,16 @@ export default function FlyersPage() {
     <main className="min-h-screen bg-white">
       <Navigation variant="light" />
 
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-gray-50">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-gray-600">
-            <Link href="/" className="hover:text-primary">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/resources" className="hover:text-primary">Resources</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-primary font-medium">Flyers</span>
-          </nav>
-        </div>
-      </div>
+      <PageHero
+        label="95+ Flyers"
+        title="Informational Flyers"
+        subtitle="Information at your fingertips. Printable one-page guides covering title, escrow, and property tax topics."
+      />
 
-      {/* Hero */}
-      <section className="py-12 bg-gray-50 border-b border-gray-100">
+      {/* Search & Filter */}
+      <section className="py-8 bg-gray-50 border-b border-gray-100">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
-            <span className="inline-block bg-primary/10 text-primary px-4 py-1 rounded-full text-sm font-medium mb-4">
-              95+ Flyers
-            </span>
-            <h1 className="text-4xl md:text-5xl font-bold text-secondary mb-4">
-              Informational Flyers
-            </h1>
-            <p className="text-xl text-gray-600">
-              Information at your fingertips. Printable one-page guides covering title, escrow, and property tax topics.
-            </p>
-          </div>
-
-          {/* Search & Filter */}
-          <div className="mt-8 space-y-4">
+          <div className="space-y-4">
             {/* Search */}
             <div className="max-w-xl">
               <div className="relative">

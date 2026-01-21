@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react"
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
+import { PageHero } from "@/components/page-hero"
 import Link from "next/link"
 import {
   Calculator,
@@ -57,74 +58,60 @@ export default function ResourcesPage() {
     <main className="min-h-screen bg-white">
       <Navigation variant="light" />
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-16 bg-gradient-to-br from-secondary via-secondary/95 to-secondary overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-20 left-10 w-64 h-64 bg-primary rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent rounded-full blur-3xl" />
-        </div>
+      <PageHero
+        label="For Real Estate Professionals"
+        title="Agent Resource Center"
+        subtitle="Everything you need to close deals faster. Access calculators, forms, tools, and educational resources — all in one place."
+      />
 
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white/90 text-sm font-medium mb-6">
-              <Sparkles className="w-4 h-4 text-accent" />
-              For Real Estate Professionals
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
-              Agent Resource Center
-            </h1>
-            <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto">
-              Everything you need to close deals faster. Access calculators, forms, tools, and 
-              educational resources — all in one place.
-            </p>
-
-            {/* Search Bar */}
-            <div className="relative max-w-2xl mx-auto">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search for calculators, forms, tools..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-14 pr-14 py-5 rounded-2xl border-0 bg-white shadow-xl focus:ring-4 focus:ring-primary/20 outline-none transition-all text-lg text-gray-900 placeholder:text-gray-400"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-400" />
-                </button>
-              )}
-            </div>
-
-            {/* Quick Filter Pills */}
-            <div className="flex flex-wrap justify-center gap-2 mt-6">
+      {/* Search & Filter Section */}
+      <section className="py-8 bg-gray-50 border-b border-gray-100">
+        <div className="container mx-auto px-4">
+          {/* Search Bar */}
+          <div className="relative max-w-2xl mx-auto mb-6">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search for calculators, forms, tools..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-14 pr-14 py-4 rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-lg text-gray-900 placeholder:text-gray-400"
+            />
+            {searchQuery && (
               <button
-                onClick={() => setActiveFilter(null)}
+                onClick={() => setSearchQuery("")}
+                className="absolute right-5 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            )}
+          </div>
+
+          {/* Quick Filter Pills */}
+          <div className="flex flex-wrap justify-center gap-2">
+            <button
+              onClick={() => setActiveFilter(null)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                !activeFilter
+                  ? "bg-primary text-white shadow-md"
+                  : "bg-white border border-gray-200 text-gray-600 hover:border-primary hover:text-primary"
+              }`}
+            >
+              All Resources
+            </button>
+            {resourceCategories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setActiveFilter(activeFilter === category.id ? null : category.id)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  !activeFilter
-                    ? "bg-white text-secondary shadow-md"
-                    : "bg-white/10 text-white/80 hover:bg-white/20"
+                  activeFilter === category.id
+                    ? "bg-primary text-white shadow-md"
+                    : "bg-white border border-gray-200 text-gray-600 hover:border-primary hover:text-primary"
                 }`}
               >
-                All Resources
+                {category.title}
               </button>
-              {resourceCategories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setActiveFilter(activeFilter === category.id ? null : category.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    activeFilter === category.id
-                      ? "bg-white text-secondary shadow-md"
-                      : "bg-white/10 text-white/80 hover:bg-white/20"
-                  }`}
-                >
-                  {category.title}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </section>

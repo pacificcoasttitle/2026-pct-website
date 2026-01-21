@@ -1,5 +1,6 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
+import { PageHero } from "@/components/page-hero"
 import Link from "next/link"
 import { BookOpen, Download, ChevronRight, ExternalLink } from "lucide-react"
 import { booklets } from "@/data/resources"
@@ -14,35 +15,11 @@ export default function BookletsPage() {
     <main className="min-h-screen bg-white">
       <Navigation variant="light" />
 
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-gray-50">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-gray-600">
-            <Link href="/" className="hover:text-primary">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/resources" className="hover:text-primary">Resources</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-primary font-medium">Booklets</span>
-          </nav>
-        </div>
-      </div>
-
-      {/* Hero */}
-      <section className="py-12 bg-gray-50 border-b border-gray-100">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
-            <span className="inline-block bg-primary/10 text-primary px-4 py-1 rounded-full text-sm font-medium mb-4">
-              Educational Materials
-            </span>
-            <h1 className="text-4xl md:text-5xl font-bold text-secondary mb-4">
-              Educational Booklets
-            </h1>
-            <p className="text-xl text-gray-600">
-              Education at your fingertips. Comprehensive guides to help you and your clients understand the title and escrow process.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        label="Educational Materials"
+        title="Educational Booklets"
+        subtitle="Education at your fingertips. Comprehensive guides to help you and your clients understand the title and escrow process."
+      />
 
       {/* Booklets Grid */}
       <section className="py-16">

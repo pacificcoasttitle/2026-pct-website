@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { PageHero } from "@/components/page-hero"
 import { 
   FileText, ChevronRight, Download, CheckCircle, XCircle, 
   AlertCircle, Phone, Mail, ArrowRight, DollarSign
@@ -45,36 +46,11 @@ const forms = [
 export default function SB2FormsPage() {
   return (
     <>
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-gradient-to-br from-secondary via-secondary/95 to-secondary">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-white/70">
-            <Link href="/" className="hover:text-white">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/notices" className="hover:text-white">Notices</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-white font-medium">SB2 Forms</span>
-          </nav>
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-br from-secondary via-secondary/95 to-secondary">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white/90 text-sm font-medium mb-6">
-              <FileText className="w-4 h-4 text-accent" />
-              Recording Compliance
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              SB2 Recording Fee Forms
-            </h1>
-            <p className="text-xl text-white/80">
-              Required forms for California recording fee compliance.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        label="Recording Compliance"
+        title="SB2 Recording Fee Forms"
+        subtitle="Required forms for California recording fee compliance."
+      />
 
       {/* What is SB2 */}
       <section className="py-16">

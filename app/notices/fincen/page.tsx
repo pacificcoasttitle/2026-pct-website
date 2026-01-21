@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { PageHero } from "@/components/page-hero"
 import { 
   Shield, AlertTriangle, Building2, Users, Briefcase, DollarSign,
   ChevronRight, Phone, Mail, CheckCircle, XCircle, Clock, Scale,
@@ -84,18 +85,11 @@ const faqs = [
 export default function FinCENPage() {
   return (
     <>
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-secondary">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-white/70">
-            <Link href="/" className="hover:text-white">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/notices" className="hover:text-white">Notices</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-white font-medium">FinCEN Rule</span>
-          </nav>
-        </div>
-      </div>
+      <PageHero
+        label="Federal Compliance Requirement"
+        title="FinCEN Anti-Money Laundering Rule"
+        subtitle="Understanding the new reporting requirements for residential property transfers."
+      />
 
       {/* Alert Banner */}
       <div className="bg-amber-500 text-white py-4">
@@ -108,24 +102,6 @@ export default function FinCENPage() {
           </div>
         </div>
       </div>
-
-      {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-br from-secondary to-secondary/95">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white/90 text-sm font-medium mb-6">
-              <Shield className="w-4 h-4 text-accent" />
-              Federal Compliance Requirement
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              FinCEN Anti-Money Laundering Rule
-            </h1>
-            <p className="text-xl text-white/80">
-              Understanding the new reporting requirements for residential property transfers.
-            </p>
-          </div>
-        </div>
-      </section>
 
       {/* Overview Section */}
       <section className="py-16">

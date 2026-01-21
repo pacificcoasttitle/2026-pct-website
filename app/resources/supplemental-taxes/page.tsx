@@ -1,5 +1,6 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
+import { PageHero } from "@/components/page-hero"
 import Link from "next/link"
 import { ChevronRight, ExternalLink, HelpCircle, Calculator, Calendar, DollarSign, AlertCircle } from "lucide-react"
 import { supplementalTaxProrationFactors } from "@/data/resources"
@@ -14,35 +15,11 @@ export default function SupplementalTaxesPage() {
     <main className="min-h-screen bg-white">
       <Navigation variant="light" />
 
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-gray-50">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-gray-600">
-            <Link href="/" className="hover:text-primary">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/resources" className="hover:text-primary">Resources</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-primary font-medium">Supplemental Taxes</span>
-          </nav>
-        </div>
-      </div>
-
-      {/* Hero */}
-      <section className="py-12 bg-gray-50 border-b border-gray-100">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
-            <span className="inline-block bg-primary/10 text-primary px-4 py-1 rounded-full text-sm font-medium mb-4">
-              Tax Guide
-            </span>
-            <h1 className="text-4xl md:text-5xl font-bold text-secondary mb-4">
-              Supplemental Taxes
-            </h1>
-            <p className="text-xl text-gray-600">
-              What are they and how they affect you? Everything you need to know about California's supplemental property tax system.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        label="Tax Guide"
+        title="Supplemental Taxes"
+        subtitle="What are they and how they affect you? Everything you need to know about California's supplemental property tax system."
+      />
 
       {/* Content */}
       <section className="py-12">
