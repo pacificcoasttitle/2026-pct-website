@@ -143,17 +143,14 @@ export default function LearnPage() {
       <div className="mt-16 bg-gradient-to-br from-secondary to-secondary/90 rounded-2xl p-8 md:p-10 text-center">
         <h2 className="text-2xl font-bold text-white mb-4">Have a Specific Question?</h2>
         <p className="text-white/80 mb-6 max-w-xl mx-auto">
-          Our AI assistant TESSA can answer your title and escrow questions instantly, 24/7.
+          Our team is ready to help with your title and escrow questions.
         </p>
-        <button
-          onClick={() => {
-            const tessaButton = document.querySelector("[data-tessa-trigger]") as HTMLButtonElement
-            if (tessaButton) tessaButton.click()
-          }}
-          className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-xl font-semibold transition-colors"
+        <Link
+          href="/contact"
+          className="inline-block bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-xl font-semibold transition-colors"
         >
-          Ask TESSA
-        </button>
+          Contact Us
+        </Link>
       </div>
     </div>
   )
