@@ -1,4 +1,5 @@
 import Navigation from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Home, Shield, FileCheck, Users, Clock, Award } from "lucide-react"
 import Link from "next/link"
@@ -188,8 +189,17 @@ export default function ResidentialTitlePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 md:py-24 bg-primary text-white">
-        <div className="container mx-auto px-4 text-center">
+      <section className="relative py-16 md:py-24 text-white overflow-hidden">
+        {/* Background Image with Orange Overlay */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: "url(/beautiful-modern-california-home-exterior-with-blu.jpg)",
+          }}
+        />
+        <div className="absolute inset-0 bg-primary/90" />
+        
+        <div className="relative container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Work With Us?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
             Whether you're buying your first home or your fifth, Pacific Coast Title is here to protect your investment
@@ -213,6 +223,8 @@ export default function ResidentialTitlePage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   )
 }

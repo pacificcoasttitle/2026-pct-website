@@ -28,7 +28,7 @@ export function HeroSimple() {
             className="w-full h-full object-cover"
           />
           {/* Blue Overlay - matching pct.com */}
-          <div className="absolute inset-0 bg-[#003d79]/85" />
+          <div className="absolute inset-0 bg-[#03374f]/85" />
         </div>
 
         {/* Content */}
@@ -40,9 +40,7 @@ export function HeroSimple() {
 
           {/* Main Headline - Customer-focused */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-tight tracking-tight mb-8">
-            CLOSE WITH
-            <br />
-            CONFIDENCE
+            CLOSE WITH CONFIDENCE
           </h1>
 
           {/* TESSA Search Bar */}
