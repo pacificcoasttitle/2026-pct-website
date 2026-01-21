@@ -5,35 +5,35 @@ import { Calculator, Wrench, FileText, ShieldCheck, MapPin, ClipboardList } from
 
 const quickLinks = [
   {
-    title: 'Rate Calculator',
+    title: 'Know Your Costs',
     href: '#tools',
     icon: Calculator,
     internal: true,
   },
   {
-    title: 'PCT Title Toolbox',
+    title: 'Agent Toolbox',
     href: 'https://www.pcttitletoolbox.com/',
     icon: Wrench,
   },
   {
-    title: 'Title Flyers',
+    title: 'Property Info',
     href: '/resources/title-flyers',
     icon: FileText,
     internal: true,
   },
   {
-    title: 'Blank Forms',
+    title: 'Get Forms',
     href: '/resources/forms',
     icon: ClipboardList,
     internal: true,
   },
   {
-    title: 'Equity Protect',
+    title: 'Protect Your Equity',
     href: 'https://www.equityprotect.com/title/pacificcoast',
     icon: ShieldCheck,
   },
   {
-    title: 'Find a Location',
+    title: 'Find Help Nearby',
     href: '/locations',
     icon: MapPin,
     internal: true,
@@ -46,9 +46,9 @@ export function QuickLinks() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-10">
-          <p className="text-sm text-gray-500 italic mb-2">Quick Links</p>
+          <p className="text-sm text-gray-500 italic mb-2">Get What You Need</p>
           <h2 className="text-3xl sm:text-4xl font-bold text-secondary">
-            HOW CAN WE HELP?
+            WHAT CAN WE DO FOR YOU?
           </h2>
           <div className="w-20 h-1 bg-primary mx-auto mt-4" />
         </div>

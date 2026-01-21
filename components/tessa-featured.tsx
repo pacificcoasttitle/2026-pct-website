@@ -21,22 +21,22 @@ export function TessaFeatured() {
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left Content */}
+          {/* Left Content - Customer-benefit focused */}
           <div className="text-center lg:text-left">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
               <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-white/90">AI-Powered Assistant</span>
+              <span className="text-sm font-medium text-white/90">Your Questions, Answered Instantly</span>
             </div>
 
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
-              Meet TESSA™
+              Stop Waiting
               <br />
-              <span className="text-primary">Your Title Expert</span>
+              <span className="text-primary">for Callbacks</span>
             </h2>
 
             <p className="text-lg text-white/80 mb-8 leading-relaxed max-w-xl">
-              TESSA (Title & Escrow Support Assistant) is available 24/7 to answer your questions, 
-              explain complex terms, and analyze your preliminary title reports instantly.
+              "What's the transfer tax in LA?" "What does this lien mean?" Get answers to your title 
+              and escrow questions right now—not tomorrow when the office opens.
             </p>
 
             <button
@@ -44,26 +44,26 @@ export function TessaFeatured() {
               className="inline-flex items-center gap-3 bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             >
               <MessageCircle className="w-5 h-5" />
-              Chat with TESSA
+              Ask Your Question
             </button>
           </div>
 
-          {/* Right - Feature Cards */}
+          {/* Right - Feature Cards - Customer-benefit focused */}
           <div className="grid gap-4">
             <FeatureCard
               icon={<MessageCircle className="w-6 h-6" />}
-              title="Ask Anything"
-              description="Get instant answers about title insurance, escrow processes, and closing costs"
+              title="Get Unstuck Faster"
+              description="Confused by title jargon? Get plain-English explanations so you can advise your clients with confidence."
             />
             <FeatureCard
               icon={<FileText className="w-6 h-6" />}
-              title="Document Analysis"
-              description="Upload your preliminary title report for AI-powered insights and explanations"
+              title="Understand Your Report"
+              description="Upload your prelim and get a clear breakdown of what it means—no title experience required."
             />
             <FeatureCard
               icon={<Clock className="w-6 h-6" />}
-              title="Always Available"
-              description="24/7 support whenever you need it - no waiting for office hours"
+              title="Night Owl? No Problem"
+              description="Working late on a deal? Get answers at 11pm, 3am, or whenever you need them."
             />
           </div>
         </div>

@@ -38,11 +38,11 @@ export function HeroSimple() {
             Residential / Commercial / Escrow
           </p>
 
-          {/* Main Headline */}
+          {/* Main Headline - Customer-focused */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-tight tracking-tight mb-8">
-            TITLE SETTLEMENT
+            CLOSE WITH
             <br />
-            SERVICES
+            CONFIDENCE
           </h1>
 
           {/* TESSA Search Bar */}
@@ -52,7 +52,7 @@ export function HeroSimple() {
                 type="text"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
-                placeholder="Need Title help? Ask TESSA™"
+                placeholder="Have a question about your transaction?"
                 className="flex-1 px-4 py-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none bg-transparent"
               />
               <button
@@ -60,26 +60,26 @@ export function HeroSimple() {
                 className="bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-md transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 <Sparkles className="w-4 h-4" />
-                Ask TESSA™
+                Get Answers
               </button>
             </div>
           </form>
 
-          {/* Trust Stats */}
+          {/* Trust Stats - Customer-benefit focused */}
           <div className="mt-16 flex flex-wrap items-center justify-center gap-8 sm:gap-16 text-white/90">
             <div className="text-center">
               <span className="block text-3xl sm:text-4xl font-bold text-white">45+</span>
-              <span className="text-sm text-white/70">Years Experience</span>
+              <span className="text-sm text-white/70">Years of On-Time Closings</span>
             </div>
             <div className="hidden sm:block w-px h-12 bg-white/20" />
             <div className="text-center">
               <span className="block text-3xl sm:text-4xl font-bold text-white">100K+</span>
-              <span className="text-sm text-white/70">Transactions</span>
+              <span className="text-sm text-white/70">Families in Their Homes</span>
             </div>
             <div className="hidden sm:block w-px h-12 bg-white/20" />
             <div className="text-center">
               <span className="block text-3xl sm:text-4xl font-bold text-white">12</span>
-              <span className="text-sm text-white/70">Counties Served</span>
+              <span className="text-sm text-white/70">Counties, One Call Away</span>
             </div>
           </div>
         </div>

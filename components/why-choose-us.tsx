@@ -3,30 +3,31 @@
 import { CheckCircle2 } from "lucide-react"
 
 export function WhyChooseUs() {
+  // Customer-benefit focused reasons
   const reasons = [
     {
-      title: "Experienced Professionals",
-      description: "Our team brings decades of combined experience in title and escrow services.",
+      title: "Your Closing Stays on Track",
+      description: "45 years of experience means we've seen every curveball. Your deal closes on time.",
     },
     {
-      title: "Comprehensive Coverage",
-      description: "From residential to commercial, we handle transactions of all sizes and complexity.",
+      title: "One Team, Start to Finish",
+      description: "No getting bounced around. Your escrow officer knows your file and answers your calls.",
     },
     {
-      title: "Customer-Focused Service",
-      description: "Your success is our success. We work hard to make your experience satisfying.",
+      title: "Clear Communication, No Jargon",
+      description: "We explain what's happening and why—so you can keep your clients informed and confident.",
     },
     {
-      title: "Technology-Enhanced",
-      description: "Modern tools and AI assistance to streamline processes and reduce closing times.",
+      title: "Problems Solved Before You Know",
+      description: "We catch title issues early and resolve them quietly, so you never have to deliver bad news.",
     },
     {
-      title: "Statewide Presence",
-      description: "Six California offices strategically located to serve you better.",
+      title: "Local Experts, Statewide Reach",
+      description: "Whether it's LA transfer taxes or Central Valley timelines, we know your market.",
     },
     {
-      title: "Proven Track Record",
-      description: "Over 500,000 successful closings demonstrate our commitment to excellence.",
+      title: "You Look Good to Your Clients",
+      description: "When closing day goes smoothly, your clients remember who made it happen.",
     },
   ]
 
@@ -37,16 +38,16 @@ export function WhyChooseUs() {
           {/* Left Column - Content */}
           <div className="space-y-5">
             <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">
-              Why Pacific Coast Title
+              Your Transaction, Protected
             </p>
             <h2 className="text-2xl sm:text-3xl font-semibold text-secondary leading-snug">
-              Dependable service backed by
+              Get to the closing table
               <br />
-              <span className="text-secondary/70">decades of experience</span>
+              <span className="text-secondary/70">without the headaches</span>
             </h2>
             <p className="text-gray-500 leading-relaxed">
-              We specialize in residential and commercial title insurance, working behind the scenes 
-              to ensure every transaction closes smoothly.
+              Deals fall apart when title problems surface late. We've protected over 100,000 transactions 
+              because we find issues early and fix them fast—keeping your closing on schedule.
             </p>
             <div className="space-y-3 pt-2">
               {reasons.map((reason, index) => (
@@ -66,7 +67,7 @@ export function WhyChooseUs() {
             <div className="aspect-[4/3] rounded-xl overflow-hidden">
               <img
                 src="/professional-title-company-office-team-meeting.jpg"
-                alt="Pacific Coast Title Team"
+                alt="Happy clients at closing"
                 className="w-full h-full object-cover"
               />
             </div>
