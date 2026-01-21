@@ -92,7 +92,10 @@ export function Navigation() {
             {/* Logo */}
             <Link href="/" className="flex items-center">
               <Image
-                src="https://pct.com/assets/media/general/logo2-dark.png"
+                src={isScrolled 
+                  ? "https://pct.com/assets/media/general/logo2-dark.png"
+                  : "https://pct.com/assets/media/general/logo2.png"
+                }
                 alt="Pacific Coast Title Company"
                 width={200}
                 height={60}
@@ -112,7 +115,11 @@ export function Navigation() {
                 >
                   <Link
                     href={item.href}
-                    className="flex items-center gap-1 text-secondary hover:text-primary transition-colors font-medium py-6"
+                    className={`flex items-center gap-1 transition-colors font-medium py-6 ${
+                      isScrolled 
+                        ? 'text-secondary hover:text-primary' 
+                        : 'text-white hover:text-white/80'
+                    }`}
                   >
                     {item.label}
                     <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${openDropdown === item.label ? 'rotate-180' : ''}`} />
@@ -147,7 +154,10 @@ export function Navigation() {
             </div>
 
             {/* Mobile Menu Button */}
-            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden p-2 text-secondary">
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+              className={`md:hidden p-2 ${isScrolled ? 'text-secondary' : 'text-white'}`}
+            >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
