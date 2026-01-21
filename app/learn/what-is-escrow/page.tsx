@@ -1,8 +1,11 @@
-"use client"
-
 import Link from "next/link"
-import { useTessa } from "@/context/tessa-context"
-import { Lock, ArrowRight, CheckCircle, Shield, AlertCircle, Sparkles, FileText, DollarSign, Users, Calendar, ClipboardCheck, Scale } from "lucide-react"
+import { Lock, ArrowRight, CheckCircle, Shield, AlertCircle, Sparkles, FileText, DollarSign, Users, Calendar, ClipboardCheck, Scale, Phone, Mail } from "lucide-react"
+
+export const metadata = {
+  title: "What is Escrow? | Pacific Coast Title",
+  description:
+    "Escrow is a process where a neutral third party holds funds and documents until all conditions of a real estate transaction are met. Learn how escrow protects you.",
+}
 
 const responsibilities = [
   {
@@ -57,13 +60,6 @@ const faqItems = [
 ]
 
 export default function WhatIsEscrowPage() {
-  const { setIsOpen, setInitialMessage } = useTessa()
-
-  const handleAskTessa = () => {
-    setInitialMessage("I have a question about escrow.")
-    setIsOpen(true)
-  }
-
   // FAQ Schema for SEO
   const faqSchema = {
     "@context": "https://schema.org",
@@ -211,23 +207,28 @@ export default function WhatIsEscrowPage() {
           </section>
         </div>
 
-        {/* Ask TESSA CTA */}
+        {/* Contact CTA */}
         <div className="bg-gradient-to-br from-primary to-primary/90 rounded-2xl p-8 text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-white text-sm font-medium mb-4">
-            <Sparkles className="w-4 h-4" />
-            AI-Powered Assistance
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-4">Have Questions About Your Escrow?</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">Have Questions About Escrow?</h2>
           <p className="text-white/80 mb-6 max-w-xl mx-auto">
-            Ask TESSA, our AI assistant, for instant answers about the escrow process.
+            Our escrow team is here to guide you through the process.
           </p>
-          <button
-            onClick={handleAskTessa}
-            className="inline-flex items-center gap-2 bg-white text-primary px-8 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors"
-          >
-            <Sparkles className="w-5 h-5" />
-            Ask TESSA
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a
+              href="tel:+17145166700"
+              className="inline-flex items-center justify-center gap-2 bg-white text-primary px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors"
+            >
+              <Phone className="w-5 h-5" />
+              (714) 516-6700
+            </a>
+            <Link
+              href="/contact"
+              className="inline-flex items-center justify-center gap-2 bg-white/20 text-white px-6 py-3 rounded-xl font-semibold hover:bg-white/30 transition-colors"
+            >
+              <Mail className="w-5 h-5" />
+              Contact Us
+            </Link>
+          </div>
         </div>
 
         {/* Related Articles */}
