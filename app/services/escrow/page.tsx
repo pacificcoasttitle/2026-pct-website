@@ -1,44 +1,44 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import Link from "next/link"
-import { Shield, Users, Clock, FileCheck, Lock, Headphones, CheckCircle, ArrowRight } from "lucide-react"
+import { Shield, Users, Clock, FileCheck, Lock, Headphones, CheckCircle, ArrowRight, AlertTriangle } from "lucide-react"
 
 export const metadata = {
   title: "Escrow Settlement Services | Pacific Coast Title",
   description:
-    "Professional escrow settlement services in California. Our experienced escrow officers guide every transaction to a smooth closing.",
+    "Professional escrow services that keep your transaction on track. From opening to closing, we handle the details so you can focus on your next chapter.",
 }
 
-const features = [
+const whatWeHandle = [
   {
     icon: Shield,
-    title: "Neutral Third Party",
-    description: "We act as an impartial intermediary, ensuring all conditions are met before funds and documents are exchanged.",
-  },
-  {
-    icon: Users,
-    title: "Experienced Officers",
-    description: "Our escrow officers average 15+ years of experience handling complex real estate transactions.",
-  },
-  {
-    icon: Clock,
-    title: "Timely Closings",
-    description: "We work diligently to meet your closing timeline while ensuring accuracy and compliance.",
+    title: "We're the Neutral Party",
+    description: "We hold funds and documents securely until everyone has met their obligations. No playing favorites—just fair, impartial service.",
   },
   {
     icon: FileCheck,
-    title: "Document Management",
-    description: "Secure handling of all transaction documents, from opening to recording and beyond.",
+    title: "We Track Every Detail",
+    description: "Dozens of documents, multiple deadlines, various parties. We keep everything organized so nothing falls through the cracks.",
   },
   {
     icon: Lock,
-    title: "Secure Fund Handling",
-    description: "Your funds are protected in insured escrow accounts with strict accounting controls.",
+    title: "Your Money Is Protected",
+    description: "Funds are held in insured escrow accounts with strict controls. Your earnest money and closing funds are safeguarded at every step.",
+  },
+  {
+    icon: Clock,
+    title: "We Keep Things Moving",
+    description: "Proactive communication with all parties means issues get resolved quickly. We work to meet your closing date, not push it back.",
+  },
+  {
+    icon: Users,
+    title: "One Person Knows Your File",
+    description: "Your dedicated escrow officer handles your transaction from start to finish. No getting bounced between departments.",
   },
   {
     icon: Headphones,
-    title: "Dedicated Support",
-    description: "Direct access to your escrow officer throughout the transaction for questions and updates.",
+    title: "You Can Always Reach Us",
+    description: "Questions don't wait for business hours. You have direct access to your escrow officer for updates and answers.",
   },
 ]
 
@@ -46,33 +46,50 @@ const processSteps = [
   {
     step: "1",
     title: "Escrow Opens",
-    description: "Once a purchase agreement is signed, escrow is opened and initial deposits are collected.",
+    what: "We receive the purchase agreement and open your file",
+    benefit: "You get a single point of contact who will guide the entire transaction",
   },
   {
     step: "2",
-    title: "Title Search",
-    description: "We conduct a thorough title search and issue a preliminary report for review.",
+    title: "Title Search Begins",
+    what: "We examine public records to verify ownership and uncover any issues",
+    benefit: "Problems are found early—while there's still time to solve them",
   },
   {
     step: "3",
-    title: "Document Preparation",
-    description: "All closing documents are prepared and reviewed for accuracy and compliance.",
+    title: "Documents Are Prepared",
+    what: "We prepare and coordinate all closing documents",
+    benefit: "Everything is reviewed for accuracy before you ever pick up a pen",
   },
   {
     step: "4",
-    title: "Signing",
-    description: "Parties sign documents either in-office or with a mobile notary at their convenience.",
+    title: "Signing Day",
+    what: "All parties sign their documents (in-office or via mobile notary)",
+    benefit: "We explain what you're signing in plain English—no confusion",
   },
   {
     step: "5",
     title: "Funding & Recording",
-    description: "Loan funds are received, documents are recorded, and the transaction is finalized.",
+    what: "Loan funds arrive; documents are recorded at the county",
+    benefit: "You're officially on record as the new owner",
   },
   {
     step: "6",
-    title: "Closing",
-    description: "Funds are disbursed to all parties and you receive your final closing package.",
+    title: "Closing & Disbursement",
+    what: "Funds are distributed to all parties; you receive your final package",
+    benefit: "You get the keys. The seller gets paid. Everyone's happy.",
   },
+]
+
+const services = [
+  "Residential Purchase Escrows",
+  "Refinance Escrows",
+  "Commercial Transaction Escrows",
+  "For Sale By Owner (FSBO) Escrows",
+  "1031 Exchange Escrows",
+  "Short Sale Escrows",
+  "Mobile Notary Services",
+  "Document Preparation",
 ]
 
 export default function EscrowServicesPage() {
@@ -80,59 +97,94 @@ export default function EscrowServicesPage() {
     <main className="min-h-screen bg-white">
       <Navigation />
 
-      {/* Hero */}
-      <section className="relative pt-32 pb-20 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
+      {/* Hero Section */}
+      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="/professional-title-company-office-team-meeting.jpg"
+            alt=""
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-secondary/90" />
+        </div>
+
+        <div className="relative z-10 container mx-auto px-4 text-center pt-24 pb-16">
+          <p className="text-primary font-semibold tracking-wide uppercase mb-4">Escrow Services</p>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 max-w-4xl mx-auto">
+            Get to Closing Day
+            <br />
+            <span className="text-primary">Without the Stress</span>
+          </h1>
+          <p className="text-xl text-white/80 max-w-2xl mx-auto">
+            We handle the paperwork, coordinate the parties, and protect everyone's interests—so you can focus on your next chapter.
+          </p>
+        </div>
+
+        {/* Wave */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto" preserveAspectRatio="none">
+            <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0V120Z" fill="white"/>
+          </svg>
+        </div>
+      </section>
+
+      {/* What Is Escrow - Customer Focused */}
+      <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl">
-            <span className="inline-block bg-primary/10 text-primary px-4 py-1 rounded-full text-sm font-medium mb-6">
-              Escrow Services
-            </span>
-            <h1 className="text-4xl md:text-5xl font-bold text-primary mb-6">
-              Professional Escrow Settlement Services
-            </h1>
-            <p className="text-xl text-gray-600 mb-8">
-              Our experienced escrow officers provide expert guidance through every step of your real estate 
-              transaction, ensuring a smooth and secure closing process.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link
-                href="/contact"
-                className="bg-primary text-white px-8 py-4 rounded-xl font-semibold hover:bg-primary/90 transition-colors text-center"
-              >
-                Open an Escrow
-              </Link>
-              <Link
-                href="/title-services/what-is-escrow"
-                className="bg-white border-2 border-primary text-primary px-8 py-4 rounded-xl font-semibold hover:bg-primary/5 transition-colors text-center"
-              >
-                Learn About Escrow
-              </Link>
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-secondary mb-8 text-center">
+              What Escrow Does For You
+            </h2>
+            
+            <div className="prose prose-lg max-w-none text-gray-600 space-y-6">
+              <p>
+                Real estate transactions involve a lot of moving parts: buyers, sellers, agents, lenders, 
+                inspectors, appraisers—all with their own deadlines and requirements. Escrow is the 
+                neutral third party that keeps everything organized and protects everyone's interests.
+              </p>
+
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-xl my-8">
+                <p className="font-semibold text-blue-800 mb-2">Think of it this way:</p>
+                <p className="text-blue-700 mb-0">
+                  The seller doesn't want to hand over the deed until they're sure they'll get paid. 
+                  The buyer doesn't want to hand over their money until they're sure they'll get clear title. 
+                  Escrow makes sure both happen simultaneously—so everyone's protected.
+                </p>
+              </div>
+
+              <p>
+                From the moment your purchase agreement is signed until the day you get your keys, your 
+                escrow officer coordinates every step, manages every document, and keeps every party 
+                informed. When closing day arrives, you're not scrambling to figure out what's missing—
+                everything's already in place.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-20">
+      {/* What We Handle */}
+      <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">Why Choose Our Escrow Services</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-secondary mb-4">
+              What We Handle For You
+            </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              With nearly two decades of experience, Pacific Coast Title delivers escrow services 
-              that protect all parties and ensure successful closings.
+              So you can focus on what matters—your move, your investment, your next chapter
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature) => {
-              const Icon = feature.icon
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {whatWeHandle.map((item) => {
+              const Icon = item.icon
               return (
-                <div key={feature.title} className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
+                <div key={item.title} className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
                   <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6">
                     <Icon className="w-7 h-7 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.description}</p>
+                  <h3 className="text-xl font-bold text-secondary mb-3">{item.title}</h3>
+                  <p className="text-gray-600">{item.description}</p>
                 </div>
               )
             })}
@@ -140,19 +192,20 @@ export default function EscrowServicesPage() {
         </div>
       </section>
 
-      {/* Process */}
-      <section className="py-20 bg-gray-50">
+      {/* The Process - Customer Benefit */}
+      <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">The Escrow Process</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-secondary mb-4">
+              The Journey to Your Closing
+            </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Understanding what happens during escrow helps ensure a smooth transaction. 
-              Here's how the process works.
+              Here's what happens at each step—and what it means for you
             </p>
           </div>
 
           <div className="max-w-4xl mx-auto">
-            <div className="grid gap-6">
+            <div className="space-y-6">
               {processSteps.map((item, index) => (
                 <div key={item.step} className="flex gap-6">
                   <div className="flex-shrink-0">
@@ -164,8 +217,9 @@ export default function EscrowServicesPage() {
                     )}
                   </div>
                   <div className="pb-8">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">{item.title}</h3>
-                    <p className="text-gray-600">{item.description}</p>
+                    <h3 className="text-xl font-bold text-secondary mb-2">{item.title}</h3>
+                    <p className="text-gray-600 mb-2"><strong>What happens:</strong> {item.what}</p>
+                    <p className="text-gray-600"><strong>Your benefit:</strong> {item.benefit}</p>
                   </div>
                 </div>
               ))}
@@ -174,59 +228,61 @@ export default function EscrowServicesPage() {
         </div>
       </section>
 
-      {/* Services List */}
-      <section className="py-20">
+      {/* Services List + CTA */}
+      <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-primary mb-6">
-                Comprehensive Escrow Services
+              <h2 className="text-3xl md:text-4xl font-bold text-secondary mb-6">
+                Escrow Services We Provide
               </h2>
               <p className="text-lg text-gray-600 mb-8">
-                Whether you're buying, selling, or refinancing, our escrow team handles all the details 
-                so you can focus on your next chapter.
+                Whether you're buying your first home, selling an investment property, or refinancing 
+                to lower your rate—we've handled transactions like yours thousands of times.
               </p>
-              <div className="space-y-4">
-                {[
-                  "Residential Purchase Escrows",
-                  "Residential Refinance Escrows",
-                  "Commercial Transaction Escrows",
-                  "For Sale By Owner (FSBO) Escrows",
-                  "1031 Exchange Escrows",
-                  "Mobile Notary Services",
-                  "Document Preparation",
-                  "Fund Disbursement",
-                ].map((service) => (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {services.map((service) => (
                   <div key={service} className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-accent flex-shrink-0" />
+                    <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
                     <span className="text-gray-700">{service}</span>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="bg-primary rounded-2xl p-8 text-white">
+            
+            <div className="bg-secondary rounded-2xl p-8 text-white">
               <h3 className="text-2xl font-bold mb-4">Ready to Open Escrow?</h3>
               <p className="text-white/80 mb-6">
-                Contact us to get started with your transaction. Our team will guide you through 
-                every step of the process.
+                Starting your transaction is easy. Contact us and we'll assign a dedicated 
+                escrow officer to guide you through every step.
               </p>
               <div className="space-y-4">
                 <Link
                   href="/contact"
-                  className="flex items-center justify-center gap-2 w-full bg-white text-primary px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-center gap-2 w-full bg-white text-secondary px-6 py-4 rounded-xl font-semibold hover:bg-gray-100 transition-colors"
                 >
                   Open an Escrow
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <a
                   href="tel:+17145166700"
-                  className="flex items-center justify-center w-full bg-accent text-white px-6 py-3 rounded-xl font-semibold hover:bg-accent/90 transition-colors"
+                  className="flex items-center justify-center w-full bg-primary text-white px-6 py-4 rounded-xl font-semibold hover:bg-primary/90 transition-colors"
                 >
                   Call (714) 516-6700
                 </a>
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Trust Banner */}
+      <section className="py-12 bg-primary/5">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-lg text-gray-700 max-w-3xl mx-auto">
+            <strong className="text-secondary">Since 2005</strong>, we've handled over 100,000 escrow 
+            transactions across California. Your closing is in experienced hands.
+          </p>
         </div>
       </section>
 
