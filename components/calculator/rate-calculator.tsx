@@ -173,21 +173,21 @@ export function RateCalculator() {
   return (
     <div className="w-full">
       {/* Form Section */}
-      <div className="space-y-4">
+      <div className="space-y-5">
         {/* Transaction Type Toggle */}
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-2">
+          <label className="block text-sm font-medium text-gray-600 mb-2.5">
             Transaction Type
           </label>
-          <div className="grid grid-cols-2 gap-2 p-1 bg-gray-50 rounded-lg border border-gray-100">
+          <div className="grid grid-cols-2 gap-2 p-1.5 bg-[#f8f6f3] rounded-xl">
             <button
               type="button"
               onClick={() => setTransactionType('purchase')}
               className={cn(
-                'flex items-center justify-center gap-2 py-2.5 px-4 rounded-md text-sm font-medium transition-all',
+                'flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all',
                 transactionType === 'purchase'
                   ? 'bg-white text-secondary shadow-sm border border-gray-100'
-                  : 'text-gray-500 hover:text-gray-700'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
               )}
             >
               <Home className="w-4 h-4" />
@@ -197,10 +197,10 @@ export function RateCalculator() {
               type="button"
               onClick={() => setTransactionType('refinance')}
               className={cn(
-                'flex items-center justify-center gap-2 py-2.5 px-4 rounded-md text-sm font-medium transition-all',
+                'flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all',
                 transactionType === 'refinance'
                   ? 'bg-white text-secondary shadow-sm border border-gray-100'
-                  : 'text-gray-500 hover:text-gray-700'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
               )}
             >
               <Building2 className="w-4 h-4" />
@@ -211,7 +211,7 @@ export function RateCalculator() {
 
         {/* County Select */}
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-2">
+          <label className="block text-sm font-medium text-gray-600 mb-2.5">
             County
           </label>
           <Select
@@ -219,7 +219,7 @@ export function RateCalculator() {
             onValueChange={setSelectedCounty}
             disabled={isLoadingCounties}
           >
-            <SelectTrigger className="w-full h-11 bg-white border-gray-200">
+            <SelectTrigger className="w-full h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary/40 transition-all">
               <SelectValue placeholder={isLoadingCounties ? 'Loading counties...' : 'Select county'} />
             </SelectTrigger>
             <SelectContent>
@@ -235,7 +235,7 @@ export function RateCalculator() {
         {/* City Select - conditional */}
         {selectedCounty && (
           <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-            <label className="block text-sm font-medium text-gray-600 mb-2">
+            <label className="block text-sm font-medium text-gray-600 mb-2.5">
               City
             </label>
             <Select
@@ -243,7 +243,7 @@ export function RateCalculator() {
               onValueChange={setSelectedCity}
               disabled={isLoadingCities}
             >
-              <SelectTrigger className="w-full h-11 bg-white border-gray-200">
+              <SelectTrigger className="w-full h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary/40 transition-all">
                 <SelectValue placeholder={isLoadingCities ? 'Loading cities...' : 'Select city'} />
               </SelectTrigger>
               <SelectContent>
@@ -255,7 +255,7 @@ export function RateCalculator() {
               </SelectContent>
             </Select>
             {selectedCityData && transactionType === 'purchase' && (
-              <p className="mt-1.5 text-xs text-gray-400">
+              <p className="mt-2 text-xs text-gray-400">
                 Transfer Tax Rate: ${selectedCityData.transferTaxRate.toFixed(2)} per $1,000
               </p>
             )}
@@ -265,11 +265,11 @@ export function RateCalculator() {
         {/* Sales Price - Purchase only */}
         {transactionType === 'purchase' && (
           <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-            <label className="block text-sm font-medium text-gray-600 mb-2">
+            <label className="block text-sm font-medium text-gray-600 mb-2.5">
               Sales Price
             </label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 type="text"
                 inputMode="numeric"
@@ -283,7 +283,7 @@ export function RateCalculator() {
                     setSalesPrice('')
                   }
                 }}
-                className="pl-9 h-11 bg-white border-gray-200"
+                className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary/40 transition-all"
               />
             </div>
           </div>
@@ -291,11 +291,11 @@ export function RateCalculator() {
 
         {/* Loan Amount */}
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-2">
+          <label className="block text-sm font-medium text-gray-600 mb-2.5">
             Loan Amount
           </label>
           <div className="relative">
-            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               type="text"
               inputMode="numeric"
@@ -309,7 +309,7 @@ export function RateCalculator() {
                   setLoanAmount('')
                 }
               }}
-              className="pl-9 h-11 bg-white border-gray-200"
+              className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary/40 transition-all"
             />
           </div>
         </div>
@@ -319,7 +319,7 @@ export function RateCalculator() {
           type="button"
           onClick={handleCalculate}
           disabled={!isFormValid || isCalculating}
-          className="w-full h-11 bg-secondary hover:bg-secondary/90 text-white font-medium text-sm rounded-lg"
+          className="w-full h-12 bg-secondary hover:bg-secondary/90 text-white font-medium text-sm rounded-xl shadow-sm hover:shadow-md transition-all"
         >
           {isCalculating ? (
             <>
@@ -337,9 +337,9 @@ export function RateCalculator() {
 
       {/* Results Section */}
       {results && (
-        <div className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
           <div className="border-t border-gray-100 pt-6">
-            <h3 className="text-base font-medium text-secondary mb-4 flex items-center gap-2">
+            <h3 className="text-base font-medium text-secondary mb-5 flex items-center gap-2">
               <Receipt className="w-4 h-4 text-secondary/60" />
               Estimated Fees
             </h3>
@@ -400,15 +400,15 @@ export function RateCalculator() {
               />
 
               {/* Grand Total */}
-              <div className="bg-secondary/5 border border-secondary/10 rounded-xl p-4 mt-4">
+              <div className="bg-gradient-to-r from-secondary/5 to-secondary/[0.02] border border-secondary/10 rounded-xl p-5 mt-5">
                 <div className="flex justify-between items-center">
                   <span className="font-medium text-secondary">Estimated Total</span>
-                  <span className="font-semibold text-xl text-secondary">{formatCurrency(results.grandTotal)}</span>
+                  <span className="font-semibold text-2xl text-secondary">{formatCurrency(results.grandTotal)}</span>
                 </div>
               </div>
 
               {/* Disclaimer */}
-              <p className="text-xs text-gray-400 text-center mt-4 leading-relaxed">
+              <p className="text-xs text-gray-400 text-center mt-5 leading-relaxed">
                 This is an estimate only. Actual fees may vary based on specific transaction details.
                 Contact us for a detailed quote.
               </p>
@@ -416,7 +416,7 @@ export function RateCalculator() {
               {/* Get Quote Button */}
               <Button
                 variant="outline"
-                className="w-full h-10 mt-2 border-gray-200 text-secondary hover:bg-gray-50 font-medium text-sm"
+                className="w-full h-11 mt-3 border-gray-200 text-secondary hover:bg-gray-50 font-medium text-sm rounded-xl"
               >
                 Request Detailed Quote
               </Button>
@@ -442,17 +442,17 @@ function FeeSection({
   const [isExpanded, setIsExpanded] = useState(false)
 
   return (
-    <div className="bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
+    <div className="bg-[#f8f6f3]/60 rounded-xl overflow-hidden border border-gray-100/80">
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-3 hover:bg-gray-100/50 transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-[#f8f6f3] transition-colors"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <span className="text-secondary/50">{icon}</span>
           <span className="font-medium text-secondary text-sm">{title}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <span className="font-medium text-secondary text-sm">{formatCurrency(total)}</span>
           <ChevronDown
             className={cn(
@@ -464,9 +464,9 @@ function FeeSection({
       </button>
       
       {isExpanded && (
-        <div className="px-3 pb-3 space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="px-4 pb-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
           {items.map((item, index) => (
-            <div key={index} className="flex justify-between text-sm pl-6">
+            <div key={index} className="flex justify-between text-sm pl-7">
               <span className="text-gray-500">{item.label}</span>
               <span className="text-gray-600">{formatCurrency(item.amount)}</span>
             </div>
