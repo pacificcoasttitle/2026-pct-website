@@ -1,105 +1,103 @@
 'use client'
 
 import { useState } from 'react'
-import { Shield, ArrowDown } from 'lucide-react'
-import { TessaSearch } from './tessa-search'
+import { Sparkles } from 'lucide-react'
 import { TessaModal } from './tessa-modal'
 
 export function HeroSimple() {
   const [isTessaOpen, setIsTessaOpen] = useState(false)
   const [tessaQuery, setTessaQuery] = useState('')
-  const [tessaMode, setTessaMode] = useState<'question' | 'analyze'>('question')
-  const [tessaFile, setTessaFile] = useState<File | undefined>()
+  const [question, setQuestion] = useState('')
 
-  const handleTessaSubmit = (query: string, mode: 'question' | 'analyze', file?: File) => {
-    setTessaQuery(query)
-    setTessaMode(mode)
-    setTessaFile(file)
-    setIsTessaOpen(true)
-  }
-
-  const scrollToTools = () => {
-    document.getElementById('tools')?.scrollIntoView({ behavior: 'smooth' })
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (question.trim()) {
+      setTessaQuery(question)
+      setIsTessaOpen(true)
+    }
   }
 
   return (
     <>
-      <section className="relative min-h-[88vh] flex items-center justify-center overflow-hidden pt-20">
-        {/* Warm Gradient Background */}
+      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
+        {/* Background Image with Blue Overlay */}
         <div className="absolute inset-0">
-          {/* Base warm gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#faf9f7] via-[#f8f6f3] to-[#f5f2ee]" />
-          
-          {/* Subtle texture overlay */}
-          <div 
-            className="absolute inset-0 opacity-[0.4]"
-            style={{
-              backgroundImage: `radial-gradient(circle at 25% 25%, rgba(0, 61, 121, 0.03) 0%, transparent 50%),
-                               radial-gradient(circle at 75% 75%, rgba(180, 160, 140, 0.04) 0%, transparent 50%)`,
-            }}
+          <img
+            src="/beautiful-modern-california-home-exterior-with-blu.jpg"
+            alt=""
+            className="w-full h-full object-cover"
           />
-          
-          {/* Soft light accent */}
-          <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-radial from-amber-50/30 via-transparent to-transparent -translate-y-1/4 translate-x-1/4" />
-          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-radial from-blue-50/20 via-transparent to-transparent translate-y-1/4 -translate-x-1/4" />
+          {/* Blue Overlay - matching pct.com */}
+          <div className="absolute inset-0 bg-[#003d79]/85" />
         </div>
 
         {/* Content */}
-        <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="space-y-6">
-            {/* Trust Badge */}
-            <div className="inline-flex items-center gap-2.5 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-100/80 shadow-sm">
-              <Shield className="w-4 h-4 text-secondary/70" />
-              <span className="text-sm font-medium text-gray-600 tracking-wide">Serving California Since 1980</span>
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-24 pb-32">
+          {/* Subheading */}
+          <p className="text-primary font-semibold tracking-[0.25em] text-sm sm:text-base mb-4 uppercase">
+            Residential / Commercial / Escrow
+          </p>
+
+          {/* Main Headline */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-tight tracking-tight mb-8">
+            TITLE SETTLEMENT
+            <br />
+            SERVICES
+          </h1>
+
+          {/* TESSA Search Bar */}
+          <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-white rounded-lg p-2 shadow-2xl">
+              <input
+                type="text"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                placeholder="Need Title help? Ask TESSA™"
+                className="flex-1 px-4 py-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none bg-transparent"
+              />
+              <button
+                type="submit"
+                className="bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-md transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+              >
+                <Sparkles className="w-4 h-4" />
+                Ask TESSA™
+              </button>
             </div>
+          </form>
 
-            {/* Headline */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-secondary leading-tight tracking-tight">
-              Title & Escrow Services
-              <br />
-              <span className="text-secondary/60">You Can Trust</span>
-            </h1>
-
-            {/* Subheadline */}
-            <p className="text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
-              Residential and commercial title insurance with transparent pricing
-              and expert guidance for every transaction.
-            </p>
-
-            {/* TESSA Search Bar */}
-            <div className="pt-6 pb-2">
-              <TessaSearch onSubmit={handleTessaSubmit} />
+          {/* Trust Stats */}
+          <div className="mt-16 flex flex-wrap items-center justify-center gap-8 sm:gap-16 text-white/90">
+            <div className="text-center">
+              <span className="block text-3xl sm:text-4xl font-bold text-white">45+</span>
+              <span className="text-sm text-white/70">Years Experience</span>
             </div>
-
-            {/* Stats Bar - Refined */}
-            <div className="pt-12">
-              <div className="inline-flex items-center gap-3 sm:gap-6 bg-white/70 backdrop-blur-sm px-6 sm:px-8 py-4 rounded-2xl border border-gray-100/80 shadow-sm">
-                <div className="text-center px-2 sm:px-4">
-                  <span className="block text-xl sm:text-2xl font-semibold text-secondary">45+</span>
-                  <span className="text-xs sm:text-sm text-gray-500">Years</span>
-                </div>
-                <div className="w-px h-10 bg-gray-200/80" />
-                <div className="text-center px-2 sm:px-4">
-                  <span className="block text-xl sm:text-2xl font-semibold text-secondary">100,000+</span>
-                  <span className="text-xs sm:text-sm text-gray-500">Transactions</span>
-                </div>
-                <div className="w-px h-10 bg-gray-200/80" />
-                <div className="text-center px-2 sm:px-4">
-                  <span className="block text-xl sm:text-2xl font-semibold text-secondary">12</span>
-                  <span className="text-xs sm:text-sm text-gray-500">Counties</span>
-                </div>
-              </div>
+            <div className="hidden sm:block w-px h-12 bg-white/20" />
+            <div className="text-center">
+              <span className="block text-3xl sm:text-4xl font-bold text-white">100K+</span>
+              <span className="text-sm text-white/70">Transactions</span>
+            </div>
+            <div className="hidden sm:block w-px h-12 bg-white/20" />
+            <div className="text-center">
+              <span className="block text-3xl sm:text-4xl font-bold text-white">12</span>
+              <span className="text-sm text-white/70">Counties Served</span>
             </div>
           </div>
+        </div>
 
-          {/* Scroll Indicator */}
-          <button
-            onClick={scrollToTools}
-            className="mt-14 inline-flex flex-col items-center text-gray-400 hover:text-secondary/60 transition-colors group cursor-pointer"
+        {/* Wave/Curve at Bottom */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg
+            viewBox="0 0 1440 120"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-full h-auto"
+            preserveAspectRatio="none"
           >
-            <span className="text-sm mb-2">Calculate Your Rates</span>
-            <ArrowDown className="w-4 h-4 animate-bounce" />
-          </button>
+            <path
+              d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0V120Z"
+              fill="white"
+            />
+          </svg>
         </div>
       </section>
 
@@ -108,8 +106,7 @@ export function HeroSimple() {
         isOpen={isTessaOpen}
         onClose={() => setIsTessaOpen(false)}
         initialQuery={tessaQuery}
-        initialMode={tessaMode}
-        initialFile={tessaFile}
+        initialMode="question"
       />
     </>
   )

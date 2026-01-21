@@ -1,7 +1,8 @@
 import { Navigation } from "@/components/navigation"
 import { HeroSimple } from "@/components/hero-simple"
+import { QuickLinks } from "@/components/quick-links"
 import { ToolsSection } from "@/components/tools-section"
-import { TessaCallout } from "@/components/tessa-callout"
+import { TessaFeatured } from "@/components/tessa-featured"
 import { WhyChooseUs } from "@/components/why-choose-us"
 import { LocationsMap } from "@/components/locations-map"
 import { TestimonialsSection } from "@/components/testimonials-section"
@@ -15,8 +16,9 @@ export default function HomePage() {
     <main className="min-h-screen bg-white">
       <Navigation />
       <HeroSimple />
+      <QuickLinks />
       <ToolsSection />
-      <TessaCallout />
+      <TessaFeatured />
       <WhyChooseUs />
       <LocationsMap />
       <TestimonialsSection />
