@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { PageHero } from "@/components/page-hero"
 import { Shield, Home, FileSearch, AlertTriangle, CheckCircle, ArrowRight, HelpCircle, DollarSign, ChevronRight } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
@@ -88,47 +89,13 @@ If we find issues, we work to resolve them before closing—so you know exactly 
 export default function TitleServicesPage() {
   return (
     <>
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-secondary">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-white/70">
-            <Link href="/" className="hover:text-white">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-white font-medium">Residential Title</span>
-          </nav>
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="/beautiful-modern-california-home-exterior-with-blu.jpg"
-            alt=""
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-secondary/90" />
-        </div>
-
-        <div className="relative z-10 container mx-auto px-4 text-center py-16">
-          <p className="text-primary font-semibold tracking-wide uppercase mb-4">Residential Title Insurance</p>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 max-w-4xl mx-auto">
-            Protect What's Yours
-            <br />
-            <span className="text-primary">Before Problems Arise</span>
-          </h1>
-          <p className="text-xl text-white/80 max-w-2xl mx-auto">
-            One payment at closing. Protection for as long as you own your home. That's the peace of mind title insurance provides.
-          </p>
-        </div>
-
-        {/* Wave */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto" preserveAspectRatio="none">
-            <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0V120Z" fill="white"/>
-          </svg>
-        </div>
-      </section>
+      <PageHero
+        label="Residential Title Insurance"
+        title="Protect What's Yours"
+        titleHighlight="Before Problems Arise"
+        subtitle="One payment at closing. Protection for as long as you own your home. That's the peace of mind title insurance provides."
+        backgroundImage="/beautiful-modern-california-home-exterior-with-blu.jpg"
+      />
 
       {/* Why Title Insurance Matters */}
       <section className="py-20">

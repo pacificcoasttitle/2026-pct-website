@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { PageHero } from "@/components/page-hero"
 import { 
   ArrowLeftRight, Building, Home, Repeat, Shield, Users, 
   ChevronRight, Download, Mail, Phone, ArrowRight, Clock,
@@ -76,46 +77,11 @@ const resources = [
 export default function Exchange1031Page() {
   return (
     <>
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-gradient-to-br from-secondary via-secondary/95 to-secondary">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-white/70">
-            <Link href="/" className="hover:text-white">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/services/title" className="hover:text-white">Services</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-white font-medium">1031 Exchange</span>
-          </nav>
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-secondary via-secondary/95 to-secondary relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-64 h-64 bg-primary rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent rounded-full blur-3xl" />
-        </div>
-
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white/90 text-sm font-medium mb-6">
-              <ArrowLeftRight className="w-4 h-4 text-accent" />
-              Tax-Deferred Exchanges
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
-              PCT Exchange
-            </h1>
-            <p className="text-xl text-white/80 mb-4">
-              Defer capital gains taxes on your investment property.
-            </p>
-            <p className="text-lg text-white/70 leading-relaxed">
-              A 1031 exchange, also known as a like-kind exchange or tax-deferred exchange, allows 
-              you to sell investment property and reinvest the proceeds into like-kind property 
-              while deferring capital gains taxes.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        label="Tax-Deferred Exchanges"
+        title="PCT Exchange"
+        subtitle="Defer capital gains taxes on your investment property. A 1031 exchange allows you to sell investment property and reinvest the proceeds into like-kind property while deferring capital gains taxes."
+      />
 
       {/* Key Concepts */}
       <section className="py-16 bg-gray-50">

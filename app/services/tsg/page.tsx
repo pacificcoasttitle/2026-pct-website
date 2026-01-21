@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { PageHero } from "@/components/page-hero"
 import { 
   Scale, Shield, FileText, Search, Home, Upload, 
   ChevronRight, Mail, Phone, MapPin, Users, Award,
@@ -53,45 +54,11 @@ const coverageStates = [
 export default function TSGPage() {
   return (
     <>
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-gradient-to-br from-secondary via-secondary/95 to-secondary">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-white/70">
-            <Link href="/" className="hover:text-white">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/services/title" className="hover:text-white">Services</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-white font-medium">TSG / REO Division</span>
-          </nav>
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-secondary via-secondary/95 to-secondary relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-64 h-64 bg-primary rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent rounded-full blur-3xl" />
-        </div>
-
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white/90 text-sm font-medium mb-6">
-              <Scale className="w-4 h-4 text-accent" />
-              Default Title Services
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
-              TSG / REO Division
-            </h1>
-            <p className="text-xl text-white/80 mb-4">
-              Foreclosure title services for the Western region.
-            </p>
-            <p className="text-lg text-white/70 leading-relaxed">
-              The Trustee Sale Guarantee (TSG) is a title guarantee issued at the start of foreclosure 
-              to assist foreclosing parties with compliance and risk management.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        label="Default Title Services"
+        title="TSG / REO Division"
+        subtitle="Foreclosure title services for the Western region. The Trustee Sale Guarantee (TSG) is a title guarantee issued at the start of foreclosure to assist foreclosing parties with compliance and risk management."
+      />
 
       {/* Coverage & Experience */}
       <section className="py-16 bg-gray-50">

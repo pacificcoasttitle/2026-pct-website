@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { PageHero } from "@/components/page-hero"
 import { 
   Users, Award, DollarSign, CheckCircle, Monitor, Shield, 
   TrendingUp, ChevronRight, Mail, Phone, MapPin, Building2,
@@ -71,45 +72,11 @@ const coverageStates = [
 export default function CreditUnionsPage() {
   return (
     <>
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-gradient-to-br from-secondary via-secondary/95 to-secondary">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-white/70">
-            <Link href="/" className="hover:text-white">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/services/title" className="hover:text-white">Services</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-white font-medium">Credit Unions</span>
-          </nav>
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-secondary via-secondary/95 to-secondary relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-64 h-64 bg-primary rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent rounded-full blur-3xl" />
-        </div>
-
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white/90 text-sm font-medium mb-6">
-              <Users className="w-4 h-4 text-accent" />
-              CUSO Division
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
-              Credit Union &<br />Major Accounts
-            </h1>
-            <p className="text-xl text-white/80 mb-4">
-              The premier provider of title insurance and escrow services to California's credit union community.
-            </p>
-            <p className="text-lg text-white/70 leading-relaxed">
-              Pacific Coast Title's CUSO Division serves credit unions across California, Nevada, 
-              and Arizona with personal service, competitive pricing, and operational efficiency.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        label="CUSO Division"
+        title="Credit Union & Major Accounts"
+        subtitle="The premier provider of title insurance and escrow services to California's credit union community. Personal service, competitive pricing, and operational efficiency."
+      />
 
       {/* Value Propositions */}
       <section className="py-20">

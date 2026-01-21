@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { PageHero } from "@/components/page-hero"
 import { 
   Shield, FileCheck, Building, FileText, Lock, ArrowLeftRight, 
   Leaf, Briefcase, Landmark, Heart, Hotel, Home, Hammer, Building2, 
@@ -127,46 +128,11 @@ const resources = [
 export default function CommercialServicesPage() {
   return (
     <>
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-gradient-to-br from-secondary via-secondary/95 to-secondary">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-white/70">
-            <Link href="/" className="hover:text-white">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/services/title" className="hover:text-white">Services</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-white font-medium">Commercial Title</span>
-          </nav>
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-secondary via-secondary/95 to-secondary relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-64 h-64 bg-primary rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent rounded-full blur-3xl" />
-        </div>
-
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white/90 text-sm font-medium mb-6">
-              <Building2 className="w-4 h-4 text-accent" />
-              Commercial Division
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
-              Commercial Title Services
-            </h1>
-            <p className="text-xl text-white/80 mb-4">
-              Helping you secure real property regardless of size.
-            </p>
-            <p className="text-lg text-white/70 leading-relaxed">
-              We partner with attorneys, lenders, brokers, and developers to handle time-consuming 
-              title intricacies that our competitors rarely take on.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        label="Commercial Division"
+        title="Commercial Title Services"
+        subtitle="We partner with attorneys, lenders, brokers, and developers to handle time-consuming title intricacies that our competitors rarely take on."
+      />
 
       {/* Service Description */}
       <section className="py-16 bg-gray-50">

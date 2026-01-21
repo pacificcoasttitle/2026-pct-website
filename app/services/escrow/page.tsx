@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { Shield, Users, Clock, FileCheck, Lock, Headphones, CheckCircle, ArrowRight, AlertTriangle, ChevronRight } from "lucide-react"
+import { PageHero } from "@/components/page-hero"
+import { Shield, Users, Clock, FileCheck, Lock, Headphones, CheckCircle, ArrowRight, ChevronRight } from "lucide-react"
 
 export const metadata = {
   title: "Escrow Settlement Services | Pacific Coast Title",
@@ -93,47 +94,12 @@ const services = [
 export default function EscrowServicesPage() {
   return (
     <>
-      {/* Breadcrumb */}
-      <div className="pt-24 bg-secondary">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-white/70">
-            <Link href="/" className="hover:text-white">Home</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-white font-medium">Escrow Settlement</span>
-          </nav>
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="/professional-title-company-office-team-meeting.jpg"
-            alt=""
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-secondary/90" />
-        </div>
-
-        <div className="relative z-10 container mx-auto px-4 text-center py-16">
-          <p className="text-primary font-semibold tracking-wide uppercase mb-4">Escrow Services</p>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 max-w-4xl mx-auto">
-            Get to Closing Day
-            <br />
-            <span className="text-primary">Without the Stress</span>
-          </h1>
-          <p className="text-xl text-white/80 max-w-2xl mx-auto">
-            We handle the paperwork, coordinate the parties, and protect everyone's interests—so you can focus on your next chapter.
-          </p>
-        </div>
-
-        {/* Wave */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto" preserveAspectRatio="none">
-            <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0V120Z" fill="white"/>
-          </svg>
-        </div>
-      </section>
+      <PageHero
+        label="Escrow Services"
+        title="Get to Closing Day"
+        titleHighlight="Without the Stress"
+        subtitle="We handle the paperwork, coordinate the parties, and protect everyone's interests—so you can focus on your next chapter."
+      />
 
       {/* What Is Escrow - Customer Focused */}
       <section className="py-20">
