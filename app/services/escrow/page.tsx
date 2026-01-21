@@ -1,7 +1,5 @@
-import Navigation from "@/components/navigation"
-import { Footer } from "@/components/footer"
 import Link from "next/link"
-import { Shield, Users, Clock, FileCheck, Lock, Headphones, CheckCircle, ArrowRight, AlertTriangle } from "lucide-react"
+import { Shield, Users, Clock, FileCheck, Lock, Headphones, CheckCircle, ArrowRight, AlertTriangle, ChevronRight } from "lucide-react"
 
 export const metadata = {
   title: "Escrow Settlement Services | Pacific Coast Title",
@@ -94,11 +92,20 @@ const services = [
 
 export default function EscrowServicesPage() {
   return (
-    <main className="min-h-screen bg-white">
-      <Navigation />
+    <>
+      {/* Breadcrumb */}
+      <div className="pt-24 bg-secondary">
+        <div className="container mx-auto px-4 py-4">
+          <nav className="flex items-center gap-2 text-sm text-white/70">
+            <Link href="/" className="hover:text-white">Home</Link>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-white font-medium">Escrow Settlement</span>
+          </nav>
+        </div>
+      </div>
 
       {/* Hero Section */}
-      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img
             src="/professional-title-company-office-team-meeting.jpg"
@@ -108,7 +115,7 @@ export default function EscrowServicesPage() {
           <div className="absolute inset-0 bg-secondary/90" />
         </div>
 
-        <div className="relative z-10 container mx-auto px-4 text-center pt-24 pb-16">
+        <div className="relative z-10 container mx-auto px-4 text-center py-16">
           <p className="text-primary font-semibold tracking-wide uppercase mb-4">Escrow Services</p>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 max-w-4xl mx-auto">
             Get to Closing Day
@@ -285,8 +292,6 @@ export default function EscrowServicesPage() {
           </p>
         </div>
       </section>
-
-      <Footer />
-    </main>
+    </>
   )
 }

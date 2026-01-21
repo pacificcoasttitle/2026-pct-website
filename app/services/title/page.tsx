@@ -1,11 +1,9 @@
-import Navigation from "@/components/navigation"
-import { Footer } from "@/components/footer"
 import Link from "next/link"
-import { Shield, Home, FileSearch, AlertTriangle, CheckCircle, ArrowRight, HelpCircle, DollarSign } from "lucide-react"
+import { Shield, Home, FileSearch, AlertTriangle, CheckCircle, ArrowRight, HelpCircle, DollarSign, ChevronRight } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 export const metadata = {
-  title: "Title Insurance Services | Pacific Coast Title Company",
+  title: "Residential Title Insurance | Pacific Coast Title Company",
   description:
     "Protect your property investment with comprehensive title insurance. Learn what title insurance covers and why you need it.",
 }
@@ -89,11 +87,20 @@ If we find issues, we work to resolve them before closing—so you know exactly 
 
 export default function TitleServicesPage() {
   return (
-    <main className="min-h-screen bg-white">
-      <Navigation />
+    <>
+      {/* Breadcrumb */}
+      <div className="pt-24 bg-secondary">
+        <div className="container mx-auto px-4 py-4">
+          <nav className="flex items-center gap-2 text-sm text-white/70">
+            <Link href="/" className="hover:text-white">Home</Link>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-white font-medium">Residential Title</span>
+          </nav>
+        </div>
+      </div>
 
       {/* Hero Section */}
-      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img
             src="/beautiful-modern-california-home-exterior-with-blu.jpg"
@@ -103,8 +110,8 @@ export default function TitleServicesPage() {
           <div className="absolute inset-0 bg-secondary/90" />
         </div>
 
-        <div className="relative z-10 container mx-auto px-4 text-center pt-24 pb-16">
-          <p className="text-primary font-semibold tracking-wide uppercase mb-4">Title Insurance</p>
+        <div className="relative z-10 container mx-auto px-4 text-center py-16">
+          <p className="text-primary font-semibold tracking-wide uppercase mb-4">Residential Title Insurance</p>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 max-w-4xl mx-auto">
             Protect What's Yours
             <br />
@@ -321,8 +328,6 @@ export default function TitleServicesPage() {
           </div>
         </div>
       </section>
-
-      <Footer />
-    </main>
+    </>
   )
 }
