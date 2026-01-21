@@ -1,4 +1,5 @@
 import Navigation from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Award, Zap, Users, Shield, TrendingUp, Clock } from "lucide-react"
 import Link from "next/link"
@@ -236,6 +237,8 @@ export default function WhyPacificCoastTitlePage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import Navigation from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import Link from "next/link"
 import { FileText, Download } from "lucide-react"
 
@@ -119,6 +120,8 @@ export default function BlankFormsPage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </>
   )
 }

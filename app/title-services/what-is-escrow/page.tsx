@@ -1,4 +1,5 @@
 import Navigation from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Shield, FileText, Users, CheckCircle, Clock, DollarSign } from "lucide-react"
 import Link from "next/link"
@@ -306,6 +307,8 @@ export default function WhatIsEscrowPage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   )
 }

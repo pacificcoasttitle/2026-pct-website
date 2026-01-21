@@ -1,4 +1,5 @@
 import Navigation from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import Link from "next/link"
 import { Building2, Shield, Users, Clock, CheckCircle2 } from "lucide-react"
 
@@ -137,6 +138,8 @@ export default function CreditUnionsPage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </>
   )
 }

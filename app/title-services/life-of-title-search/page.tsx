@@ -1,4 +1,5 @@
 import Navigation from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, CheckCircle } from "lucide-react"
 import Link from "next/link"
@@ -223,6 +224,8 @@ export default function LifeOfTitleSearchPage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   )
 }

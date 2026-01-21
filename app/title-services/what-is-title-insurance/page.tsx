@@ -1,4 +1,5 @@
 import Navigation from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Shield, Clock, FileCheck, AlertTriangle, Home, Building } from "lucide-react"
 import Link from "next/link"
@@ -208,6 +209,8 @@ export default function WhatIsTitleInsurancePage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   )
 }

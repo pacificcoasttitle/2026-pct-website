@@ -1,4 +1,5 @@
 import Navigation from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, DollarSign, Clock, FileText, TrendingUp, Shield, CheckCircle } from "lucide-react"
 import Link from "next/link"
@@ -414,6 +415,8 @@ export default function Exchange1031Page() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   )
 }

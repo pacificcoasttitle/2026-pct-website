@@ -1,4 +1,5 @@
 import Navigation from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Building2, TrendingUp, Shield, FileCheck, Briefcase } from "lucide-react"
 import Link from "next/link"
@@ -210,6 +211,8 @@ export default function CommercialTitlePage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   )
 }

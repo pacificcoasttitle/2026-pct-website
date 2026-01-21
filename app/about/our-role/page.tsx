@@ -1,4 +1,5 @@
 import Navigation from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, FileSearch, Shield, Users, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
@@ -162,6 +163,8 @@ export default function OurRolePage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   )
 }

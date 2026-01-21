@@ -1,4 +1,5 @@
 import Navigation from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Shield, Search, FileCheck, Gavel, Users } from "lucide-react"
 import Link from "next/link"
@@ -188,6 +189,8 @@ export default function ProtectingYouPage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   )
 }

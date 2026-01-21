@@ -1,4 +1,5 @@
 import Navigation from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, DollarSign, Shield, Scale, TrendingUp, CheckCircle, Users, Award, Clock } from "lucide-react"
 import Link from "next/link"
@@ -230,6 +231,8 @@ export default function BenefitsTitleInsurancePage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import Navigation from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import {
   ArrowRight,
@@ -250,6 +251,8 @@ export default function Top10TitleProblemsPage() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   )
 }
