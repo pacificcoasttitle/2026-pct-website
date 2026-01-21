@@ -115,7 +115,7 @@ export default function Top10TitleProblemsPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
+      <Navigation variant="light" />
 
       {/* Hero Section */}
       <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center">

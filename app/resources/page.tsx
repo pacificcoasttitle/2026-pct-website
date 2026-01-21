@@ -55,7 +55,7 @@ export default function ResourcesPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <Navigation />
+      <Navigation variant="light" />
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-16 bg-gradient-to-br from-secondary via-secondary/95 to-secondary overflow-hidden">

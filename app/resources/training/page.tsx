@@ -108,7 +108,7 @@ export default function TrainingPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <Navigation />
+      <Navigation variant="light" />
 
       {/* Breadcrumb */}
       <div className="pt-24 bg-gray-50">

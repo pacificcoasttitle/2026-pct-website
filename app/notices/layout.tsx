@@ -43,7 +43,7 @@ export default function NoticesLayout({
 }) {
   return (
     <main className="min-h-screen bg-white">
-      <Navigation />
+      <Navigation variant="light" />
       
       {children}
 

@@ -39,7 +39,7 @@ export default function CreditUnionsPage() {
 
   return (
     <>
-      <Navigation />
+      <Navigation variant="light" />
       <div className="relative min-h-[40vh] flex items-center justify-center bg-white overflow-hidden">
         <img
           src="/beautiful-modern-california-home-exterior-with-blu.jpg"

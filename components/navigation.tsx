@@ -6,10 +6,24 @@ import { Menu, X, Calculator, ChevronDown } from 'lucide-react'
 import Link from "next/link"
 import Image from "next/image"
 
-export function Navigation() {
+interface NavigationProps {
+  /** 
+   * "transparent" - White text on transparent bg (for dark hero backgrounds like homepage)
+   * "light" - Dark text on transparent bg (for light/white hero backgrounds)
+   */
+  variant?: "transparent" | "light"
+}
+
+export function Navigation({ variant = "transparent" }: NavigationProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  
+  // Determine if we should use dark text
+  // - Always dark when scrolled (white bg)
+  // - Dark when variant is "light" (white/light hero background)
+  // - White only when not scrolled AND variant is "transparent" (dark hero)
+  const useDarkText = isScrolled || variant === "light"
 
   useEffect(() => {
     const handleScroll = () => {
@@ -92,7 +106,7 @@ export function Navigation() {
             {/* Logo */}
             <Link href="/" className="flex items-center">
               <Image
-                src={isScrolled 
+                src={useDarkText 
                   ? "https://pct.com/assets/media/general/logo2-dark.png"
                   : "https://pct.com/assets/media/general/logo2.png"
                 }
@@ -116,7 +130,7 @@ export function Navigation() {
                   <Link
                     href={item.href}
                     className={`flex items-center gap-1 transition-colors font-medium py-6 ${
-                      isScrolled 
+                      useDarkText 
                         ? 'text-secondary hover:text-primary' 
                         : 'text-white hover:text-white/80'
                     }`}
@@ -156,7 +170,7 @@ export function Navigation() {
             {/* Mobile Menu Button */}
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-              className={`md:hidden p-2 ${isScrolled ? 'text-secondary' : 'text-white'}`}
+              className={`md:hidden p-2 ${useDarkText ? 'text-secondary' : 'text-white'}`}
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>

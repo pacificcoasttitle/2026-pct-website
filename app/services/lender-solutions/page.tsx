@@ -56,7 +56,7 @@ const services = [
 export default function LenderSolutionsPage() {
   return (
     <main className="min-h-screen bg-white">
-      <Navigation />
+      <Navigation variant="light" />
 
       {/* Hero */}
       <section className="relative pt-32 pb-20 bg-gradient-to-b from-gray-50 to-white overflow-hidden">

@@ -70,7 +70,7 @@ const locations = [
 export default function ContactPage() {
   return (
     <main className="min-h-screen bg-white">
-      <Navigation />
+      <Navigation variant="light" />
 
       {/* Hero Section */}
       <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden">

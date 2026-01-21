@@ -49,7 +49,7 @@ export default function ServicesLayout({
 }) {
   return (
     <main className="min-h-screen bg-white">
-      <Navigation />
+      <Navigation variant="light" />
       
       {children}
 

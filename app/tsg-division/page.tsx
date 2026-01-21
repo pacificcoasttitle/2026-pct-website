@@ -12,7 +12,7 @@ export const metadata = {
 export default function TSGDivisionPage() {
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
+      <Navigation variant="light" />
 
       {/* Hero Section */}
       <section className="relative h-[60vh] min-h-[500px] flex items-center justify-center">

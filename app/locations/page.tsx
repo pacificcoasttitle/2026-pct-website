@@ -11,7 +11,7 @@ export const metadata = {
 export default function LocationsPage() {
   return (
     <main className="min-h-screen bg-white">
-      <Navigation />
+      <Navigation variant="light" />
       
       {/* Hero */}
       <section className="relative pt-32 pb-8 bg-gradient-to-b from-gray-50 to-white">

@@ -128,7 +128,7 @@ const categories = [
 export default function AgentResourcesPage() {
   return (
     <main className="min-h-screen bg-white">
-      <Navigation />
+      <Navigation variant="light" />
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-16 bg-gradient-to-b from-gray-50 to-white">
