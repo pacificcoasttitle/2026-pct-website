@@ -43,7 +43,7 @@ export const pinnedTools: Resource[] = [
   {
     title: "Prop 19 Calculator",
     description: "Property tax savings",
-    href: "/prop-19-calculator",
+    href: "/resources/prop-19-calculator",
     isExternal: false,
     icon: Calculator,
   },
@@ -87,7 +87,7 @@ export const resourceCategories: ResourceCategory[] = [
       {
         title: "Prop 19 Calculator",
         description: "Estimate property tax savings under Proposition 19 for homeowners 55+, disabled, or disaster victims",
-        href: "/prop-19-calculator",
+        href: "/resources/prop-19-calculator",
         isExternal: false,
       },
     ],
@@ -203,7 +203,7 @@ export const quickAccessLinks = [
   },
   {
     label: "Prop 19 Calculator",
-    href: "/prop-19-calculator",
+    href: "/resources/prop-19-calculator",
     isExternal: false,
   },
   {
