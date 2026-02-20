@@ -1,6 +1,7 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { PageHero } from "@/components/page-hero"
+import { UtilityLookup } from "./utility-lookup"
 import Link from "next/link"
 import {
   Calculator,
@@ -134,6 +135,9 @@ export default function UtilitiesPage() {
         titleHighlight="Quick Links Directory"
         subtitle="Your go-to resource for county recorder offices, tax assessor sites, industry organizations, and PCT tools—all in one convenient place."
       />
+
+      {/* Utility Provider Lookup */}
+      <UtilityLookup />
 
       {/* PCT Tools */}
       <section className="py-16">
