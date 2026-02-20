@@ -18,10 +18,19 @@ export function Footer() {
 
   const company = ["About Us", "Our Team", "Careers", "Press", "Partners", "Locations"]
 
+  const fincenLinks = [
+    { label: "FinCEN Overview", href: "/fincen" },
+    { label: "Is It Reportable?", href: "/fincen/is-it-reportable" },
+    { label: "Agent Guidance", href: "/fincen/agents" },
+    { label: "Entity & Trust Buyers", href: "/fincen/entity-trust-buyers" },
+    { label: "Trustee Sales", href: "/fincen/trustee-sales" },
+    { label: "FAQ", href: "/fincen/faq" },
+  ]
+
   return (
     <footer id="contact" className="bg-secondary text-secondary-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
           {/* About Column */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -71,6 +80,23 @@ export function Footer() {
                 <li key={index}>
                   <Link href="#" className="text-white/70 hover:text-primary transition-colors text-sm">
                     {resource}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* FinCEN Column */}
+          <div>
+            <h3 className="font-bold text-white text-lg mb-4 flex items-center gap-2">
+              FinCEN
+              <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full font-normal">New</span>
+            </h3>
+            <ul className="space-y-3">
+              {fincenLinks.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-white/70 hover:text-primary transition-colors text-sm">
+                    {link.label}
                   </Link>
                 </li>
               ))}

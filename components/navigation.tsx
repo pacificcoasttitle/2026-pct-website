@@ -86,6 +86,20 @@ export function Navigation({ variant = "transparent" }: NavigationProps) {
       ],
     },
     {
+      label: "FinCEN",
+      href: "/fincen",
+      dropdown: [
+        { label: "FinCEN Overview", href: "/fincen" },
+        { label: "RRE Rule Explained", href: "/fincen/rre-rule" },
+        { label: "Is It Reportable?", href: "/fincen/is-it-reportable" },
+        { label: "Agent Guidance", href: "/fincen/agents" },
+        { label: "Entity & Trust Buyers", href: "/fincen/entity-trust-buyers" },
+        { label: "Trustee Sales", href: "/fincen/trustee-sales" },
+        { label: "FAQ", href: "/fincen/faq" },
+        { label: "Resources & Glossary", href: "/fincen/resources" },
+      ],
+    },
+    {
       label: "Contact",
       href: "/contact",
       dropdown: [
