@@ -4,8 +4,6 @@ import { PageHero } from "@/components/page-hero"
 import { UtilityLookup } from "./utility-lookup"
 import Link from "next/link"
 import {
-  Calculator,
-  FileText,
   Search,
   ExternalLink,
   Building2,
@@ -115,14 +113,6 @@ const industryLinks = [
   },
 ]
 
-const pctTools = [
-  { title: "Rate Calculator", href: "/resources/rate-book", icon: Calculator, description: "Get title & escrow rate estimates" },
-  { title: "Prop 19 Calculator", href: "/resources/prop-19-calculator", icon: Calculator, description: "Calculate property tax transfer benefits" },
-  { title: "Recording Fee Schedule", href: "/resources/recording-fees", icon: FileText, description: "View current county recording fees" },
-  { title: "Transfer Tax Rates", href: "/resources/transfer-tax", icon: DollarSign, description: "Look up city and county transfer tax rates" },
-  { title: "Supplemental Tax Guide", href: "/resources/supplemental-taxes", icon: BookOpen, description: "Understand supplemental tax assessments" },
-  { title: "Glossary of Terms", href: "/resources/glossary", icon: BookOpen, description: "Real estate and title terminology" },
-]
 
 export default function UtilitiesPage() {
   return (
@@ -139,39 +129,8 @@ export default function UtilitiesPage() {
       {/* Utility Provider Lookup */}
       <UtilityLookup />
 
-      {/* PCT Tools */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-secondary mb-4">PCT Tools & Calculators</h2>
-            <p className="text-gray-600">Quick access to our most-used resources</p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
-            {pctTools.map((tool) => {
-              const Icon = tool.icon
-              return (
-                <Link
-                  key={tool.href}
-                  href={tool.href}
-                  className="group flex items-center gap-4 p-5 bg-white border border-gray-100 rounded-xl hover:border-primary/30 hover:shadow-md transition-all"
-                >
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-primary transition-colors">
-                    <Icon className="w-6 h-6 text-primary group-hover:text-white transition-colors" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-secondary group-hover:text-primary transition-colors">{tool.title}</p>
-                    <p className="text-sm text-gray-500">{tool.description}</p>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* County Resources */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <MapPin className="w-12 h-12 text-primary mx-auto mb-4" />
@@ -212,7 +171,7 @@ export default function UtilitiesPage() {
       </section>
 
       {/* Industry Links */}
-      <section className="py-16">
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <Globe className="w-12 h-12 text-primary mx-auto mb-4" />
