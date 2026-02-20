@@ -18,7 +18,7 @@ import {
   PhoneCall,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import allUtilities from "./all-utilities.json"
+import allUtilities from "@/lib/data/all-utilities.json"
 
 type UtilityRecord = {
   County: string
