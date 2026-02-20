@@ -1,0 +1,122 @@
+[
+  {
+    "id": 2,
+    "transactionType": "refinance",
+    "category": "recording",
+    "name": "Doc Recording Estimate",
+    "value": 200,
+    "active": true
+  },
+  {
+    "id": 3,
+    "transactionType": "refinance",
+    "category": "escrow",
+    "name": "Notary Fee Estimate",
+    "value": 200,
+    "active": true
+  },
+  {
+    "id": 5,
+    "transactionType": "refinance",
+    "category": "recording",
+    "name": "SB2 Recording Fee Charge",
+    "value": 275,
+    "active": true
+  },
+  {
+    "id": 10,
+    "transactionType": "resale",
+    "category": "escrow",
+    "name": "New Loan Fee",
+    "value": 280,
+    "active": true
+  },
+  {
+    "id": 11,
+    "transactionType": "resale",
+    "category": "escrow",
+    "name": "Mobile Signing Fee",
+    "value": 200,
+    "active": true
+  },
+  {
+    "id": 12,
+    "transactionType": "resale",
+    "category": "escrow",
+    "name": "Document Processing Fee",
+    "value": 250,
+    "active": true
+  },
+  {
+    "id": 14,
+    "transactionType": "refinance",
+    "category": "escrow",
+    "name": "Wire Fee",
+    "value": 30,
+    "active": true
+  },
+  {
+    "id": 15,
+    "transactionType": "refinance",
+    "category": "recording",
+    "name": "Recording Service Fee",
+    "value": 30,
+    "active": true
+  },
+  {
+    "id": 16,
+    "transactionType": "resale",
+    "category": "other",
+    "name": "Wire Fees",
+    "value": 35,
+    "active": true
+  },
+  {
+    "id": 17,
+    "transactionType": "resale",
+    "category": "other",
+    "name": "Overnight Fee",
+    "value": 50,
+    "active": true
+  },
+  {
+    "id": 18,
+    "transactionType": "resale",
+    "category": "other",
+    "name": "Demand Processing Fee",
+    "value": 150,
+    "active": true
+  },
+  {
+    "id": 19,
+    "transactionType": "resale",
+    "category": "other",
+    "name": "Home Warranty Fee",
+    "value": 750,
+    "active": true
+  },
+  {
+    "id": 20,
+    "transactionType": "resale",
+    "category": "other",
+    "name": "Natural Hazard Disclosure Report Fee",
+    "value": 110,
+    "active": true
+  },
+  {
+    "id": 21,
+    "transactionType": "resale",
+    "category": "other",
+    "name": "TC Fee",
+    "value": 450,
+    "active": true
+  },
+  {
+    "id": 22,
+    "transactionType": "refinance",
+    "category": "escrow",
+    "name": "Sub Escrow",
+    "value": 45,
+    "active": true
+  }
+]

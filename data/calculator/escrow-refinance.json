@@ -1,0 +1,254 @@
+[
+  {
+    "county": "Riverside__All",
+    "minRange": 0,
+    "maxRange": 250000,
+    "escrowRate": 525
+  },
+  {
+    "county": "San Bernardino__All",
+    "minRange": 0,
+    "maxRange": 250000,
+    "escrowRate": 525
+  },
+  {
+    "county": "Los Angeles County__All",
+    "minRange": 0,
+    "maxRange": 250000,
+    "escrowRate": 525
+  },
+  {
+    "county": "Ventura County__All",
+    "minRange": 0,
+    "maxRange": 250000,
+    "escrowRate": 525
+  },
+  {
+    "county": "San Diego__All",
+    "minRange": 0,
+    "maxRange": 250000,
+    "escrowRate": 525
+  },
+  {
+    "county": "Orange__All",
+    "minRange": 250001,
+    "maxRange": 500000,
+    "escrowRate": 575
+  },
+  {
+    "county": "Riverside__All",
+    "minRange": 250001,
+    "maxRange": 500000,
+    "escrowRate": 575
+  },
+  {
+    "county": "San Bernardino__All",
+    "minRange": 250001,
+    "maxRange": 500000,
+    "escrowRate": 575
+  },
+  {
+    "county": "Los Angeles County__All",
+    "minRange": 250001,
+    "maxRange": 500000,
+    "escrowRate": 575
+  },
+  {
+    "county": "Ventura County__All",
+    "minRange": 250001,
+    "maxRange": 500000,
+    "escrowRate": 575
+  },
+  {
+    "county": "San Diego__All",
+    "minRange": 250001,
+    "maxRange": 500000,
+    "escrowRate": 575
+  },
+  {
+    "county": "Orange__All",
+    "minRange": 500001,
+    "maxRange": 750000,
+    "escrowRate": 675
+  },
+  {
+    "county": "Riverside__All",
+    "minRange": 500001,
+    "maxRange": 750000,
+    "escrowRate": 675
+  },
+  {
+    "county": "San Bernardino__All",
+    "minRange": 500001,
+    "maxRange": 750000,
+    "escrowRate": 675
+  },
+  {
+    "county": "Los Angeles County__All",
+    "minRange": 500001,
+    "maxRange": 750000,
+    "escrowRate": 675
+  },
+  {
+    "county": "Ventura County__All",
+    "minRange": 500001,
+    "maxRange": 750000,
+    "escrowRate": 675
+  },
+  {
+    "county": "San Diego__All",
+    "minRange": 500001,
+    "maxRange": 750000,
+    "escrowRate": 675
+  },
+  {
+    "county": "Orange__All",
+    "minRange": 750001,
+    "maxRange": 1000000,
+    "escrowRate": 775
+  },
+  {
+    "county": "Riverside__All",
+    "minRange": 750001,
+    "maxRange": 1000000,
+    "escrowRate": 775
+  },
+  {
+    "county": "San Bernardino__All",
+    "minRange": 750001,
+    "maxRange": 1000000,
+    "escrowRate": 775
+  },
+  {
+    "county": "Los Angeles County__All",
+    "minRange": 750001,
+    "maxRange": 1000000,
+    "escrowRate": 775
+  },
+  {
+    "county": "Ventura County__All",
+    "minRange": 750001,
+    "maxRange": 1000000,
+    "escrowRate": 775
+  },
+  {
+    "county": "San Diego__All",
+    "minRange": 750001,
+    "maxRange": 1000000,
+    "escrowRate": 775
+  },
+  {
+    "county": "Alameda County__All",
+    "minRange": 0,
+    "maxRange": 750000,
+    "escrowRate": 475
+  },
+  {
+    "county": "Contra County__All",
+    "minRange": 0,
+    "maxRange": 750000,
+    "escrowRate": 475
+  },
+  {
+    "county": "Santa Clara County__Re-Finance",
+    "minRange": 0,
+    "maxRange": 750000,
+    "escrowRate": 475
+  },
+  {
+    "county": "Alameda County__All",
+    "minRange": 750001,
+    "maxRange": 1200000,
+    "escrowRate": 575
+  },
+  {
+    "county": "Contra County__All",
+    "minRange": 750001,
+    "maxRange": 1200000,
+    "escrowRate": 575
+  },
+  {
+    "county": "Santa Clara County__Re-Finance",
+    "minRange": 750001,
+    "maxRange": 1200000,
+    "escrowRate": 575
+  },
+  {
+    "county": "Santa Clara County__Re-Finance",
+    "minRange": 1200001,
+    "maxRange": 2000000,
+    "escrowRate": 675
+  },
+  {
+    "county": "Contra County__All",
+    "minRange": 1200001,
+    "maxRange": 2000000,
+    "escrowRate": 675
+  },
+  {
+    "county": "Alameda County__All",
+    "minRange": 1200001,
+    "maxRange": 2000000,
+    "escrowRate": 675
+  },
+  {
+    "county": "Alameda County__All",
+    "minRange": 2000001,
+    "maxRange": null,
+    "escrowRate": 775
+  },
+  {
+    "county": "Santa Clara County__Re-Finance",
+    "minRange": 2000001,
+    "maxRange": null,
+    "escrowRate": 775
+  },
+  {
+    "county": "Contra County__All",
+    "minRange": 2000001,
+    "maxRange": null,
+    "escrowRate": 775
+  },
+  {
+    "county": "Orange__All",
+    "minRange": 1000001,
+    "maxRange": null,
+    "escrowRate": 775
+  },
+  {
+    "county": "Orange__All",
+    "minRange": 1,
+    "maxRange": 250000,
+    "escrowRate": 525
+  },
+  {
+    "county": "Los Angeles County__All",
+    "minRange": 1000001,
+    "maxRange": null,
+    "escrowRate": 775
+  },
+  {
+    "county": "Ventura County__All",
+    "minRange": 1000001,
+    "maxRange": null,
+    "escrowRate": 775
+  },
+  {
+    "county": "San Bernardino__All",
+    "minRange": 1000001,
+    "maxRange": null,
+    "escrowRate": 775
+  },
+  {
+    "county": "San Diego__All",
+    "minRange": 1000001,
+    "maxRange": null,
+    "escrowRate": 775
+  },
+  {
+    "county": "Riverside__All",
+    "minRange": 1000001,
+    "maxRange": null,
+    "escrowRate": 775
+  }
+]

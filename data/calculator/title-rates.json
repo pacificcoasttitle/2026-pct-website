@@ -1,0 +1,4484 @@
+[
+  {
+    "minRange": 0,
+    "maxRange": 30000,
+    "ownerRate": 677,
+    "homeOwnerRate": 745,
+    "conLoanRate": 484,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 542
+  },
+  {
+    "minRange": 30001,
+    "maxRange": 40000,
+    "ownerRate": 677,
+    "homeOwnerRate": 745,
+    "conLoanRate": 484,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 542
+  },
+  {
+    "minRange": 40001,
+    "maxRange": 50000,
+    "ownerRate": 677,
+    "homeOwnerRate": 745,
+    "conLoanRate": 484,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 542
+  },
+  {
+    "minRange": 50001,
+    "maxRange": 60000,
+    "ownerRate": 677,
+    "homeOwnerRate": 745,
+    "conLoanRate": 484,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 542
+  },
+  {
+    "minRange": 60001,
+    "maxRange": 70000,
+    "ownerRate": 677,
+    "homeOwnerRate": 745,
+    "conLoanRate": 484,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 542
+  },
+  {
+    "minRange": 70001,
+    "maxRange": 80000,
+    "ownerRate": 677,
+    "homeOwnerRate": 745,
+    "conLoanRate": 484,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 542
+  },
+  {
+    "minRange": 80001,
+    "maxRange": 90000,
+    "ownerRate": 677,
+    "homeOwnerRate": 745,
+    "conLoanRate": 484,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 542
+  },
+  {
+    "minRange": 90001,
+    "maxRange": 100000,
+    "ownerRate": 677,
+    "homeOwnerRate": 745,
+    "conLoanRate": 484,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 542
+  },
+  {
+    "minRange": 100001,
+    "maxRange": 110000,
+    "ownerRate": 703,
+    "homeOwnerRate": 773,
+    "conLoanRate": 495,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 562
+  },
+  {
+    "minRange": 110001,
+    "maxRange": 120000,
+    "ownerRate": 729,
+    "homeOwnerRate": 802,
+    "conLoanRate": 506,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 583
+  },
+  {
+    "minRange": 120001,
+    "maxRange": 130000,
+    "ownerRate": 756,
+    "homeOwnerRate": 832,
+    "conLoanRate": 517,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 605
+  },
+  {
+    "minRange": 130001,
+    "maxRange": 140000,
+    "ownerRate": 781,
+    "homeOwnerRate": 859,
+    "conLoanRate": 528,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 625
+  },
+  {
+    "minRange": 140001,
+    "maxRange": 150000,
+    "ownerRate": 807,
+    "homeOwnerRate": 888,
+    "conLoanRate": 539,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 646
+  },
+  {
+    "minRange": 150001,
+    "maxRange": 160000,
+    "ownerRate": 834,
+    "homeOwnerRate": 917,
+    "conLoanRate": 550,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 667
+  },
+  {
+    "minRange": 160001,
+    "maxRange": 170000,
+    "ownerRate": 860,
+    "homeOwnerRate": 946,
+    "conLoanRate": 561,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 688
+  },
+  {
+    "minRange": 170001,
+    "maxRange": 180000,
+    "ownerRate": 887,
+    "homeOwnerRate": 976,
+    "conLoanRate": 571,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 710
+  },
+  {
+    "minRange": 180001,
+    "maxRange": 190000,
+    "ownerRate": 911,
+    "homeOwnerRate": 1002,
+    "conLoanRate": 583,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 729
+  },
+  {
+    "minRange": 190001,
+    "maxRange": 200000,
+    "ownerRate": 943,
+    "homeOwnerRate": 1037,
+    "conLoanRate": 600,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 754
+  },
+  {
+    "minRange": 200001,
+    "maxRange": 210000,
+    "ownerRate": 964,
+    "homeOwnerRate": 1060,
+    "conLoanRate": 606,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 771
+  },
+  {
+    "minRange": 210001,
+    "maxRange": 220000,
+    "ownerRate": 991,
+    "homeOwnerRate": 1090,
+    "conLoanRate": 617,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 793
+  },
+  {
+    "minRange": 220001,
+    "maxRange": 230000,
+    "ownerRate": 1016,
+    "homeOwnerRate": 1118,
+    "conLoanRate": 628,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 813
+  },
+  {
+    "minRange": 230001,
+    "maxRange": 240000,
+    "ownerRate": 1041,
+    "homeOwnerRate": 1145,
+    "conLoanRate": 639,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 833
+  },
+  {
+    "minRange": 240001,
+    "maxRange": 250000,
+    "ownerRate": 1066,
+    "homeOwnerRate": 1173,
+    "conLoanRate": 652,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 853
+  },
+  {
+    "minRange": 250001,
+    "maxRange": 260000,
+    "ownerRate": 1091,
+    "homeOwnerRate": 1200,
+    "conLoanRate": 664,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 873
+  },
+  {
+    "minRange": 260001,
+    "maxRange": 270000,
+    "ownerRate": 1117,
+    "homeOwnerRate": 1229,
+    "conLoanRate": 676,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 894
+  },
+  {
+    "minRange": 270001,
+    "maxRange": 280000,
+    "ownerRate": 1141,
+    "homeOwnerRate": 1255,
+    "conLoanRate": 690,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 913
+  },
+  {
+    "minRange": 280001,
+    "maxRange": 290000,
+    "ownerRate": 1167,
+    "homeOwnerRate": 1284,
+    "conLoanRate": 702,
+    "resiLoanRate": 450,
+    "conFullLoanRate": 934
+  },
+  {
+    "minRange": 290001,
+    "maxRange": 300000,
+    "ownerRate": 1192,
+    "homeOwnerRate": 1311,
+    "conLoanRate": 714,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 954
+  },
+  {
+    "minRange": 300001,
+    "maxRange": 310000,
+    "ownerRate": 1203,
+    "homeOwnerRate": 1323,
+    "conLoanRate": 718,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 962
+  },
+  {
+    "minRange": 310001,
+    "maxRange": 320000,
+    "ownerRate": 1222,
+    "homeOwnerRate": 1344,
+    "conLoanRate": 734,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 978
+  },
+  {
+    "minRange": 320001,
+    "maxRange": 330000,
+    "ownerRate": 1241,
+    "homeOwnerRate": 1365,
+    "conLoanRate": 748,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 993
+  },
+  {
+    "minRange": 330001,
+    "maxRange": 340000,
+    "ownerRate": 1260,
+    "homeOwnerRate": 1386,
+    "conLoanRate": 763,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1008
+  },
+  {
+    "minRange": 340001,
+    "maxRange": 350000,
+    "ownerRate": 1279,
+    "homeOwnerRate": 1407,
+    "conLoanRate": 778,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1023
+  },
+  {
+    "minRange": 350001,
+    "maxRange": 360000,
+    "ownerRate": 1298,
+    "homeOwnerRate": 1428,
+    "conLoanRate": 792,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1038
+  },
+  {
+    "minRange": 360001,
+    "maxRange": 370000,
+    "ownerRate": 1318,
+    "homeOwnerRate": 1450,
+    "conLoanRate": 807,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1054
+  },
+  {
+    "minRange": 370001,
+    "maxRange": 380000,
+    "ownerRate": 1338,
+    "homeOwnerRate": 1472,
+    "conLoanRate": 822,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1070
+  },
+  {
+    "minRange": 380001,
+    "maxRange": 390000,
+    "ownerRate": 1358,
+    "homeOwnerRate": 1494,
+    "conLoanRate": 836,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1086
+  },
+  {
+    "minRange": 390001,
+    "maxRange": 400000,
+    "ownerRate": 1377,
+    "homeOwnerRate": 1515,
+    "conLoanRate": 850,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1102
+  },
+  {
+    "minRange": 400001,
+    "maxRange": 410000,
+    "ownerRate": 1407,
+    "homeOwnerRate": 1548,
+    "conLoanRate": 878,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1126
+  },
+  {
+    "minRange": 410001,
+    "maxRange": 420000,
+    "ownerRate": 1425,
+    "homeOwnerRate": 1568,
+    "conLoanRate": 893,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1140
+  },
+  {
+    "minRange": 420001,
+    "maxRange": 430000,
+    "ownerRate": 1445,
+    "homeOwnerRate": 1590,
+    "conLoanRate": 907,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1156
+  },
+  {
+    "minRange": 430001,
+    "maxRange": 440000,
+    "ownerRate": 1463,
+    "homeOwnerRate": 1609,
+    "conLoanRate": 922,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1170
+  },
+  {
+    "minRange": 440001,
+    "maxRange": 450000,
+    "ownerRate": 1482,
+    "homeOwnerRate": 1630,
+    "conLoanRate": 937,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1186
+  },
+  {
+    "minRange": 450001,
+    "maxRange": 460000,
+    "ownerRate": 1502,
+    "homeOwnerRate": 1652,
+    "conLoanRate": 951,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1202
+  },
+  {
+    "minRange": 460001,
+    "maxRange": 470000,
+    "ownerRate": 1521,
+    "homeOwnerRate": 1673,
+    "conLoanRate": 966,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1217
+  },
+  {
+    "minRange": 470001,
+    "maxRange": 480000,
+    "ownerRate": 1540,
+    "homeOwnerRate": 1694,
+    "conLoanRate": 981,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1232
+  },
+  {
+    "minRange": 480001,
+    "maxRange": 490000,
+    "ownerRate": 1560,
+    "homeOwnerRate": 1716,
+    "conLoanRate": 995,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1248
+  },
+  {
+    "minRange": 490001,
+    "maxRange": 500000,
+    "ownerRate": 1579,
+    "homeOwnerRate": 1737,
+    "conLoanRate": 1010,
+    "resiLoanRate": 660,
+    "conFullLoanRate": 1263
+  },
+  {
+    "minRange": 500001,
+    "maxRange": 510000,
+    "ownerRate": 1593,
+    "homeOwnerRate": 1752,
+    "conLoanRate": 1018,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1274
+  },
+  {
+    "minRange": 510001,
+    "maxRange": 520000,
+    "ownerRate": 1611,
+    "homeOwnerRate": 1772,
+    "conLoanRate": 1029,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1289
+  },
+  {
+    "minRange": 520001,
+    "maxRange": 530000,
+    "ownerRate": 1629,
+    "homeOwnerRate": 1792,
+    "conLoanRate": 1040,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1303
+  },
+  {
+    "minRange": 530001,
+    "maxRange": 540000,
+    "ownerRate": 1648,
+    "homeOwnerRate": 1813,
+    "conLoanRate": 1051,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1318
+  },
+  {
+    "minRange": 540001,
+    "maxRange": 550000,
+    "ownerRate": 1665,
+    "homeOwnerRate": 1832,
+    "conLoanRate": 1062,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1332
+  },
+  {
+    "minRange": 550001,
+    "maxRange": 560000,
+    "ownerRate": 1683,
+    "homeOwnerRate": 1851,
+    "conLoanRate": 1073,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1346
+  },
+  {
+    "minRange": 560001,
+    "maxRange": 570000,
+    "ownerRate": 1700,
+    "homeOwnerRate": 1870,
+    "conLoanRate": 1084,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1360
+  },
+  {
+    "minRange": 570001,
+    "maxRange": 580000,
+    "ownerRate": 1719,
+    "homeOwnerRate": 1891,
+    "conLoanRate": 1095,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1375
+  },
+  {
+    "minRange": 580001,
+    "maxRange": 590000,
+    "ownerRate": 1737,
+    "homeOwnerRate": 1911,
+    "conLoanRate": 1106,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1390
+  },
+  {
+    "minRange": 590001,
+    "maxRange": 600000,
+    "ownerRate": 1754,
+    "homeOwnerRate": 1929,
+    "conLoanRate": 1117,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1403
+  },
+  {
+    "minRange": 600001,
+    "maxRange": 610000,
+    "ownerRate": 1770,
+    "homeOwnerRate": 1947,
+    "conLoanRate": 1126,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1416
+  },
+  {
+    "minRange": 610001,
+    "maxRange": 620000,
+    "ownerRate": 1788,
+    "homeOwnerRate": 1967,
+    "conLoanRate": 1137,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1430
+  },
+  {
+    "minRange": 620001,
+    "maxRange": 630000,
+    "ownerRate": 1806,
+    "homeOwnerRate": 1987,
+    "conLoanRate": 1148,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1445
+  },
+  {
+    "minRange": 630001,
+    "maxRange": 640000,
+    "ownerRate": 1823,
+    "homeOwnerRate": 2005,
+    "conLoanRate": 1159,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1458
+  },
+  {
+    "minRange": 640001,
+    "maxRange": 650000,
+    "ownerRate": 1841,
+    "homeOwnerRate": 2025,
+    "conLoanRate": 1170,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1473
+  },
+  {
+    "minRange": 650001,
+    "maxRange": 660000,
+    "ownerRate": 1860,
+    "homeOwnerRate": 2046,
+    "conLoanRate": 1181,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1488
+  },
+  {
+    "minRange": 660001,
+    "maxRange": 670000,
+    "ownerRate": 1878,
+    "homeOwnerRate": 2066,
+    "conLoanRate": 1192,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1502
+  },
+  {
+    "minRange": 670001,
+    "maxRange": 680000,
+    "ownerRate": 1895,
+    "homeOwnerRate": 2085,
+    "conLoanRate": 1203,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1516
+  },
+  {
+    "minRange": 680001,
+    "maxRange": 690000,
+    "ownerRate": 1912,
+    "homeOwnerRate": 2103,
+    "conLoanRate": 1214,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1530
+  },
+  {
+    "minRange": 690001,
+    "maxRange": 700000,
+    "ownerRate": 1930,
+    "homeOwnerRate": 2123,
+    "conLoanRate": 1225,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1544
+  },
+  {
+    "minRange": 700001,
+    "maxRange": 710000,
+    "ownerRate": 1947,
+    "homeOwnerRate": 2142,
+    "conLoanRate": 1234,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1558
+  },
+  {
+    "minRange": 710001,
+    "maxRange": 720000,
+    "ownerRate": 1965,
+    "homeOwnerRate": 2162,
+    "conLoanRate": 1245,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1572
+  },
+  {
+    "minRange": 720001,
+    "maxRange": 730000,
+    "ownerRate": 1981,
+    "homeOwnerRate": 2179,
+    "conLoanRate": 1256,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1585
+  },
+  {
+    "minRange": 730001,
+    "maxRange": 740000,
+    "ownerRate": 1999,
+    "homeOwnerRate": 2199,
+    "conLoanRate": 1267,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1599
+  },
+  {
+    "minRange": 740001,
+    "maxRange": 750000,
+    "ownerRate": 2018,
+    "homeOwnerRate": 2220,
+    "conLoanRate": 1278,
+    "resiLoanRate": 840,
+    "conFullLoanRate": 1614
+  },
+  {
+    "minRange": 750001,
+    "maxRange": 760000,
+    "ownerRate": 2036,
+    "homeOwnerRate": 2240,
+    "conLoanRate": 1289,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1629
+  },
+  {
+    "minRange": 760001,
+    "maxRange": 770000,
+    "ownerRate": 2054,
+    "homeOwnerRate": 2259,
+    "conLoanRate": 1300,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1643
+  },
+  {
+    "minRange": 770001,
+    "maxRange": 780000,
+    "ownerRate": 2071,
+    "homeOwnerRate": 2278,
+    "conLoanRate": 1311,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1657
+  },
+  {
+    "minRange": 780001,
+    "maxRange": 790000,
+    "ownerRate": 2089,
+    "homeOwnerRate": 2298,
+    "conLoanRate": 1322,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1671
+  },
+  {
+    "minRange": 790001,
+    "maxRange": 800000,
+    "ownerRate": 2107,
+    "homeOwnerRate": 2318,
+    "conLoanRate": 1333,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1686
+  },
+  {
+    "minRange": 800001,
+    "maxRange": 810000,
+    "ownerRate": 2130,
+    "homeOwnerRate": 2343,
+    "conLoanRate": 1344,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1704
+  },
+  {
+    "minRange": 810001,
+    "maxRange": 820000,
+    "ownerRate": 2149,
+    "homeOwnerRate": 2364,
+    "conLoanRate": 1355,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1719
+  },
+  {
+    "minRange": 820001,
+    "maxRange": 830000,
+    "ownerRate": 2166,
+    "homeOwnerRate": 2383,
+    "conLoanRate": 1366,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1733
+  },
+  {
+    "minRange": 830001,
+    "maxRange": 840000,
+    "ownerRate": 2184,
+    "homeOwnerRate": 2402,
+    "conLoanRate": 1377,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1747
+  },
+  {
+    "minRange": 840001,
+    "maxRange": 850000,
+    "ownerRate": 2201,
+    "homeOwnerRate": 2421,
+    "conLoanRate": 1388,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1761
+  },
+  {
+    "minRange": 850001,
+    "maxRange": 860000,
+    "ownerRate": 2219,
+    "homeOwnerRate": 2441,
+    "conLoanRate": 1396,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1775
+  },
+  {
+    "minRange": 860001,
+    "maxRange": 870000,
+    "ownerRate": 2236,
+    "homeOwnerRate": 2460,
+    "conLoanRate": 1403,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1789
+  },
+  {
+    "minRange": 870001,
+    "maxRange": 880000,
+    "ownerRate": 2252,
+    "homeOwnerRate": 2477,
+    "conLoanRate": 1411,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1802
+  },
+  {
+    "minRange": 880001,
+    "maxRange": 890000,
+    "ownerRate": 2270,
+    "homeOwnerRate": 2497,
+    "conLoanRate": 1419,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1816
+  },
+  {
+    "minRange": 890001,
+    "maxRange": 900000,
+    "ownerRate": 2287,
+    "homeOwnerRate": 2516,
+    "conLoanRate": 1427,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1830
+  },
+  {
+    "minRange": 900001,
+    "maxRange": 910000,
+    "ownerRate": 2307,
+    "homeOwnerRate": 2538,
+    "conLoanRate": 1434,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1846
+  },
+  {
+    "minRange": 910001,
+    "maxRange": 920000,
+    "ownerRate": 2324,
+    "homeOwnerRate": 2556,
+    "conLoanRate": 1442,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1859
+  },
+  {
+    "minRange": 920001,
+    "maxRange": 930000,
+    "ownerRate": 2340,
+    "homeOwnerRate": 2574,
+    "conLoanRate": 1450,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1872
+  },
+  {
+    "minRange": 930001,
+    "maxRange": 940000,
+    "ownerRate": 2357,
+    "homeOwnerRate": 2593,
+    "conLoanRate": 1457,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1886
+  },
+  {
+    "minRange": 940001,
+    "maxRange": 950000,
+    "ownerRate": 2376,
+    "homeOwnerRate": 2614,
+    "conLoanRate": 1465,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1901
+  },
+  {
+    "minRange": 950001,
+    "maxRange": 960000,
+    "ownerRate": 2393,
+    "homeOwnerRate": 2632,
+    "conLoanRate": 1473,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1914
+  },
+  {
+    "minRange": 960001,
+    "maxRange": 970000,
+    "ownerRate": 2409,
+    "homeOwnerRate": 2650,
+    "conLoanRate": 1480,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1927
+  },
+  {
+    "minRange": 970001,
+    "maxRange": 980000,
+    "ownerRate": 2426,
+    "homeOwnerRate": 2669,
+    "conLoanRate": 1488,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1941
+  },
+  {
+    "minRange": 980001,
+    "maxRange": 990000,
+    "ownerRate": 2443,
+    "homeOwnerRate": 2687,
+    "conLoanRate": 1496,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1954
+  },
+  {
+    "minRange": 990001,
+    "maxRange": 1000000,
+    "ownerRate": 2462,
+    "homeOwnerRate": 2708,
+    "conLoanRate": 1504,
+    "resiLoanRate": 1150,
+    "conFullLoanRate": 1970
+  },
+  {
+    "minRange": 1000001,
+    "maxRange": 1010000,
+    "ownerRate": 2474,
+    "homeOwnerRate": 2721,
+    "conLoanRate": 1509,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 1979
+  },
+  {
+    "minRange": 1010001,
+    "maxRange": 1020000,
+    "ownerRate": 2488,
+    "homeOwnerRate": 2737,
+    "conLoanRate": 1515,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 1990
+  },
+  {
+    "minRange": 1020001,
+    "maxRange": 1030000,
+    "ownerRate": 2501,
+    "homeOwnerRate": 2751,
+    "conLoanRate": 1520,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2001
+  },
+  {
+    "minRange": 1030001,
+    "maxRange": 1040000,
+    "ownerRate": 2515,
+    "homeOwnerRate": 2767,
+    "conLoanRate": 1526,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2012
+  },
+  {
+    "minRange": 1040001,
+    "maxRange": 1050000,
+    "ownerRate": 2529,
+    "homeOwnerRate": 2782,
+    "conLoanRate": 1531,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2023
+  },
+  {
+    "minRange": 1050001,
+    "maxRange": 1060000,
+    "ownerRate": 2542,
+    "homeOwnerRate": 2796,
+    "conLoanRate": 1537,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2034
+  },
+  {
+    "minRange": 1060001,
+    "maxRange": 1070000,
+    "ownerRate": 2556,
+    "homeOwnerRate": 2812,
+    "conLoanRate": 1542,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2045
+  },
+  {
+    "minRange": 1070001,
+    "maxRange": 1080000,
+    "ownerRate": 2569,
+    "homeOwnerRate": 2826,
+    "conLoanRate": 1548,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2055
+  },
+  {
+    "minRange": 1080001,
+    "maxRange": 1090000,
+    "ownerRate": 2583,
+    "homeOwnerRate": 2841,
+    "conLoanRate": 1553,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2066
+  },
+  {
+    "minRange": 1090001,
+    "maxRange": 1100000,
+    "ownerRate": 2597,
+    "homeOwnerRate": 2857,
+    "conLoanRate": 1559,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2078
+  },
+  {
+    "minRange": 1100001,
+    "maxRange": 1110000,
+    "ownerRate": 2610,
+    "homeOwnerRate": 2871,
+    "conLoanRate": 1564,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2088
+  },
+  {
+    "minRange": 1110001,
+    "maxRange": 1120000,
+    "ownerRate": 2624,
+    "homeOwnerRate": 2886,
+    "conLoanRate": 1570,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2099
+  },
+  {
+    "minRange": 1120001,
+    "maxRange": 1130000,
+    "ownerRate": 2637,
+    "homeOwnerRate": 2901,
+    "conLoanRate": 1575,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2110
+  },
+  {
+    "minRange": 1130001,
+    "maxRange": 1140000,
+    "ownerRate": 2651,
+    "homeOwnerRate": 2916,
+    "conLoanRate": 1581,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2121
+  },
+  {
+    "minRange": 1140001,
+    "maxRange": 1150000,
+    "ownerRate": 2665,
+    "homeOwnerRate": 2932,
+    "conLoanRate": 1586,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2132
+  },
+  {
+    "minRange": 1150001,
+    "maxRange": 1160000,
+    "ownerRate": 2678,
+    "homeOwnerRate": 2946,
+    "conLoanRate": 1592,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2142
+  },
+  {
+    "minRange": 1160001,
+    "maxRange": 1170000,
+    "ownerRate": 2692,
+    "homeOwnerRate": 2961,
+    "conLoanRate": 1597,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2154
+  },
+  {
+    "minRange": 1170001,
+    "maxRange": 1180000,
+    "ownerRate": 2704,
+    "homeOwnerRate": 2974,
+    "conLoanRate": 1603,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2163
+  },
+  {
+    "minRange": 1180001,
+    "maxRange": 1190000,
+    "ownerRate": 2718,
+    "homeOwnerRate": 2990,
+    "conLoanRate": 1608,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2174
+  },
+  {
+    "minRange": 1190001,
+    "maxRange": 1200000,
+    "ownerRate": 2732,
+    "homeOwnerRate": 3005,
+    "conLoanRate": 1614,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2186
+  },
+  {
+    "minRange": 1200001,
+    "maxRange": 1210000,
+    "ownerRate": 2745,
+    "homeOwnerRate": 3020,
+    "conLoanRate": 1619,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2196
+  },
+  {
+    "minRange": 1210001,
+    "maxRange": 1220000,
+    "ownerRate": 2759,
+    "homeOwnerRate": 3035,
+    "conLoanRate": 1625,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2207
+  },
+  {
+    "minRange": 1220001,
+    "maxRange": 1230000,
+    "ownerRate": 2772,
+    "homeOwnerRate": 3049,
+    "conLoanRate": 1630,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2218
+  },
+  {
+    "minRange": 1230001,
+    "maxRange": 1240000,
+    "ownerRate": 2786,
+    "homeOwnerRate": 3065,
+    "conLoanRate": 1636,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2229
+  },
+  {
+    "minRange": 1240001,
+    "maxRange": 1250000,
+    "ownerRate": 2800,
+    "homeOwnerRate": 3080,
+    "conLoanRate": 1641,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2240
+  },
+  {
+    "minRange": 1250001,
+    "maxRange": 1260000,
+    "ownerRate": 2813,
+    "homeOwnerRate": 3094,
+    "conLoanRate": 1647,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2250
+  },
+  {
+    "minRange": 1260001,
+    "maxRange": 1270000,
+    "ownerRate": 2827,
+    "homeOwnerRate": 3110,
+    "conLoanRate": 1652,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2262
+  },
+  {
+    "minRange": 1270001,
+    "maxRange": 1280000,
+    "ownerRate": 2840,
+    "homeOwnerRate": 3124,
+    "conLoanRate": 1658,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2272
+  },
+  {
+    "minRange": 1280001,
+    "maxRange": 1290000,
+    "ownerRate": 2854,
+    "homeOwnerRate": 3139,
+    "conLoanRate": 1663,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2283
+  },
+  {
+    "minRange": 1290001,
+    "maxRange": 1300000,
+    "ownerRate": 2868,
+    "homeOwnerRate": 3155,
+    "conLoanRate": 1669,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2294
+  },
+  {
+    "minRange": 1300001,
+    "maxRange": 1310000,
+    "ownerRate": 2881,
+    "homeOwnerRate": 3169,
+    "conLoanRate": 1674,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2305
+  },
+  {
+    "minRange": 1310001,
+    "maxRange": 1320000,
+    "ownerRate": 2895,
+    "homeOwnerRate": 3185,
+    "conLoanRate": 1680,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2316
+  },
+  {
+    "minRange": 1320001,
+    "maxRange": 1330000,
+    "ownerRate": 2908,
+    "homeOwnerRate": 3199,
+    "conLoanRate": 1685,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2326
+  },
+  {
+    "minRange": 1330001,
+    "maxRange": 1340000,
+    "ownerRate": 2922,
+    "homeOwnerRate": 3214,
+    "conLoanRate": 1691,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2338
+  },
+  {
+    "minRange": 1340001,
+    "maxRange": 1350000,
+    "ownerRate": 2936,
+    "homeOwnerRate": 3230,
+    "conLoanRate": 1696,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2349
+  },
+  {
+    "minRange": 1350001,
+    "maxRange": 1360000,
+    "ownerRate": 2949,
+    "homeOwnerRate": 3244,
+    "conLoanRate": 1702,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2359
+  },
+  {
+    "minRange": 1360001,
+    "maxRange": 1370000,
+    "ownerRate": 2962,
+    "homeOwnerRate": 3258,
+    "conLoanRate": 1707,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2370
+  },
+  {
+    "minRange": 1370001,
+    "maxRange": 1380000,
+    "ownerRate": 2975,
+    "homeOwnerRate": 3273,
+    "conLoanRate": 1713,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2380
+  },
+  {
+    "minRange": 1380001,
+    "maxRange": 1390000,
+    "ownerRate": 2989,
+    "homeOwnerRate": 3288,
+    "conLoanRate": 1718,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2391
+  },
+  {
+    "minRange": 1390001,
+    "maxRange": 1400000,
+    "ownerRate": 3003,
+    "homeOwnerRate": 3303,
+    "conLoanRate": 1724,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2402
+  },
+  {
+    "minRange": 1400001,
+    "maxRange": 1410000,
+    "ownerRate": 3016,
+    "homeOwnerRate": 3318,
+    "conLoanRate": 1729,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2413
+  },
+  {
+    "minRange": 1410001,
+    "maxRange": 1420000,
+    "ownerRate": 3030,
+    "homeOwnerRate": 3333,
+    "conLoanRate": 1735,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2424
+  },
+  {
+    "minRange": 1420001,
+    "maxRange": 1430000,
+    "ownerRate": 3043,
+    "homeOwnerRate": 3347,
+    "conLoanRate": 1740,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2434
+  },
+  {
+    "minRange": 1430001,
+    "maxRange": 1440000,
+    "ownerRate": 3057,
+    "homeOwnerRate": 3363,
+    "conLoanRate": 1746,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2446
+  },
+  {
+    "minRange": 1440001,
+    "maxRange": 1450000,
+    "ownerRate": 3071,
+    "homeOwnerRate": 3378,
+    "conLoanRate": 1751,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2457
+  },
+  {
+    "minRange": 1450001,
+    "maxRange": 1460000,
+    "ownerRate": 3084,
+    "homeOwnerRate": 3392,
+    "conLoanRate": 1757,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2467
+  },
+  {
+    "minRange": 1460001,
+    "maxRange": 1470000,
+    "ownerRate": 3098,
+    "homeOwnerRate": 3408,
+    "conLoanRate": 1762,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2478
+  },
+  {
+    "minRange": 1470001,
+    "maxRange": 1480000,
+    "ownerRate": 3111,
+    "homeOwnerRate": 3422,
+    "conLoanRate": 1768,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2489
+  },
+  {
+    "minRange": 1480001,
+    "maxRange": 1490000,
+    "ownerRate": 3125,
+    "homeOwnerRate": 3438,
+    "conLoanRate": 1773,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2500
+  },
+  {
+    "minRange": 1490001,
+    "maxRange": 1500000,
+    "ownerRate": 3139,
+    "homeOwnerRate": 3453,
+    "conLoanRate": 1779,
+    "resiLoanRate": 1550,
+    "conFullLoanRate": 2511
+  },
+  {
+    "minRange": 1500001,
+    "maxRange": 1510000,
+    "ownerRate": 3142,
+    "homeOwnerRate": 3456,
+    "conLoanRate": 1783,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2514
+  },
+  {
+    "minRange": 1510001,
+    "maxRange": 1520000,
+    "ownerRate": 3154,
+    "homeOwnerRate": 3469,
+    "conLoanRate": 1787,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2523
+  },
+  {
+    "minRange": 1520001,
+    "maxRange": 1530000,
+    "ownerRate": 3167,
+    "homeOwnerRate": 3484,
+    "conLoanRate": 1792,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2534
+  },
+  {
+    "minRange": 1530001,
+    "maxRange": 1540000,
+    "ownerRate": 3181,
+    "homeOwnerRate": 3499,
+    "conLoanRate": 1796,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2545
+  },
+  {
+    "minRange": 1540001,
+    "maxRange": 1550000,
+    "ownerRate": 3193,
+    "homeOwnerRate": 3512,
+    "conLoanRate": 1801,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2554
+  },
+  {
+    "minRange": 1550001,
+    "maxRange": 1560000,
+    "ownerRate": 3205,
+    "homeOwnerRate": 3526,
+    "conLoanRate": 1805,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2564
+  },
+  {
+    "minRange": 1560001,
+    "maxRange": 1570000,
+    "ownerRate": 3217,
+    "homeOwnerRate": 3539,
+    "conLoanRate": 1809,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2574
+  },
+  {
+    "minRange": 1570001,
+    "maxRange": 1580000,
+    "ownerRate": 3231,
+    "homeOwnerRate": 3554,
+    "conLoanRate": 1814,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2585
+  },
+  {
+    "minRange": 1580001,
+    "maxRange": 1590000,
+    "ownerRate": 3243,
+    "homeOwnerRate": 3567,
+    "conLoanRate": 1818,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2594
+  },
+  {
+    "minRange": 1590001,
+    "maxRange": 1600000,
+    "ownerRate": 3256,
+    "homeOwnerRate": 3582,
+    "conLoanRate": 1823,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2605
+  },
+  {
+    "minRange": 1600001,
+    "maxRange": 1610000,
+    "ownerRate": 3260,
+    "homeOwnerRate": 3586,
+    "conLoanRate": 1827,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2608
+  },
+  {
+    "minRange": 1610001,
+    "maxRange": 1620000,
+    "ownerRate": 3273,
+    "homeOwnerRate": 3600,
+    "conLoanRate": 1831,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2618
+  },
+  {
+    "minRange": 1620001,
+    "maxRange": 1630000,
+    "ownerRate": 3285,
+    "homeOwnerRate": 3614,
+    "conLoanRate": 1836,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2628
+  },
+  {
+    "minRange": 1630001,
+    "maxRange": 1640000,
+    "ownerRate": 3298,
+    "homeOwnerRate": 3628,
+    "conLoanRate": 1840,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2638
+  },
+  {
+    "minRange": 1640001,
+    "maxRange": 1650000,
+    "ownerRate": 3311,
+    "homeOwnerRate": 3642,
+    "conLoanRate": 1845,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2649
+  },
+  {
+    "minRange": 1650001,
+    "maxRange": 1660000,
+    "ownerRate": 3324,
+    "homeOwnerRate": 3656,
+    "conLoanRate": 1849,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2659
+  },
+  {
+    "minRange": 1660001,
+    "maxRange": 1670000,
+    "ownerRate": 3336,
+    "homeOwnerRate": 3670,
+    "conLoanRate": 1853,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2669
+  },
+  {
+    "minRange": 1670001,
+    "maxRange": 1680000,
+    "ownerRate": 3349,
+    "homeOwnerRate": 3684,
+    "conLoanRate": 1858,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2679
+  },
+  {
+    "minRange": 1680001,
+    "maxRange": 1690000,
+    "ownerRate": 3362,
+    "homeOwnerRate": 3698,
+    "conLoanRate": 1862,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2690
+  },
+  {
+    "minRange": 1690001,
+    "maxRange": 1700000,
+    "ownerRate": 3374,
+    "homeOwnerRate": 3711,
+    "conLoanRate": 1867,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2699
+  },
+  {
+    "minRange": 1700001,
+    "maxRange": 1710000,
+    "ownerRate": 3384,
+    "homeOwnerRate": 3722,
+    "conLoanRate": 1871,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2707
+  },
+  {
+    "minRange": 1710001,
+    "maxRange": 1720000,
+    "ownerRate": 3397,
+    "homeOwnerRate": 3737,
+    "conLoanRate": 1875,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2718
+  },
+  {
+    "minRange": 1720001,
+    "maxRange": 1730000,
+    "ownerRate": 3409,
+    "homeOwnerRate": 3750,
+    "conLoanRate": 1880,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2727
+  },
+  {
+    "minRange": 1730001,
+    "maxRange": 1740000,
+    "ownerRate": 3422,
+    "homeOwnerRate": 3764,
+    "conLoanRate": 1884,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2738
+  },
+  {
+    "minRange": 1740001,
+    "maxRange": 1750000,
+    "ownerRate": 3435,
+    "homeOwnerRate": 3779,
+    "conLoanRate": 1889,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2748
+  },
+  {
+    "minRange": 1750001,
+    "maxRange": 1760000,
+    "ownerRate": 3447,
+    "homeOwnerRate": 3792,
+    "conLoanRate": 1893,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2758
+  },
+  {
+    "minRange": 1760001,
+    "maxRange": 1770000,
+    "ownerRate": 3460,
+    "homeOwnerRate": 3806,
+    "conLoanRate": 1897,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2768
+  },
+  {
+    "minRange": 1770001,
+    "maxRange": 1780000,
+    "ownerRate": 3472,
+    "homeOwnerRate": 3819,
+    "conLoanRate": 1902,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2778
+  },
+  {
+    "minRange": 1780001,
+    "maxRange": 1790000,
+    "ownerRate": 3485,
+    "homeOwnerRate": 3834,
+    "conLoanRate": 1906,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2788
+  },
+  {
+    "minRange": 1790001,
+    "maxRange": 1800000,
+    "ownerRate": 3498,
+    "homeOwnerRate": 3848,
+    "conLoanRate": 1911,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2798
+  },
+  {
+    "minRange": 1800001,
+    "maxRange": 1810000,
+    "ownerRate": 3513,
+    "homeOwnerRate": 3864,
+    "conLoanRate": 1915,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2810
+  },
+  {
+    "minRange": 1810001,
+    "maxRange": 1820000,
+    "ownerRate": 3526,
+    "homeOwnerRate": 3879,
+    "conLoanRate": 1919,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2821
+  },
+  {
+    "minRange": 1820001,
+    "maxRange": 1830000,
+    "ownerRate": 3538,
+    "homeOwnerRate": 3892,
+    "conLoanRate": 1924,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2830
+  },
+  {
+    "minRange": 1830001,
+    "maxRange": 1840000,
+    "ownerRate": 3551,
+    "homeOwnerRate": 3906,
+    "conLoanRate": 1928,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2841
+  },
+  {
+    "minRange": 1840001,
+    "maxRange": 1850000,
+    "ownerRate": 3562,
+    "homeOwnerRate": 3918,
+    "conLoanRate": 1933,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2850
+  },
+  {
+    "minRange": 1850001,
+    "maxRange": 1860000,
+    "ownerRate": 3575,
+    "homeOwnerRate": 3933,
+    "conLoanRate": 1937,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2860
+  },
+  {
+    "minRange": 1860001,
+    "maxRange": 1870000,
+    "ownerRate": 3589,
+    "homeOwnerRate": 3948,
+    "conLoanRate": 1941,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2871
+  },
+  {
+    "minRange": 1870001,
+    "maxRange": 1880000,
+    "ownerRate": 3601,
+    "homeOwnerRate": 3961,
+    "conLoanRate": 1946,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2881
+  },
+  {
+    "minRange": 1880001,
+    "maxRange": 1890000,
+    "ownerRate": 3614,
+    "homeOwnerRate": 3975,
+    "conLoanRate": 1950,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2891
+  },
+  {
+    "minRange": 1890001,
+    "maxRange": 1900000,
+    "ownerRate": 3626,
+    "homeOwnerRate": 3989,
+    "conLoanRate": 1955,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2901
+  },
+  {
+    "minRange": 1900001,
+    "maxRange": 1910000,
+    "ownerRate": 3641,
+    "homeOwnerRate": 4005,
+    "conLoanRate": 1959,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2913
+  },
+  {
+    "minRange": 1910001,
+    "maxRange": 1920000,
+    "ownerRate": 3655,
+    "homeOwnerRate": 4021,
+    "conLoanRate": 1963,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2924
+  },
+  {
+    "minRange": 1920001,
+    "maxRange": 1930000,
+    "ownerRate": 3667,
+    "homeOwnerRate": 4034,
+    "conLoanRate": 1968,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2934
+  },
+  {
+    "minRange": 1930001,
+    "maxRange": 1940000,
+    "ownerRate": 3680,
+    "homeOwnerRate": 4048,
+    "conLoanRate": 1972,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2944
+  },
+  {
+    "minRange": 1940001,
+    "maxRange": 1950000,
+    "ownerRate": 3691,
+    "homeOwnerRate": 4060,
+    "conLoanRate": 1977,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2953
+  },
+  {
+    "minRange": 1950001,
+    "maxRange": 1960000,
+    "ownerRate": 3704,
+    "homeOwnerRate": 4074,
+    "conLoanRate": 1981,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2963
+  },
+  {
+    "minRange": 1960001,
+    "maxRange": 1970000,
+    "ownerRate": 3716,
+    "homeOwnerRate": 4088,
+    "conLoanRate": 1985,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2973
+  },
+  {
+    "minRange": 1970001,
+    "maxRange": 1980000,
+    "ownerRate": 3730,
+    "homeOwnerRate": 4103,
+    "conLoanRate": 1990,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2984
+  },
+  {
+    "minRange": 1980001,
+    "maxRange": 1990000,
+    "ownerRate": 3742,
+    "homeOwnerRate": 4116,
+    "conLoanRate": 1994,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 2994
+  },
+  {
+    "minRange": 1990001,
+    "maxRange": 2000000,
+    "ownerRate": 3755,
+    "homeOwnerRate": 4131,
+    "conLoanRate": 1999,
+    "resiLoanRate": 2100,
+    "conFullLoanRate": 3004
+  },
+  {
+    "minRange": 2000001,
+    "maxRange": 2010000,
+    "ownerRate": 3761,
+    "homeOwnerRate": 4137,
+    "conLoanRate": 2004,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3009
+  },
+  {
+    "minRange": 2010001,
+    "maxRange": 2020000,
+    "ownerRate": 3769,
+    "homeOwnerRate": 4146,
+    "conLoanRate": 2010,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3015
+  },
+  {
+    "minRange": 2020001,
+    "maxRange": 2030000,
+    "ownerRate": 3775,
+    "homeOwnerRate": 4153,
+    "conLoanRate": 2015,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3020
+  },
+  {
+    "minRange": 2030001,
+    "maxRange": 2040000,
+    "ownerRate": 3782,
+    "homeOwnerRate": 4160,
+    "conLoanRate": 2021,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3026
+  },
+  {
+    "minRange": 2040001,
+    "maxRange": 2050000,
+    "ownerRate": 3788,
+    "homeOwnerRate": 4167,
+    "conLoanRate": 2026,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3030
+  },
+  {
+    "minRange": 2050001,
+    "maxRange": 2060000,
+    "ownerRate": 3796,
+    "homeOwnerRate": 4176,
+    "conLoanRate": 2032,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3037
+  },
+  {
+    "minRange": 2060001,
+    "maxRange": 2070000,
+    "ownerRate": 3802,
+    "homeOwnerRate": 4182,
+    "conLoanRate": 2037,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3042
+  },
+  {
+    "minRange": 2070001,
+    "maxRange": 2080000,
+    "ownerRate": 3809,
+    "homeOwnerRate": 4190,
+    "conLoanRate": 2043,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3047
+  },
+  {
+    "minRange": 2080001,
+    "maxRange": 2090000,
+    "ownerRate": 3816,
+    "homeOwnerRate": 4198,
+    "conLoanRate": 2048,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3053
+  },
+  {
+    "minRange": 2090001,
+    "maxRange": 2100000,
+    "ownerRate": 3822,
+    "homeOwnerRate": 4204,
+    "conLoanRate": 2054,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3058
+  },
+  {
+    "minRange": 2100001,
+    "maxRange": 2110000,
+    "ownerRate": 3829,
+    "homeOwnerRate": 4212,
+    "conLoanRate": 2059,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3063
+  },
+  {
+    "minRange": 2110001,
+    "maxRange": 2120000,
+    "ownerRate": 3836,
+    "homeOwnerRate": 4220,
+    "conLoanRate": 2065,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3069
+  },
+  {
+    "minRange": 2120001,
+    "maxRange": 2130000,
+    "ownerRate": 3843,
+    "homeOwnerRate": 4227,
+    "conLoanRate": 2070,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3074
+  },
+  {
+    "minRange": 2130001,
+    "maxRange": 2140000,
+    "ownerRate": 3849,
+    "homeOwnerRate": 4234,
+    "conLoanRate": 2076,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3079
+  },
+  {
+    "minRange": 2140001,
+    "maxRange": 2150000,
+    "ownerRate": 3856,
+    "homeOwnerRate": 4242,
+    "conLoanRate": 2081,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3085
+  },
+  {
+    "minRange": 2150001,
+    "maxRange": 2160000,
+    "ownerRate": 3863,
+    "homeOwnerRate": 4249,
+    "conLoanRate": 2087,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3090
+  },
+  {
+    "minRange": 2160001,
+    "maxRange": 2170000,
+    "ownerRate": 3870,
+    "homeOwnerRate": 4257,
+    "conLoanRate": 2092,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3096
+  },
+  {
+    "minRange": 2170001,
+    "maxRange": 2180000,
+    "ownerRate": 3876,
+    "homeOwnerRate": 4264,
+    "conLoanRate": 2098,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3101
+  },
+  {
+    "minRange": 2180001,
+    "maxRange": 2190000,
+    "ownerRate": 3884,
+    "homeOwnerRate": 4272,
+    "conLoanRate": 2103,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3107
+  },
+  {
+    "minRange": 2190001,
+    "maxRange": 2200000,
+    "ownerRate": 3890,
+    "homeOwnerRate": 4279,
+    "conLoanRate": 2109,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3112
+  },
+  {
+    "minRange": 2200001,
+    "maxRange": 2210000,
+    "ownerRate": 3897,
+    "homeOwnerRate": 4287,
+    "conLoanRate": 2114,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3118
+  },
+  {
+    "minRange": 2210001,
+    "maxRange": 2220000,
+    "ownerRate": 3904,
+    "homeOwnerRate": 4294,
+    "conLoanRate": 2120,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3123
+  },
+  {
+    "minRange": 2220001,
+    "maxRange": 2230000,
+    "ownerRate": 3911,
+    "homeOwnerRate": 4302,
+    "conLoanRate": 2125,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3129
+  },
+  {
+    "minRange": 2230001,
+    "maxRange": 2240000,
+    "ownerRate": 3917,
+    "homeOwnerRate": 4309,
+    "conLoanRate": 2131,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3134
+  },
+  {
+    "minRange": 2240001,
+    "maxRange": 2250000,
+    "ownerRate": 3924,
+    "homeOwnerRate": 4316,
+    "conLoanRate": 2136,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3139
+  },
+  {
+    "minRange": 2250001,
+    "maxRange": 2260000,
+    "ownerRate": 3931,
+    "homeOwnerRate": 4324,
+    "conLoanRate": 2142,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3145
+  },
+  {
+    "minRange": 2260001,
+    "maxRange": 2270000,
+    "ownerRate": 3938,
+    "homeOwnerRate": 4332,
+    "conLoanRate": 2147,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3150
+  },
+  {
+    "minRange": 2270001,
+    "maxRange": 2280000,
+    "ownerRate": 3944,
+    "homeOwnerRate": 4338,
+    "conLoanRate": 2153,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3155
+  },
+  {
+    "minRange": 2280001,
+    "maxRange": 2290000,
+    "ownerRate": 3951,
+    "homeOwnerRate": 4346,
+    "conLoanRate": 2158,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3161
+  },
+  {
+    "minRange": 2290001,
+    "maxRange": 2300000,
+    "ownerRate": 3958,
+    "homeOwnerRate": 4354,
+    "conLoanRate": 2164,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3166
+  },
+  {
+    "minRange": 2300001,
+    "maxRange": 2310000,
+    "ownerRate": 3964,
+    "homeOwnerRate": 4360,
+    "conLoanRate": 2169,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3171
+  },
+  {
+    "minRange": 2310001,
+    "maxRange": 2320000,
+    "ownerRate": 3972,
+    "homeOwnerRate": 4369,
+    "conLoanRate": 2175,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3178
+  },
+  {
+    "minRange": 2320001,
+    "maxRange": 2330000,
+    "ownerRate": 3978,
+    "homeOwnerRate": 4376,
+    "conLoanRate": 2180,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3182
+  },
+  {
+    "minRange": 2330001,
+    "maxRange": 2340000,
+    "ownerRate": 3985,
+    "homeOwnerRate": 4384,
+    "conLoanRate": 2186,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3188
+  },
+  {
+    "minRange": 2340001,
+    "maxRange": 2350000,
+    "ownerRate": 3991,
+    "homeOwnerRate": 4390,
+    "conLoanRate": 2191,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3193
+  },
+  {
+    "minRange": 2350001,
+    "maxRange": 2360000,
+    "ownerRate": 3999,
+    "homeOwnerRate": 4399,
+    "conLoanRate": 2197,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3199
+  },
+  {
+    "minRange": 2360001,
+    "maxRange": 2370000,
+    "ownerRate": 4005,
+    "homeOwnerRate": 4406,
+    "conLoanRate": 2202,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3204
+  },
+  {
+    "minRange": 2370001,
+    "maxRange": 2380000,
+    "ownerRate": 4012,
+    "homeOwnerRate": 4413,
+    "conLoanRate": 2208,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3210
+  },
+  {
+    "minRange": 2380001,
+    "maxRange": 2390000,
+    "ownerRate": 4019,
+    "homeOwnerRate": 4421,
+    "conLoanRate": 2213,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3215
+  },
+  {
+    "minRange": 2390001,
+    "maxRange": 2400000,
+    "ownerRate": 4026,
+    "homeOwnerRate": 4429,
+    "conLoanRate": 2219,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3221
+  },
+  {
+    "minRange": 2400001,
+    "maxRange": 2410000,
+    "ownerRate": 4032,
+    "homeOwnerRate": 4435,
+    "conLoanRate": 2224,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3226
+  },
+  {
+    "minRange": 2410001,
+    "maxRange": 2420000,
+    "ownerRate": 4040,
+    "homeOwnerRate": 4444,
+    "conLoanRate": 2230,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3232
+  },
+  {
+    "minRange": 2420001,
+    "maxRange": 2430000,
+    "ownerRate": 4046,
+    "homeOwnerRate": 4451,
+    "conLoanRate": 2235,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3237
+  },
+  {
+    "minRange": 2430001,
+    "maxRange": 2440000,
+    "ownerRate": 4053,
+    "homeOwnerRate": 4458,
+    "conLoanRate": 2241,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3242
+  },
+  {
+    "minRange": 2440001,
+    "maxRange": 2450000,
+    "ownerRate": 4059,
+    "homeOwnerRate": 4465,
+    "conLoanRate": 2246,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3247
+  },
+  {
+    "minRange": 2450001,
+    "maxRange": 2460000,
+    "ownerRate": 4067,
+    "homeOwnerRate": 4474,
+    "conLoanRate": 2252,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3254
+  },
+  {
+    "minRange": 2460001,
+    "maxRange": 2470000,
+    "ownerRate": 4073,
+    "homeOwnerRate": 4480,
+    "conLoanRate": 2257,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3258
+  },
+  {
+    "minRange": 2470001,
+    "maxRange": 2480000,
+    "ownerRate": 4079,
+    "homeOwnerRate": 4487,
+    "conLoanRate": 2263,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3263
+  },
+  {
+    "minRange": 2480001,
+    "maxRange": 2490000,
+    "ownerRate": 4087,
+    "homeOwnerRate": 4496,
+    "conLoanRate": 2268,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3270
+  },
+  {
+    "minRange": 2490001,
+    "maxRange": 2500000,
+    "ownerRate": 4093,
+    "homeOwnerRate": 4502,
+    "conLoanRate": 2274,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3274
+  },
+  {
+    "minRange": 2500001,
+    "maxRange": 2510000,
+    "ownerRate": 4100,
+    "homeOwnerRate": 4510,
+    "conLoanRate": 2279,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3280
+  },
+  {
+    "minRange": 2510001,
+    "maxRange": 2520000,
+    "ownerRate": 4107,
+    "homeOwnerRate": 4518,
+    "conLoanRate": 2285,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3286
+  },
+  {
+    "minRange": 2520001,
+    "maxRange": 2530000,
+    "ownerRate": 4114,
+    "homeOwnerRate": 4525,
+    "conLoanRate": 2290,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3291
+  },
+  {
+    "minRange": 2530001,
+    "maxRange": 2540000,
+    "ownerRate": 4120,
+    "homeOwnerRate": 4532,
+    "conLoanRate": 2296,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3296
+  },
+  {
+    "minRange": 2540001,
+    "maxRange": 2550000,
+    "ownerRate": 4127,
+    "homeOwnerRate": 4540,
+    "conLoanRate": 2301,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3302
+  },
+  {
+    "minRange": 2550001,
+    "maxRange": 2560000,
+    "ownerRate": 4134,
+    "homeOwnerRate": 4547,
+    "conLoanRate": 2307,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3307
+  },
+  {
+    "minRange": 2560001,
+    "maxRange": 2570000,
+    "ownerRate": 4141,
+    "homeOwnerRate": 4555,
+    "conLoanRate": 2312,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3313
+  },
+  {
+    "minRange": 2570001,
+    "maxRange": 2580000,
+    "ownerRate": 4147,
+    "homeOwnerRate": 4562,
+    "conLoanRate": 2318,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3318
+  },
+  {
+    "minRange": 2580001,
+    "maxRange": 2590000,
+    "ownerRate": 4155,
+    "homeOwnerRate": 4571,
+    "conLoanRate": 2323,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3324
+  },
+  {
+    "minRange": 2590001,
+    "maxRange": 2600000,
+    "ownerRate": 4161,
+    "homeOwnerRate": 4577,
+    "conLoanRate": 2329,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3329
+  },
+  {
+    "minRange": 2600001,
+    "maxRange": 2610000,
+    "ownerRate": 4168,
+    "homeOwnerRate": 4585,
+    "conLoanRate": 2334,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3334
+  },
+  {
+    "minRange": 2610001,
+    "maxRange": 2620000,
+    "ownerRate": 4175,
+    "homeOwnerRate": 4593,
+    "conLoanRate": 2340,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3340
+  },
+  {
+    "minRange": 2620001,
+    "maxRange": 2630000,
+    "ownerRate": 4181,
+    "homeOwnerRate": 4599,
+    "conLoanRate": 2345,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3345
+  },
+  {
+    "minRange": 2630001,
+    "maxRange": 2640000,
+    "ownerRate": 4188,
+    "homeOwnerRate": 4607,
+    "conLoanRate": 2351,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3350
+  },
+  {
+    "minRange": 2640001,
+    "maxRange": 2650000,
+    "ownerRate": 4195,
+    "homeOwnerRate": 4615,
+    "conLoanRate": 2356,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3356
+  },
+  {
+    "minRange": 2650001,
+    "maxRange": 2660000,
+    "ownerRate": 4202,
+    "homeOwnerRate": 4622,
+    "conLoanRate": 2362,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3362
+  },
+  {
+    "minRange": 2660001,
+    "maxRange": 2670000,
+    "ownerRate": 4208,
+    "homeOwnerRate": 4629,
+    "conLoanRate": 2367,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3366
+  },
+  {
+    "minRange": 2670001,
+    "maxRange": 2680000,
+    "ownerRate": 4215,
+    "homeOwnerRate": 4637,
+    "conLoanRate": 2373,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3372
+  },
+  {
+    "minRange": 2680001,
+    "maxRange": 2690000,
+    "ownerRate": 4222,
+    "homeOwnerRate": 4644,
+    "conLoanRate": 2378,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3378
+  },
+  {
+    "minRange": 2690001,
+    "maxRange": 2700000,
+    "ownerRate": 4229,
+    "homeOwnerRate": 4652,
+    "conLoanRate": 2384,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3383
+  },
+  {
+    "minRange": 2700001,
+    "maxRange": 2710000,
+    "ownerRate": 4235,
+    "homeOwnerRate": 4659,
+    "conLoanRate": 2389,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3388
+  },
+  {
+    "minRange": 2710001,
+    "maxRange": 2720000,
+    "ownerRate": 4243,
+    "homeOwnerRate": 4667,
+    "conLoanRate": 2395,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3394
+  },
+  {
+    "minRange": 2720001,
+    "maxRange": 2730000,
+    "ownerRate": 4249,
+    "homeOwnerRate": 4674,
+    "conLoanRate": 2400,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3399
+  },
+  {
+    "minRange": 2730001,
+    "maxRange": 2740000,
+    "ownerRate": 4256,
+    "homeOwnerRate": 4682,
+    "conLoanRate": 2406,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3405
+  },
+  {
+    "minRange": 2740001,
+    "maxRange": 2750000,
+    "ownerRate": 4262,
+    "homeOwnerRate": 4688,
+    "conLoanRate": 2411,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3410
+  },
+  {
+    "minRange": 2750001,
+    "maxRange": 2760000,
+    "ownerRate": 4270,
+    "homeOwnerRate": 4697,
+    "conLoanRate": 2417,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3416
+  },
+  {
+    "minRange": 2760001,
+    "maxRange": 2770000,
+    "ownerRate": 4276,
+    "homeOwnerRate": 4704,
+    "conLoanRate": 2422,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3421
+  },
+  {
+    "minRange": 2770001,
+    "maxRange": 2780000,
+    "ownerRate": 4283,
+    "homeOwnerRate": 4711,
+    "conLoanRate": 2428,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3426
+  },
+  {
+    "minRange": 2780001,
+    "maxRange": 2790000,
+    "ownerRate": 4290,
+    "homeOwnerRate": 4719,
+    "conLoanRate": 2433,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3432
+  },
+  {
+    "minRange": 2790001,
+    "maxRange": 2800000,
+    "ownerRate": 4297,
+    "homeOwnerRate": 4727,
+    "conLoanRate": 2439,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3438
+  },
+  {
+    "minRange": 2800001,
+    "maxRange": 2810000,
+    "ownerRate": 4303,
+    "homeOwnerRate": 4733,
+    "conLoanRate": 2444,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3442
+  },
+  {
+    "minRange": 2810001,
+    "maxRange": 2820000,
+    "ownerRate": 4311,
+    "homeOwnerRate": 4742,
+    "conLoanRate": 2450,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3449
+  },
+  {
+    "minRange": 2820001,
+    "maxRange": 2830000,
+    "ownerRate": 4317,
+    "homeOwnerRate": 4749,
+    "conLoanRate": 2455,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3454
+  },
+  {
+    "minRange": 2830001,
+    "maxRange": 2840000,
+    "ownerRate": 4323,
+    "homeOwnerRate": 4755,
+    "conLoanRate": 2461,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3458
+  },
+  {
+    "minRange": 2840001,
+    "maxRange": 2850000,
+    "ownerRate": 4330,
+    "homeOwnerRate": 4763,
+    "conLoanRate": 2466,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3464
+  },
+  {
+    "minRange": 2850001,
+    "maxRange": 2860000,
+    "ownerRate": 4337,
+    "homeOwnerRate": 4771,
+    "conLoanRate": 2472,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3470
+  },
+  {
+    "minRange": 2860001,
+    "maxRange": 2870000,
+    "ownerRate": 4344,
+    "homeOwnerRate": 4778,
+    "conLoanRate": 2477,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3475
+  },
+  {
+    "minRange": 2870001,
+    "maxRange": 2880000,
+    "ownerRate": 4350,
+    "homeOwnerRate": 4785,
+    "conLoanRate": 2483,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3480
+  },
+  {
+    "minRange": 2880001,
+    "maxRange": 2890000,
+    "ownerRate": 4358,
+    "homeOwnerRate": 4794,
+    "conLoanRate": 2488,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3486
+  },
+  {
+    "minRange": 2890001,
+    "maxRange": 2900000,
+    "ownerRate": 4364,
+    "homeOwnerRate": 4800,
+    "conLoanRate": 2494,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3491
+  },
+  {
+    "minRange": 2900001,
+    "maxRange": 2910000,
+    "ownerRate": 4371,
+    "homeOwnerRate": 4808,
+    "conLoanRate": 2499,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3497
+  },
+  {
+    "minRange": 2910001,
+    "maxRange": 2920000,
+    "ownerRate": 4378,
+    "homeOwnerRate": 4816,
+    "conLoanRate": 2505,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3502
+  },
+  {
+    "minRange": 2920001,
+    "maxRange": 2930000,
+    "ownerRate": 4385,
+    "homeOwnerRate": 4824,
+    "conLoanRate": 2510,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3508
+  },
+  {
+    "minRange": 2930001,
+    "maxRange": 2940000,
+    "ownerRate": 4391,
+    "homeOwnerRate": 4830,
+    "conLoanRate": 2516,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3513
+  },
+  {
+    "minRange": 2940001,
+    "maxRange": 2950000,
+    "ownerRate": 4398,
+    "homeOwnerRate": 4838,
+    "conLoanRate": 2521,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3518
+  },
+  {
+    "minRange": 2950001,
+    "maxRange": 2960000,
+    "ownerRate": 4405,
+    "homeOwnerRate": 4846,
+    "conLoanRate": 2527,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3524
+  },
+  {
+    "minRange": 2960001,
+    "maxRange": 2970000,
+    "ownerRate": 4412,
+    "homeOwnerRate": 4853,
+    "conLoanRate": 2532,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3530
+  },
+  {
+    "minRange": 2970001,
+    "maxRange": 2980000,
+    "ownerRate": 4418,
+    "homeOwnerRate": 4860,
+    "conLoanRate": 2538,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3534
+  },
+  {
+    "minRange": 2980001,
+    "maxRange": 2990000,
+    "ownerRate": 4426,
+    "homeOwnerRate": 4869,
+    "conLoanRate": 2543,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3541
+  },
+  {
+    "minRange": 2990001,
+    "maxRange": 3000000,
+    "ownerRate": 4432,
+    "homeOwnerRate": 4875,
+    "conLoanRate": 2549,
+    "resiLoanRate": 2800,
+    "conFullLoanRate": 3546
+  },
+  {
+    "minRange": 3000001,
+    "maxRange": 3010000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3010001,
+    "maxRange": 3020000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3020001,
+    "maxRange": 3030000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3030001,
+    "maxRange": 3040000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3040001,
+    "maxRange": 3050000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3050001,
+    "maxRange": 3060000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3060001,
+    "maxRange": 3070000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3070001,
+    "maxRange": 3080000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3080001,
+    "maxRange": 3090000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3090001,
+    "maxRange": 3100000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3100001,
+    "maxRange": 3110000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3110001,
+    "maxRange": 3120000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3120001,
+    "maxRange": 3130000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3130001,
+    "maxRange": 3140000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3140001,
+    "maxRange": 3150000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3150001,
+    "maxRange": 3160000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3160001,
+    "maxRange": 3170000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3170001,
+    "maxRange": 3180000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3180001,
+    "maxRange": 3190000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3190001,
+    "maxRange": 3200000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3200001,
+    "maxRange": 3210000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3210001,
+    "maxRange": 3220000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3220001,
+    "maxRange": 3230000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3230001,
+    "maxRange": 3240000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3240001,
+    "maxRange": 3250000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3250001,
+    "maxRange": 3260000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3260001,
+    "maxRange": 3270000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3270001,
+    "maxRange": 3280000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3280001,
+    "maxRange": 3290000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3290001,
+    "maxRange": 3300000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3300001,
+    "maxRange": 3310000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3310001,
+    "maxRange": 3320000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3320001,
+    "maxRange": 3330000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3330001,
+    "maxRange": 3340000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3340001,
+    "maxRange": 3350000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3350001,
+    "maxRange": 3360000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3360001,
+    "maxRange": 3370000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3370001,
+    "maxRange": 3380000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3380001,
+    "maxRange": 3390000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3390001,
+    "maxRange": 3400000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3400001,
+    "maxRange": 3410000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3410001,
+    "maxRange": 3420000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3420001,
+    "maxRange": 3430000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3430001,
+    "maxRange": 3440000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3440001,
+    "maxRange": 3450000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3450001,
+    "maxRange": 3460000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3460001,
+    "maxRange": 3470000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3470001,
+    "maxRange": 3480000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3480001,
+    "maxRange": 3490000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3490001,
+    "maxRange": 3500000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3500001,
+    "maxRange": 3510000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3510001,
+    "maxRange": 3520000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3520001,
+    "maxRange": 3530000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3530001,
+    "maxRange": 3540000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3540001,
+    "maxRange": 3550000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3550001,
+    "maxRange": 3560000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3560001,
+    "maxRange": 3570000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3570001,
+    "maxRange": 3580000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3580001,
+    "maxRange": 3590000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3590001,
+    "maxRange": 3600000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3600001,
+    "maxRange": 3610000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3610001,
+    "maxRange": 3620000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3620001,
+    "maxRange": 3630000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3630001,
+    "maxRange": 3640000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3640001,
+    "maxRange": 3650000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3650001,
+    "maxRange": 3660000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3660001,
+    "maxRange": 3670000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3670001,
+    "maxRange": 3680000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3680001,
+    "maxRange": 3690000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3690001,
+    "maxRange": 3700000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3700001,
+    "maxRange": 3710000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3710001,
+    "maxRange": 3720000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3720001,
+    "maxRange": 3730000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3730001,
+    "maxRange": 3740000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3740001,
+    "maxRange": 3750000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3750001,
+    "maxRange": 3760000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3760001,
+    "maxRange": 3770000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3770001,
+    "maxRange": 3780000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3780001,
+    "maxRange": 3790000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3790001,
+    "maxRange": 3800000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3800001,
+    "maxRange": 3810000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3810001,
+    "maxRange": 3820000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3820001,
+    "maxRange": 3830000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3830001,
+    "maxRange": 3840000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3840001,
+    "maxRange": 3850000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3850001,
+    "maxRange": 3860000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3860001,
+    "maxRange": 3870000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3870001,
+    "maxRange": 3880000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3880001,
+    "maxRange": 3890000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3890001,
+    "maxRange": 3900000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3900001,
+    "maxRange": 3910000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3910001,
+    "maxRange": 3920000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3920001,
+    "maxRange": 3930000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3930001,
+    "maxRange": 3940000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3940001,
+    "maxRange": 3950000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3950001,
+    "maxRange": 3960000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3960001,
+    "maxRange": 3970000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3970001,
+    "maxRange": 3980000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3980001,
+    "maxRange": 3990000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 3990001,
+    "maxRange": 4000000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4000001,
+    "maxRange": 4010000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4010001,
+    "maxRange": 4020000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4020001,
+    "maxRange": 4030000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4030001,
+    "maxRange": 4040000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4040001,
+    "maxRange": 4050000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4050001,
+    "maxRange": 4060000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4060001,
+    "maxRange": 4070000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4070001,
+    "maxRange": 4080000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4080001,
+    "maxRange": 4090000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4090001,
+    "maxRange": 4100000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4100001,
+    "maxRange": 4110000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4110001,
+    "maxRange": 4120000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4120001,
+    "maxRange": 4130000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4130001,
+    "maxRange": 4140000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4140001,
+    "maxRange": 4150000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4150001,
+    "maxRange": 4160000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4160001,
+    "maxRange": 4170000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4170001,
+    "maxRange": 4180000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4180001,
+    "maxRange": 4190000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4190001,
+    "maxRange": 4200000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4200001,
+    "maxRange": 4210000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4210001,
+    "maxRange": 4220000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4220001,
+    "maxRange": 4230000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4230001,
+    "maxRange": 4240000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4240001,
+    "maxRange": 4250000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4250001,
+    "maxRange": 4260000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4260001,
+    "maxRange": 4270000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4270001,
+    "maxRange": 4280000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4280001,
+    "maxRange": 4290000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4290001,
+    "maxRange": 4300000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4300001,
+    "maxRange": 4310000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4310001,
+    "maxRange": 4320000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4320001,
+    "maxRange": 4330000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4330001,
+    "maxRange": 4340000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4340001,
+    "maxRange": 4350000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4350001,
+    "maxRange": 4360000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4360001,
+    "maxRange": 4370000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4370001,
+    "maxRange": 4380000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4380001,
+    "maxRange": 4390000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4390001,
+    "maxRange": 4400000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4400001,
+    "maxRange": 4410000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4410001,
+    "maxRange": 4420000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4420001,
+    "maxRange": 4430000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4430001,
+    "maxRange": 4440000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4440001,
+    "maxRange": 4450000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4450001,
+    "maxRange": 4460000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4460001,
+    "maxRange": 4470000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4470001,
+    "maxRange": 4480000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4480001,
+    "maxRange": 4490000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4490001,
+    "maxRange": 4500000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4500001,
+    "maxRange": 4510000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4510001,
+    "maxRange": 4520000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4520001,
+    "maxRange": 4530000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4530001,
+    "maxRange": 4540000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4540001,
+    "maxRange": 4550000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4550001,
+    "maxRange": 4560000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4560001,
+    "maxRange": 4570000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4570001,
+    "maxRange": 4580000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4580001,
+    "maxRange": 4590000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4590001,
+    "maxRange": 4600000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4600001,
+    "maxRange": 4610000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4610001,
+    "maxRange": 4620000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4620001,
+    "maxRange": 4630000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4630001,
+    "maxRange": 4640000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4640001,
+    "maxRange": 4650000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4650001,
+    "maxRange": 4660000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4660001,
+    "maxRange": 4670000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4670001,
+    "maxRange": 4680000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4680001,
+    "maxRange": 4690000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4690001,
+    "maxRange": 4700000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4700001,
+    "maxRange": 4710000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4710001,
+    "maxRange": 4720000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4720001,
+    "maxRange": 4730000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4730001,
+    "maxRange": 4740000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4740001,
+    "maxRange": 4750000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4750001,
+    "maxRange": 4760000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4760001,
+    "maxRange": 4770000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4770001,
+    "maxRange": 4780000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4780001,
+    "maxRange": 4790000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4790001,
+    "maxRange": 4800000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4800001,
+    "maxRange": 4810000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4810001,
+    "maxRange": 4820000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4820001,
+    "maxRange": 4830000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4830001,
+    "maxRange": 4840000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4840001,
+    "maxRange": 4850000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4850001,
+    "maxRange": 4860000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4860001,
+    "maxRange": 4870000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4870001,
+    "maxRange": 4880000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4880001,
+    "maxRange": 4890000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4890001,
+    "maxRange": 4900000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4900001,
+    "maxRange": 4910000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4910001,
+    "maxRange": 4920000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4920001,
+    "maxRange": 4930000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4930001,
+    "maxRange": 4940000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4940001,
+    "maxRange": 4950000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4950001,
+    "maxRange": 4960000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4960001,
+    "maxRange": 4970000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4970001,
+    "maxRange": 4980000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4980001,
+    "maxRange": 4990000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  },
+  {
+    "minRange": 4990001,
+    "maxRange": 5000000,
+    "ownerRate": 0,
+    "homeOwnerRate": 0,
+    "conLoanRate": 0,
+    "resiLoanRate": 0,
+    "conFullLoanRate": 0
+  }
+]

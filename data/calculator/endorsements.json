@@ -1,0 +1,72 @@
+[
+  {
+    "id": 1,
+    "name": "CLTA 100-06 - Restrictions, Encroachments & Minerals",
+    "fee": 0,
+    "transactionType": "Resale",
+    "isDefault": true
+  },
+  {
+    "id": 2,
+    "name": "CLTA 110.9-06 (ALTA 8.1-06) - Environmental Protection Lien",
+    "fee": 0,
+    "transactionType": "Resale",
+    "isDefault": true
+  },
+  {
+    "id": 3,
+    "name": "CLTA 116-06 - Designation of Improvements, Address",
+    "fee": 0,
+    "transactionType": "Resale",
+    "isDefault": true
+  },
+  {
+    "id": 4,
+    "name": "CLTA 100.12-06 - CC&R's, Right of Reversion",
+    "fee": 0,
+    "transactionType": "Resale",
+    "isDefault": false
+  },
+  {
+    "id": 5,
+    "name": "CLTA 103.3-06 - Easement, Existing Encroachment, Enforced Removal",
+    "fee": 0,
+    "transactionType": "Resale",
+    "isDefault": false
+  },
+  {
+    "id": 6,
+    "name": "CLTA 103.5-06 - Water Rights, Surface Damage",
+    "fee": 0,
+    "transactionType": "Resale",
+    "isDefault": false
+  },
+  {
+    "id": 7,
+    "name": "CLTA 111.5-06 (ALTA 6-06) - Variable Rate Mortgage",
+    "fee": 0,
+    "transactionType": "Resale",
+    "isDefault": false
+  },
+  {
+    "id": 8,
+    "name": "CLTA 110.9-06 (ALTA 8.1-06) - Environmental Protection Lien",
+    "fee": 0,
+    "transactionType": "Re-finance",
+    "isDefault": true
+  },
+  {
+    "id": 9,
+    "name": "CLTA 100.12-06 - CC&R's, Right of Reversion",
+    "fee": 0,
+    "transactionType": "Re-finance",
+    "isDefault": false
+  },
+  {
+    "id": 10,
+    "name": "CLTA 103.5-06 - Water Rights, Surface Damage",
+    "fee": 0,
+    "transactionType": "Re-finance",
+    "isDefault": false
+  }
+]

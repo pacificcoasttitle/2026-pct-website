@@ -1,7 +1,22 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Calculator, Loader2, ChevronDown, DollarSign, Home, Building2, FileText, Receipt } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import {
+  Calculator,
+  Loader2,
+  ChevronDown,
+  DollarSign,
+  Home,
+  Building2,
+  FileText,
+  Receipt,
+  Shield,
+  AlertTriangle,
+  Phone,
+  Printer,
+  ChevronRight,
+  Info,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -13,44 +28,54 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 
-interface County {
+// ── Types ───────────────────────────────────────────────────────────────────
+
+interface CountyOption {
   id: string
   name: string
 }
 
-interface City {
+interface CityOption {
   id: string
   name: string
-  transferTaxRate: number
 }
 
-interface FeeBreakdown {
-  titleInsurance: {
-    ownerPolicy: number
-    lenderPolicy: number
-    endorsements: number
-    total: number
-  }
-  escrowFees: {
-    baseFee: number
-    documentPreparation: number
-    notaryFees: number
-    wireTransfer: number
-    courierFees: number
-    total: number
-  }
-  transferTaxes: {
-    county: number
-    city: number
-    total: number
-  }
-  recordingFees: {
-    deed: number
-    mortgage: number
-    total: number
-  }
+interface TitleFees {
+  ownerPolicy: number
+  ownerPolicyLabel: string
+  lenderPolicy: number
+  lenderPolicyLabel: string
+  endorsements: { name: string; fee: number }[]
+  endorsementTotal: number
+  total: number
+}
+
+interface EscrowFees {
+  baseFee: number
+  additionalFees: { name: string; fee: number }[]
+  total: number
+}
+
+interface TransferTaxResult {
+  countyTax: number
+  cityTax: number
+  countyRate: number
+  cityRate: number
+  total: number
+}
+
+interface CalculatorResult {
+  titleFees: TitleFees
+  escrowFees: EscrowFees
+  transferTaxes: TransferTaxResult
+  additionalFees: { name: string; fee: number; category: string }[]
+  additionalFeesTotal: number
   grandTotal: number
+  callForQuote: boolean
+  disclaimer: string
 }
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -60,115 +85,214 @@ function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
-function parseCurrencyInput(value: string): number {
-  const cleaned = value.replace(/[^0-9.]/g, '')
-  return parseFloat(cleaned) || 0
+function formatNumberInput(value: string): string {
+  const raw = value.replace(/[^0-9]/g, '')
+  return raw ? Number(raw).toLocaleString() : ''
 }
 
+function parseNumberInput(value: string): number {
+  return parseInt(value.replace(/[^0-9]/g, ''), 10) || 0
+}
+
+// ── Component ───────────────────────────────────────────────────────────────
+
 export function RateCalculator() {
+  // Form state
   const [transactionType, setTransactionType] = useState<'purchase' | 'refinance'>('purchase')
-  const [counties, setCounties] = useState<County[]>([])
-  const [cities, setCities] = useState<City[]>([])
-  const [selectedCounty, setSelectedCounty] = useState<string>('')
-  const [selectedCity, setSelectedCity] = useState<string>('')
-  const [selectedCityData, setSelectedCityData] = useState<City | null>(null)
+  const [counties, setCounties] = useState<CountyOption[]>([])
+  const [cities, setCities] = useState<CityOption[]>([])
+  const [selectedCounty, setSelectedCounty] = useState('')
+  const [selectedCity, setSelectedCity] = useState('')
+  const [salesPrice, setSalesPrice] = useState('')
+  const [loanAmount, setLoanAmount] = useState('')
+  const [ownerPolicyType, setOwnerPolicyType] = useState<'clta' | 'alta'>('clta')
+  const [lenderPolicyType, setLenderPolicyType] = useState<'clta' | 'alta'>('clta')
+  const [includeOwnerPolicy, setIncludeOwnerPolicy] = useState(true)
+
+  // UI state
   const [isLoadingCounties, setIsLoadingCounties] = useState(true)
   const [isLoadingCities, setIsLoadingCities] = useState(false)
   const [isCalculating, setIsCalculating] = useState(false)
-  const [results, setResults] = useState<FeeBreakdown | null>(null)
-  const [salesPrice, setSalesPrice] = useState('')
-  const [loanAmount, setLoanAmount] = useState('')
+  const [results, setResults] = useState<CalculatorResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  // Fetch counties on mount
+  const resultsRef = useRef<HTMLDivElement>(null)
+
+  // ── Data Fetching ─────────────────────────────────────────────────────────
+
   useEffect(() => {
     async function fetchCounties() {
       try {
-        const response = await fetch('/api/calculator/counties')
-        const data = await response.json()
-        setCounties(data.counties)
-      } catch (error) {
-        console.error('Failed to fetch counties:', error)
+        const res = await fetch(`/api/calculator/counties?type=${transactionType}`)
+        const data = await res.json()
+        setCounties(data.counties || [])
+      } catch {
+        console.error('Failed to load counties')
       } finally {
         setIsLoadingCounties(false)
       }
     }
+    setIsLoadingCounties(true)
     fetchCounties()
-  }, [])
+  }, [transactionType])
 
-  // Fetch cities when county changes
   useEffect(() => {
     if (!selectedCounty) {
       setCities([])
       setSelectedCity('')
-      setSelectedCityData(null)
       return
     }
-
     async function fetchCities() {
       setIsLoadingCities(true)
       try {
-        const response = await fetch(`/api/calculator/cities?county=${selectedCounty}`)
-        const data = await response.json()
-        setCities(data.cities)
+        const res = await fetch(
+          `/api/calculator/cities?county=${encodeURIComponent(selectedCounty)}&type=${transactionType}`
+        )
+        const data = await res.json()
+        setCities(data.cities || [])
         setSelectedCity('')
-        setSelectedCityData(null)
-      } catch (error) {
-        console.error('Failed to fetch cities:', error)
+      } catch {
+        console.error('Failed to load cities')
       } finally {
         setIsLoadingCities(false)
       }
     }
     fetchCities()
-  }, [selectedCounty])
-
-  // Update selected city data when city changes
-  useEffect(() => {
-    if (selectedCity && cities.length > 0) {
-      const cityData = cities.find(c => c.id === selectedCity)
-      setSelectedCityData(cityData || null)
-    } else {
-      setSelectedCityData(null)
-    }
-  }, [selectedCity, cities])
+  }, [selectedCounty, transactionType])
 
   // Clear results when form changes
   useEffect(() => {
     setResults(null)
-  }, [transactionType, selectedCounty, selectedCity, salesPrice, loanAmount])
+    setError(null)
+  }, [transactionType, selectedCounty, selectedCity, salesPrice, loanAmount, ownerPolicyType, lenderPolicyType, includeOwnerPolicy])
 
-  const handleCalculate = async () => {
-    if (!selectedCounty || !selectedCity || !selectedCityData) return
-    if (transactionType === 'purchase' && !salesPrice) return
-    if (!loanAmount) return
+  // ── Calculation ───────────────────────────────────────────────────────────
+
+  const handleCalculate = useCallback(async () => {
+    setError(null)
+
+    if (!selectedCounty) { setError('Please select a county.'); return }
+    if (!selectedCity) { setError('Please select a city.'); return }
+    if (transactionType === 'purchase' && !salesPrice) { setError('Please enter a sales price.'); return }
+    if (!loanAmount) { setError('Please enter a loan amount.'); return }
 
     setIsCalculating(true)
     try {
-      const response = await fetch('/api/calculator/fees', {
+      const res = await fetch('/api/calculator/fees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           transactionType,
-          county: selectedCounty,
-          city: selectedCity,
-          salesPrice: transactionType === 'purchase' ? parseCurrencyInput(salesPrice) : undefined,
-          loanAmount: parseCurrencyInput(loanAmount),
-          cityTransferTaxRate: selectedCityData.transferTaxRate,
+          countyZone: selectedCounty,
+          cityName: selectedCity,
+          salesPrice: transactionType === 'purchase' ? parseNumberInput(salesPrice) : 0,
+          loanAmount: parseNumberInput(loanAmount),
+          ownerPolicyType,
+          lenderPolicyType,
+          includeOwnerPolicy: transactionType === 'purchase' ? includeOwnerPolicy : false,
         }),
       })
-      const data = await response.json()
+      if (!res.ok) throw new Error('Calculation failed')
+      const data: CalculatorResult = await res.json()
       setResults(data)
-    } catch (error) {
-      console.error('Failed to calculate fees:', error)
+
+      // Scroll to results
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    } catch {
+      setError('Unable to calculate. Please try again.')
     } finally {
       setIsCalculating(false)
     }
-  }
+  }, [transactionType, selectedCounty, selectedCity, salesPrice, loanAmount, ownerPolicyType, lenderPolicyType, includeOwnerPolicy])
 
-  const isFormValid = 
-    selectedCounty && 
-    selectedCity && 
-    loanAmount && 
+  // ── Print ─────────────────────────────────────────────────────────────────
+
+  const handlePrint = useCallback(() => {
+    if (!results) return
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) return
+
+    const isPurchase = transactionType === 'purchase'
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>PCT Rate Estimate</title>
+        <style>
+          body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; color: #333; }
+          h1 { font-size: 20px; color: #03374f; border-bottom: 2px solid #e8830c; padding-bottom: 8px; }
+          h2 { font-size: 15px; color: #03374f; margin-top: 24px; }
+          .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; }
+          .row span:last-child { font-weight: 500; }
+          .total { border-top: 2px solid #03374f; padding-top: 8px; margin-top: 12px; }
+          .total span { font-size: 18px; font-weight: 700; color: #03374f; }
+          .info { font-size: 12px; color: #888; margin-top: 4px; }
+          .meta { font-size: 13px; color: #666; margin-bottom: 20px; }
+          .disclaimer { font-size: 11px; color: #999; margin-top: 24px; border-top: 1px solid #eee; padding-top: 12px; }
+          .logo { font-size: 14px; font-weight: 700; color: #03374f; }
+          @media print { body { margin: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="logo">Pacific Coast Title Company</div>
+        <h1>Title & Escrow Fee Estimate</h1>
+        <div class="meta">
+          <div><strong>Transaction:</strong> ${isPurchase ? 'Purchase' : 'Refinance'}</div>
+          <div><strong>County:</strong> ${selectedCounty} · <strong>City:</strong> ${selectedCity}</div>
+          ${isPurchase ? `<div><strong>Sales Price:</strong> ${formatCurrency(parseNumberInput(salesPrice))}</div>` : ''}
+          <div><strong>Loan Amount:</strong> ${formatCurrency(parseNumberInput(loanAmount))}</div>
+          <div><strong>Date:</strong> ${new Date().toLocaleDateString()}</div>
+        </div>
+
+        <h2>Title Insurance</h2>
+        ${results.titleFees.ownerPolicy > 0 ? `<div class="row"><span>${results.titleFees.ownerPolicyLabel}</span><span>${formatCurrency(results.titleFees.ownerPolicy)}</span></div>` : ''}
+        <div class="row"><span>${results.titleFees.lenderPolicyLabel}</span><span>${formatCurrency(results.titleFees.lenderPolicy)}</span></div>
+        ${results.titleFees.endorsements.map(e => `<div class="row"><span style="font-size:12px;color:#666">${e.name}</span><span>${formatCurrency(e.fee)}</span></div>`).join('')}
+        <div class="row" style="font-weight:600"><span>Title Subtotal</span><span>${formatCurrency(results.titleFees.total)}</span></div>
+
+        <h2>Escrow Fees</h2>
+        <div class="row"><span>Escrow Fee</span><span>${formatCurrency(results.escrowFees.baseFee)}</span></div>
+        ${results.escrowFees.additionalFees.map(f => `<div class="row"><span>${f.name}</span><span>${formatCurrency(f.fee)}</span></div>`).join('')}
+        <div class="row" style="font-weight:600"><span>Escrow Subtotal</span><span>${formatCurrency(results.escrowFees.total)}</span></div>
+
+        ${isPurchase ? `
+        <h2>Transfer Taxes</h2>
+        <div class="row"><span>County Transfer Tax ($${results.transferTaxes.countyRate.toFixed(2)}/1,000)</span><span>${formatCurrency(results.transferTaxes.countyTax)}</span></div>
+        ${results.transferTaxes.cityTax > 0 ? `<div class="row"><span>City Transfer Tax ($${results.transferTaxes.cityRate.toFixed(2)}/1,000)</span><span>${formatCurrency(results.transferTaxes.cityTax)}</span></div>` : ''}
+        <div class="row" style="font-weight:600"><span>Transfer Tax Subtotal</span><span>${formatCurrency(results.transferTaxes.total)}</span></div>
+        ` : ''}
+
+        ${results.additionalFees.length > 0 ? `
+        <h2>Additional Fees</h2>
+        ${results.additionalFees.map(f => `<div class="row"><span>${f.name}</span><span>${formatCurrency(f.fee)}</span></div>`).join('')}
+        <div class="row" style="font-weight:600"><span>Additional Fees Subtotal</span><span>${formatCurrency(results.additionalFeesTotal)}</span></div>
+        ` : ''}
+
+        <div class="total">
+          <div class="row"><span>Estimated Total</span><span>${formatCurrency(results.grandTotal)}</span></div>
+        </div>
+
+        <div class="disclaimer">${results.disclaimer}</div>
+        <div class="disclaimer">Pacific Coast Title Company · (714) 516-6700 · pct.com</div>
+      </body>
+      </html>
+    `)
+    printWindow.document.close()
+    printWindow.print()
+  }, [results, transactionType, selectedCounty, selectedCity, salesPrice, loanAmount])
+
+  // ── Validation ────────────────────────────────────────────────────────────
+
+  const isFormValid =
+    selectedCounty &&
+    selectedCity &&
+    loanAmount &&
     (transactionType === 'refinance' || salesPrice)
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="w-full">
@@ -182,11 +306,15 @@ export function RateCalculator() {
           <div className="grid grid-cols-2 gap-2 p-1.5 bg-[#f8f6f3] rounded-xl">
             <button
               type="button"
-              onClick={() => setTransactionType('purchase')}
+              onClick={() => {
+                setTransactionType('purchase')
+                setSelectedCounty('')
+                setSelectedCity('')
+              }}
               className={cn(
                 'flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all',
                 transactionType === 'purchase'
-                  ? 'bg-white text-secondary shadow-sm border border-gray-100'
+                  ? 'bg-white text-[#03374f] shadow-sm border border-gray-100'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
               )}
             >
@@ -195,11 +323,15 @@ export function RateCalculator() {
             </button>
             <button
               type="button"
-              onClick={() => setTransactionType('refinance')}
+              onClick={() => {
+                setTransactionType('refinance')
+                setSelectedCounty('')
+                setSelectedCity('')
+              }}
               className={cn(
                 'flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all',
                 transactionType === 'refinance'
-                  ? 'bg-white text-secondary shadow-sm border border-gray-100'
+                  ? 'bg-white text-[#03374f] shadow-sm border border-gray-100'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
               )}
             >
@@ -211,79 +343,49 @@ export function RateCalculator() {
 
         {/* County Select */}
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-2.5">
-            County
-          </label>
-          <Select
-            value={selectedCounty}
-            onValueChange={setSelectedCounty}
-            disabled={isLoadingCounties}
-          >
-            <SelectTrigger className="w-full h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary/40 transition-all">
-              <SelectValue placeholder={isLoadingCounties ? 'Loading counties...' : 'Select county'} />
+          <label className="block text-sm font-medium text-gray-600 mb-2.5">County / Region</label>
+          <Select value={selectedCounty} onValueChange={setSelectedCounty} disabled={isLoadingCounties}>
+            <SelectTrigger className="w-full h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-[#03374f]/20 focus:border-[#03374f]/40 transition-all">
+              <SelectValue placeholder={isLoadingCounties ? 'Loading...' : 'Select county'} />
             </SelectTrigger>
             <SelectContent>
-              {counties.map((county) => (
-                <SelectItem key={county.id} value={county.id}>
-                  {county.name}
-                </SelectItem>
+              {counties.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        {/* City Select - conditional */}
+        {/* City Select */}
         {selectedCounty && (
           <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-            <label className="block text-sm font-medium text-gray-600 mb-2.5">
-              City
-            </label>
-            <Select
-              value={selectedCity}
-              onValueChange={setSelectedCity}
-              disabled={isLoadingCities}
-            >
-              <SelectTrigger className="w-full h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary/40 transition-all">
-                <SelectValue placeholder={isLoadingCities ? 'Loading cities...' : 'Select city'} />
+            <label className="block text-sm font-medium text-gray-600 mb-2.5">City</label>
+            <Select value={selectedCity} onValueChange={setSelectedCity} disabled={isLoadingCities}>
+              <SelectTrigger className="w-full h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-[#03374f]/20 focus:border-[#03374f]/40 transition-all">
+                <SelectValue placeholder={isLoadingCities ? 'Loading...' : 'Select city'} />
               </SelectTrigger>
               <SelectContent>
-                {cities.map((city) => (
-                  <SelectItem key={city.id} value={city.id}>
-                    {city.name}
-                  </SelectItem>
+                {cities.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {selectedCityData && transactionType === 'purchase' && (
-              <p className="mt-2 text-xs text-gray-400">
-                Transfer Tax Rate: ${selectedCityData.transferTaxRate.toFixed(2)} per $1,000
-              </p>
-            )}
           </div>
         )}
 
-        {/* Sales Price - Purchase only */}
+        {/* Sales Price (Purchase only) */}
         {transactionType === 'purchase' && (
           <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-            <label className="block text-sm font-medium text-gray-600 mb-2.5">
-              Sales Price
-            </label>
+            <label className="block text-sm font-medium text-gray-600 mb-2.5">Sales Price</label>
             <div className="relative">
               <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 type="text"
                 inputMode="numeric"
-                placeholder="500,000"
+                placeholder="750,000"
                 value={salesPrice}
-                onChange={(e) => {
-                  const raw = e.target.value.replace(/[^0-9]/g, '')
-                  if (raw) {
-                    setSalesPrice(Number(raw).toLocaleString())
-                  } else {
-                    setSalesPrice('')
-                  }
-                }}
-                className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary/40 transition-all"
+                onChange={(e) => setSalesPrice(formatNumberInput(e.target.value))}
+                className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-[#03374f]/20 focus:border-[#03374f]/40 transition-all"
               />
             </div>
           </div>
@@ -291,35 +393,105 @@ export function RateCalculator() {
 
         {/* Loan Amount */}
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-2.5">
-            Loan Amount
-          </label>
+          <label className="block text-sm font-medium text-gray-600 mb-2.5">Loan Amount</label>
           <div className="relative">
             <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               type="text"
               inputMode="numeric"
-              placeholder="400,000"
+              placeholder="600,000"
               value={loanAmount}
-              onChange={(e) => {
-                const raw = e.target.value.replace(/[^0-9]/g, '')
-                if (raw) {
-                  setLoanAmount(Number(raw).toLocaleString())
-                } else {
-                  setLoanAmount('')
-                }
-              }}
-              className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary/40 transition-all"
+              onChange={(e) => setLoanAmount(formatNumberInput(e.target.value))}
+              className="pl-10 h-12 bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-[#03374f]/20 focus:border-[#03374f]/40 transition-all"
             />
           </div>
         </div>
+
+        {/* Policy Options (Purchase only) */}
+        {transactionType === 'purchase' && (
+          <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-4">
+            {/* Owner's Policy Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2.5">
+                Owner&apos;s Policy Type
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOwnerPolicyType('clta')}
+                  className={cn(
+                    'py-2.5 px-3 rounded-lg text-xs font-medium border transition-all',
+                    ownerPolicyType === 'clta'
+                      ? 'bg-[#03374f]/5 border-[#03374f]/20 text-[#03374f]'
+                      : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+                  )}
+                >
+                  CLTA Standard
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOwnerPolicyType('alta')}
+                  className={cn(
+                    'py-2.5 px-3 rounded-lg text-xs font-medium border transition-all',
+                    ownerPolicyType === 'alta'
+                      ? 'bg-[#03374f]/5 border-[#03374f]/20 text-[#03374f]'
+                      : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+                  )}
+                >
+                  ALTA Homeowner&apos;s
+                </button>
+              </div>
+            </div>
+
+            {/* Lender's Policy Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2.5">
+                Lender&apos;s Policy Type
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setLenderPolicyType('clta')}
+                  className={cn(
+                    'py-2.5 px-3 rounded-lg text-xs font-medium border transition-all',
+                    lenderPolicyType === 'clta'
+                      ? 'bg-[#03374f]/5 border-[#03374f]/20 text-[#03374f]'
+                      : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+                  )}
+                >
+                  CLTA Concurrent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLenderPolicyType('alta')}
+                  className={cn(
+                    'py-2.5 px-3 rounded-lg text-xs font-medium border transition-all',
+                    lenderPolicyType === 'alta'
+                      ? 'bg-[#03374f]/5 border-[#03374f]/20 text-[#03374f]'
+                      : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+                  )}
+                >
+                  ALTA Extended
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            {error}
+          </div>
+        )}
 
         {/* Calculate Button */}
         <Button
           type="button"
           onClick={handleCalculate}
           disabled={!isFormValid || isCalculating}
-          className="w-full h-12 bg-secondary hover:bg-secondary/90 text-white font-medium text-sm rounded-xl shadow-sm hover:shadow-md transition-all"
+          className="w-full h-12 bg-[#03374f] hover:bg-[#03374f]/90 text-white font-medium text-sm rounded-xl shadow-sm hover:shadow-md transition-all"
         >
           {isCalculating ? (
             <>
@@ -335,27 +507,54 @@ export function RateCalculator() {
         </Button>
       </div>
 
-      {/* Results Section */}
+      {/* ── Results ────────────────────────────────────────────────────────── */}
       {results && (
-        <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div ref={resultsRef} className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
           <div className="border-t border-gray-100 pt-6">
-            <h3 className="text-base font-medium text-secondary mb-5 flex items-center gap-2">
-              <Receipt className="w-4 h-4 text-secondary/60" />
-              Estimated Fees
-            </h3>
+            {/* Call for Quote Banner */}
+            {results.callForQuote && (
+              <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl mb-5">
+                <Phone className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-amber-800">Call for Quote</p>
+                  <p className="text-xs text-amber-700 mt-0.5">
+                    Properties over $3,000,000 require a custom quote. Please call us at{' '}
+                    <a href="tel:7145166700" className="underline font-medium">(714) 516-6700</a>.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-base font-medium text-[#03374f] flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-[#03374f]/60" />
+                Fee Estimate
+              </h3>
+              <button
+                onClick={handlePrint}
+                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#03374f] transition-colors"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                Print
+              </button>
+            </div>
 
             <div className="space-y-3">
               {/* Title Insurance */}
               <FeeSection
-                icon={<FileText className="w-4 h-4" />}
+                icon={<Shield className="w-4 h-4" />}
                 title="Title Insurance"
-                total={results.titleInsurance.total}
+                total={results.titleFees.total}
                 items={[
-                  ...(results.titleInsurance.ownerPolicy > 0
-                    ? [{ label: "Owner's Policy", amount: results.titleInsurance.ownerPolicy }]
+                  ...(results.titleFees.ownerPolicy > 0
+                    ? [{ label: results.titleFees.ownerPolicyLabel, amount: results.titleFees.ownerPolicy }]
                     : []),
-                  { label: "Lender's Policy", amount: results.titleInsurance.lenderPolicy },
-                  { label: 'Endorsements', amount: results.titleInsurance.endorsements },
+                  ...(results.titleFees.lenderPolicy > 0
+                    ? [{ label: results.titleFees.lenderPolicyLabel, amount: results.titleFees.lenderPolicy }]
+                    : []),
+                  ...results.titleFees.endorsements
+                    .filter(e => e.fee > 0)
+                    .map(e => ({ label: e.name, amount: e.fee })),
                 ]}
               />
 
@@ -365,61 +564,78 @@ export function RateCalculator() {
                 title="Escrow Fees"
                 total={results.escrowFees.total}
                 items={[
-                  { label: 'Base Fee', amount: results.escrowFees.baseFee },
-                  { label: 'Document Preparation', amount: results.escrowFees.documentPreparation },
-                  { label: 'Notary Fees', amount: results.escrowFees.notaryFees },
-                  { label: 'Wire Transfer', amount: results.escrowFees.wireTransfer },
-                  { label: 'Courier Fees', amount: results.escrowFees.courierFees },
+                  { label: 'Escrow Fee', amount: results.escrowFees.baseFee },
+                  ...results.escrowFees.additionalFees.map(f => ({ label: f.name, amount: f.fee })),
                 ]}
               />
 
-              {/* Transfer Taxes - Purchase only */}
+              {/* Transfer Taxes (Purchase only) */}
               {transactionType === 'purchase' && results.transferTaxes.total > 0 && (
                 <FeeSection
                   icon={<Receipt className="w-4 h-4" />}
                   title="Transfer Taxes"
                   total={results.transferTaxes.total}
                   items={[
-                    { label: 'County Transfer Tax', amount: results.transferTaxes.county },
-                    { label: 'City Transfer Tax', amount: results.transferTaxes.city },
+                    {
+                      label: `County Transfer Tax ($${results.transferTaxes.countyRate.toFixed(2)}/1,000)`,
+                      amount: results.transferTaxes.countyTax,
+                    },
+                    ...(results.transferTaxes.cityTax > 0
+                      ? [{
+                        label: `City Transfer Tax ($${results.transferTaxes.cityRate.toFixed(2)}/1,000)`,
+                        amount: results.transferTaxes.cityTax,
+                      }]
+                      : []),
                   ]}
                 />
               )}
 
-              {/* Recording Fees */}
-              <FeeSection
-                icon={<FileText className="w-4 h-4" />}
-                title="Recording Fees"
-                total={results.recordingFees.total}
-                items={[
-                  ...(results.recordingFees.deed > 0
-                    ? [{ label: 'Deed Recording', amount: results.recordingFees.deed }]
-                    : []),
-                  { label: 'Mortgage Recording', amount: results.recordingFees.mortgage },
-                ]}
-              />
+              {/* Additional Fees */}
+              {results.additionalFees.length > 0 && (
+                <FeeSection
+                  icon={<FileText className="w-4 h-4" />}
+                  title="Additional Fees"
+                  total={results.additionalFeesTotal}
+                  items={results.additionalFees.map(f => ({ label: f.name, amount: f.fee }))}
+                />
+              )}
 
               {/* Grand Total */}
-              <div className="bg-gradient-to-r from-secondary/5 to-secondary/[0.02] border border-secondary/10 rounded-xl p-5 mt-5">
+              <div className="bg-gradient-to-r from-[#03374f]/5 to-[#03374f]/[0.02] border border-[#03374f]/10 rounded-xl p-5 mt-5">
                 <div className="flex justify-between items-center">
-                  <span className="font-medium text-secondary">Estimated Total</span>
-                  <span className="font-semibold text-2xl text-secondary">{formatCurrency(results.grandTotal)}</span>
+                  <span className="font-medium text-[#03374f]">Estimated Total</span>
+                  <span className="font-semibold text-2xl text-[#03374f]">
+                    {formatCurrency(results.grandTotal)}
+                  </span>
                 </div>
               </div>
 
               {/* Disclaimer */}
-              <p className="text-xs text-gray-400 text-center mt-5 leading-relaxed">
-                This is an estimate only. Actual fees may vary based on specific transaction details.
-                Contact us for a detailed quote.
-              </p>
+              <div className="flex items-start gap-2 mt-4 p-3 bg-gray-50 rounded-xl">
+                <Info className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  {results.disclaimer}
+                </p>
+              </div>
 
-              {/* Get Quote Button */}
-              <Button
-                variant="outline"
-                className="w-full h-11 mt-3 border-gray-200 text-secondary hover:bg-gray-50 font-medium text-sm rounded-xl"
-              >
-                Request Detailed Quote
-              </Button>
+              {/* Action Buttons */}
+              <div className="flex gap-3 mt-4">
+                <Button
+                  onClick={handlePrint}
+                  variant="outline"
+                  className="flex-1 h-11 border-gray-200 text-[#03374f] hover:bg-gray-50 font-medium text-sm rounded-xl"
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print Estimate
+                </Button>
+                <a
+                  href="tel:7145166700"
+                  className="flex-1 h-11 inline-flex items-center justify-center bg-[#e8830c] hover:bg-[#e8830c]/90 text-white font-medium text-sm rounded-xl transition-colors"
+                >
+                  <Phone className="w-4 h-4 mr-2" />
+                  Call for Quote
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -427,6 +643,8 @@ export function RateCalculator() {
     </div>
   )
 }
+
+// ── Fee Section Sub-Component ───────────────────────────────────────────────
 
 function FeeSection({
   icon,
@@ -449,11 +667,11 @@ function FeeSection({
         className="w-full flex items-center justify-between p-4 hover:bg-[#f8f6f3] transition-colors"
       >
         <div className="flex items-center gap-2.5">
-          <span className="text-secondary/50">{icon}</span>
-          <span className="font-medium text-secondary text-sm">{title}</span>
+          <span className="text-[#03374f]/50">{icon}</span>
+          <span className="font-medium text-[#03374f] text-sm">{title}</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="font-medium text-secondary text-sm">{formatCurrency(total)}</span>
+          <span className="font-medium text-[#03374f] text-sm">{formatCurrency(total)}</span>
           <ChevronDown
             className={cn(
               'w-4 h-4 text-gray-400 transition-transform',
@@ -462,7 +680,7 @@ function FeeSection({
           />
         </div>
       </button>
-      
+
       {isExpanded && (
         <div className="px-4 pb-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
           {items.map((item, index) => (

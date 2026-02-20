@@ -1,0 +1,68 @@
+[
+  {
+    "countyId": 188,
+    "zoneName": "Los Angeles County",
+    "countyTaxPerThousand": 1.1,
+    "cityTaxPerThousand": 4.5
+  },
+  {
+    "countyId": 161,
+    "zoneName": "Los Angeles County",
+    "countyTaxPerThousand": 1.1,
+    "cityTaxPerThousand": 4.5
+  },
+  {
+    "countyId": 202,
+    "zoneName": "Los Angeles County",
+    "countyTaxPerThousand": 1.1,
+    "cityTaxPerThousand": 2.2
+  },
+  {
+    "countyId": 204,
+    "zoneName": "Los Angeles County",
+    "countyTaxPerThousand": 1.1,
+    "cityTaxPerThousand": 2.2
+  },
+  {
+    "countyId": 214,
+    "zoneName": "Los Angeles County",
+    "countyTaxPerThousand": 1.1,
+    "cityTaxPerThousand": 3
+  },
+  {
+    "countyId": 314,
+    "zoneName": "Los Angeles County",
+    "countyTaxPerThousand": 1.1,
+    "cityTaxPerThousand": 1.1
+  },
+  {
+    "countyId": 309,
+    "zoneName": "Orange",
+    "countyTaxPerThousand": 1.1,
+    "cityTaxPerThousand": 0
+  },
+  {
+    "countyId": 313,
+    "zoneName": "San Bernardino",
+    "countyTaxPerThousand": 1.1,
+    "cityTaxPerThousand": 0
+  },
+  {
+    "countyId": 74,
+    "zoneName": "Riverside",
+    "countyTaxPerThousand": 1.1,
+    "cityTaxPerThousand": 1.1
+  },
+  {
+    "countyId": 316,
+    "zoneName": "San Diego",
+    "countyTaxPerThousand": 1.1,
+    "cityTaxPerThousand": 0
+  },
+  {
+    "countyId": 281,
+    "zoneName": "Ventura",
+    "countyTaxPerThousand": 1.1,
+    "cityTaxPerThousand": 0
+  }
+]

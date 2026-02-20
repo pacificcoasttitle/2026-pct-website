@@ -1,0 +1,2002 @@
+[
+  {
+    "zoneName": "Santa Clara County",
+    "zoneId": 7,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 1,
+        "name": "Campbell",
+        "transactionType": "Re-Finance"
+      },
+      {
+        "id": 2,
+        "name": "Cupertino",
+        "transactionType": "Re-Finance"
+      },
+      {
+        "id": 3,
+        "name": "Gilroy",
+        "transactionType": "Re-Finance"
+      },
+      {
+        "id": 4,
+        "name": "Los Altos",
+        "transactionType": "Re-Finance"
+      },
+      {
+        "id": 5,
+        "name": "Los Altos Hills",
+        "transactionType": "Re-Finance"
+      },
+      {
+        "id": 6,
+        "name": "Los Gatos",
+        "transactionType": "Re-Finance"
+      },
+      {
+        "id": 7,
+        "name": "Milpitas",
+        "transactionType": "Re-Finance"
+      },
+      {
+        "id": 8,
+        "name": "Monte Sereno",
+        "transactionType": "Re-Finance"
+      },
+      {
+        "id": 9,
+        "name": "Morgan Hill",
+        "transactionType": "Re-Finance"
+      },
+      {
+        "id": 10,
+        "name": "Mountain View",
+        "transactionType": "Re-Finance"
+      },
+      {
+        "id": 11,
+        "name": "San Jose",
+        "transactionType": "Re-Finance"
+      },
+      {
+        "id": 12,
+        "name": "Palo Alto",
+        "transactionType": "Re-Finance"
+      },
+      {
+        "id": 13,
+        "name": "Santa Clara",
+        "transactionType": "Re-Finance"
+      },
+      {
+        "id": 14,
+        "name": "Saratoga",
+        "transactionType": "Re-Finance"
+      },
+      {
+        "id": 15,
+        "name": "Sunnyvale",
+        "transactionType": "Re-Finance"
+      },
+      {
+        "id": 308,
+        "name": "All Cities",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Orange",
+    "zoneId": 1,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 16,
+        "name": "Aliso Viejo",
+        "transactionType": "All"
+      },
+      {
+        "id": 17,
+        "name": "Anaheim",
+        "transactionType": "All"
+      },
+      {
+        "id": 18,
+        "name": "Brea",
+        "transactionType": "All"
+      },
+      {
+        "id": 19,
+        "name": "Buena Park",
+        "transactionType": "All"
+      },
+      {
+        "id": 20,
+        "name": "Costa Mesa",
+        "transactionType": "All"
+      },
+      {
+        "id": 21,
+        "name": "Cypress",
+        "transactionType": "All"
+      },
+      {
+        "id": 22,
+        "name": "Dana Point",
+        "transactionType": "All"
+      },
+      {
+        "id": 23,
+        "name": "Fountain Valley",
+        "transactionType": "All"
+      },
+      {
+        "id": 24,
+        "name": "Fullerton",
+        "transactionType": "All"
+      },
+      {
+        "id": 25,
+        "name": "Garden Grove",
+        "transactionType": "All"
+      },
+      {
+        "id": 26,
+        "name": "Huntington Beach",
+        "transactionType": "All"
+      },
+      {
+        "id": 27,
+        "name": "Irvine",
+        "transactionType": "All"
+      },
+      {
+        "id": 28,
+        "name": "Laguna Beach",
+        "transactionType": "All"
+      },
+      {
+        "id": 29,
+        "name": "Laguna Hills",
+        "transactionType": "All"
+      },
+      {
+        "id": 30,
+        "name": "Laguna Niguel",
+        "transactionType": "All"
+      },
+      {
+        "id": 31,
+        "name": "Laguna Woods",
+        "transactionType": "All"
+      },
+      {
+        "id": 32,
+        "name": "La Habra",
+        "transactionType": "All"
+      },
+      {
+        "id": 33,
+        "name": "Lake Forest",
+        "transactionType": "All"
+      },
+      {
+        "id": 34,
+        "name": "La Palma",
+        "transactionType": "All"
+      },
+      {
+        "id": 35,
+        "name": "Los Alamitos",
+        "transactionType": "All"
+      },
+      {
+        "id": 36,
+        "name": "Mission Viejo",
+        "transactionType": "All"
+      },
+      {
+        "id": 37,
+        "name": "Newport Beach",
+        "transactionType": "All"
+      },
+      {
+        "id": 38,
+        "name": "Orange",
+        "transactionType": "All"
+      },
+      {
+        "id": 39,
+        "name": "Placentia",
+        "transactionType": "All"
+      },
+      {
+        "id": 40,
+        "name": "Rancho Santa Margarita",
+        "transactionType": "All"
+      },
+      {
+        "id": 41,
+        "name": "San Clemente",
+        "transactionType": "All"
+      },
+      {
+        "id": 42,
+        "name": "San Juan Capistrano",
+        "transactionType": "All"
+      },
+      {
+        "id": 43,
+        "name": "Santa Ana",
+        "transactionType": "All"
+      },
+      {
+        "id": 44,
+        "name": "Seal Beach",
+        "transactionType": "All"
+      },
+      {
+        "id": 45,
+        "name": "Stanton",
+        "transactionType": "All"
+      },
+      {
+        "id": 46,
+        "name": "Tustin",
+        "transactionType": "All"
+      },
+      {
+        "id": 47,
+        "name": "Villa Park",
+        "transactionType": "All"
+      },
+      {
+        "id": 48,
+        "name": "Westminster",
+        "transactionType": "All"
+      },
+      {
+        "id": 49,
+        "name": "Yorba Linda",
+        "transactionType": "All"
+      },
+      {
+        "id": 309,
+        "name": "All Cities",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "Riverside",
+    "zoneId": 1,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 50,
+        "name": "Banning",
+        "transactionType": "All"
+      },
+      {
+        "id": 51,
+        "name": "Beaumont",
+        "transactionType": "All"
+      },
+      {
+        "id": 52,
+        "name": "Blythe",
+        "transactionType": "All"
+      },
+      {
+        "id": 53,
+        "name": "Calimesa",
+        "transactionType": "All"
+      },
+      {
+        "id": 54,
+        "name": "Canyon Lake",
+        "transactionType": "All"
+      },
+      {
+        "id": 55,
+        "name": "Cathedral City",
+        "transactionType": "All"
+      },
+      {
+        "id": 56,
+        "name": "Coachella",
+        "transactionType": "All"
+      },
+      {
+        "id": 57,
+        "name": "Corona",
+        "transactionType": "All"
+      },
+      {
+        "id": 58,
+        "name": "Desert Hot Springs",
+        "transactionType": "All"
+      },
+      {
+        "id": 59,
+        "name": "Eastvale",
+        "transactionType": "All"
+      },
+      {
+        "id": 60,
+        "name": "Hemet",
+        "transactionType": "All"
+      },
+      {
+        "id": 61,
+        "name": "Indian Wells",
+        "transactionType": "All"
+      },
+      {
+        "id": 62,
+        "name": "Indio",
+        "transactionType": "All"
+      },
+      {
+        "id": 63,
+        "name": "Jurupa Valley",
+        "transactionType": "All"
+      },
+      {
+        "id": 64,
+        "name": "Lake Elsinore",
+        "transactionType": "All"
+      },
+      {
+        "id": 65,
+        "name": "La Quinta",
+        "transactionType": "All"
+      },
+      {
+        "id": 66,
+        "name": "Menifee",
+        "transactionType": "All"
+      },
+      {
+        "id": 67,
+        "name": "Moreno Valley",
+        "transactionType": "All"
+      },
+      {
+        "id": 68,
+        "name": "Murrieta",
+        "transactionType": "All"
+      },
+      {
+        "id": 69,
+        "name": "Norco",
+        "transactionType": "All"
+      },
+      {
+        "id": 70,
+        "name": "Palm Desert",
+        "transactionType": "All"
+      },
+      {
+        "id": 71,
+        "name": "Palm Springs",
+        "transactionType": "All"
+      },
+      {
+        "id": 72,
+        "name": "Perris",
+        "transactionType": "All"
+      },
+      {
+        "id": 73,
+        "name": "Rancho Mirage",
+        "transactionType": "All"
+      },
+      {
+        "id": 74,
+        "name": "Riverside",
+        "transactionType": "All"
+      },
+      {
+        "id": 75,
+        "name": "San Jacinto",
+        "transactionType": "All"
+      },
+      {
+        "id": 76,
+        "name": "Temecula",
+        "transactionType": "All"
+      },
+      {
+        "id": 77,
+        "name": "Wildomar",
+        "transactionType": "All"
+      },
+      {
+        "id": 310,
+        "name": "All Cities",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "Alameda County",
+    "zoneId": 7,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 78,
+        "name": "Alameda",
+        "transactionType": "All"
+      },
+      {
+        "id": 79,
+        "name": "Albany",
+        "transactionType": "All"
+      },
+      {
+        "id": 80,
+        "name": "Berkeley",
+        "transactionType": "All"
+      },
+      {
+        "id": 81,
+        "name": "Castro Valley",
+        "transactionType": "All"
+      },
+      {
+        "id": 82,
+        "name": "Dublin",
+        "transactionType": "All"
+      },
+      {
+        "id": 83,
+        "name": "Emeryville",
+        "transactionType": "All"
+      },
+      {
+        "id": 84,
+        "name": "Fremont",
+        "transactionType": "All"
+      },
+      {
+        "id": 85,
+        "name": "Hayward",
+        "transactionType": "All"
+      },
+      {
+        "id": 86,
+        "name": "Kensington",
+        "transactionType": "All"
+      },
+      {
+        "id": 87,
+        "name": "Livermore",
+        "transactionType": "All"
+      },
+      {
+        "id": 88,
+        "name": "Mount Eden",
+        "transactionType": "All"
+      },
+      {
+        "id": 89,
+        "name": "Newark",
+        "transactionType": "All"
+      },
+      {
+        "id": 90,
+        "name": "Oakland",
+        "transactionType": "All"
+      },
+      {
+        "id": 91,
+        "name": "Piedmont",
+        "transactionType": "All"
+      },
+      {
+        "id": 92,
+        "name": "Pleasanton",
+        "transactionType": "All"
+      },
+      {
+        "id": 93,
+        "name": "San Leandro",
+        "transactionType": "All"
+      },
+      {
+        "id": 94,
+        "name": "San Lorenzo",
+        "transactionType": "All"
+      },
+      {
+        "id": 95,
+        "name": "Sunol",
+        "transactionType": "All"
+      },
+      {
+        "id": 96,
+        "name": "Union City",
+        "transactionType": "All"
+      },
+      {
+        "id": 311,
+        "name": "All Cities",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "Contra County",
+    "zoneId": 7,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 97,
+        "name": "Antioch",
+        "transactionType": "All"
+      },
+      {
+        "id": 98,
+        "name": "Brentwood",
+        "transactionType": "All"
+      },
+      {
+        "id": 99,
+        "name": "Clayton",
+        "transactionType": "All"
+      },
+      {
+        "id": 100,
+        "name": "Concord",
+        "transactionType": "All"
+      },
+      {
+        "id": 101,
+        "name": "Danville",
+        "transactionType": "All"
+      },
+      {
+        "id": 102,
+        "name": "El Cerrito",
+        "transactionType": "All"
+      },
+      {
+        "id": 103,
+        "name": "Hercules",
+        "transactionType": "All"
+      },
+      {
+        "id": 104,
+        "name": "Lafayette",
+        "transactionType": "All"
+      },
+      {
+        "id": 105,
+        "name": "Martinez",
+        "transactionType": "All"
+      },
+      {
+        "id": 106,
+        "name": "Moraga",
+        "transactionType": "All"
+      },
+      {
+        "id": 107,
+        "name": "Oakley",
+        "transactionType": "All"
+      },
+      {
+        "id": 108,
+        "name": "Orinda",
+        "transactionType": "All"
+      },
+      {
+        "id": 109,
+        "name": "Pinole",
+        "transactionType": "All"
+      },
+      {
+        "id": 110,
+        "name": "Pittsburg",
+        "transactionType": "All"
+      },
+      {
+        "id": 111,
+        "name": "Pleasant Hill",
+        "transactionType": "All"
+      },
+      {
+        "id": 112,
+        "name": "Richmond",
+        "transactionType": "All"
+      },
+      {
+        "id": 113,
+        "name": "San Pablo",
+        "transactionType": "All"
+      },
+      {
+        "id": 114,
+        "name": "San Ramon",
+        "transactionType": "All"
+      },
+      {
+        "id": 115,
+        "name": "Walnut Creek",
+        "transactionType": "All"
+      },
+      {
+        "id": 312,
+        "name": "All Cities",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "San Bernardino",
+    "zoneId": 1,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 116,
+        "name": "Adelanto",
+        "transactionType": "All"
+      },
+      {
+        "id": 117,
+        "name": "Apple Valley",
+        "transactionType": "All"
+      },
+      {
+        "id": 118,
+        "name": "Barstow",
+        "transactionType": "All"
+      },
+      {
+        "id": 119,
+        "name": "Big Bear Lake",
+        "transactionType": "All"
+      },
+      {
+        "id": 120,
+        "name": "Chino",
+        "transactionType": "All"
+      },
+      {
+        "id": 121,
+        "name": "Chino Hills",
+        "transactionType": "All"
+      },
+      {
+        "id": 122,
+        "name": "Colton",
+        "transactionType": "All"
+      },
+      {
+        "id": 123,
+        "name": "Fontana",
+        "transactionType": "All"
+      },
+      {
+        "id": 124,
+        "name": "Grand Terrace",
+        "transactionType": "All"
+      },
+      {
+        "id": 125,
+        "name": "Hesperia",
+        "transactionType": "All"
+      },
+      {
+        "id": 126,
+        "name": "Highland",
+        "transactionType": "All"
+      },
+      {
+        "id": 127,
+        "name": "Loma Linda",
+        "transactionType": "All"
+      },
+      {
+        "id": 128,
+        "name": "Montclair",
+        "transactionType": "All"
+      },
+      {
+        "id": 129,
+        "name": "Needles",
+        "transactionType": "All"
+      },
+      {
+        "id": 130,
+        "name": "Ontario",
+        "transactionType": "All"
+      },
+      {
+        "id": 131,
+        "name": "Rancho Cucamonga",
+        "transactionType": "All"
+      },
+      {
+        "id": 132,
+        "name": "Redlands",
+        "transactionType": "All"
+      },
+      {
+        "id": 133,
+        "name": "Rialto",
+        "transactionType": "All"
+      },
+      {
+        "id": 134,
+        "name": "San Bernardino",
+        "transactionType": "All"
+      },
+      {
+        "id": 135,
+        "name": "Twentynine Palms",
+        "transactionType": "All"
+      },
+      {
+        "id": 136,
+        "name": "Upland",
+        "transactionType": "All"
+      },
+      {
+        "id": 137,
+        "name": "Victorville",
+        "transactionType": "All"
+      },
+      {
+        "id": 138,
+        "name": "Yucaipa",
+        "transactionType": "All"
+      },
+      {
+        "id": 139,
+        "name": "Yucca Valley",
+        "transactionType": "All"
+      },
+      {
+        "id": 313,
+        "name": "All Cities",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "Los Angeles County",
+    "zoneId": 2,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 140,
+        "name": "Agoura Hills",
+        "transactionType": "All"
+      },
+      {
+        "id": 141,
+        "name": "Alhambra",
+        "transactionType": "All"
+      },
+      {
+        "id": 142,
+        "name": "Arcadia",
+        "transactionType": "All"
+      },
+      {
+        "id": 143,
+        "name": "Artesia",
+        "transactionType": "All"
+      },
+      {
+        "id": 144,
+        "name": "Avalon",
+        "transactionType": "All"
+      },
+      {
+        "id": 145,
+        "name": "Azusa",
+        "transactionType": "All"
+      },
+      {
+        "id": 146,
+        "name": "Baldwin Park",
+        "transactionType": "All"
+      },
+      {
+        "id": 147,
+        "name": "Bell",
+        "transactionType": "All"
+      },
+      {
+        "id": 148,
+        "name": "Bellflower",
+        "transactionType": "All"
+      },
+      {
+        "id": 149,
+        "name": "Bell Gardens",
+        "transactionType": "All"
+      },
+      {
+        "id": 150,
+        "name": "Beverly Hills",
+        "transactionType": "All"
+      },
+      {
+        "id": 151,
+        "name": "Bradbury",
+        "transactionType": "All"
+      },
+      {
+        "id": 152,
+        "name": "Burbank",
+        "transactionType": "All"
+      },
+      {
+        "id": 153,
+        "name": "Calabasas",
+        "transactionType": "All"
+      },
+      {
+        "id": 154,
+        "name": "Carson",
+        "transactionType": "All"
+      },
+      {
+        "id": 155,
+        "name": "Cerritos",
+        "transactionType": "All"
+      },
+      {
+        "id": 156,
+        "name": "Claremont",
+        "transactionType": "All"
+      },
+      {
+        "id": 157,
+        "name": "Commerce",
+        "transactionType": "All"
+      },
+      {
+        "id": 158,
+        "name": "Compton",
+        "transactionType": "All"
+      },
+      {
+        "id": 159,
+        "name": "Covina",
+        "transactionType": "All"
+      },
+      {
+        "id": 160,
+        "name": "Cudahy",
+        "transactionType": "All"
+      },
+      {
+        "id": 161,
+        "name": "Culver City",
+        "transactionType": "All"
+      },
+      {
+        "id": 162,
+        "name": "Diamond Bar",
+        "transactionType": "All"
+      },
+      {
+        "id": 163,
+        "name": "Downey",
+        "transactionType": "All"
+      },
+      {
+        "id": 164,
+        "name": "Duarte",
+        "transactionType": "All"
+      },
+      {
+        "id": 165,
+        "name": "El Monte",
+        "transactionType": "All"
+      },
+      {
+        "id": 166,
+        "name": "El Segundo",
+        "transactionType": "All"
+      },
+      {
+        "id": 167,
+        "name": "Gardena",
+        "transactionType": "All"
+      },
+      {
+        "id": 168,
+        "name": "Glendale",
+        "transactionType": "All"
+      },
+      {
+        "id": 169,
+        "name": "Glendora",
+        "transactionType": "All"
+      },
+      {
+        "id": 170,
+        "name": "Hawaiian Gardens",
+        "transactionType": "All"
+      },
+      {
+        "id": 171,
+        "name": "Hawthorne",
+        "transactionType": "All"
+      },
+      {
+        "id": 172,
+        "name": "Hermosa Beach",
+        "transactionType": "All"
+      },
+      {
+        "id": 173,
+        "name": "Hidden Hills",
+        "transactionType": "All"
+      },
+      {
+        "id": 174,
+        "name": "Huntington Park",
+        "transactionType": "All"
+      },
+      {
+        "id": 175,
+        "name": "Industry",
+        "transactionType": "All"
+      },
+      {
+        "id": 176,
+        "name": "Inglewood",
+        "transactionType": "All"
+      },
+      {
+        "id": 177,
+        "name": "Irwindale",
+        "transactionType": "All"
+      },
+      {
+        "id": 178,
+        "name": "La Canada Flintridge",
+        "transactionType": "All"
+      },
+      {
+        "id": 179,
+        "name": "La Habra Heights",
+        "transactionType": "All"
+      },
+      {
+        "id": 180,
+        "name": "Lakewood",
+        "transactionType": "All"
+      },
+      {
+        "id": 181,
+        "name": "La Mirada",
+        "transactionType": "All"
+      },
+      {
+        "id": 182,
+        "name": "Lancaster",
+        "transactionType": "All"
+      },
+      {
+        "id": 183,
+        "name": "La Puente",
+        "transactionType": "All"
+      },
+      {
+        "id": 184,
+        "name": "La Verne",
+        "transactionType": "All"
+      },
+      {
+        "id": 185,
+        "name": "Lawndale",
+        "transactionType": "All"
+      },
+      {
+        "id": 186,
+        "name": "Lomita",
+        "transactionType": "All"
+      },
+      {
+        "id": 187,
+        "name": "Long Beach",
+        "transactionType": "All"
+      },
+      {
+        "id": 188,
+        "name": "Los Angeles",
+        "transactionType": "All"
+      },
+      {
+        "id": 189,
+        "name": "Lynwood",
+        "transactionType": "All"
+      },
+      {
+        "id": 190,
+        "name": "Malibu",
+        "transactionType": "All"
+      },
+      {
+        "id": 191,
+        "name": "Manhattan Beach",
+        "transactionType": "All"
+      },
+      {
+        "id": 192,
+        "name": "Maywood",
+        "transactionType": "All"
+      },
+      {
+        "id": 193,
+        "name": "Monrovia",
+        "transactionType": "All"
+      },
+      {
+        "id": 194,
+        "name": "Montebello",
+        "transactionType": "All"
+      },
+      {
+        "id": 195,
+        "name": "Monterey Park",
+        "transactionType": "All"
+      },
+      {
+        "id": 196,
+        "name": "Norwalk",
+        "transactionType": "All"
+      },
+      {
+        "id": 197,
+        "name": "Palmdale",
+        "transactionType": "All"
+      },
+      {
+        "id": 198,
+        "name": "Palos Verdes Estates",
+        "transactionType": "All"
+      },
+      {
+        "id": 199,
+        "name": "Paramount",
+        "transactionType": "All"
+      },
+      {
+        "id": 200,
+        "name": "Pasadena",
+        "transactionType": "All"
+      },
+      {
+        "id": 201,
+        "name": "Pico Rivera",
+        "transactionType": "All"
+      },
+      {
+        "id": 202,
+        "name": "Pomona",
+        "transactionType": "All"
+      },
+      {
+        "id": 203,
+        "name": "Rancho Palos Verdes",
+        "transactionType": "All"
+      },
+      {
+        "id": 204,
+        "name": "Redondo Beach",
+        "transactionType": "All"
+      },
+      {
+        "id": 205,
+        "name": "Rolling Hills",
+        "transactionType": "All"
+      },
+      {
+        "id": 206,
+        "name": "Rolling Hills Estates",
+        "transactionType": "All"
+      },
+      {
+        "id": 207,
+        "name": "Rosemead",
+        "transactionType": "All"
+      },
+      {
+        "id": 208,
+        "name": "San Dimas",
+        "transactionType": "All"
+      },
+      {
+        "id": 209,
+        "name": "San Fernando",
+        "transactionType": "All"
+      },
+      {
+        "id": 210,
+        "name": "San Gabriel",
+        "transactionType": "All"
+      },
+      {
+        "id": 211,
+        "name": "San Marino",
+        "transactionType": "All"
+      },
+      {
+        "id": 212,
+        "name": "Santa Clarita",
+        "transactionType": "All"
+      },
+      {
+        "id": 213,
+        "name": "Santa Fe Springs",
+        "transactionType": "All"
+      },
+      {
+        "id": 214,
+        "name": "Santa Monica",
+        "transactionType": "All"
+      },
+      {
+        "id": 215,
+        "name": "Sierra Madre",
+        "transactionType": "All"
+      },
+      {
+        "id": 216,
+        "name": "Signal Hill",
+        "transactionType": "All"
+      },
+      {
+        "id": 217,
+        "name": "South El Monte",
+        "transactionType": "All"
+      },
+      {
+        "id": 218,
+        "name": "South Gate",
+        "transactionType": "All"
+      },
+      {
+        "id": 219,
+        "name": "South Pasadena",
+        "transactionType": "All"
+      },
+      {
+        "id": 220,
+        "name": "Temple City",
+        "transactionType": "All"
+      },
+      {
+        "id": 221,
+        "name": "Torrance",
+        "transactionType": "All"
+      },
+      {
+        "id": 222,
+        "name": "Vernon",
+        "transactionType": "All"
+      },
+      {
+        "id": 223,
+        "name": "Walnut",
+        "transactionType": "All"
+      },
+      {
+        "id": 224,
+        "name": "West Covina",
+        "transactionType": "All"
+      },
+      {
+        "id": 225,
+        "name": "West Hollywood",
+        "transactionType": "All"
+      },
+      {
+        "id": 226,
+        "name": "Westlake Village",
+        "transactionType": "All"
+      },
+      {
+        "id": 227,
+        "name": "Whittier",
+        "transactionType": "All"
+      },
+      {
+        "id": 314,
+        "name": "All Cities",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "Ventura County",
+    "zoneId": 3,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 228,
+        "name": "Camarillo",
+        "transactionType": "All"
+      },
+      {
+        "id": 229,
+        "name": "Fillmore",
+        "transactionType": "All"
+      },
+      {
+        "id": 230,
+        "name": "Moorpark",
+        "transactionType": "All"
+      },
+      {
+        "id": 231,
+        "name": "Ojai",
+        "transactionType": "All"
+      },
+      {
+        "id": 232,
+        "name": "Oxnard",
+        "transactionType": "All"
+      },
+      {
+        "id": 233,
+        "name": "Port Hueneme",
+        "transactionType": "All"
+      },
+      {
+        "id": 234,
+        "name": "San Buenaventura",
+        "transactionType": "All"
+      },
+      {
+        "id": 235,
+        "name": "Santa Paula",
+        "transactionType": "All"
+      },
+      {
+        "id": 236,
+        "name": "Simi Valley",
+        "transactionType": "All"
+      },
+      {
+        "id": 237,
+        "name": "Thousand Oaks",
+        "transactionType": "All"
+      },
+      {
+        "id": 238,
+        "name": "Ventura",
+        "transactionType": "All"
+      },
+      {
+        "id": 315,
+        "name": "All Cities",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "San Diego",
+    "zoneId": 10,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 239,
+        "name": "Carlsbad",
+        "transactionType": "All"
+      },
+      {
+        "id": 240,
+        "name": "Chula Vista",
+        "transactionType": "All"
+      },
+      {
+        "id": 241,
+        "name": "Coronado",
+        "transactionType": "All"
+      },
+      {
+        "id": 242,
+        "name": "Del Mar",
+        "transactionType": "All"
+      },
+      {
+        "id": 243,
+        "name": "El Cajon",
+        "transactionType": "All"
+      },
+      {
+        "id": 244,
+        "name": "Encinitas",
+        "transactionType": "All"
+      },
+      {
+        "id": 245,
+        "name": "Escondido",
+        "transactionType": "All"
+      },
+      {
+        "id": 246,
+        "name": "Imperial Beach",
+        "transactionType": "All"
+      },
+      {
+        "id": 247,
+        "name": "La Mesa",
+        "transactionType": "All"
+      },
+      {
+        "id": 248,
+        "name": "Lemon Grove",
+        "transactionType": "All"
+      },
+      {
+        "id": 249,
+        "name": "National City",
+        "transactionType": "All"
+      },
+      {
+        "id": 250,
+        "name": "Oceanside",
+        "transactionType": "All"
+      },
+      {
+        "id": 251,
+        "name": "Poway",
+        "transactionType": "All"
+      },
+      {
+        "id": 252,
+        "name": "San Diego",
+        "transactionType": "All"
+      },
+      {
+        "id": 253,
+        "name": "San Marcos",
+        "transactionType": "All"
+      },
+      {
+        "id": 254,
+        "name": "Santee",
+        "transactionType": "All"
+      },
+      {
+        "id": 255,
+        "name": "Solana Beach",
+        "transactionType": "All"
+      },
+      {
+        "id": 256,
+        "name": "Vista",
+        "transactionType": "All"
+      },
+      {
+        "id": 316,
+        "name": "All Cities",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "Yuba",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 257,
+        "name": "Yuba",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Lake",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 258,
+        "name": "Lake",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Tehama",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 259,
+        "name": "Tehama",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "San Benito",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 260,
+        "name": "San Benito",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Tuolumne",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 261,
+        "name": "Tuolumne",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Syskiyou",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 262,
+        "name": "Syskiyou",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Calayeras",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 263,
+        "name": "Calayeras",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Amador",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 264,
+        "name": "Amador",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Lassen",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 265,
+        "name": "Lassen",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Del Norte",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 266,
+        "name": "Del Norte",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Glenn",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 267,
+        "name": "Glenn",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Colusa",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 268,
+        "name": "Colusa",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Plumas",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 269,
+        "name": "Plumas",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Mariposa",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 270,
+        "name": "Mariposa",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Inyo",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 271,
+        "name": "Inyo",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Trinity",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 272,
+        "name": "Trinity",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Mono",
+    "zoneId": 0,
+    "transactionType": null,
+    "cities": [
+      {
+        "id": 273,
+        "name": "Mono",
+        "transactionType": null
+      }
+    ]
+  },
+  {
+    "zoneName": "Modoc",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 274,
+        "name": "Modoc",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Sierra",
+    "zoneId": 0,
+    "transactionType": null,
+    "cities": [
+      {
+        "id": 275,
+        "name": "Sierra",
+        "transactionType": null
+      }
+    ]
+  },
+  {
+    "zoneName": "Alpine",
+    "zoneId": 0,
+    "transactionType": null,
+    "cities": [
+      {
+        "id": 276,
+        "name": "Alpine",
+        "transactionType": null
+      }
+    ]
+  },
+  {
+    "zoneName": "Sacramento",
+    "zoneId": 0,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 277,
+        "name": "Sacramento",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "Contra Costa",
+    "zoneId": 0,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 278,
+        "name": "Contra Costa",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "Fresno",
+    "zoneId": 0,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 279,
+        "name": "Fresno",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "San Francisco",
+    "zoneId": 0,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 280,
+        "name": "San Francisco",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "Ventura",
+    "zoneId": 0,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 281,
+        "name": "Ventura",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "Kern",
+    "zoneId": 0,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 282,
+        "name": "Kern",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "San Mateo",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 283,
+        "name": "San Mateo",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "San Joaquin",
+    "zoneId": 0,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 284,
+        "name": "San Joaquin",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "Stanislaus",
+    "zoneId": 0,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 285,
+        "name": "Stanislaus",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "Sonoma",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 286,
+        "name": "Sonoma",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Tulare",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 287,
+        "name": "Tulare",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Monterey",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 288,
+        "name": "Monterey",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Santa Barbara",
+    "zoneId": 0,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 289,
+        "name": "Santa Barbara",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "Solano",
+    "zoneId": 0,
+    "transactionType": "All",
+    "cities": [
+      {
+        "id": 290,
+        "name": "Solano",
+        "transactionType": "All"
+      }
+    ]
+  },
+  {
+    "zoneName": "Placer",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 291,
+        "name": "Placer",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "San Luis Obispo",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 292,
+        "name": "San Luis Obispo",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Santa Cruz",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 293,
+        "name": "Santa Cruz",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Marin",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 294,
+        "name": "Marin",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Merced",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 295,
+        "name": "Merced",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Butte",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 296,
+        "name": "Butte",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Yolo",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 297,
+        "name": "Yolo",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Shasta",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 298,
+        "name": "Shasta",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Imperial",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 299,
+        "name": "Imperial",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "El Dorado",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 300,
+        "name": "El Dorado",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Kings",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 301,
+        "name": "Kings",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Madera",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 302,
+        "name": "Madera",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Napa",
+    "zoneId": 0,
+    "transactionType": null,
+    "cities": [
+      {
+        "id": 303,
+        "name": "Napa",
+        "transactionType": null
+      }
+    ]
+  },
+  {
+    "zoneName": "Humboldt",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 304,
+        "name": "Humboldt",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Sutter",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 305,
+        "name": "Sutter",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "Nevada",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 306,
+        "name": "Nevada",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  },
+  {
+    "zoneName": "MendocIno",
+    "zoneId": 0,
+    "transactionType": "Re-Finance",
+    "cities": [
+      {
+        "id": 307,
+        "name": "MendocIno",
+        "transactionType": "Re-Finance"
+      }
+    ]
+  }
+]

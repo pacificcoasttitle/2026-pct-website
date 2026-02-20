@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="zxx">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Property Tax Calculator | Pacific Coast Title Company</title>
+    <meta content="We specialize in Residential, Commercial Title & Escrow Services" name="description">
+    <meta content="" name="keywords">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="telephone=no" name="format-detection">
+    <meta name="HandheldFriendly" content="true">
+    <link rel="stylesheet" href="assets/css/master.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+	<link rel="stylesheet" href="glossary/css/style.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,700;1,300&display=swap" rel="stylesheet">
+    <meta charset="utf-8">
+    <!--[if lt IE 9 ]>
+<script src="/assets/js/separate-js/html5shiv-3.7.2.min.js" type="text/javascript"></script><meta content="no" http-equiv="imagetoolbar">
+<![endif]-->
+
+
+<style>
+  #prop-19-calculator {
+    font-size: 18px;
+    padding: 15px;
+    background: #F6F6F6;
+    color: #080808;
+    border-radius: 15px;
+    margin: auto;
+	margin-bottom:20px;
+}
+a.btlink {
+	text-decoration:underline;
+	font-weight:bold;
+	color:#D35411;
+	
+}
+.btn-container {
+    display: flex;
+    justify-content: center;
+}
+#js-agree-btn {
+    margin-bottom: 2rem;
+    padding: 1.2em 2em;
+    background: #111;
+    color: #fff;
+    display: inline-block;
+    text-decoration: none;
+    border: solid 1px #111;
+    transition: cubic-bezier(0.165, 0.84, 0.44, 1) 400ms;
+}
+#js-agree-btn:hover {
+    color: #111;
+    background: none;
+    transition: cubic-bezier(0.165, 0.84, 0.44, 1) 400ms;
+}
+.row-flex {
+    display: flex;
+    margin: 15px 0;
+}
+.row-flex:first-child {
+    margin-top: 0;
+}
+.row-flex:last-child {
+    margin-bottom: 0;
+}
+.col-flex {
+    display: flex;
+    flex-direction: column;
+}
+.col {
+    border-radius: 15px;
+}
+.col-1 {
+    flex: 1;
+}
+.col-2 {
+    flex: 2;
+    /*! width: 60%; */
+}
+.row-1st .col:first-child {
+    margin-right: 15px;
+}
+.row-3rd .col:first-child {
+    border-radius: 15px 0 0 15px;
+}
+.row-3rd .col:last-child {
+    border-radius: 0 15px 15px 0;
+}
+.content-group {
+     padding: 10px 20px 0px 20px;
+}
+.label {
+    line-height: 1.3em;
+	color:#000000;
+	padding: 10px 0px 8px;
+	letter-spacing: 0.025em;
+	font-size: 14px;
+}
+.label2 {
+    line-height: 1.3em;
+	color:#000000;
+	padding: 10px 0px 8px;
+	letter-spacing: 0.025em;
+	font-size: 11px;
+}
+.price-in, .price-out {
+    margin-top: 0.3em;
+}
+.pad-field-top {
+	padding-top:161px;
+}	
+	
+.price-in::before,
+.price-out::before {
+    content: '$';
+    display: inline;
+    font-size: 1.65rem;
+    font-weight: 700;
+}
+.price-in input {
+    display: inline !important;
+    background: none !important;
+    border: unset !important;
+    padding: 0 !important;
+    border-bottom: solid 1px #000 !important;
+    font-size: 1.5em !important;
+    width: unset !important;
+    font-weight: 700;
+    color:#000;
+}
+.price-out {
+    font-size: 36px;
+    font-weight: 700;
+}
+body section.premium-content #prop-19-calculator .white {
+    background: #FFF;
+}
+
+.white label, .white .label{
+    background: unset;
+    color: #000!important;
+}
+
+.red {
+    background: rgba(212, 85, 0, 0.49);
+    color: #D35411;
+}
+
+.red label, .red .label{
+    background: ;
+    color: #d35411!important;
+	font-size:16px;
+	letter-spacing: 0px;
+	line-height: 17px;
+}
+
+
+.yellow {
+    background: rgba(3, 55, 79, 0.3);
+    color: #03374f;
+}
+
+.yellow label, .yellow .label{
+    background: ;
+    color: #03374f!important;
+	font-size:16px;
+	letter-spacing: 0px;
+	line-height:17px;
+}
+
+.green label, .green .label{
+    background: #B9EBC3;
+    color: #169830!important;
+	font-size:16px;
+	letter-spacing: 0px;
+	line-height:17px;
+}
+
+.green {
+    background: #B9EBC3;
+    color: #169830;
+}
+.gray-0 {
+    background: #F8F8F8;
+}
+.gray-1 {
+    background: #EFEFEF;
+}
+ 
+   
+ body section.premium-content #prop-19-calculator label {
+   color: #808080;
+     text-align:left!important;
+     padding: unset!important;
+     margin: unset!important;
+     font-size:18px;
+     line-height:1.3em;
+}
+  
+   body section.premium-content #prop-19-calculator .label {
+       color: #000;
+   text-align:left!important;
+    padding: unset!important;
+       margin: unset!important;
+    white-space: unset;
+    border-radius: unset;
+         font-size:18px;
+       line-height:1.3em;
+}
+
+
+.ui-subtitle-block-3 {
+    margin-bottom: 39px;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.714;
+    text-transform: none;
+}
+
+
+}
+.ui-decor-1 {
+    margin-top: 22px;
+    margin-bottom: 34px;
+    background-color: #d35411;
+    display: inline-block;
+    width: 100px;
+    height: 2px;
+	}
+
+</style>
+
+
+
+
+</head>
+
+
+
+<body>
+    <!-- Loader-->
+    <div id="page-preloader"><span class="spinner border-t_second_b border-t_prim_a"></span></div>
+    <!-- Loader end-->
+    <div class="l-theme animated-css" data-header="sticky" data-header-top="200" data-canvas="container">
+     <!-- ==========================-->
+        <!-- MOBILE MENU-->
+        <!-- ==========================-->
+        <div data-off-canvas="mobile-slidebar left overlay">
+            <ul class="yamm main-menu nav navbar-nav">
+                            <!-- <li><a href="index.html">Home</a></li>-->
+                               <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">About Us<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+                                         <li><h4>How We Help</h4></li>
+										<li><a href="our-role.html">Our Role in Title</a></li>
+										<li><a href="protecting-you.html">Protecting You</a></li>
+										<li><a href="why-pacific-coast-title.html">Why Pacific Coast Title</a></li>
+										<li><h4>About Us</h4></li>
+										<li><a href="about-us.html">About Our Company</a></li>
+										
+										<li><a href="join-our-team.html">Join our Team</a></li>
+                                        
+                                    </ul>
+                                </li>
+                                <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">Title Services<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+                                        <li><h4>Residential Services</h4></li>
+                                        <li><a href="residential-title.html">Residential Title</a></li>
+                                        <li><a href="escrow-settlement.html">Escrow Settlement</a></li>
+										 <li><h4>About Title</h4></li>
+										 <li><a href="what-is-title-insurance.html">What Is Title Insurance</a></li>
+										<li><a href="benefits-title-insurance.html">Benefits of Title Insurance</a></li>
+										<li><a href="life-of-title-search.html">Life of a Title Search</a></li>
+										<li><a href="top-10-title-problems.html">Top 10 Title Concerns</a></li>
+										<li><h4>About Escrow</h4></li>
+										<li><a href="what-is-escrow.html">What is Escrow</a></li>
+										<li><a href="life-of-escrow.html">Life of an Escrow</a></li>
+										<li><a href="escrow-terms.html">Escrow Terms</a></li>
+										<li><h4>Commercical Services</h4></li>
+										 <li><a href="commercial-services.html">Services</a></li>
+                                        <li><a href="commercial-expertise.html">Expertise</a></li>
+                                        <li><a href="commercial-resources.html">Resources</a></li>
+                                    </ul>
+                                </li>
+								 <li class="dropdown"><a class="dropdown-toggle" href="1031-exchange.html" data-toggle="dropdown">1031 Exchange<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+									 <li><a href="1031-exchange.html">What is a 1031 Exchange?</a></li>
+                                     
+                                    </ul>
+                                </li>
+								<li><a href="tsg.html">TSG Divison</a></li>
+							    <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">Credit Unions & More<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+									 <li><a href="credit-union-division.html">Credit Unions</a></li>
+									 <li><a href="credit-union-division.html">Corporate Accounts</a></li>
+                                     
+                                    </ul>
+                                </li>
+								
+                                <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">Agent Resources<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+										 <li><h4>Forms & Flyers</h4></li>
+                                        <li><a href="blank-forms.html">Blank Forms</a></li>
+										<li><a href="educational-booklets.html">Educational Booklets</a></li>
+										<li><a href="informational-flyers.html">Flyer Center</a></li>
+										<li><a href="common-title-terms.html">Common Title Terms</a></li>
+										 <li class="divider"></li>
+										 <li><h4>Rates, Fees & Taxes</h4></li>
+										<li><a href="https://www.pct.com/calculator/">Rate Calculator</a></li>
+										<li><a href="http://www.pct.com/calculator/index.php?welcome/signup">Lender Rate Portal</a></li>
+										<li><a href="recording-fees.html">Recording Fees</a></li>
+										<li><a href="assets/downloads/2026-Recorders-Calendar.pdf">Recorders Holidays</a></li>
+										<li><a href="assets/downloads/2023-RC.pdf">Recission Calendar</a></li>
+										<li><a href="city-transfer-tax.html">City Transfer Tax</a></li>
+										<li><a href="rate-book.html">Rate Book</a></li><li><a href="supplemental-taxes.html">Supplemental Taxes</a></li>
+										<li><a href="http://pct.com/prop-19-calculator.html">Prop 19 Calculator</a></li>
+										 <li class="divider"></li>
+										  <li><h4>Tools</h4></li>
+										
+										
+                                        <li><a href="http://www.pacificcoastagent.com/">Pacific Coast Agent</a></li>
+										<li><a href="https://www.pcttitletoolbox.com/#!/">PCT Title Toolbox</a></li>
+										<li><a href="#">Instant Profile</a></li>
+										<li><a href="http://www.pct247.com/">PCT247.com</a></li>	
+										<li class="divider"></li>	
+										<li><h4>Video</h4></li>
+										<li><a href="training-center.html">Training center</a></li>
+                                    </ul>
+									
+									
+                                </li>
+                                <li class="dropdown"><a class="dropdown-toggle" href="contact.html" data-toggle="dropdown">Contact Us<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+									
+                                         <li><a href="downey.html">Downey</a></li>
+										<li><a href="fresno.html">Fresno</a></li>
+                                        <li><a href="glendale.html">Glendale</a></li>
+										<li><a href="inland-empire.html">Inland Empire</a></li>
+                                        <li><a href="orange.html">Orange</a></li>
+                                        <li><a href="sandiego.html">San Diego</a></li>
+                                        
+                                    </ul>
+                                </li>
+            </ul>
+        </div>
+        <!-- ==========================-->
+        <!-- FULL SCREEN MENU-->
+        <!-- ==========================-->
+      <!--  <div class="wrap-fixed-menu" id="fixedMenu">
+            <nav class="fullscreen-center-menu">
+
+                <div class="menu-main-menu-container">
+
+                    <ul class="nav navbar-nav">
+
+                        <li><a href="index.html" >Home</a></li>
+                        <li><a href="about-us.html">About</a></li>
+                        <li><a href="blank-forms.html" >Blank Forms</a></li>
+                        <li><a href="information-flyers.html">Informational Flyers</a> </li>
+                        <li><a href="educational-booklets.html">Educational Booklets</a></li>
+                        <li><a href="contact.html" >Branches</a>
+                        </li>
+
+                    </ul>
+                </div>
+            </nav>
+            <button type="button" class="fullmenu-close"><i class="fa fa-times"></i></button>
+        </div> -->
+
+        <header class="header header-topbar-hidden header-full-width navbar-fixed-top header-background-trans header-color-white header-logo-white header-navibox-1-left header-navibox-2-right header-navibox-3-right header-navibox-4-right">
+            <div class="container container-boxed-width">
+                
+                <nav class="navbar" id="nav">
+                    <div class="container">
+                        <div class="header-navibox-1">
+                            <!-- Mobile Trigger Start-->
+                            <button class="menu-mobile-button visible-xs-block js-toggle-mobile-slidebar toggle-menu-button"><i class="toggle-menu-button-icon"><span></span><span></span><span></span><span></span><span></span><span></span></i></button>
+                            <!-- Mobile Trigger End-->
+                            <a class="navbar-brand scroll" href="index.html"><img class="normal-logo" src="assets/media/general/logo2.png" alt="logo"><img class="scroll-logo hidden-xs" src="assets/media/general/logo2-dark.png" alt="logo"></a>
+                        </div>
+                        <div class="header-navibox-2">
+                            <ul class="yamm main-menu nav navbar-nav">
+                            <!-- <li><a href="index.html">Home</a></li>-->
+                               <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">About Us<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+                                         <li><h4>How We Help</h4></li>
+										<li><a href="our-role.html">Our Role in Title</a></li>
+										<li><a href="protecting-you.html">Protecting You</a></li>
+										<li><a href="why-pacific-coast-title.html">Why Pacific Coast Title</a></li>
+										<li><h4>About Us</h4></li>
+										<li><a href="about-us.html">About Our Company</a></li>
+										
+										<li><a href="join-our-team.html">Join our Team</a></li>
+                                        
+                                    </ul>
+                                </li>
+                                <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">Title Services<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+                                        <li><h4>Residential Services</h4></li>
+                                        <li><a href="residential-title.html">Residential Title</a></li>
+                                        <li><a href="escrow-settlement.html">Escrow Settlement</a></li>
+										 <li><h4>About Title</h4></li>
+										 <li><a href="what-is-title-insurance.html">What Is Title Insurance</a></li>
+										<li><a href="benefits-title-insurance.html">Benefits of Title Insurance</a></li>
+										<li><a href="life-of-title-search.html">Life of a Title Search</a></li>
+										<li><a href="top-10-title-problems.html">Top 10 Title Concerns</a></li>
+										<li><h4>About Escrow</h4></li>
+										<li><a href="what-is-escrow.html">What is Escrow</a></li>
+										<li><a href="life-of-escrow.html">Life of an Escrow</a></li>
+										<li><a href="escrow-terms.html">Escrow Terms</a></li>
+										<li><h4>Commercical Services</h4></li>
+										 <li><a href="commercial-services.html">Services</a></li>
+                                        <li><a href="commercial-expertise.html">Expertise</a></li>
+                                        <li><a href="commercial-resources.html">Resources</a></li>
+                                    </ul>
+                                </li>
+								 <li class="dropdown"><a class="dropdown-toggle" href="1031-exchange.html" data-toggle="dropdown">1031 Exchange<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+									 <li><a href="1031-exchange.html">What is a 1031 Exchange?</a></li>
+                                     
+                                    </ul>
+                                </li>
+								<li><a href="tsg.html">TSG Divison</a></li>
+							    <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">Credit Unions & More<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+									 <li><a href="credit-union-division.html">Credit Unions</a></li>
+									 <li><a href="credit-union-division.html">Corporate Accounts</a></li>
+                                     
+                                    </ul>
+                                </li>
+								
+                                <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">Agent Resources<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+										 <li><h4>Forms & Flyers</h4></li>
+                                        <li><a href="blank-forms.html">Blank Forms</a></li>
+										<li><a href="educational-booklets.html">Educational Booklets</a></li>
+										<li><a href="informational-flyers.html">Flyer Center</a></li>
+										<li><a href="common-title-terms.html">Common Title Terms</a></li>
+										 <li class="divider"></li>
+										 <li><h4>Rates, Fees & Taxes</h4></li>
+										<li><a href="https://www.pct.com/calculator/">Rate Calculator</a></li>
+										<li><a href="http://www.pct.com/calculator/index.php?welcome/signup">Lender Rate Portal</a></li>
+										<li><a href="recording-fees.html">Recording Fees</a></li>
+										<li><a href="assets/downloads/2026-Recorders-Calendar.pdf">Recorders Holidays</a></li>
+										<li><a href="assets/downloads/2023-RC.pdf">Recission Calendar</a></li>
+										<li><a href="city-transfer-tax.html">City Transfer Tax</a></li>
+										<li><a href="rate-book.html">Rate Book</a></li><li><a href="supplemental-taxes.html">Supplemental Taxes</a></li>
+										<li><a href="http://pct.com/prop-19-calculator.html">Prop 19 Calculator</a></li>
+										 <li class="divider"></li>
+										  <li><h4>Tools</h4></li>
+										
+										
+                                        <li><a href="http://www.pacificcoastagent.com/">Pacific Coast Agent</a></li>
+										<li><a href="https://www.pcttitletoolbox.com/#!/">PCT Title Toolbox</a></li>
+										<li><a href="#">Instant Profile</a></li>
+										<li><a href="http://www.pct247.com/">PCT247.com</a></li>	
+										<li class="divider"></li>	
+										<li><h4>Video</h4></li>
+										<li><a href="training-center.html">Training center</a></li>
+                                    </ul>
+									
+									
+                                </li>
+                                <li class="dropdown"><a class="dropdown-toggle" href="contact.html" data-toggle="dropdown">Contact Us<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+									
+                                        <li><a href="downey.html">Downey</a></li>
+										<li><a href="fresno.html">Fresno</a></li>
+                                        <li><a href="glendale.html">Glendale</a></li>
+										<li><a href="inland-empire.html">Inland Empire</a></li>
+                                        <li><a href="orange.html">Orange</a></li>
+                                        <li><a href="sandiego.html">San Diego</a></li>
+                                        
+                                    </ul>
+                                </li>
+            </ul>
+                            </ul>
+                        </div>
+                    <!--   <div class="header-navibox-3">
+                            <ul class="nav navbar-nav hidden-xs clearfix vcenter">
+                              <!--  <li><a class="btn_header_search" href="#"><i class="fa fa-search"></i></a></li>
+                                <li>
+                                    <button class="js-toggle-screen toggle-menu-button"><i class="toggle-menu-button-icon"><span></span><span></span><span></span><span></span><span></span><span></span></i></button>
+                                </li>
+                            </ul>
+                        </div> -->
+                      <!--  <div class="header-navibox-4">
+                            <div class="header-cart"><a href="#"><i class="fa fa-shopping-basket" aria-hidden="true"></i></a><span class="header-cart-count">3</span></div>
+                            <div class="header-language-nav dropdown">
+                                <button class="dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown">English<span class="caret"></span></button>
+                                <ul class="dropdown-menu">
+                                    <li><a href="#">English</a></li>
+                                    <li><a href="#">Italy</a></li>
+                                    <li><a href="#">France</a></li>
+                                </ul>
+                            </div>
+                        </div> -->
+                    </div>
+                </nav>
+            </div>
+        </header>
+        <!-- end .header-->
+        <div class="section-title-page7a area-bg area-bg_blue area-bg_op_60 parallax">
+          <div class="area-bg__inner">
+            <div class="container">
+              <div class="row">
+                <div class="col-xs-12">
+                  <h1 class="b-title-page">Prop 19 Calculator.</h1>
+                  <div class="b-title-page__info">Property Tax Calculator</div>
+                  <!-- end breadcrumb-->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- end .b-title-page-->
+		
+		 <section class="section-type-4 section-default" style="padding-bottom:0px;">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h2 class="ui-title-block ui-title-block_light">Prop 19 Calculator</h2>
+                        <div class="ui-decor-1 bg-primary"></div>
+                
+						  <div class="ui-subtitle-block-3">
+    <p>Under California's Proposition 19, homeowners who are <strong>over 55 years of age</strong>, <strong>severely disabled</strong>, or victims of a <strong>wildfire or natural disaster</strong> may transfer the base year value of their primary residence to a replacement primary residence anywhere within California. The replacement home must be purchased or newly constructed within two years of the sale of the original property and must serve as the homeowner’s primary residence.</p>
+
+    <p>To help estimate the potential new base year value of your replacement primary residence, please provide the details below. This estimation applies only upon approval of a qualifying claim.</p>
+    <br>
+    <p><strong>DISCLAIMER:</strong> This Prop 19 property tax estimator is based on the California Association of Realtors' analysis of Prop 19. These calculations are estimates only. Tax assessments may vary by county and city, and additional factors may affect your actual property taxes. For a precise calculation, please consult with a professional tax or estate advisor.</p><br>
+
+    <p>By using this calculator, you accept the terms and conditions and acknowledge that this is an estimator only, subject to your unique situation.</p>
+</div>
+                        
+						
+<div id="prop-19-calculator" style="filter: unset;">
+    <div class="row-flex-container">
+        <div class="row-flex row-1st">
+            <div class="col col-2 white">
+                <div class="content-group">
+                    <div class="label">
+                        <label for="js-in-original-home-price">Primary Residence
+                            <div>Current Assessed Value</div>
+                        </label>
+                    </div>
+                    <div class="price-in"><input size="13" type="text" id="js-in-original-home-price"></div>
+                </div>
+                <div class="content-group">
+                    <div class="label">
+                        <label for="js-in-current-home-price">Primary Residence Sales Price
+                            <div>(Current Home Sale’s Price)</div>
+                        </label>
+                    </div>
+                    <div class="price-in"><input size="13" type="text" id="js-in-current-home-price"></div>
+                </div>
+                <div class="content-group">
+                    <div class="label">
+                        <label for="js-in-new-home-price">Replacement Primary Residence
+                            <div>(New Home Purchase Price)</div>
+                        </label>
+                    </div>
+                    <div class="price-in"><input size="13" type="text" id="js-in-new-home-price"></div>
+                </div>
+            </div>
+            <div class="col col-1 col-flex">
+                <div class="col col-2 pad-field-top">
+                    <div class="content-group">
+                        <div class="label" style="font-size:14px;">Estimated Annual Property Tax (Based on Estimated<br> 1.20% Average Assessment)</div>
+                    </div>
+                </div>
+                <div class="col col-1 red">
+                    <div class="content-group">
+                        <div class="label">Without
+                            <div>Prop 19</div>
+                        </div>
+                        <div class="price-out" id="js-out-without-prop-19">0.00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row-flex row-2nd">
+            <div class="col col-1 yellow">
+                <div class="content-group">
+                    <div class="label">Difference Between Primary
+                        <div>&amp; Replacement Residence</div>
+                    </div>
+                    <div class="price-out" id="js-out-diff-primary-replacement">0.00</div>
+                </div>
+            </div>
+        </div>
+        <div class="row-flex row-3rd">
+            <div class="col col-2 green">
+                <div class="content-group">
+                    <div class="label">Estimated Taxable Value of New Home
+                        <div>(0-365 Days Between Sales)</div>
+                    </div>
+                    <div class="price-out" id="js-out-taxable-value">0.00</div>
+                </div>
+            </div>
+            <div class="col col-1 green">
+                <div class="content-group">
+                    <div class="label">With Prop 19
+                        <div>(0-365 Days Between Sales)</div>
+                    </div>
+                    <div class="price-out" id="js-out-with-prop-19">0.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<button id="explain-button" class="btn btn-grad-3a">Explain My Scenario</button>
+<button id="print-button" class="btn btn-type-3" style="margin-left: 10px;">Print PDF</button>
+
+<div id="explanation" class="explanation-output" style="margin-top: 20px; padding: 15px; background-color: #; border: 1px dashed #ECEFF1; font-size:16px;">
+    <!-- Explanation output will be displayed here -->
+</div>
+
+<script type="text/javascript">
+document.getElementById('explain-button').addEventListener('click', function() {
+    // Capture the input values
+    var assessedValue = parseFloat(document.getElementById('js-in-original-home-price').value.replace(/,/g, '')) || 0;
+    var originalMarketValue = parseFloat(document.getElementById('js-in-current-home-price').value.replace(/,/g, '')) || 0;
+    var newHomePrice = parseFloat(document.getElementById('js-in-new-home-price').value.replace(/,/g, '')) || 0;
+    var explanationDiv = document.getElementById('explanation');
+
+    // Proposition 19 logic for explanation
+    let explanation = `<h3>Your Scenario Explanation</h3>`;
+    explanation += `<p><strong>1.&nbsp Original Assessed Value:</strong> $${assessedValue.toLocaleString()}</p>`;
+    explanation += `<p><strong>2.&nbsp Current Fair Market Value:</strong> $${originalMarketValue.toLocaleString()}</p>`;
+    explanation += `<p><strong>3.&nbsp New Home Purchase Price:</strong> $${newHomePrice.toLocaleString()}</p>`;
+
+    if (newHomePrice <= originalMarketValue) {
+        // Case where new home value is less than or equal to original market value
+        explanation += `<p>Since the <strong>new home’s market value ($${newHomePrice.toLocaleString()}) is less than or equal to the original home’s market value ($${originalMarketValue.toLocaleString()})</strong>, Proposition 19 allows the assessed value from your original home to transfer to the new home without any adjustment.</p>`;
+        explanation += `<p><strong>Transferred Taxable Value:</strong> $${assessedValue.toLocaleString()}</p>`;
+    } else {
+        // Case where new home value is greater than original market value
+        var difference = newHomePrice - originalMarketValue;
+        var newTaxableValue = assessedValue + difference;
+        explanation += `<p>Since the <strong>new home’s market value ($${newHomePrice.toLocaleString()}) is greater than the original home’s market value ($${originalMarketValue.toLocaleString()})</strong>, Proposition 19 allows the original assessed value to transfer, but the difference will be added to it.</p>`;
+        explanation += `<p><strong>Difference in Market Value:</strong> $${difference.toLocaleString()}</p>`;
+        explanation += `<p><strong>New Taxable Value:</strong> $${newTaxableValue.toLocaleString()}</p>`;
+    }
+
+    // Calculate estimated property taxes
+    var annualTaxWithProp19 = (newHomePrice <= originalMarketValue ? assessedValue : newTaxableValue) * 0.012;
+    var annualTaxWithoutProp19 = newHomePrice * 0.012;
+
+    explanation += `<p><strong>Annual Property Tax with Prop 19:</strong> $${annualTaxWithProp19.toLocaleString()}</p>`;
+    explanation += `<p><strong>Annual Property Tax without Prop 19:</strong> $${annualTaxWithoutProp19.toLocaleString()}</p>`;
+
+    // Display the explanation
+    explanationDiv.innerHTML = explanation;
+});
+</script>
+
+<div class="ui-subtitle-block-3">
+   <br> <h3 class="ui-title-block ui-title-block_light">Prop 19 Calculator General Explanation</h3><br>
+    
+    <h4><strong>Scenario 1: Property Below $1 Million</strong></h4>
+    <p>Imagine a homeowner with an original home valued below $1 million.</p>
+    <ul>
+        <li><strong>Original Home’s Current Assessed Value</strong>: $300,000 (taxable value based on prior purchase or assessment)</li>
+        <li><strong>Original Home’s Market Value</strong>: $800,000 (approximate selling price today)</li>
+        <li><strong>New Home’s Purchase Price</strong>: $750,000 (cost of the new home)</li>
+    </ul>
+   <br> <h4><strong>What Happens with Proposition 19?</strong></h4></p>
+    <p>If the <strong>new home’s market value ($750,000) is less than the original home’s market value ($800,000)</strong>, the assessed value from the original home transfers directly to the new home.</p>
+    <ul>
+        <li><strong>New Home’s Taxable Value</strong>: $300,000</li>
+        <li><strong>Annual Property Tax</strong>: $300,000 × 1.2% = $3,600</li>
+    </ul>
+    <p>By transferring the original assessed value, the homeowner saves significantly, paying <strong>$3,600</strong> in annual property tax on a $750,000 home instead of <strong>$9,000 without Prop 19.</strong></p>
+	
+    <hr>
+	<br>
+   <h4><strong>Scenario 2: Property Over $1 Million</strong></h4>
+    <p>This scenario covers a homeowner moving to a more expensive property.</p>
+    <ul>
+        <li><strong>Original Home’s Current Assessed Value</strong>: $400,000</li>
+        <li><strong>Original Home’s Market Value</strong>: $1,200,000</li>
+        <li><strong>New Home’s Purchase Price</strong>: $1,500,000</li>
+    </ul>
+    <br><h4><strong>What Happens with Proposition 19?</strong></h4>
+    <p>Because the <strong>new home’s market value ($1,500,000) is more than the original home’s market value ($1,200,000)</strong>, the homeowner can transfer the original assessed value but must add the difference.</p>
+    <ul>
+        <li><strong>Difference in Market Value</strong>: $1,500,000 - $1,200,000 = $300,000</li>
+        <li><strong>New Home’s Taxable Value</strong>: $400,000 + $300,000 = $700,000</li>
+        <li><strong>Annual Property Tax</strong>: $700,000 × 1.2% = $8,400</li>
+    </ul><br>
+    <p>In this case, the homeowner’s new home has a taxable value of $700,000, saving them from paying taxes on the full $1,500,000 market value. Without Prop 19, the annual tax would be $18,000, resulting in $9,600 saved annually.</p>
+</div><br>
+
+                    </div>
+                   
+                </div>
+            </div>
+       
+    
+   
+	   </section>
+       <footer class="footer">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <ul class="footer-social-nets">
+                            <li class="footer-social-nets__item"><a class="footer-social-nets__link" href="https://www.facebook.com/PacificCoastTitleCompany/">facebook</a></li>
+                            <li class="footer-social-nets__item"><a class="footer-social-nets__link" href="https://twitter.com/mypct?lang=en">twitter</a></li>                      
+                            <li class="footer-social-nets__item"><a class="footer-social-nets__link" href="#">instagram</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer__main">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div class="footer-section">
+                                <a class="footer__logo" href="index.html"><img class="img-responsive" src="assets/media/general/logo-lg2.png" alt="Logo"></a>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <section class="footer-section footer-section_links">
+                                <h3 class="footer-section__title">useful links</h3>
+                                <ul class="footer-list list-unstyled">
+                                    <li class="footer-list__item"><a class="footer-list__link" href="about.html">About Us</a></li>
+                                    <li class="footer-list__item"><a class="footer-list__link" href="contact.html">Contact Us</a></li>
+                                    <li class="footer-list__item"><a class="footer-list__link" href="how-we-protect-you.html">Our Role</a></li>
+                                    <li class="footer-list__item"><a class="footer-list__link" href="blank-forms.html">Blank Forms</a></li>
+                                    <li class="footer-list__item"><a class="footer-list__link" href="what-is-title-insurance.html">What Is Title Ins.</a></li>
+                                    <li class="footer-list__item"><a class="footer-list__link" href="information-flyers.html">Info Flyers</a></li>
+									<li class="footer-list__item"><a class="footer-list__link" href="notices.html">Notices</a></li>
+												<li class="footer-list__item"><a class="footer-list__link" href="fin-cen.html">FinCEN</a></li>
+                                   <li class="footer-list__item"><a class="footer-list__link" href="sb2-forms.html">SB2-Forms</a></li>
+                                </ul>
+                            </section>
+                        </div>
+                        <div class="col-sm-4">
+                            <section class="footer-section">
+                                <h3 class="footer-section__title">Corporate Contact Info</h3>
+                                <p>Address: 1111 E. Katella Ave Ste. 120 Orange, CA 92867</p>
+                                <p>Phone: (714) 516-6700 / (866) 724-1050</p>
+                                <p>Email: info@pct.com</p><a class="footer__link" href="https://goo.gl/maps/Hrjgqrh1imP2">get directions</a>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright">
+                <div class="container">
+                <div class="row">
+                 <div class="col-xs-12">
+<img class="img-responsive2" src="/assets/media/content/associations/SiVet.png" alt="Logo"><img class="img-responsive2" src="/assets/media/content/associations/ss.png" alt="Logo">©<a class="copyright__link" href="index.html"> PACIFIC COAST TITLE COMPANY</a> All rights reserved.</div>
+                </div>
+                    </div>
+            </div>
+        </footer>
+        <!-- .footer-->
+    </div>
+    <!-- end layout-theme-->
+    
+    
+   
+    <!-- ++++++++++++-->
+    <!-- MAIN SCRIPTS-->
+    <!-- ++++++++++++-->
+    <script src="assets/libs/jquery-1.12.4.min.js"></script>
+    <script src="assets/libs/jquery-migrate-1.2.1.js"></script>
+    <!-- Bootstrap-->
+    <script src="assets/libs/bootstrap/bootstrap.min.js"></script>
+
+    <!---->
+    <!-- Select customization & Color scheme-->
+    <script src="assets/plugins/bootstrap-select/js/bootstrap-select.js"></script>
+    <!-- Slider-->
+    <script src="assets/plugins/owl-carousel/owl.carousel.min.js"></script>
+    <!-- Pop-up window-->
+    <script src="assets/plugins/magnific-popup/jquery.magnific-popup.min.js"></script>
+    <!-- Headers scripts-->
+    <script src="assets/plugins/headers/slidebar.js"></script>
+    <script src="assets/plugins/headers/header.js"></script>
+    <!-- Mail scripts-->
+    <script src="assets/plugins/jqBootstrapValidation.js"></script>
+    <script src="assets/plugins/contact_me.js"></script>
+    <!-- Video player-->
+    <script src="assets/plugins/flowplayer/flowplayer.min.js"></script>
+    <!-- Filter and sorting images-->
+    <script src="assets/plugins/isotope/isotope.pkgd.min.js"></script>
+    <script src="assets/plugins/isotope/imagesLoaded.js"></script>
+    <!-- Progress numbers-->
+    <script src="assets/plugins/rendro-easy-pie-chart/jquery.easypiechart.min.js"></script>
+    <script src="assets/plugins/rendro-easy-pie-chart/waypoints.min.js"></script>
+    <!-- Animations-->
+    <script src="assets/plugins/scrollreveal/scrollreveal.min.js"></script>
+    <script src="assets/plugins/revealer/js/anime.min.js"></script>
+    <script src="assets/plugins/revealer/js/scrollMonitor.js"></script>
+    <script src="assets/plugins/revealer/js/main.js"></script>
+    <script src="assets/plugins/animate/wow.min.js"></script>
+    <script src="assets/plugins/animate/jquery.shuffleLetters.js"></script>
+    <!-- <script src="assets/plugins/animate/jquery.scrollme.min.js"></script> -->
+	
+	<!-- Include html2pdf.js Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+
+<script type="text/javascript">
+    // Print to PDF Button
+    document.getElementById('print-button').addEventListener('click', function() {
+        // Capture only the explanation content for PDF generation
+        var explanationContent = document.getElementById('explanation').innerHTML;
+
+        // Create a temporary container for PDF content with logo and explanation
+        var pdfContainer = document.createElement('div');
+        pdfContainer.innerHTML = `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="https://pct.com/assets/media/general/logo2-dark.png" alt="Company Logo" style="width: 150px; height: auto;">
+            </div>
+            <h2 style="text-align: center; font-size: 24px;">Prop 19 Calculator Explanation</h2>
+            <div style="padding: 20px; background-color: #f9f9f9; border: 1px solid #ddd;">
+                ${explanationContent}
+            </div>
+        `;
+
+        // Use html2pdf.js to generate the PDF
+        html2pdf().from(pdfContainer).set({
+            margin: 1,
+            filename: 'Prop19_Calculator_Explanation.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        }).save();
+    });
+</script>
+
+
+
+    <!-- User customization-->
+    <script src="assets/js/custom.js"></script>
+<script type="text/javascript">
+    !function () {
+        var originalPrice = document.getElementById('js-in-original-home-price');
+        var currentHomePrice = document.getElementById('js-in-current-home-price');
+        var newHomePrice = document.getElementById('js-in-new-home-price');
+        var diffPrimaryReplace = document.getElementById('js-out-diff-primary-replacement');
+        var taxableValue = document.getElementById('js-out-taxable-value');
+        var withoutProp19 = document.getElementById('js-out-without-prop-19');
+        var withProp19 = document.getElementById('js-out-with-prop-19');
+        
+        [diffPrimaryReplace, taxableValue, withoutProp19, withProp19].forEach(function(x) {
+            x.innerText = "0.00";
+        });
+        
+        var inputs = [originalPrice, currentHomePrice, newHomePrice];
+        inputs.forEach(function(x) {
+            x.value = "0.00";
+            x.addEventListener('keyup', function() {
+                updateValues();
+                x.value = numFormat(removeFormat(x.value));
+            });
+        });
+
+        function updateValues() {
+    var assessedOriginal = removeFormat(originalPrice.value);   // Original taxable value
+    var marketValueOriginal = removeFormat(currentHomePrice.value); // Original market value
+    var marketValueNewHome = removeFormat(newHomePrice.value);  // Replacement market value
+    
+    // Calculate Difference Between Primary & Replacement Residence
+    var difference = marketValueNewHome - marketValueOriginal;
+    diffPrimaryReplace.innerText = numFormat(difference);
+
+    // Calculate Estimated Taxable Value of New Home with Prop 19
+    if (marketValueNewHome <= marketValueOriginal) {
+        // Case where replacement market value <= original market value
+        taxableValue.innerText = numFormat(assessedOriginal);
+    } else {
+        // Case where replacement market value > original market value
+        taxableValue.innerText = numFormat(assessedOriginal + difference);
+    }
+
+    // Calculate Without Prop 19 Tax (based on full market value of the new home)
+    withoutProp19.innerText = numFormat(marketValueNewHome * 0.012);
+
+    // Calculate With Prop 19 Tax (based on taxable value after Prop 19 adjustments)
+    withProp19.innerText = numFormat(removeFormat(taxableValue.innerText) * 0.012);
+}
+
+        function numFormat(x) {
+            return x.toLocaleString('en-US', {maximumFractionDigits:2});
+        }
+
+        function removeFormat(x) {
+            return Math.round((parseFloat((x.toString().split('.')[0].split(',').join('')) + '.' + (x.toString().split('.')[1] || '00'))) * 100) / 100;
+        }
+    }();
+</script>
+<!-- Facebook Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '307916942954456', {
+em: 'insert_email_variable'
+});
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=307916942954456&ev=PageView&noscript=1"
+/></noscript>
+<!-- DO NOT MODIFY -->
+<!-- End Facebook Pixel Code -->
+
+
+</body>
+
+</html>

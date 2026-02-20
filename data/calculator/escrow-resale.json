@@ -1,0 +1,389 @@
+[
+  {
+    "county": "Orange__All",
+    "minRange": 0,
+    "maxRange": 1500000,
+    "baseAmount": 500,
+    "perThousandPrice": 4,
+    "baseRate": null,
+    "minimumRate": 700
+  },
+  {
+    "county": "Orange__All",
+    "minRange": 1500001,
+    "maxRange": null,
+    "baseAmount": 0,
+    "perThousandPrice": 0,
+    "baseRate": 0,
+    "minimumRate": 6500
+  },
+  {
+    "county": "Riverside__All",
+    "minRange": 0,
+    "maxRange": 1000000,
+    "baseAmount": 500,
+    "perThousandPrice": 4,
+    "baseRate": 0,
+    "minimumRate": 700
+  },
+  {
+    "county": "San Bernardino__All",
+    "minRange": 0,
+    "maxRange": 1000000,
+    "baseAmount": 500,
+    "perThousandPrice": 4,
+    "baseRate": 0,
+    "minimumRate": 700
+  },
+  {
+    "county": "Riverside__All",
+    "minRange": 1000001,
+    "maxRange": null,
+    "baseAmount": 0,
+    "perThousandPrice": 0,
+    "baseRate": 0,
+    "minimumRate": 4500
+  },
+  {
+    "county": "San Bernardino__All",
+    "minRange": 1000001,
+    "maxRange": null,
+    "baseAmount": 0,
+    "perThousandPrice": 0,
+    "baseRate": 0,
+    "minimumRate": 4500
+  },
+  {
+    "county": "Los Angeles County__All",
+    "minRange": 0,
+    "maxRange": 1000000,
+    "baseAmount": 500,
+    "perThousandPrice": 4,
+    "baseRate": 0,
+    "minimumRate": 700
+  },
+  {
+    "county": "Los Angeles County__All",
+    "minRange": 1000001,
+    "maxRange": null,
+    "baseAmount": 0,
+    "perThousandPrice": 0,
+    "baseRate": 0,
+    "minimumRate": 4500
+  },
+  {
+    "county": "Ventura County__All",
+    "minRange": 0,
+    "maxRange": 1000000,
+    "baseAmount": 500,
+    "perThousandPrice": 4,
+    "baseRate": 0,
+    "minimumRate": 700
+  },
+  {
+    "county": "Ventura County__All",
+    "minRange": 1000001,
+    "maxRange": 1500000,
+    "baseAmount": 4500,
+    "perThousandPrice": 2,
+    "baseRate": 0,
+    "minimumRate": 0
+  },
+  {
+    "county": "Ventura County__All",
+    "minRange": 1500001,
+    "maxRange": null,
+    "baseAmount": 0,
+    "perThousandPrice": 0,
+    "baseRate": 0,
+    "minimumRate": 5500
+  },
+  {
+    "county": "San Diego__All",
+    "minRange": 0,
+    "maxRange": 700000,
+    "baseAmount": 700,
+    "perThousandPrice": 3,
+    "baseRate": 0,
+    "minimumRate": 0
+  },
+  {
+    "county": "San Diego__All",
+    "minRange": 700001,
+    "maxRange": null,
+    "baseAmount": 0,
+    "perThousandPrice": 0,
+    "baseRate": 0,
+    "minimumRate": 2800
+  },
+  {
+    "county": "Alameda County__All",
+    "minRange": 0,
+    "maxRange": 100000,
+    "baseAmount": 0,
+    "perThousandPrice": 0,
+    "baseRate": 450,
+    "minimumRate": 0
+  },
+  {
+    "county": "Contra County__All",
+    "minRange": 0,
+    "maxRange": 100000,
+    "baseAmount": 0,
+    "perThousandPrice": 0,
+    "baseRate": 450,
+    "minimumRate": 0
+  },
+  {
+    "county": "Santa Clara County__Re-Finance",
+    "minRange": 0,
+    "maxRange": 100000,
+    "baseAmount": 0,
+    "perThousandPrice": 0,
+    "baseRate": 450,
+    "minimumRate": 0
+  },
+  {
+    "county": "Alameda County__All",
+    "minRange": 100001,
+    "maxRange": 200000,
+    "baseAmount": 450,
+    "perThousandPrice": 7.5,
+    "baseRate": 0,
+    "minimumRate": 0
+  },
+  {
+    "county": "Contra County__All",
+    "minRange": 100001,
+    "maxRange": 200000,
+    "baseAmount": 450,
+    "perThousandPrice": 7.5,
+    "baseRate": 0,
+    "minimumRate": 0
+  },
+  {
+    "county": "Santa Clara County__Re-Finance",
+    "minRange": 100001,
+    "maxRange": 200000,
+    "baseAmount": 450,
+    "perThousandPrice": 7.5,
+    "baseRate": 0,
+    "minimumRate": 0
+  },
+  {
+    "county": "Alameda County__All",
+    "minRange": 200001,
+    "maxRange": 600000,
+    "baseAmount": 600,
+    "perThousandPrice": 5,
+    "baseRate": 0,
+    "minimumRate": 0
+  },
+  {
+    "county": "Contra County__All",
+    "minRange": 200001,
+    "maxRange": 600000,
+    "baseAmount": 600,
+    "perThousandPrice": 5,
+    "baseRate": 0,
+    "minimumRate": 0
+  },
+  {
+    "county": "Santa Clara County__Re-Finance",
+    "minRange": 200001,
+    "maxRange": 600000,
+    "baseAmount": 600,
+    "perThousandPrice": 5,
+    "baseRate": 0,
+    "minimumRate": 0
+  },
+  {
+    "county": "Alameda County__All",
+    "minRange": 600001,
+    "maxRange": 800000,
+    "baseAmount": 1000,
+    "perThousandPrice": 2.5,
+    "baseRate": null,
+    "minimumRate": null
+  },
+  {
+    "county": "Contra County__All",
+    "minRange": 600001,
+    "maxRange": 800000,
+    "baseAmount": 1000,
+    "perThousandPrice": 2.5,
+    "baseRate": null,
+    "minimumRate": null
+  },
+  {
+    "county": "Santa Clara County__Re-Finance",
+    "minRange": 600001,
+    "maxRange": 800000,
+    "baseAmount": 1000,
+    "perThousandPrice": 2.5,
+    "baseRate": null,
+    "minimumRate": null
+  },
+  {
+    "county": "Alameda County__All",
+    "minRange": 800001,
+    "maxRange": 900000,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": 1200,
+    "minimumRate": null
+  },
+  {
+    "county": "Contra County__All",
+    "minRange": 800001,
+    "maxRange": 900000,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": 1200,
+    "minimumRate": null
+  },
+  {
+    "county": "Santa Clara County__Re-Finance",
+    "minRange": 800001,
+    "maxRange": 900000,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": 1200,
+    "minimumRate": null
+  },
+  {
+    "county": "Alameda County__All",
+    "minRange": 900001,
+    "maxRange": 1000000,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": 1350,
+    "minimumRate": null
+  },
+  {
+    "county": "Contra County__All",
+    "minRange": 900001,
+    "maxRange": 1000000,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": 1350,
+    "minimumRate": null
+  },
+  {
+    "county": "Santa Clara County__Re-Finance",
+    "minRange": 900001,
+    "maxRange": 1000000,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": 1350,
+    "minimumRate": null
+  },
+  {
+    "county": "Alameda County__All",
+    "minRange": 1000001,
+    "maxRange": 1250000,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": 1450,
+    "minimumRate": null
+  },
+  {
+    "county": "Contra County__All",
+    "minRange": 1000001,
+    "maxRange": 1250000,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": 1450,
+    "minimumRate": null
+  },
+  {
+    "county": "Santa Clara County__Re-Finance",
+    "minRange": 1000001,
+    "maxRange": 1250000,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": 1450,
+    "minimumRate": null
+  },
+  {
+    "county": "Alameda County__All",
+    "minRange": 1250001,
+    "maxRange": 1500000,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": 1575,
+    "minimumRate": null
+  },
+  {
+    "county": "Contra County__All",
+    "minRange": 1250001,
+    "maxRange": 1500000,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": 1575,
+    "minimumRate": null
+  },
+  {
+    "county": "Santa Clara County__Re-Finance",
+    "minRange": 1250001,
+    "maxRange": 1500000,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": 1575,
+    "minimumRate": null
+  },
+  {
+    "county": "Contra County__All",
+    "minRange": 1500001,
+    "maxRange": 2000000,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": 1700,
+    "minimumRate": null
+  },
+  {
+    "county": "Santa Clara County__Re-Finance",
+    "minRange": 1500001,
+    "maxRange": 2000000,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": 1700,
+    "minimumRate": null
+  },
+  {
+    "county": "Alameda County__All",
+    "minRange": 1500001,
+    "maxRange": 2000000,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": 1700,
+    "minimumRate": null
+  },
+  {
+    "county": "Alameda County__All",
+    "minRange": 2000001,
+    "maxRange": null,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": null,
+    "minimumRate": 1700
+  },
+  {
+    "county": "Contra County__All",
+    "minRange": 2000001,
+    "maxRange": null,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": null,
+    "minimumRate": 1700
+  },
+  {
+    "county": "Santa Clara County__Re-Finance",
+    "minRange": 2000001,
+    "maxRange": null,
+    "baseAmount": null,
+    "perThousandPrice": null,
+    "baseRate": null,
+    "minimumRate": 1700
+  }
+]

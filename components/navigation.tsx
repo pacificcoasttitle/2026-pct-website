@@ -36,15 +36,16 @@ export function Navigation({ variant = "transparent" }: NavigationProps) {
   const navigationItems = [
     {
       label: "Services",
-      href: "/title-services/residential",
+      href: "/services/title",
       dropdown: [
-        { label: "Residential Title", href: "/title-services/residential" },
-        { label: "Commercial Title", href: "/title-services/commercial" },
+        { label: "Residential Title", href: "/services/title" },
+        { label: "Commercial Title", href: "/services/commercial" },
         { label: "Escrow Services", href: "/services/escrow" },
-        { label: "1031 Exchange", href: "/1031-exchange" },
+        { label: "1031 Exchange", href: "/services/1031-exchange" },
         { label: "Lender Solutions", href: "/services/lender-solutions" },
-        { label: "Credit Union Division", href: "/credit-unions" },
-        { label: "TSG Division", href: "/tsg-division" },
+        { label: "Credit Unions", href: "/services/credit-unions" },
+        { label: "TSG Division", href: "/services/tsg" },
+        { label: "Nationwide Services", href: "/nationwide" },
       ],
     },
     {
@@ -52,22 +53,23 @@ export function Navigation({ variant = "transparent" }: NavigationProps) {
       href: "/resources",
       dropdown: [
         { label: "Agent Resource Center", href: "/resources" },
-        { label: "Rate Calculator", href: "https://www.pct.com/calculator/", external: true },
-        { label: "Prop 19 Calculator", href: "https://pct.com/prop-19-calculator.html", external: true },
-        { label: "Blank Forms", href: "/resources/blank-forms" },
-        { label: "Educational Materials", href: "/resources/educational-materials" },
-        { label: "PCT Toolbox", href: "https://www.pcttitletoolbox.com/", external: true },
+        { label: "Rate Calculator", href: "/resources/rate-book" },
+        { label: "Prop 19 Calculator", href: "/resources/prop-19-calculator" },
+        { label: "Utilities Directory", href: "/utilities" },
+        { label: "Blank Forms", href: "/resources/forms" },
+        { label: "Learning Center", href: "/learn" },
       ],
     },
     {
       label: "About",
-      href: "/about/our-role",
+      href: "/about",
       dropdown: [
+        { label: "About PCT", href: "/about" },
+        { label: "How We Protect You", href: "/about/how-we-protect-you" },
         { label: "Our Role in Title", href: "/about/our-role" },
-        { label: "Protecting You", href: "/about/protecting-you" },
         { label: "Why Pacific Coast Title", href: "/about/why-pacific-coast-title" },
-        { label: "What is Title Insurance", href: "/title-services/what-is-title-insurance" },
-        { label: "What is Escrow", href: "/title-services/what-is-escrow" },
+        { label: "Events & Training", href: "/events" },
+        { label: "Careers", href: "/careers" },
       ],
     },
     {
@@ -88,8 +90,8 @@ export function Navigation({ variant = "transparent" }: NavigationProps) {
       href: "/contact",
       dropdown: [
         { label: "Contact Us", href: "/contact" },
-        { label: "Get a Quote", href: "/contact" },
-        { label: "Orange (HQ)", href: "/locations/orange" },
+        { label: "Get a Rate Estimate", href: "/resources/rate-book" },
+        { label: "Feedback", href: "/feedback" },
       ],
     },
   ]
