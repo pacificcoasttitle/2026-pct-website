@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight, Calendar } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 
 interface QuickLink {
   label: string
@@ -34,13 +34,12 @@ export function FinCENHero({
         <div className="absolute inset-0 bg-white/90" />
 
         <div className="relative container mx-auto px-4 text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary px-4 py-1.5 rounded-full text-sm font-semibold mb-4 pt-12">
-            <Calendar className="w-3.5 h-3.5" />
+          {/* Badge — plain text label, matches PageHero style */}
+          <p className="text-primary font-semibold mb-3 uppercase tracking-wide pt-12">
             {badge}
-          </div>
+          </p>
 
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 text-balance">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 text-balance max-w-2xl mx-auto">
             {title}
             {titleHighlight && (
               <>
