@@ -9,6 +9,7 @@ interface QuickLink {
 interface FinCENHeroProps {
   badge?: string
   title: string
+  titleHighlight?: string
   subtitle: string
   quickLinks?: QuickLink[]
 }
@@ -16,55 +17,63 @@ interface FinCENHeroProps {
 export function FinCENHero({
   badge = "Effective March 1, 2026",
   title,
+  titleHighlight,
   subtitle,
   quickLinks,
 }: FinCENHeroProps) {
   return (
-    <section className="relative bg-secondary pt-32 pb-16 overflow-hidden">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
-          backgroundImage: "repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%)",
-          backgroundSize: "20px 20px",
-        }} />
-      </div>
+    <>
+      {/* Hero — matches PageHero exactly */}
+      <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center">
+        <div
+          className="absolute inset-0 bg-cover bg-center grayscale"
+          style={{
+            backgroundImage: `url(/professional-title-company-office-team-meeting.jpg)`,
+          }}
+        />
+        <div className="absolute inset-0 bg-white/90" />
 
-      <div className="relative container mx-auto px-4">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="relative container mx-auto px-4 text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-primary/20 border border-primary/40 text-primary px-4 py-2 rounded-full text-sm font-semibold mb-6">
-            <Calendar className="w-4 h-4" />
+          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary px-4 py-1.5 rounded-full text-sm font-semibold mb-4 pt-12">
+            <Calendar className="w-3.5 h-3.5" />
             {badge}
           </div>
 
-          {/* Headline */}
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 text-balance">
             {title}
+            {titleHighlight && (
+              <>
+                <br />
+                <span className="text-primary">{titleHighlight}</span>
+              </>
+            )}
           </h1>
 
-          {/* Subheadline */}
           <p
-            className="text-xl text-white/75 max-w-3xl mx-auto leading-relaxed mb-10"
+            className="text-xl text-muted-foreground max-w-2xl mx-auto text-pretty"
             dangerouslySetInnerHTML={{ __html: subtitle }}
           />
-
-          {/* Quick Links */}
-          {quickLinks && quickLinks.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-3">
-              {quickLinks.map((link, i) => (
-                <Link
-                  key={i}
-                  href={link.href}
-                  className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-5 py-2.5 rounded-full text-sm font-medium transition-colors"
-                >
-                  {link.label}
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              ))}
-            </div>
-          )}
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* Quick links strip — only rendered when links are provided */}
+      {quickLinks && quickLinks.length > 0 && (
+        <div className="bg-gray-50 border-b border-gray-100">
+          <div className="container mx-auto px-4 py-3 flex flex-wrap items-center justify-center gap-2">
+            {quickLinks.map((link, i) => (
+              <Link
+                key={i}
+                href={link.href}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-primary transition-colors px-3 py-1.5 rounded-full hover:bg-primary/5"
+              >
+                {link.label}
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
   )
 }
