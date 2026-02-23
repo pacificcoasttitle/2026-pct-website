@@ -9,8 +9,8 @@ const tools = [
   {
     icon: Calculator,
     label: "Rate Calc",
-    href: "https://www.pct.com/calculator/",
-    external: true,
+    href: "/#tools",
+    external: false,
   },
   {
     icon: Home,

@@ -74,15 +74,15 @@ export default function ContactPage() {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <a 
-              href="tel:+17145166700"
+              href="tel:+18667241050"
               className="flex items-center gap-4 p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
             >
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Phone className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <div className="text-sm text-gray-500">Call Main Office</div>
-                <div className="font-semibold text-secondary">(714) 516-6700</div>
+                <div className="text-sm text-gray-500">Call our Customer Service</div>
+                <div className="font-semibold text-secondary">(866) 724-1050</div>
               </div>
             </a>
             
@@ -121,11 +121,11 @@ export default function ContactPage() {
               Our California Offices
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Four locations across Southern California and one in the Central Valley to serve you better
+              Four offices across Southern California to serve you better
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {locations.map((location) => (
               <div 
                 key={location.name} 

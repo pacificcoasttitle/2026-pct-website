@@ -1,6 +1,7 @@
 import Link from "next/link"
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
+import { PageHero } from "@/components/page-hero"
 import {
   Shield,
   Search,
@@ -79,21 +80,11 @@ export default function HowWeProtectYouPage() {
     <main className="min-h-screen bg-white">
       <Navigation variant="light" />
 
-      {/* Hero */}
-      <section className="relative py-16 bg-gradient-to-b from-gray-50 to-white pt-32">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <p className="text-primary font-semibold mb-3 uppercase tracking-wide">Your Protection</p>
-            <h1 className="text-4xl md:text-5xl font-bold text-secondary mb-6">
-              How We Protect You
-            </h1>
-            <p className="text-xl text-gray-600">
-              Your home is likely the biggest investment you&apos;ll ever make. Here&apos;s how Pacific Coast Title works behind 
-              the scenes to make sure your ownership is secure from day one.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        label="Your Protection"
+        title="How We Protect You"
+        subtitle="Your home is likely the biggest investment you'll ever make. Here's how Pacific Coast Title works behind the scenes to make sure your ownership is secure from day one."
+      />
 
       {/* Protection Steps */}
       <section className="py-20">
@@ -198,7 +189,7 @@ export default function HowWeProtectYouPage() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/resources/rate-book"
+                href="/#tools"
                 className="bg-primary text-white px-8 py-4 rounded-xl font-semibold hover:bg-primary/90 transition-colors inline-flex items-center justify-center gap-2"
               >
                 Get a Rate Estimate
