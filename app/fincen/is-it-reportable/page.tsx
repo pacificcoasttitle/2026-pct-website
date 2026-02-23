@@ -175,12 +175,28 @@ export default function IsItReportablePage() {
                         : "Based on your answers, this transaction is less likely to require FinCEN reporting. However, exemptions and details matter—confirm with escrow."}
                     </p>
                     {isLikelyReportable && (
-                      <Link
-                        href="/fincen/contact"
-                        className="inline-flex items-center gap-2 mt-4 bg-primary text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
-                      >
-                        Talk to an Escrow Officer →
-                      </Link>
+                      <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                        <Link
+                          href={`/fincen/intake?result=likely_reportable&residential=${q1}&financing=${q2 === "yes" ? "cash" : "financed"}&buyerType=${q3 === "yes" ? "entity" : "individual"}`}
+                          className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
+                        >
+                          Continue — Start FinCEN Intake Form →
+                        </Link>
+                        <a
+                          href="tel:+18667241050"
+                          className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                        >
+                          Or call us: (866) 724-1050
+                        </a>
+                      </div>
+                    )}
+                    {!isLikelyReportable && showResult && (
+                      <p className="mt-4 text-xs text-gray-500">
+                        Think this might be wrong?{" "}
+                        <Link href="/fincen/intake" className="text-primary underline">
+                          Start the intake form anyway
+                        </Link>
+                      </p>
                     )}
                   </div>
                 </div>
