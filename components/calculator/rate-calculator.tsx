@@ -105,11 +105,14 @@ export function RateCalculator() {
   const [selectedCity, setSelectedCity] = useState('')
   const [salesPrice, setSalesPrice] = useState('')
   const [loanAmount, setLoanAmount] = useState('')
-  const [ownerPolicyType, setOwnerPolicyType] = useState<'clta' | 'alta'>('clta')
-  const [lenderPolicyType, setLenderPolicyType] = useState<'clta' | 'alta'>('clta')
-  const [includeOwnerPolicy, setIncludeOwnerPolicy] = useState(true)
+  const [includeOwnerPolicy] = useState(true)
 
   // UI state
+  // Fee visibility filters (shown after results load)
+  const [visibleFees, setVisibleFees] = useState<Set<string>>(
+    new Set(['title', 'escrow', 'transfer', 'recording'])
+  )
+
   const [isLoadingCounties, setIsLoadingCounties] = useState(true)
   const [isLoadingCities, setIsLoadingCities] = useState(false)
   const [isCalculating, setIsCalculating] = useState(false)
@@ -164,7 +167,7 @@ export function RateCalculator() {
   useEffect(() => {
     setResults(null)
     setError(null)
-  }, [transactionType, selectedCounty, selectedCity, salesPrice, loanAmount, ownerPolicyType, lenderPolicyType, includeOwnerPolicy])
+  }, [transactionType, selectedCounty, selectedCity, salesPrice, loanAmount])
 
   // ── Calculation ───────────────────────────────────────────────────────────
 
@@ -187,8 +190,8 @@ export function RateCalculator() {
           cityName: selectedCity,
           salesPrice: transactionType === 'purchase' ? parseNumberInput(salesPrice) : 0,
           loanAmount: parseNumberInput(loanAmount),
-          ownerPolicyType,
-          lenderPolicyType,
+          ownerPolicyType: 'clta',
+          lenderPolicyType: 'clta',
           includeOwnerPolicy: transactionType === 'purchase' ? includeOwnerPolicy : false,
         }),
       })
@@ -205,7 +208,7 @@ export function RateCalculator() {
     } finally {
       setIsCalculating(false)
     }
-  }, [transactionType, selectedCounty, selectedCity, salesPrice, loanAmount, ownerPolicyType, lenderPolicyType, includeOwnerPolicy])
+  }, [transactionType, selectedCounty, selectedCity, salesPrice, loanAmount, includeOwnerPolicy])
 
   // ── Print ─────────────────────────────────────────────────────────────────
 
@@ -407,77 +410,6 @@ export function RateCalculator() {
           </div>
         </div>
 
-        {/* Policy Options (Purchase only) */}
-        {transactionType === 'purchase' && (
-          <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-4">
-            {/* Owner's Policy Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2.5">
-                Owner&apos;s Policy Type
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOwnerPolicyType('clta')}
-                  className={cn(
-                    'py-2.5 px-3 rounded-lg text-xs font-medium border transition-all',
-                    ownerPolicyType === 'clta'
-                      ? 'bg-[#03374f]/5 border-[#03374f]/20 text-[#03374f]'
-                      : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
-                  )}
-                >
-                  CLTA Standard
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOwnerPolicyType('alta')}
-                  className={cn(
-                    'py-2.5 px-3 rounded-lg text-xs font-medium border transition-all',
-                    ownerPolicyType === 'alta'
-                      ? 'bg-[#03374f]/5 border-[#03374f]/20 text-[#03374f]'
-                      : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
-                  )}
-                >
-                  ALTA Homeowner&apos;s
-                </button>
-              </div>
-            </div>
-
-            {/* Lender's Policy Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2.5">
-                Lender&apos;s Policy Type
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setLenderPolicyType('clta')}
-                  className={cn(
-                    'py-2.5 px-3 rounded-lg text-xs font-medium border transition-all',
-                    lenderPolicyType === 'clta'
-                      ? 'bg-[#03374f]/5 border-[#03374f]/20 text-[#03374f]'
-                      : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
-                  )}
-                >
-                  CLTA Concurrent
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLenderPolicyType('alta')}
-                  className={cn(
-                    'py-2.5 px-3 rounded-lg text-xs font-medium border transition-all',
-                    lenderPolicyType === 'alta'
-                      ? 'bg-[#03374f]/5 border-[#03374f]/20 text-[#03374f]'
-                      : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
-                  )}
-                >
-                  ALTA Extended
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Error */}
         {error && (
           <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
@@ -508,138 +440,205 @@ export function RateCalculator() {
       </div>
 
       {/* ── Results ────────────────────────────────────────────────────────── */}
-      {results && (
-        <div ref={resultsRef} className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="border-t border-gray-100 pt-6">
-            {/* Call for Quote Banner */}
-            {results.callForQuote && (
-              <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl mb-5">
-                <Phone className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-amber-800">Call for Quote</p>
-                  <p className="text-xs text-amber-700 mt-0.5">
-                    Properties over $3,000,000 require a custom quote. Please call us at{' '}
-                    <a href="tel:7145166700" className="underline font-medium">(714) 516-6700</a>.
+      {results && (() => {
+        // Compute filtered total from visible categories
+        const showTitle    = visibleFees.has('title')
+        const showEscrow   = visibleFees.has('escrow')
+        const showTransfer = visibleFees.has('transfer')
+        const showRecording = visibleFees.has('recording')
+
+        const filteredTotal =
+          (showTitle ? results.titleFees.total : 0) +
+          (showEscrow ? results.escrowFees.total : 0) +
+          (showTransfer && transactionType === 'purchase' ? results.transferTaxes.total : 0) +
+          (showRecording ? results.additionalFeesTotal : 0)
+
+        const toggleFee = (key: string) => {
+          setVisibleFees(prev => {
+            const next = new Set(prev)
+            next.has(key) ? next.delete(key) : next.add(key)
+            return next
+          })
+        }
+
+        const feeFilters: { key: string; label: string; icon: React.ReactNode; alwaysShow: boolean }[] = [
+          { key: 'title',     label: 'Title',          icon: <Shield className="w-3.5 h-3.5" />,   alwaysShow: true },
+          { key: 'escrow',    label: 'Escrow',         icon: <Building2 className="w-3.5 h-3.5" />, alwaysShow: true },
+          { key: 'transfer',  label: 'Transfer Taxes', icon: <Receipt className="w-3.5 h-3.5" />,   alwaysShow: transactionType === 'purchase' && results.transferTaxes.total > 0 },
+          { key: 'recording', label: 'Recording & Other', icon: <FileText className="w-3.5 h-3.5" />, alwaysShow: results.additionalFees.length > 0 },
+        ]
+
+        return (
+          <div ref={resultsRef} className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="border-t border-gray-100 pt-6">
+              {/* Call for Quote Banner */}
+              {results.callForQuote && (
+                <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl mb-5">
+                  <Phone className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-800">Call for Quote</p>
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      Properties over $3,000,000 require a custom quote. Please call us at{' '}
+                      <a href="tel:7145166700" className="underline font-medium">(714) 516-6700</a>.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-medium text-[#03374f] flex items-center gap-2">
+                  <Receipt className="w-4 h-4 text-[#03374f]/60" />
+                  Fee Estimate
+                </h3>
+                <button
+                  onClick={handlePrint}
+                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#03374f] transition-colors"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  Print
+                </button>
+              </div>
+
+              {/* ── Fee Category Toggles ── */}
+              <div className="mb-4">
+                <p className="text-xs text-gray-400 mb-2 font-medium uppercase tracking-wide">Show fees</p>
+                <div className="flex flex-wrap gap-2">
+                  {feeFilters.filter(f => f.alwaysShow).map(f => {
+                    const active = visibleFees.has(f.key)
+                    return (
+                      <button
+                        key={f.key}
+                        type="button"
+                        onClick={() => toggleFee(f.key)}
+                        className={cn(
+                          'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
+                          active
+                            ? 'bg-[#03374f] border-[#03374f] text-white shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600'
+                        )}
+                      >
+                        {f.icon}
+                        {f.label}
+                        {active && (
+                          <span className="ml-0.5 w-3.5 h-3.5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">✓</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {/* Title Insurance */}
+                {showTitle && (
+                  <FeeSection
+                    icon={<Shield className="w-4 h-4" />}
+                    title="Title Insurance"
+                    total={results.titleFees.total}
+                    items={[
+                      ...(results.titleFees.ownerPolicy > 0
+                        ? [{ label: results.titleFees.ownerPolicyLabel, amount: results.titleFees.ownerPolicy }]
+                        : []),
+                      ...(results.titleFees.lenderPolicy > 0
+                        ? [{ label: results.titleFees.lenderPolicyLabel, amount: results.titleFees.lenderPolicy }]
+                        : []),
+                      ...results.titleFees.endorsements
+                        .filter(e => e.fee > 0)
+                        .map(e => ({ label: e.name, amount: e.fee })),
+                    ]}
+                  />
+                )}
+
+                {/* Escrow Fees */}
+                {showEscrow && (
+                  <FeeSection
+                    icon={<Building2 className="w-4 h-4" />}
+                    title="Escrow Fees"
+                    total={results.escrowFees.total}
+                    items={[
+                      { label: 'Escrow Fee', amount: results.escrowFees.baseFee },
+                      ...results.escrowFees.additionalFees.map(f => ({ label: f.name, amount: f.fee })),
+                    ]}
+                  />
+                )}
+
+                {/* Transfer Taxes (Purchase only) */}
+                {showTransfer && transactionType === 'purchase' && results.transferTaxes.total > 0 && (
+                  <FeeSection
+                    icon={<Receipt className="w-4 h-4" />}
+                    title="Transfer Taxes"
+                    total={results.transferTaxes.total}
+                    items={[
+                      {
+                        label: `County Transfer Tax ($${results.transferTaxes.countyRate.toFixed(2)}/1,000)`,
+                        amount: results.transferTaxes.countyTax,
+                      },
+                      ...(results.transferTaxes.cityTax > 0
+                        ? [{
+                          label: `City Transfer Tax ($${results.transferTaxes.cityRate.toFixed(2)}/1,000)`,
+                          amount: results.transferTaxes.cityTax,
+                        }]
+                        : []),
+                    ]}
+                  />
+                )}
+
+                {/* Recording & Other Fees */}
+                {showRecording && results.additionalFees.length > 0 && (
+                  <FeeSection
+                    icon={<FileText className="w-4 h-4" />}
+                    title="Recording & Other Fees"
+                    total={results.additionalFeesTotal}
+                    items={results.additionalFees.map(f => ({ label: f.name, amount: f.fee }))}
+                  />
+                )}
+
+                {/* Grand Total — reflects visible categories */}
+                <div className="bg-gradient-to-r from-[#03374f]/5 to-[#03374f]/[0.02] border border-[#03374f]/10 rounded-xl p-5 mt-5">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="font-medium text-[#03374f]">Estimated Total</span>
+                      {filteredTotal !== results.grandTotal && (
+                        <p className="text-[10px] text-gray-400 mt-0.5">Selected categories only</p>
+                      )}
+                    </div>
+                    <span className="font-semibold text-2xl text-[#03374f]">
+                      {formatCurrency(filteredTotal)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Disclaimer */}
+                <div className="flex items-start gap-2 mt-4 p-3 bg-gray-50 rounded-xl">
+                  <Info className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    {results.disclaimer}
                   </p>
                 </div>
-              </div>
-            )}
 
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-base font-medium text-[#03374f] flex items-center gap-2">
-                <Receipt className="w-4 h-4 text-[#03374f]/60" />
-                Fee Estimate
-              </h3>
-              <button
-                onClick={handlePrint}
-                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#03374f] transition-colors"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                Print
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {/* Title Insurance */}
-              <FeeSection
-                icon={<Shield className="w-4 h-4" />}
-                title="Title Insurance"
-                total={results.titleFees.total}
-                items={[
-                  ...(results.titleFees.ownerPolicy > 0
-                    ? [{ label: results.titleFees.ownerPolicyLabel, amount: results.titleFees.ownerPolicy }]
-                    : []),
-                  ...(results.titleFees.lenderPolicy > 0
-                    ? [{ label: results.titleFees.lenderPolicyLabel, amount: results.titleFees.lenderPolicy }]
-                    : []),
-                  ...results.titleFees.endorsements
-                    .filter(e => e.fee > 0)
-                    .map(e => ({ label: e.name, amount: e.fee })),
-                ]}
-              />
-
-              {/* Escrow Fees */}
-              <FeeSection
-                icon={<Building2 className="w-4 h-4" />}
-                title="Escrow Fees"
-                total={results.escrowFees.total}
-                items={[
-                  { label: 'Escrow Fee', amount: results.escrowFees.baseFee },
-                  ...results.escrowFees.additionalFees.map(f => ({ label: f.name, amount: f.fee })),
-                ]}
-              />
-
-              {/* Transfer Taxes (Purchase only) */}
-              {transactionType === 'purchase' && results.transferTaxes.total > 0 && (
-                <FeeSection
-                  icon={<Receipt className="w-4 h-4" />}
-                  title="Transfer Taxes"
-                  total={results.transferTaxes.total}
-                  items={[
-                    {
-                      label: `County Transfer Tax ($${results.transferTaxes.countyRate.toFixed(2)}/1,000)`,
-                      amount: results.transferTaxes.countyTax,
-                    },
-                    ...(results.transferTaxes.cityTax > 0
-                      ? [{
-                        label: `City Transfer Tax ($${results.transferTaxes.cityRate.toFixed(2)}/1,000)`,
-                        amount: results.transferTaxes.cityTax,
-                      }]
-                      : []),
-                  ]}
-                />
-              )}
-
-              {/* Additional Fees */}
-              {results.additionalFees.length > 0 && (
-                <FeeSection
-                  icon={<FileText className="w-4 h-4" />}
-                  title="Additional Fees"
-                  total={results.additionalFeesTotal}
-                  items={results.additionalFees.map(f => ({ label: f.name, amount: f.fee }))}
-                />
-              )}
-
-              {/* Grand Total */}
-              <div className="bg-gradient-to-r from-[#03374f]/5 to-[#03374f]/[0.02] border border-[#03374f]/10 rounded-xl p-5 mt-5">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-[#03374f]">Estimated Total</span>
-                  <span className="font-semibold text-2xl text-[#03374f]">
-                    {formatCurrency(results.grandTotal)}
-                  </span>
+                {/* Action Buttons */}
+                <div className="flex gap-3 mt-4">
+                  <Button
+                    onClick={handlePrint}
+                    variant="outline"
+                    className="flex-1 h-11 border-gray-200 text-[#03374f] hover:bg-gray-50 font-medium text-sm rounded-xl"
+                  >
+                    <Printer className="w-4 h-4 mr-2" />
+                    Print Estimate
+                  </Button>
+                  <a
+                    href="tel:7145166700"
+                    className="flex-1 h-11 inline-flex items-center justify-center bg-[#e8830c] hover:bg-[#e8830c]/90 text-white font-medium text-sm rounded-xl transition-colors"
+                  >
+                    <Phone className="w-4 h-4 mr-2" />
+                    Call for Quote
+                  </a>
                 </div>
-              </div>
-
-              {/* Disclaimer */}
-              <div className="flex items-start gap-2 mt-4 p-3 bg-gray-50 rounded-xl">
-                <Info className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  {results.disclaimer}
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 mt-4">
-                <Button
-                  onClick={handlePrint}
-                  variant="outline"
-                  className="flex-1 h-11 border-gray-200 text-[#03374f] hover:bg-gray-50 font-medium text-sm rounded-xl"
-                >
-                  <Printer className="w-4 h-4 mr-2" />
-                  Print Estimate
-                </Button>
-                <a
-                  href="tel:7145166700"
-                  className="flex-1 h-11 inline-flex items-center justify-center bg-[#e8830c] hover:bg-[#e8830c]/90 text-white font-medium text-sm rounded-xl transition-colors"
-                >
-                  <Phone className="w-4 h-4 mr-2" />
-                  Call for Quote
-                </a>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
