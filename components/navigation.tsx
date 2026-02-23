@@ -68,7 +68,6 @@ export function Navigation({ variant = "transparent" }: NavigationProps) {
         { label: "How We Protect You", href: "/about/how-we-protect-you" },
         { label: "Our Role in Title", href: "/about/our-role" },
         { label: "Why Pacific Coast Title", href: "/about/why-pacific-coast-title" },
-        { label: "Events & Training", href: "/events" },
         { label: "Careers", href: "/careers" },
       ],
     },
@@ -82,7 +81,6 @@ export function Navigation({ variant = "transparent" }: NavigationProps) {
         { label: "Fresno", href: "/locations/fresno" },
         { label: "Glendale", href: "/locations/glendale" },
         { label: "Inland Empire", href: "/locations/inland-empire" },
-        { label: "San Diego", href: "/locations/san-diego" },
       ],
     },
     {
@@ -104,8 +102,6 @@ export function Navigation({ variant = "transparent" }: NavigationProps) {
       href: "/contact",
       dropdown: [
         { label: "Contact Us", href: "/contact" },
-        { label: "Get a Rate Estimate", href: "/resources/rate-book" },
-        { label: "Feedback", href: "/feedback" },
       ],
     },
   ]

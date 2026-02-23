@@ -2,8 +2,8 @@ import Link from "next/link"
 import { PageHero } from "@/components/page-hero"
 import { 
   Shield, FileCheck, Building, FileText, Lock, ArrowLeftRight, 
-  Leaf, Briefcase, Landmark, Heart, Hotel, Home, Hammer, Building2, 
-  Zap, Store, ChevronRight, Download, Mail, Phone, ArrowRight,
+  Leaf, Briefcase, Home, Hammer, Building2, 
+  Store, ChevronRight, Download, Mail, Phone, ArrowRight,
   BookOpen
 } from "lucide-react"
 
@@ -59,21 +59,6 @@ const industries = [
     description: "Major corporate sales, portfolio refinancing, debt restructuring, multi-site transactions.",
   },
   {
-    icon: Landmark,
-    title: "Government",
-    description: "Government-owned properties requiring specialized legal knowledge.",
-  },
-  {
-    icon: Heart,
-    title: "Healthcare",
-    description: "Medical facilities, hospitals, nursing homes, healthcare REITs.",
-  },
-  {
-    icon: Hotel,
-    title: "Hospitality",
-    description: "Hotels, public houses, sports facilities, single to multi-state projects.",
-  },
-  {
     icon: Home,
     title: "Multifamily Housing",
     description: "Apartment complexes, townhouses, condos, mixed-use buildings.",
@@ -87,11 +72,6 @@ const industries = [
     icon: Building2,
     title: "Office / Industrial",
     description: "Office buildings, warehouses, distribution centers, industrial parks.",
-  },
-  {
-    icon: Zap,
-    title: "Power & Energy",
-    description: "Wind, solar, natural gas projects including financing and acquisitions.",
   },
   {
     icon: Store,
@@ -196,7 +176,7 @@ export default function CommercialServicesPage() {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 max-w-7xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
             {industries.map((industry, index) => (
               <div
                 key={index}

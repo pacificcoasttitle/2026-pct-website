@@ -56,16 +56,6 @@ const locations = [
     hours: "Mon-Fri 8:00 AM - 5:00 PM",
     mapUrl: "https://www.google.com/maps/search/?api=1&query=3200+Inland+Empire+Blvd+Suite+235+Ontario+CA+91764",
   },
-  {
-    name: "San Diego",
-    address: "3914 Murphy Canyon Rd. Suite A120",
-    city: "San Diego, CA 92123",
-    phone: "(858) 244-1850",
-    fax: "(858) 244-1860",
-    email: "sandiego@pct.com",
-    hours: "Mon-Fri 8:00 AM - 5:00 PM",
-    mapUrl: "https://www.google.com/maps/search/?api=1&query=3914+Murphy+Canyon+Rd+Suite+A120+San+Diego+CA+92123",
-  },
 ]
 
 export default function ContactPage() {
@@ -131,7 +121,7 @@ export default function ContactPage() {
               Our California Offices
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Five locations across Southern California to serve you better
+              Four locations across Southern California and one in the Central Valley to serve you better
             </p>
           </div>
 

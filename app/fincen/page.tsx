@@ -1,8 +1,7 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
-import { KeyTakeaways } from "@/components/fincen/key-takeaways"
-import { CTABox } from "@/components/fincen/cta-box"
+import { FinCENPageLayout } from "@/components/fincen/fincen-page-layout"
 import { Shield, AlertCircle, Users, ClipboardList, CheckCircle, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import type { Metadata } from "next"
@@ -94,9 +93,17 @@ export default function FinCENLandingPage() {
         ]}
       />
 
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
-        <KeyTakeaways items={takeaways} />
-
+      <FinCENPageLayout
+        takeaways={takeaways}
+        cta={{
+          heading: "Keep the Deal Moving — Don't Let FinCEN Surprise You",
+          body: "If a purchase looks like it may fall under FinCEN reporting, we'll help you understand what's needed and when.",
+          buttons: [
+            { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
+            { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
+          ],
+        }}
+      >
         <div className="space-y-16">
           {sections.map((section) => {
             const Icon = section.icon

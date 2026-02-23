@@ -1,8 +1,7 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
-import { KeyTakeaways } from "@/components/fincen/key-takeaways"
-import { CTABox } from "@/components/fincen/cta-box"
+import { FinCENPageLayout } from "@/components/fincen/fincen-page-layout"
 import { ArrowRight, Download, BookOpen, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import type { Metadata } from "next"
@@ -85,9 +84,17 @@ export default function ResourcesPage() {
         subtitle="Save, share, and keep your next closing moving."
       />
 
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
-        <KeyTakeaways items={takeaways} />
-
+      <FinCENPageLayout
+        takeaways={takeaways}
+        cta={{
+          heading: "Want the Checklist Tailored to Your Deal?",
+          body: "Tell us how the buyer will take title and how the deal will be funded. We'll help you plan what's needed next.",
+          buttons: [
+            { label: "Start FinCEN Intake", href: "/fincen/contact" },
+            { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
+          ],
+        }}
+      >
         <div className="space-y-16">
 
           {/* Quick Links */}
@@ -183,15 +190,7 @@ export default function ResourcesPage() {
           </section>
         </div>
 
-        <CTABox
-          heading="Want the Checklist Tailored to Your Deal?"
-          body="Tell us how the buyer will take title and how the deal will be funded. We'll help you plan what's needed next."
-          buttons={[
-            { label: "Start FinCEN Intake", href: "/fincen/contact" },
-            { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
-          ]}
-        />
-      </div>
+      </FinCENPageLayout>
 
       <Footer />
     </main>

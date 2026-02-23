@@ -3,14 +3,12 @@ import { Footer } from "@/components/footer"
 import { PageHero } from "@/components/page-hero"
 import Link from "next/link"
 import {
-  Users,
   Heart,
   TrendingUp,
   GraduationCap,
   Shield,
   Clock,
   DollarSign,
-  MapPin,
   ArrowRight,
   CheckCircle,
   Briefcase,
@@ -63,33 +61,6 @@ const values = [
   "Innovation and continuous improvement",
   "Respect and inclusion for all",
   "Excellence as a standard, not a goal",
-]
-
-const openPositions = [
-  {
-    title: "Escrow Officer",
-    location: "Orange, CA",
-    type: "Full-time",
-    department: "Escrow",
-  },
-  {
-    title: "Title Examiner",
-    location: "San Diego, CA",
-    type: "Full-time",
-    department: "Title",
-  },
-  {
-    title: "Escrow Assistant",
-    location: "Glendale, CA",
-    type: "Full-time",
-    department: "Escrow",
-  },
-  {
-    title: "Client Relations Manager",
-    location: "Orange, CA",
-    type: "Full-time",
-    department: "Business Development",
-  },
 ]
 
 export default function CareersPage() {
@@ -175,49 +146,18 @@ export default function CareersPage() {
               </p>
             </div>
 
-            <div className="space-y-4">
-              {openPositions.map((position) => (
-                <div
-                  key={`${position.title}-${position.location}`}
-                  className="bg-white border border-gray-100 rounded-xl p-6 hover:shadow-md transition-shadow flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-                >
-                  <div>
-                    <h3 className="text-lg font-bold text-secondary">{position.title}</h3>
-                    <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {position.location}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        {position.type}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Users className="w-3.5 h-3.5" />
-                        {position.department}
-                      </span>
-                    </div>
-                  </div>
-                  <Link
-                    href="/contact"
-                    className="inline-flex items-center gap-2 bg-primary/10 text-primary px-6 py-3 rounded-lg font-semibold hover:bg-primary hover:text-white transition-colors text-sm whitespace-nowrap"
-                  >
-                    Apply Now
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8 bg-gray-50 rounded-xl p-6 text-center">
-              <p className="text-gray-600 mb-4">
-                Don&apos;t see a role that fits? We&apos;re always looking for great talent. Send us your resume!
+            <div className="bg-primary/5 border border-primary/20 rounded-2xl p-10 text-center">
+              <Briefcase className="w-14 h-14 text-primary mx-auto mb-5" />
+              <h3 className="text-2xl font-bold text-secondary mb-3">We&apos;re Always Looking for Great Talent</h3>
+              <p className="text-gray-600 mb-6 max-w-xl mx-auto">
+                Even when specific openings aren&apos;t listed, we welcome talented professionals who are passionate 
+                about real estate, title, and exceptional service. Send us your resume and let&apos;s connect.
               </p>
               <a
-                href="mailto:careers@pct.com"
-                className="inline-flex items-center gap-2 text-primary font-semibold hover:underline"
+                href="mailto:hr@pct.com"
+                className="inline-flex items-center gap-2 bg-primary text-white px-8 py-4 rounded-xl font-semibold hover:bg-primary/90 transition-colors"
               >
-                careers@pct.com
+                Send Your Resume to hr@pct.com
                 <ArrowRight className="w-4 h-4" />
               </a>
             </div>
@@ -236,7 +176,7 @@ export default function CareersPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="mailto:careers@pct.com"
+              href="mailto:hr@pct.com"
               className="bg-primary text-white px-8 py-4 rounded-xl font-semibold hover:bg-primary/90 transition-colors inline-flex items-center justify-center gap-2"
             >
               Send Your Resume

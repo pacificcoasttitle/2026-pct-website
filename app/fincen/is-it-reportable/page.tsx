@@ -4,8 +4,7 @@ import { useState } from "react"
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
-import { KeyTakeaways } from "@/components/fincen/key-takeaways"
-import { CTABox } from "@/components/fincen/cta-box"
+import { FinCENPageLayout } from "@/components/fincen/fincen-page-layout"
 import { MiniDisclaimer } from "@/components/fincen/mini-disclaimer"
 import { CheckCircle, XCircle, HelpCircle, AlertTriangle, ChevronDown } from "lucide-react"
 import Link from "next/link"
@@ -77,9 +76,17 @@ export default function IsItReportablePage() {
         subtitle="Answer three questions for a directional read. Then confirm specifics with your escrow officer."
       />
 
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
-        <KeyTakeaways items={takeaways} />
-
+      <FinCENPageLayout
+        takeaways={takeaways}
+        cta={{
+          heading: "Want a Clean Answer Before You Write the Offer?",
+          body: "Loop escrow in early—especially if the buyer plans to purchase in an entity or trust.",
+          buttons: [
+            { label: "Talk to an Escrow Officer", href: "/fincen/contact" },
+            { label: "Guidance for agents", href: "/fincen/agents", variant: "outline" },
+          ],
+        }}
+      >
         {/* Checker */}
         <section className="mb-16">
           <div className="flex items-center gap-3 mb-2">
@@ -290,15 +297,7 @@ export default function IsItReportablePage() {
           </div>
         </section>
 
-        <CTABox
-          heading="Want a Clean Answer Before You Write the Offer?"
-          body="Loop escrow in early—especially if the buyer plans to purchase in an entity or trust."
-          buttons={[
-            { label: "Talk to an Escrow Officer", href: "/fincen/contact" },
-            { label: "Guidance for agents", href: "/fincen/agents", variant: "outline" },
-          ]}
-        />
-      </div>
+      </FinCENPageLayout>
 
       <Footer />
     </main>

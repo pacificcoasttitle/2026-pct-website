@@ -1,8 +1,7 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
-import { KeyTakeaways } from "@/components/fincen/key-takeaways"
-import { CTABox } from "@/components/fincen/cta-box"
+import { FinCENPageLayout } from "@/components/fincen/fincen-page-layout"
 import { Users, FileText, ClipboardList, Calendar, MessageSquare, CheckCircle } from "lucide-react"
 import type { Metadata } from "next"
 
@@ -53,9 +52,17 @@ export default function AgentsPage() {
         subtitle="You're not the filer—but you can prevent the most common FinCEN-driven delays with one simple move: set expectations early."
       />
 
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
-        <KeyTakeaways items={takeaways} />
-
+      <FinCENPageLayout
+        takeaways={takeaways}
+        cta={{
+          heading: "Want Help Spotting Reportable Deals?",
+          body: "Send us the scenario early—property type, buyer type, and financing. We'll help you set the right expectations.",
+          buttons: [
+            { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
+            { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
+          ],
+        }}
+      >
         <div className="space-y-14">
 
           {/* Section 1: Who Is Affected */}
@@ -177,15 +184,7 @@ export default function AgentsPage() {
           </section>
         </div>
 
-        <CTABox
-          heading="Want Help Spotting Reportable Deals?"
-          body="Send us the scenario early—property type, buyer type, and financing. We'll help you set the right expectations."
-          buttons={[
-            { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
-            { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
-          ]}
-        />
-      </div>
+      </FinCENPageLayout>
 
       <Footer />
     </main>

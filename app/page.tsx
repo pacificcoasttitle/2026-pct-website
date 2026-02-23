@@ -8,7 +8,6 @@ import { LocationsMap } from "@/components/locations-map"
 import { TestimonialsSection } from "@/components/testimonials-section"
 import { CTASection } from "@/components/cta-section"
 import { Footer } from "@/components/footer"
-import { TessaChat } from "@/components/tessa-chat"
 import { QuickAccessToolbar } from "@/components/quick-access-toolbar"
 
 export default function HomePage() {
@@ -24,7 +23,6 @@ export default function HomePage() {
       <TestimonialsSection />
       <CTASection />
       <Footer />
-      <TessaChat />
       <QuickAccessToolbar />
     </main>
   )

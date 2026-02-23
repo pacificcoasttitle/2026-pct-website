@@ -1,4 +1,6 @@
 import Link from "next/link"
+import Navigation from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import {
   Shield,
   Search,
@@ -74,9 +76,11 @@ const commonThreats = [
 
 export default function HowWeProtectYouPage() {
   return (
-    <div>
+    <main className="min-h-screen bg-white">
+      <Navigation variant="light" />
+
       {/* Hero */}
-      <section className="relative py-16 bg-gradient-to-b from-gray-50 to-white">
+      <section className="relative py-16 bg-gradient-to-b from-gray-50 to-white pt-32">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <p className="text-primary font-semibold mb-3 uppercase tracking-wide">Your Protection</p>
@@ -210,6 +214,8 @@ export default function HowWeProtectYouPage() {
           </div>
         </div>
       </section>
-    </div>
+
+      <Footer />
+    </main>
   )
 }

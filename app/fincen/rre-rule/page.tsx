@@ -1,8 +1,7 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
-import { KeyTakeaways } from "@/components/fincen/key-takeaways"
-import { CTABox } from "@/components/fincen/cta-box"
+import { FinCENPageLayout } from "@/components/fincen/fincen-page-layout"
 import { CheckCircle, Home, List, FileText, Users, GitBranch, Archive, AlertTriangle, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import type { Metadata } from "next"
@@ -32,9 +31,17 @@ export default function RREPage() {
         subtitle="What triggers reporting, what gets collected, and why early coordination matters."
       />
 
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
-        <KeyTakeaways items={takeaways} />
-
+      <FinCENPageLayout
+        takeaways={takeaways}
+        cta={{
+          heading: "Want to Know If Your Deal Triggers Reporting?",
+          body: "Use the quick checker to get a directional answer, then confirm with escrow.",
+          buttons: [
+            { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
+            { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
+          ],
+        }}
+      >
         <div className="space-y-14">
 
           {/* Section 1: What the Rule Covers */}
@@ -210,15 +217,7 @@ export default function RREPage() {
           </div>
         </div>
 
-        <CTABox
-          heading="Want to Know If Your Deal Triggers Reporting?"
-          body="Use the quick checker to get a directional answer, then confirm with escrow."
-          buttons={[
-            { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
-            { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
-          ]}
-        />
-      </div>
+      </FinCENPageLayout>
 
       <Footer />
     </main>

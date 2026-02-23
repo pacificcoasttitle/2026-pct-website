@@ -111,10 +111,10 @@ export function Footer() {
                 <Phone className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                 <div>
                   <a
-                    href="tel:8005551234"
+                    href="tel:7145166700"
                     className="text-white hover:text-primary transition-colors font-semibold text-lg"
                   >
-                    (800) 555-1234
+                    (714) 516-6700
                   </a>
                   <p className="text-white/70 text-xs">Mon-Fri 8am-6pm PST</p>
                 </div>
@@ -122,10 +122,10 @@ export function Footer() {
               <div className="flex items-start gap-3">
                 <Mail className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                 <a
-                  href="mailto:info@pacificcoasttitle.com"
+                  href="mailto:info@pct.com"
                   className="text-white/70 hover:text-primary transition-colors text-sm"
                 >
-                  info@pacificcoasttitle.com
+                  info@pct.com
                 </a>
               </div>
               <div className="flex items-start gap-3">
@@ -142,7 +142,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-white/10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-white/60">
-            <p>© 2025 Pacific Coast Title Company. All rights reserved.</p>
+            <p>© 2026 Pacific Coast Title Company. All rights reserved.</p>
             <div className="flex gap-6">
               <Link href="#" className="hover:text-primary transition-colors">
                 Privacy Policy

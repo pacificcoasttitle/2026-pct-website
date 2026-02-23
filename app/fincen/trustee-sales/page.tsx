@@ -1,8 +1,7 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
-import { KeyTakeaways } from "@/components/fincen/key-takeaways"
-import { CTABox } from "@/components/fincen/cta-box"
+import { FinCENPageLayout } from "@/components/fincen/fincen-page-layout"
 import { CheckCircle, Gavel, HelpCircle, UserCheck, Users, Shield, XCircle } from "lucide-react"
 import type { Metadata } from "next"
 
@@ -30,9 +29,17 @@ export default function TrusteeSalesPage() {
         subtitle="If you buy trustee sales using an entity or trust—and you're paying cash or using private funds—your purchase may trigger FinCEN reporting. Preparation is everything."
       />
 
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
-        <KeyTakeaways items={takeaways} />
-
+      <FinCENPageLayout
+        takeaways={takeaways}
+        cta={{
+          heading: "Buying Trustee Sales with an LLC or Trust?",
+          body: "Start the process early—especially if you're purchasing residential property with cash or private funds.",
+          buttons: [
+            { label: "Start FinCEN Intake", href: "/fincen/contact" },
+            { label: "Check if it's reportable", href: "/fincen/is-it-reportable", variant: "outline" },
+          ],
+        }}
+      >
         <div className="space-y-14">
 
           {/* Section 1: Quick Overview */}
@@ -207,15 +214,7 @@ export default function TrusteeSalesPage() {
           </section>
         </div>
 
-        <CTABox
-          heading="Buying Trustee Sales with an LLC or Trust?"
-          body="Start the process early—especially if you're purchasing residential property with cash or private funds."
-          buttons={[
-            { label: "Start FinCEN Intake", href: "/fincen/contact" },
-            { label: "Check if it's reportable", href: "/fincen/is-it-reportable", variant: "outline" },
-          ]}
-        />
-      </div>
+      </FinCENPageLayout>
 
       <Footer />
     </main>

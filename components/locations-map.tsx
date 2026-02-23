@@ -62,17 +62,6 @@ const locations = [
     hours: "Mon-Fri: 8:00 AM - 5:00 PM",
     position: { top: "38%", left: "58%" },
   },
-  {
-    id: "san-diego",
-    name: "San Diego",
-    address: "701 B St, Suite 1410",
-    city: "San Diego, CA 92101",
-    phone: "(619) 236-9080",
-    fax: "(619) 236-9085",
-    email: "sandiego@pct.com",
-    hours: "Mon-Fri: 8:00 AM - 5:00 PM",
-    position: { top: "85%", left: "70%" },
-  },
 ]
 
 export function LocationsMap() {
@@ -84,7 +73,7 @@ export function LocationsMap() {
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">Our California Offices</h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            With 6 offices across California, we're always nearby to serve your title and escrow needs.
+            With 5 offices across California, we're always nearby to serve your title and escrow needs.
           </p>
         </div>
 

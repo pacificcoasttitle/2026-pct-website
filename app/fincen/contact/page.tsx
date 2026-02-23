@@ -4,8 +4,7 @@ import { useState } from "react"
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
-import { KeyTakeaways } from "@/components/fincen/key-takeaways"
-import { CTABox } from "@/components/fincen/cta-box"
+import { FinCENPageLayout } from "@/components/fincen/fincen-page-layout"
 import { CheckCircle, Mail, Send } from "lucide-react"
 
 const takeaways = [
@@ -87,9 +86,17 @@ export default function FinCENContactPage() {
         subtitle="Send us the basics and we'll help you map next steps—fast."
       />
 
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
-        <KeyTakeaways items={takeaways} />
-
+      <FinCENPageLayout
+        takeaways={takeaways}
+        cta={{
+          heading: "If You Think It Might Be Reportable, Start Early.",
+          body: "The fastest closings are the ones where ownership and IDs are collected early—not the night before signing.",
+          buttons: [
+            { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
+            { label: "View FAQs", href: "/fincen/faq", variant: "outline" },
+          ],
+        }}
+      >
         <div className="grid md:grid-cols-2 gap-12 mb-16">
 
           {/* Left: What to Send + What Happens Next */}
@@ -299,15 +306,7 @@ export default function FinCENContactPage() {
           </div>
         </div>
 
-        <CTABox
-          heading="If You Think It Might Be Reportable, Start Early."
-          body="The fastest closings are the ones where ownership and IDs are collected early—not the night before signing."
-          buttons={[
-            { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
-            { label: "View FAQs", href: "/fincen/faq", variant: "outline" },
-          ]}
-        />
-      </div>
+      </FinCENPageLayout>
 
       <Footer />
     </main>

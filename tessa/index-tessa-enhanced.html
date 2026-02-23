@@ -1,0 +1,1826 @@
+ <!DOCTYPE html>
+<html lang="zxx">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Pacific Coast Title Company | Tessa Enhanced (Beta)</title>
+    <meta content="We specialize in Residential, Commercial Title & Escrow Services" name="description">
+    <meta content="" name="keywords">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="telephone=no" name="format-detection">
+    <meta name="HandheldFriendly" content="true">
+    <link rel="stylesheet" href="assets/css/master.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+	<link rel="stylesheet" href="glossary/css/style.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="assets/plugins/slider-pro/slider-pro.css">
+	
+    <meta charset="utf-8">
+    <!--[if lt IE 9 ]>
+<script src="/assets/js/separate-js/html5shiv-3.7.2.min.js" type="text/javascript"></script><meta content="no" http-equiv="imagetoolbar">
+<![endif]-->
+<style>
+/* ============================================
+   TESSA ENHANCED - COLLAPSIBLE CARDS THEME
+   Font: Inter | Distinct sections with collapse
+   ============================================ */
+
+/* Base Variables */
+:root {
+  --tessa-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --tessa-primary: #2563eb;
+  --tessa-accent: #f26b2b;
+  --tessa-text: #1f2937;
+  --tessa-text-light: #6b7280;
+  --tessa-text-muted: #9ca3af;
+  --tessa-bg: #ffffff;
+  --tessa-bg-subtle: #f9fafb;
+  --tessa-bg-dark: #111827;
+  --tessa-border: #e5e7eb;
+  --tessa-border-light: #f3f4f6;
+  --tessa-success: #059669;
+  --tessa-success-bg: #ecfdf5;
+  --tessa-warning: #d97706;
+  --tessa-warning-bg: #fffbeb;
+  --tessa-danger: #dc2626;
+  --tessa-danger-bg: #fef2f2;
+  --tessa-info: #0891b2;
+  --tessa-info-bg: #ecfeff;
+  --tessa-purple: #7c3aed;
+  --tessa-purple-bg: #f5f3ff;
+  --tessa-radius: 12px;
+  --tessa-radius-sm: 8px;
+  --tessa-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --tessa-shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --tessa-shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+}
+
+#tessa-response-container {
+  display: none;
+  text-align: center;
+  padding: 24px;
+}
+
+#pct-slider-search-result {
+  color: var(--tessa-text);
+  font-size: 15px;
+  margin-top: 12px;
+  word-break: break-word;
+  font-family: var(--tessa-font);
+}
+
+/* Modal Styles */
+.modal-dialog {
+  max-width: 900px;
+  margin: 40px auto;
+}
+
+.modal-content {
+  border: none;
+  border-radius: var(--tessa-radius);
+  box-shadow: var(--tessa-shadow-lg);
+  overflow: hidden;
+}
+
+.modal-header {
+  position: relative;
+  border-bottom: 1px solid var(--tessa-border);
+  padding: 20px 24px;
+  background: var(--tessa-bg);
+}
+
+.modal-header .modal-title {
+  font-family: var(--tessa-font);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--tessa-text);
+}
+
+.modal-body {
+  max-height: 600px;
+  overflow-y: auto;
+  font-family: var(--tessa-font);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--tessa-text);
+  padding: 20px;
+  background: var(--tessa-bg-subtle);
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid var(--tessa-border);
+  background: var(--tessa-bg);
+}
+
+/* Input & Buttons */
+#tessaModalInput {
+  flex: 1;
+  margin-right: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--tessa-border);
+  border-radius: var(--tessa-radius-sm);
+  font-size: 15px;
+  font-family: var(--tessa-font);
+  width: 100%;
+  margin-top: 0;
+  transition: all 0.2s ease;
+  background: var(--tessa-bg);
+}
+
+#tessaModalInput:focus {
+  outline: none;
+  border-color: var(--tessa-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.tessa-btn, #tessaModalSendBtn {
+  margin: 0;
+  padding: 14px 28px;
+  background-color: var(--tessa-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--tessa-radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--tessa-font);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tessa-btn:hover, #tessaModalSendBtn:hover {
+  background-color: #e55a1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(242, 107, 43, 0.3);
+}
+
+/* Close Button */
+.tessa-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-size: 22px;
+  color: var(--tessa-text-light);
+  background: none;
+  border: none;
+  z-index: 10;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  line-height: 1;
+}
+
+.tessa-close-btn:hover {
+  color: var(--tessa-accent);
+}
+
+/* Message Bubbles */
+.tessa-response, .user-message {
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  border-radius: var(--tessa-radius-sm);
+  word-break: break-word;
+  font-family: var(--tessa-font);
+}
+
+.tessa-response {
+  background: var(--tessa-bg);
+  border: 1px solid var(--tessa-border);
+  font-size: 15px;
+  line-height: 1.7;
+  box-shadow: var(--tessa-shadow);
+}
+
+.user-message {
+  background: var(--tessa-bg);
+  border: 1px solid var(--tessa-border-light);
+  color: var(--tessa-text);
+  text-align: left;
+}
+
+.tessa-response strong {
+  color: var(--tessa-text);
+  font-weight: 600;
+}
+
+.tessa-response code {
+  background: var(--tessa-bg-subtle);
+  border: 1px solid var(--tessa-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: 13px;
+  color: var(--tessa-text);
+}
+
+/* ============================================
+   ANALYSIS RESPONSE - COLLAPSIBLE CARDS
+   ============================================ */
+
+.tessa-analysis-response {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Main Report Header */
+.tessa-analysis-response > h3:first-child {
+  color: var(--tessa-text);
+  margin: 0 0 20px 0;
+  padding: 20px 24px;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: var(--tessa-font);
+  background: var(--tessa-bg);
+  border-radius: var(--tessa-radius);
+  box-shadow: var(--tessa-shadow);
+  border-left: 5px solid var(--tessa-accent);
+}
+
+/* ============================================
+   COLLAPSIBLE SECTION CARDS
+   ============================================ */
+
+.tessa-section-card {
+  background: var(--tessa-bg);
+  border-radius: var(--tessa-radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: var(--tessa-shadow);
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.tessa-section-card:hover {
+  box-shadow: var(--tessa-shadow-md);
+}
+
+/* Section Header - Clickable */
+.tessa-section-header {
+  display: flex;
+  align-items: center;
+  padding: 18px 24px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.tessa-section-header:hover {
+  background: var(--tessa-bg-subtle);
+}
+
+.tessa-section-card.expanded .tessa-section-header {
+  border-bottom: 1px solid var(--tessa-border);
+}
+
+/* Section Icon */
+.tessa-section-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-right: 16px;
+  flex-shrink: 0;
+}
+
+/* Section Title & Preview */
+.tessa-section-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tessa-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--tessa-text);
+  margin: 0 0 4px 0;
+  font-family: var(--tessa-font);
+}
+
+.tessa-section-preview {
+  font-size: 13px;
+  color: var(--tessa-text-light);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Expand/Collapse Arrow */
+.tessa-section-toggle {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--tessa-bg-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 12px;
+  transition: transform 0.3s ease, background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.tessa-section-toggle::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--tessa-text-light);
+  border-bottom: 2px solid var(--tessa-text-light);
+  transform: rotate(45deg);
+  margin-top: -3px;
+  transition: transform 0.3s ease;
+}
+
+.tessa-section-card.expanded .tessa-section-toggle::after {
+  transform: rotate(-135deg);
+  margin-top: 3px;
+}
+
+/* Section Body - Collapsible */
+.tessa-section-body {
+  display: none;
+}
+
+.tessa-section-card.expanded .tessa-section-body {
+  display: block;
+}
+
+.tessa-section-content {
+  padding: 24px;
+}
+
+/* ============================================
+   SECTION-SPECIFIC STYLES (Distinct feels)
+   ============================================ */
+
+/* Requirements - Green Theme */
+.tessa-section-card.section-requirements .tessa-section-icon {
+  background: var(--tessa-success-bg);
+  color: var(--tessa-success);
+}
+.tessa-section-card.section-requirements .tessa-section-title {
+  color: var(--tessa-success);
+}
+.tessa-section-card.section-requirements {
+  border-left: 4px solid var(--tessa-success);
+}
+
+/* Summary - Blue Theme */
+.tessa-section-card.section-summary .tessa-section-icon {
+  background: #eff6ff;
+  color: var(--tessa-primary);
+}
+.tessa-section-card.section-summary .tessa-section-title {
+  color: var(--tessa-primary);
+}
+.tessa-section-card.section-summary {
+  border-left: 4px solid var(--tessa-primary);
+}
+
+/* Property Info - Purple Theme */
+.tessa-section-card.section-property .tessa-section-icon {
+  background: var(--tessa-purple-bg);
+  color: var(--tessa-purple);
+}
+.tessa-section-card.section-property .tessa-section-title {
+  color: var(--tessa-purple);
+}
+.tessa-section-card.section-property {
+  border-left: 4px solid var(--tessa-purple);
+}
+
+/* Liens - Red Theme */
+.tessa-section-card.section-liens .tessa-section-icon {
+  background: var(--tessa-danger-bg);
+  color: var(--tessa-danger);
+}
+.tessa-section-card.section-liens .tessa-section-title {
+  color: var(--tessa-danger);
+}
+.tessa-section-card.section-liens {
+  border-left: 4px solid var(--tessa-danger);
+}
+
+/* Taxes - Amber Theme */
+.tessa-section-card.section-taxes .tessa-section-icon {
+  background: var(--tessa-warning-bg);
+  color: var(--tessa-warning);
+}
+.tessa-section-card.section-taxes .tessa-section-title {
+  color: var(--tessa-warning);
+}
+.tessa-section-card.section-taxes {
+  border-left: 4px solid var(--tessa-warning);
+}
+
+/* Other Findings - Gray Theme */
+.tessa-section-card.section-other .tessa-section-icon {
+  background: #f3f4f6;
+  color: var(--tessa-text-light);
+}
+.tessa-section-card.section-other .tessa-section-title {
+  color: var(--tessa-text-light);
+}
+.tessa-section-card.section-other {
+  border-left: 4px solid var(--tessa-text-light);
+}
+
+/* Document Status - Teal Theme */
+.tessa-section-card.section-status .tessa-section-icon {
+  background: var(--tessa-info-bg);
+  color: var(--tessa-info);
+}
+.tessa-section-card.section-status .tessa-section-title {
+  color: var(--tessa-info);
+}
+.tessa-section-card.section-status {
+  border-left: 4px solid var(--tessa-info);
+}
+
+/* ============================================
+   CONTENT INSIDE SECTIONS
+   ============================================ */
+
+.tessa-section-content h4 {
+  color: var(--tessa-text);
+  margin: 0 0 16px 0;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--tessa-font);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--tessa-border);
+}
+
+.tessa-section-content ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tessa-section-content li {
+  margin: 12px 0;
+  padding: 16px 20px;
+  background: var(--tessa-bg-subtle);
+  border-radius: var(--tessa-radius-sm);
+  line-height: 1.7;
+  font-size: 14px;
+  border: 1px solid var(--tessa-border-light);
+}
+
+.tessa-section-content p {
+  margin: 0 0 16px 0;
+  line-height: 1.8;
+}
+
+/* Item Numbers - Make them POP */
+.tessa-item-number {
+  display: inline-block;
+  background: var(--tessa-primary);
+  color: white;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  margin-right: 8px;
+  text-transform: uppercase;
+}
+
+/* Requirements section - GREEN pills for ALL item numbers */
+.section-requirements .tessa-item-number,
+.section-requirements .tessa-section-content .tessa-item-number {
+  background: var(--tessa-success) !important;
+}
+
+.section-liens .tessa-item-number {
+  background: var(--tessa-danger);
+}
+
+.section-taxes .tessa-item-number {
+  background: var(--tessa-warning);
+}
+
+/* ============================================
+   SECTION-SPECIFIC ENHANCEMENTS
+   ============================================ */
+
+/* SUMMARY - More spacing for closing risks */
+.section-summary .tessa-section-content li {
+  margin: 16px 0;
+  padding: 18px 22px;
+  border-left: 4px solid var(--tessa-primary);
+}
+
+.section-summary .tessa-section-content li:first-child {
+  border-left-color: var(--tessa-danger);
+  background: var(--tessa-danger-bg);
+}
+
+.section-summary .tessa-section-content li:nth-child(2) {
+  border-left-color: var(--tessa-warning);
+  background: var(--tessa-warning-bg);
+}
+
+.section-summary .tessa-section-content li:nth-child(3) {
+  border-left-color: var(--tessa-info);
+  background: var(--tessa-info-bg);
+}
+
+/* PROPERTY INFORMATION - Increased line spacing */
+.section-property .tessa-section-content {
+  line-height: 2.2;
+}
+
+.section-property .tessa-section-content li {
+  margin: 14px 0;
+  padding: 14px 20px;
+  line-height: 1.9;
+}
+
+/* TAXES - Parcel separators */
+.section-taxes .tessa-section-content .parcel-divider {
+  border-top: 2px dashed var(--tessa-warning);
+  margin: 24px 0;
+  padding-top: 20px;
+}
+
+.section-taxes .tessa-section-content .parcel-header {
+  display: inline-block;
+  background: var(--tessa-warning);
+  color: white;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-taxes .tessa-section-content li {
+  margin: 10px 0;
+  padding: 12px 18px;
+}
+
+/* Tax ID highlight */
+.section-taxes .tessa-section-content .tax-id-label {
+  font-weight: 700;
+  color: var(--tessa-warning);
+}
+
+/* OTHER FINDINGS - Larger Type labels */
+.section-other .tessa-section-content li {
+  margin: 16px 0;
+  padding: 18px 22px;
+}
+
+.section-other .tessa-section-content .finding-type {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--tessa-text);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--tessa-border-light);
+}
+
+/* Type label styling when using strong tags */
+.section-other .tessa-section-content strong:first-child {
+  font-size: 15px;
+  color: var(--tessa-text);
+}
+
+/* Data Grid for Taxes/Liens - Similar to Summary */
+.tessa-data-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.tessa-data-row {
+  display: flex;
+  padding: 12px 16px;
+  background: var(--tessa-bg-subtle);
+  border-radius: var(--tessa-radius-sm);
+  border: 1px solid var(--tessa-border-light);
+}
+
+.tessa-data-label {
+  font-weight: 600;
+  color: var(--tessa-text-light);
+  min-width: 140px;
+  font-size: 13px;
+}
+
+.tessa-data-value {
+  color: var(--tessa-text);
+  flex: 1;
+}
+
+/* Highlight rows for important data */
+.tessa-data-row.highlight {
+  background: var(--tessa-warning-bg);
+  border-color: var(--tessa-warning);
+}
+
+.tessa-data-row.danger {
+  background: var(--tessa-danger-bg);
+  border-color: var(--tessa-danger);
+}
+
+/* Section Stats Bar */
+.tessa-section-stats {
+  display: flex;
+  gap: 24px;
+  padding: 16px 20px;
+  background: var(--tessa-bg-subtle);
+  border-radius: var(--tessa-radius-sm);
+  margin-bottom: 20px;
+  border: 1px solid var(--tessa-border-light);
+}
+
+.tessa-stat {
+  text-align: center;
+}
+
+.tessa-stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--tessa-text);
+  line-height: 1;
+}
+
+.tessa-stat-label {
+  font-size: 11px;
+  color: var(--tessa-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+/* Cheat Sheet Card - Its own section */
+.tessa-section-card.section-cheatsheet .tessa-section-icon {
+  background: #fef3c7;
+  color: #b45309;
+}
+.tessa-section-card.section-cheatsheet .tessa-section-title {
+  color: #b45309;
+}
+.tessa-section-card.section-cheatsheet {
+  border-left: 4px solid #f59e0b;
+}
+
+/* ============================================
+   LEGACY BOX STYLES (for backward compat)
+   ============================================ */
+
+.tessa-analysis-response .highlight-box,
+.tessa-analysis-response .info-box,
+.tessa-analysis-response .warning-box,
+.tessa-analysis-response .requirements-box,
+.tessa-analysis-response .property-info-box,
+.tessa-analysis-response .liens-judgments-box,
+.tessa-analysis-response .taxes-assessments-box,
+.tessa-analysis-response .other-findings-box {
+  background: var(--tessa-bg);
+  border-radius: var(--tessa-radius);
+  padding: 20px 24px;
+  margin: 16px 0;
+  box-shadow: var(--tessa-shadow);
+}
+
+.tessa-analysis-response .requirements-box {
+  border-left: 4px solid var(--tessa-success);
+  background: linear-gradient(135deg, var(--tessa-success-bg) 0%, var(--tessa-bg) 100%);
+}
+
+.tessa-analysis-response .requirements-box h3,
+.tessa-analysis-response .requirements-box h4 {
+  color: var(--tessa-success);
+}
+
+.tessa-analysis-response .property-info-box {
+  border-left: 4px solid var(--tessa-purple);
+  background: linear-gradient(135deg, var(--tessa-purple-bg) 0%, var(--tessa-bg) 100%);
+}
+
+.tessa-analysis-response .property-info-box h4 {
+  color: var(--tessa-purple);
+}
+
+.tessa-analysis-response .liens-judgments-box {
+  border-left: 4px solid var(--tessa-danger);
+  background: linear-gradient(135deg, var(--tessa-danger-bg) 0%, var(--tessa-bg) 100%);
+}
+
+.tessa-analysis-response .liens-judgments-box h4 {
+  color: var(--tessa-danger);
+}
+
+.tessa-analysis-response .taxes-assessments-box {
+  border-left: 4px solid var(--tessa-warning);
+  background: linear-gradient(135deg, var(--tessa-warning-bg) 0%, var(--tessa-bg) 100%);
+}
+
+.tessa-analysis-response .taxes-assessments-box h4 {
+  color: var(--tessa-warning);
+}
+
+.tessa-analysis-response .other-findings-box {
+  border-left: 4px solid var(--tessa-text-light);
+  background: linear-gradient(135deg, #f9fafb 0%, var(--tessa-bg) 100%);
+}
+
+.tessa-analysis-response .other-findings-box h4 {
+  color: var(--tessa-text-light);
+}
+
+.tessa-analysis-response .info-box {
+  border-left: 4px solid var(--tessa-info);
+  background: linear-gradient(135deg, var(--tessa-info-bg) 0%, var(--tessa-bg) 100%);
+}
+
+.tessa-analysis-response .info-box h4 {
+  color: var(--tessa-info);
+}
+
+.tessa-analysis-response .highlight-box {
+  border-left: 4px solid var(--tessa-primary);
+  background: linear-gradient(135deg, #eff6ff 0%, var(--tessa-bg) 100%);
+}
+
+.tessa-analysis-response .warning-box {
+  border-left: 4px solid var(--tessa-danger);
+  background: var(--tessa-danger-bg);
+}
+
+.tessa-analysis-response .warning-box h4,
+.tessa-analysis-response .warning-box h5 {
+  color: var(--tessa-danger);
+}
+
+.tessa-analysis-response .warning-box p {
+  color: #991b1b;
+}
+
+/* Amounts & Addresses */
+.tessa-analysis-response .amount {
+  font-weight: 700;
+  color: var(--tessa-success);
+  font-size: 16px;
+  font-family: var(--tessa-font);
+}
+
+.tessa-analysis-response .property-address {
+  font-weight: 600;
+  color: var(--tessa-text);
+  font-size: 15px;
+}
+
+/* Agent Cheat Sheet */
+.agent-cheat-sheet {
+  margin-top: 20px;
+  background: var(--tessa-bg) !important;
+  border: 1px solid var(--tessa-border) !important;
+  border-left: 4px solid var(--tessa-info) !important;
+  padding: 20px 24px !important;
+  border-radius: var(--tessa-radius) !important;
+}
+
+.agent-cheat-sheet h4 {
+  color: var(--tessa-info) !important;
+  margin: 0 0 16px 0 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Loader */
+.tessa-loader {
+  display: inline-block;
+  position: relative;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto;
+  border: 3px solid var(--tessa-border);
+  border-top-color: var(--tessa-primary);
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+}
+
+.tessa-loader::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  bottom: 6px;
+  left: 6px;
+  border: 3px solid transparent;
+  border-top-color: var(--tessa-accent);
+  border-radius: 50%;
+  animation: spin 1.5s infinite linear reverse;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ============================================
+   QUICK NAV TABS (Optional top navigation)
+   ============================================ */
+
+.tessa-quick-nav {
+  display: flex;
+  gap: 8px;
+  padding: 12px 0;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.tessa-quick-nav-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--tessa-font);
+  border: 1px solid var(--tessa-border);
+  border-radius: 20px;
+  background: var(--tessa-bg);
+  color: var(--tessa-text-light);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tessa-quick-nav-btn:hover {
+  background: var(--tessa-bg-subtle);
+  color: var(--tessa-text);
+  border-color: var(--tessa-text-light);
+}
+
+.tessa-quick-nav-btn.active {
+  background: var(--tessa-text);
+  color: var(--tessa-bg);
+  border-color: var(--tessa-text);
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+  .modal-dialog {
+    max-width: 70% !important;
+    width: auto !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .modal-dialog {
+    margin: 16px;
+  }
+  
+  .modal-body {
+    padding: 12px;
+  }
+  
+  .tessa-section-header {
+    padding: 14px 16px;
+  }
+  
+  .tessa-section-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+  
+  .tessa-section-content {
+    padding: 16px;
+  }
+  
+  .tessa-quick-nav {
+    gap: 6px;
+  }
+  
+  .tessa-quick-nav-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+
+</style>
+
+
+
+</head>
+
+<body>
+    <!-- Loader-->
+    <div id="page-preloader"><span class="spinner border-t_second_b border-t_prim_a"></span></div>
+    <!-- Loader end-->
+    <div class="l-theme animated-css" data-header="sticky" data-header-top="200" data-canvas="container">
+     <!-- ==========================-->
+        <!-- MOBILE MENU-->
+        <!-- ==========================-->
+        <div data-off-canvas="mobile-slidebar left overlay">
+            <ul class="yamm main-menu nav navbar-nav">
+                            <!-- <li><a href="index.html">Home</a></li>-->
+                               <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">About Us<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+                                         <li><h4>How We Help</h4></li>
+										<li><a href="our-role.html">Our Role in Title</a></li>
+										<li><a href="protecting-you.html">Protecting You</a></li>
+										<li><a href="why-pacific-coast-title.html">Why Pacific Coast Title</a></li>
+										<li><h4>About Us</h4></li>
+										<li><a href="about-us.html">About Our Company</a></li>
+										
+										<li><a href="join-our-team.html">Join our Team</a></li>
+                                        
+                                    </ul>
+                                </li>
+                                <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">Title Services<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+                                        <li><h4>Residential Services</h4></li>
+                                        <li><a href="residential-title.html">Residential Title</a></li>
+                                        <li><a href="escrow-settlement.html">Escrow Settlement</a></li>
+										 <li><h4>About Title</h4></li>
+										 <li><a href="what-is-title-insurance.html">What Is Title Insurance</a></li>
+										<li><a href="benefits-title-insurance.html">Benefits of Title Insurance</a></li>
+										<li><a href="life-of-title-search.html">Life of a Title Search</a></li>
+										<li><a href="top-10-title-problems.html">Top 10 Title Concerns</a></li>
+										<li><h4>About Escrow</h4></li>
+										<li><a href="what-is-escrow.html">What is Escrow</a></li>
+										<li><a href="life-of-escrow.html">Life of an Escrow</a></li>
+										<li><a href="escrow-terms.html">Escrow Terms</a></li>
+										<li><h4>Commercical Services</h4></li>
+										 <li><a href="commercial-services.html">Services</a></li>
+                                        <li><a href="commercial-expertise.html">Expertise</a></li>
+                                        <li><a href="commercial-resources.html">Resources</a></li>
+                                    </ul>
+                                </li>
+								 <li class="dropdown"><a class="dropdown-toggle" href="1031-exchange.html" data-toggle="dropdown">1031 Exchange<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+									 <li><a href="1031-exchange.html">What is a 1031 Exchange?</a></li>
+                                     
+                                    </ul>
+                                </li>
+								<li><a href="tsg.html">TSG Divison</a></li>
+							    <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">Credit Unions & More<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+									 <li><a href="credit-union-division.html">Credit Unions</a></li>
+									 <li><a href="credit-union-division.html">Corporate Accounts</a></li>
+                                     
+                                    </ul>
+                                </li>
+								
+                                <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">Agent Resources<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+										 <li><h4>Forms & Flyers</h4></li>
+                                        <li><a href="blank-forms.html">Blank Forms</a></li>
+										<li><a href="educational-booklets.html">Educational Booklets</a></li>
+										<li><a href="informational-flyers.html">Flyer Center</a></li>
+										<li><a href="common-title-terms.html">Common Title Terms</a></li>
+										 <li class="divider"></li>
+										 <li><h4>Rates, Fees & Taxes</h4></li>
+										<li><a href="https://www.pct.com/calculator/">Rate Calculator</a></li>
+										<li><a href="https://www.pct.com/calculator/index.php?welcome/signup">Lender Rate Portal</a></li>
+										<li><a href="recording-fees.html">Recording Fees</a></li>
+										<li><a href="assets/downloads/2026-Recorders-Calendar.pdf">Recorders Holidays</a></li>
+										<li><a href="assets/downloads/2023-RC.pdf">Recission Calendar</a></li>
+										<li><a href="city-transfer-tax.html">City Transfer Tax</a></li>
+										<li><a href="rate-book.html">Rate Book</a></li><li><a href="supplemental-taxes.html">Supplemental Taxes</a></li>
+										<li><a href="https://pct.com/prop-19-calculator.html">Prop 19 Calculator</a></li>
+										 <li class="divider"></li>
+										  <li><h4>Tools</h4></li>
+										
+										
+                                        <li><a href="https://www.pacificcoastagent.com/">Pacific Coast Agent</a></li>
+										<li><a href="https://www.pcttitletoolbox.com/#!/">PCT Title Toolbox</a></li>
+										<li><a href="#">Instant Profile</a></li>
+										<li><a href="https://www.pct247.com/">PCT247.com</a></li>	
+										<li class="divider"></li>	
+										<li><h4>Video</h4></li>
+										<li><a href="training-center.html">Training center</a></li>
+                                    </ul>
+									
+									
+                                </li>
+                                <li class="dropdown"><a class="dropdown-toggle" href="contact.html" data-toggle="dropdown">Contact Us<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+									
+                                        <li><a href="downey.html">Downey</a></li>
+										<li><a href="fresno.html">Fresno</a></li>
+                                        <li><a href="glendale.html">Glendale</a></li>
+										<li><a href="inland-empire.html">Inland Empire</a></li>
+                                        <li><a href="orange.html">Orange</a></li>
+                                        <li><a href="sandiego.html">San Diego</a></li>
+                                    </ul>
+                                </li>
+            </ul>
+        </div>
+        <!-- ==========================-->
+        <!-- FULL SCREEN MENU-->
+        <!-- ==========================-->
+      <!--  <div class="wrap-fixed-menu" id="fixedMenu">
+            <nav class="fullscreen-center-menu">
+
+                <div class="menu-main-menu-container">
+
+                    <ul class="nav navbar-nav">
+
+                        <li><a href="index.html" >Home</a></li>
+                        <li><a href="about-us.html">About</a></li>
+                        <li><a href="blank-forms.html" >Blank Forms</a></li>
+                        <li><a href="information-flyers.html">Informational Flyers</a> </li>
+                        <li><a href="educational-booklets.html">Educational Booklets</a></li>
+                        <li><a href="contact.html" >Branches</a>
+                        </li>
+
+                    </ul>
+                </div>
+            </nav>
+            <button type="button" class="fullmenu-close"><i class="fa fa-times"></i></button>
+        </div> -->
+
+        <header class="header header-topbar-hidden header-full-width navbar-fixed-top header-background-trans header-color-white header-logo-white header-navibox-1-left header-navibox-2-right header-navibox-3-right header-navibox-4-right">
+            <div class="container container-boxed-width">
+                
+                <nav class="navbar" id="nav">
+                    <div class="container">
+                        <div class="header-navibox-1">
+                            <!-- Mobile Trigger Start-->
+                            <button class="menu-mobile-button visible-xs-block js-toggle-mobile-slidebar toggle-menu-button"><i class="toggle-menu-button-icon"><span></span><span></span><span></span><span></span><span></span><span></span></i></button>
+                            <!-- Mobile Trigger End-->
+                            <a class="navbar-brand scroll" href="index.html"><img class="normal-logo" src="assets/media/general/logo2.png" alt="logo"><img class="scroll-logo hidden-xs" src="assets/media/general/logo2-dark.png" alt="logo"></a>
+                        </div>
+                        <div class="header-navibox-2">
+                            <ul class="yamm main-menu nav navbar-nav">
+                            <!-- <li><a href="index.html">Home</a></li>-->
+                               <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">About Us<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+                                         <li><h4>How We Help</h4></li>
+										<li><a href="our-role.html">Our Role in Title</a></li>
+										<li><a href="protecting-you.html">Protecting You</a></li>
+										<li><a href="why-pacific-coast-title.html">Why Pacific Coast Title</a></li>
+										<li><h4>About Us</h4></li>
+										<li><a href="about-us.html">About Our Company</a></li>
+										
+										<li><a href="join-our-team.html">Join our Team</a></li>
+                                        
+                                    </ul>
+                                </li>
+                                <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">Title Services<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+                                        <li><h4>Residential Services</h4></li>
+                                        <li><a href="residential-title.html">Residential Title</a></li>
+                                        <li><a href="escrow-settlement.html">Escrow Settlement</a></li>
+										 <li><h4>About Title</h4></li>
+										 <li><a href="what-is-title-insurance.html">What Is Title Insurance</a></li>
+										<li><a href="benefits-title-insurance.html">Benefits of Title Insurance</a></li>
+										<li><a href="life-of-title-search.html">Life of a Title Search</a></li>
+										<li><a href="top-10-title-problems.html">Top 10 Title Concerns</a></li>
+										<li><h4>About Escrow</h4></li>
+										<li><a href="what-is-escrow.html">What is Escrow</a></li>
+										<li><a href="life-of-escrow.html">Life of an Escrow</a></li>
+										<li><a href="escrow-terms.html">Escrow Terms</a></li>
+										<li><h4>Commercical Services</h4></li>
+										 <li><a href="commercial-services.html">Services</a></li>
+                                        <li><a href="commercial-expertise.html">Expertise</a></li>
+                                        <li><a href="commercial-resources.html">Resources</a></li>
+                                    </ul>
+                                </li>
+								 <li class="dropdown"><a class="dropdown-toggle" href="1031-exchange.html" data-toggle="dropdown">1031 Exchange<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+									 <li><a href="1031-exchange.html">What is a 1031 Exchange?</a></li>
+                                     
+                                    </ul>
+                                </li>
+								<li><a href="tsg.html">TSG Divison</a></li>
+							    <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">Credit Unions & More<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+									 <li><a href="credit-union-division.html">Credit Unions</a></li>
+									 <li><a href="credit-union-division.html">Corporate Accounts</a></li>
+                                     
+                                    </ul>
+                                </li>
+								
+                                <li class="dropdown"><a class="dropdown-toggle" href="#" data-toggle="dropdown">Agent Resources<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+										 <li><h4>Forms & Flyers</h4></li>
+                                        <li><a href="blank-forms.html">Blank Forms</a></li>
+										<li><a href="educational-booklets.html">Educational Booklets</a></li>
+										<li><a href="informational-flyers.html">Flyer Center</a></li>
+										<li><a href="common-title-terms.html">Common Title Terms</a></li>
+										 <li class="divider"></li>
+										 <li><h4>Rates, Fees & Taxes</h4></li>
+										<li><a href="https://www.pct.com/calculator/">Rate Calculator</a></li>
+										<li><a href="https://www.pct.com/calculator/index.php?welcome/signup">Lender Rate Portal</a></li>
+										<li><a href="recording-fees.html">Recording Fees</a></li>
+										<li><a href="assets/downloads/2026-Recorders-Calendar.pdf">Recorders Holidays</a></li>
+										<li><a href="assets/downloads/2023-RC.pdf">Recission Calendar</a></li>
+										<li><a href="city-transfer-tax.html">City Transfer Tax</a></li>
+										<li><a href="rate-book.html">Rate Book</a></li><li><a href="supplemental-taxes.html">Supplemental Taxes</a></li>
+										<li><a href="https://pct.com/prop-19-calculator.html">Prop 19 Calculator</a></li>
+										 <li class="divider"></li>
+										  <li><h4>Tools</h4></li>
+										
+										
+                                        <li><a href="https://www.pacificcoastagent.com/">Pacific Coast Agent</a></li>
+										<li><a href="https://www.pcttitletoolbox.com/#!/">PCT Title Toolbox</a></li>
+										<li><a href="#">Instant Profile</a></li>
+										<li><a href="https://www.pct247.com/">PCT247.com</a></li>	
+										<li class="divider"></li>	
+										<li><h4>Video</h4></li>
+										<li><a href="training-center.html">Training center</a></li>
+                                    </ul>
+									
+									
+                                </li>
+                                <li class="dropdown"><a class="dropdown-toggle" href="contact.html" data-toggle="dropdown">Contact Us<b class="caret"></b>
+                          <!-- Classic Dropdown--></a>
+                                    <ul class="dropdown-menu">
+									
+                                         <li><a href="downey.html">Downey</a></li>
+										<li><a href="fresno.html">Fresno</a></li>
+                                        <li><a href="glendale.html">Glendale</a></li>
+										<li><a href="inland-empire.html">Inland Empire</a></li>
+                                        <li><a href="orange.html">Orange</a></li>
+                                        <li><a href="sandiego.html">San Diego</a></li>
+                                        
+                                    </ul>
+                                </li>
+            </ul>
+                            </ul>
+                        </div>
+                    <!--   <div class="header-navibox-3">
+                            <ul class="nav navbar-nav hidden-xs clearfix vcenter">
+                              <!--  <li><a class="btn_header_search" href="#"><i class="fa fa-search"></i></a></li>
+                                <li>
+                                    <button class="js-toggle-screen toggle-menu-button"><i class="toggle-menu-button-icon"><span></span><span></span><span></span><span></span><span></span><span></span></i></button>
+                                </li>
+                            </ul>
+                        </div> -->
+                      <!--  <div class="header-navibox-4">
+                            <div class="header-cart"><a href="#"><i class="fa fa-shopping-basket" aria-hidden="true"></i></a><span class="header-cart-count">3</span></div>
+                            <div class="header-language-nav dropdown">
+                                <button class="dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown">English<span class="caret"></span></button>
+                                <ul class="dropdown-menu">
+                                    <li><a href="#">English</a></li>
+                                    <li><a href="#">Italy</a></li>
+                                    <li><a href="#">France</a></li>
+                                </ul>
+                            </div>
+                        </div> -->
+                    </div>
+                </nav>
+            </div>
+        </header>
+        <!-- end .header-->
+        <div class="main-slider slider-pro text-center" id="main-slider" data-slider-width="100%" data-slider-height="600px" data-slider-arrows="True" data-slider-buttons="true">
+            <div class="sp-slides">
+                <!-- Slide 1-->
+                <div class="sp-slide"><img class="sp-image" src="https://www.pct.com/assets/media/components/b-main-slider/2025-1.jpg" alt="slider">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="main-slider__info sp-layer" data-width="100%" data-show-transition="left" data-hide-transition="left" data-show-duration="2000" data-show-delay="500" data-hide-delay="400">Residential / Commercial / Escrow</div>
+                                <!-- Nuclear lftp test: Surgical precision -->
+                                <h2 class="main-slider__title sp-layer" data-width="100%" data-show-transition="left" data-hide-transition="left" data-show-duration="800" data-show-delay="500" data-hide-delay="400">Title Settlement Services</h2>
+								
+								<!--<img data-width="100%" data-show-transition="left" data-hide-transition="left" data-show-duration="800" data-show-delay="400" data-hide-delay="250" class="help" src="https://pct.com/assets/media/general/word/Help.png"/>-->
+								
+							<div class="sp-layer pct-search-wrapper" data-width="100%" data-show-transition="left" data-hide-transition="left" data-show-duration="1200" data-show-delay="1500" data-hide-delay="400" style="margin-top: 20px;">
+    <form id="pct-slider-search-form" class="pct-slider-search-form" novalidate>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: nowrap; justify-content: center; white-space: nowrap;">
+            <!-- Question Input (default) - original width -->
+            <input type="text" id="pct-slider-search-input" name="question" placeholder="What would you like to know about title or escrow?" required>
+            
+            <!-- File Input (hidden by default) - styled as button -->
+            <div id="homepage-file-wrapper" style="display: none; position: relative;">
+                <input type="file" id="homepage-pdf-input" accept=".pdf" style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;">
+                <button type="button" id="homepage-file-btn" style="padding: 15px 25px; font-size: 16px; border: 2px solid #28a745; border-radius: 5px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(40,167,69,0.3); transition: all 0.3s ease;">
+                    📎 Choose PDF File
+                </button>
+            </div>
+            
+            <!-- Submit Button -->
+            <button type="submit" id="homepage-submit-btn">Ask Tessa™</button>
+            
+            <!-- Function Dropdown - with custom styling -->
+            <select id="homepage-function-select" style="padding: 22px 0px; font-size: 14px; border: 2px solid #f26b2b; border-radius: 5px; background: none; color: #fff; font-weight: 500; cursor: pointer; box-shadow: 0 2px 4px rgba(242,107,43,0.2);">
+                <option value="question" style="color: #333; background: #fff;">Ask</option>
+                <option value="analyze" style="color: #333; background: #fff;">Summarize</option>
+            </select>
+        </div>
+        
+        <!-- Status Display -->
+        <div id="homepage-status" style="margin-top: 10px; font-size: 14px; text-align: center;"></div>
+    </form>
+   
+</div>
+								
+                              
+                            </div>
+                        </div>
+                    </div>
+					
+					
+<!--<section class="tessa-response-area text-center" id="tessa-response-container" style="display: none;">
+  <div class="container">
+    <h3>💬 Tessa's Response</h3>
+    <div id="pct-slider-search-result" class="pct-slider-search-result"></div>
+  </div>
+</section>-->
+                </div>
+               
+                <!-- Slide 3-->
+               
+               
+            </div>
+        </div>
+		<section class="section-default pct-button-links" data-show-delay="2500">
+		<div class="row">
+                    <div class="col-xs-12">
+                        <div class="text-center">
+                            <div class="ui-subtitle-block">Quick Links </div>
+                            <h2 class="ui-title-block-2">How Can We Help?</h2>
+                            <div class="ui-decor-1 bg-primary" style="background:#d35410;"></div>
+							
+                        </div>
+                    </div>
+                </div>
+  <div class="container text-center">
+    <a class="main-slider__btn btn btn-default btn-lg" href="https://pct.com/prop-19-calculator.html">Prop-19 Calculator</a>
+    <a class="main-slider__btn btn btn-default btn-lg" href="https://www.pcttitletoolbox.com/#!/">PCT Title Toolbox</a>
+    <a class="main-slider__btn btn btn-default btn-lg" href="https://www.titlepro247.com/">TitlePro 247</a><br><br>
+    <a class="main-slider__btn btn btn-default btn-lg" href="https://www.pct.com/calculator/">Get Title Quote</a>
+    <a class="main-slider__btn btn btn-default btn-lg" href="https://www.equityprotect.com/title/pacificcoast">Equity Protect</a>
+    <a class="main-slider__btn btn btn-default btn-lg" href="https://pct.com/utilities-directory.html">Utilities Directory</a>
+  </div>
+		</section>
+		
+		
+		
+		
+		
+        <!-- end .main-slider-->
+        <section class="section-default">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <div class="text-center">
+                            <div class="ui-subtitle-block">We would like to welcome you to Pacific Coast Title </div>
+                            <h2 class="ui-title-block-2">What We Do</h2>
+                            <div class="ui-decor-1 bg-primary" style="background:#d35410;"></div>
+							
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-3">
+                        <section class="b-advantages b-advantages-1  wow  fadeIn" data-wow-duration="1s" data-wow-delay="0.15s"> <i class="b-advantages__icon stroke flaticon-printed-paper "></i>
+                            <div class="b-advantages__inner">
+                                <h3 class="b-advantages__title ui-title-inner"><a href="index.html">Residential Title</a></h3>
+                                <div class="b-advantages__info">Our thorough title searches, title clearance, and title policies help to produce a clear property title and enable an efficient closing of your transactions.</div>
+                            </div>
+                        </section>
+                        <!-- end .b-advantages-->
+                    </div>
+					 <div class="col-sm-3">
+                        <section class="b-advantages b-advantages-1  wow  fadeIn" data-wow-duration="1s" data-wow-delay="0.35s"> <i class="b-advantages__icon stroke flaticon-layers "></i>
+                            <div class="b-advantages__inner">
+                                <h3 class="b-advantages__title ui-title-inner"><a href="index.html">Commercial Title</a></h3>
+                                <div class="b-advantages__info">Our team of top industry professionals have the expertise and knowledge
+needed to close your commercial real estate transactions.</div>
+                            </div>
+                        </section>
+                        <!-- end .b-advantages-->
+                    </div>
+                    <div class="col-sm-3">
+                        <section class="b-advantages b-advantages-1 wow  fadeIn" data-wow-duration="1s" data-wow-delay="0.45s"><i class="b-advantages__icon stroke flaticon-presentation"></i>
+                            <div class="b-advantages__inner">
+                                <h3 class="b-advantages__title ui-title-inner"><a href="index.html">Escrow Settlement</a></h3>
+                                <div class="b-advantages__info">Our escrow division is comprised of seasoned settlement agents who can
+facilitate the closing of the most demanding residential & commercial transactions</div>
+                            </div>
+                        </section>
+                        <!-- end .b-advantages-->
+                    </div>
+                    <div class="col-sm-3">
+                        <section class="b-advantages b-advantages-1 wow  fadeIn" data-wow-duration="1s" data-wow-delay="0.65s"><i class="b-advantages__icon stroke flaticon-bar-chart"></i>
+                            <div class="b-advantages__inner">
+                                <h3 class="b-advantages__title ui-title-inner"><a href="index.html">Lender Solutions</a></h3>
+                                <div class="b-advantages__info">Our title operations and technology infrastructure allow us to partner with some of the nations largest lenders requiring title & escrow services</div>
+                            </div>
+                        </section>
+                        <!-- end .b-advantages-->
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- end .section-default-->
+         <div class="block-table block-table_lg">
+            <div class="block-table__cell col-lg-6">
+                <div class="section-type-9 area-bg area-bg_op_25 area-bg_grad-5 block-table__inner">
+                    <div class="area-bg__inner">
+                     <!--   <div class="b-brands owl-carousel owl-theme enable-owl-carousel" data-min480="2" data-min768="3" data-min992="3" data-min1200="3" data-pagination="false" data-navigation="false" data-auto-play="40000" data-stop-on-hover="true">
+                            <a class="b-brands__item" href="index.html"><img class="img-responsive center-block" src="assets/media/components/b-brands/res.png" alt="foto"></a>
+                            <a class="b-brands__item" href="index.html"><img class="img-responsive center-block" src="assets/media/components/b-brands/com.png" alt="foto"></a>
+                            <a class="b-brands__item" href="index.html"><img class="img-responsive center-block" src="assets/media/components/b-brands/hou.png" alt="foto"></a>
+                        </div> -->
+                        <!-- end b-brands-->
+                    </div>
+                    <div class="helper-2"></div>
+                </div>
+            </div>
+            <div class="block-table__cell col-lg-6">
+                <div class="section-type-10 area-bg area-bg_blue area-bg_op_90 parallax">
+                    <div class="area-bg__inner">
+                        <ul class="b-tabs-nav nav nav-tabs">
+                           <li class="active"><a href="#who" data-toggle="tab">about us</a></li>
+                        <li><a href="#statement" data-toggle="tab">mission statement</a></li>
+                        <li><a href="#awards" data-toggle="tab">our values</a></li>
+                        <li><a href="#strategy" data-toggle="tab">the strategy</a></li>
+                        </ul>
+                        <div class="b-tabs-content tab-content">
+                            <div class="tab-pane active" id="who">
+                                <section class="section-area">
+                                    <h2 class="ui-title-block-3">who we are</h2>
+                                    <div class="ui-subtitle-block-2">solutions for everyone</div>
+                                    <div class="ui-decor-2 bg-white"></div>
+                                   <p>We specialize in Residential & Commercial Title Insurance and we work hard behind the scenes to make sure your experience with us is a satisfying one. Your success is our success.</p>
+                                </section>
+                            </div>
+                            <div class="tab-pane" id="statement">
+                                <section class="section-area">
+                                    <h2 class="ui-title-block-3">mission statement</h2>
+                                    <div class="ui-subtitle-block-2">solutions for everyone</div>
+                                    <div class="ui-decor-2 bg-white"></div>
+                                    <p>To empower our clients through superior customer service, industry innovation, and our commitment to delivering on our promises.<br><br></p>
+                                </section>
+                            </div>
+                            <div class="tab-pane" id="awards">
+                                <section class="section-area">
+                                    <h2 class="ui-title-block-3">our values</h2>
+                                    <div class="ui-subtitle-block-2">solutions for everyone</div>
+                                    <div class="ui-decor-2 bg-white"></div>
+                                   <p>it's our goal to establish a long-term relationship with all of our clients. By working together, we can deliver our services faster which will help you close deals quickly and more efficiently. </p>
+                                </section>
+                            </div>
+                            <div class="tab-pane" id="strategy">
+                                <section class="section-area">
+                                    <h2 class="ui-title-block-3">our strategy</h2>
+                                    <div class="ui-subtitle-block-2">solutions for everyone</div>
+                                    <div class="ui-decor-2 bg-white"></div>
+                                    <p>to provide cutting edge tools that agents can use in their business generation efforts and combine them with the best customer service in the industry.<br><br></p>
+                                </section>
+                            </div>
+                        </div>
+                        <!-- end .b-tabs-->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- end .block-table-->
+		<section class="section-default bg-grey">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <div class="text-center">
+                            <div class="ui-subtitle-block">want to know a little more about us</div>
+                            <h2 class="ui-title-block-2"><span class="shuffle">Service, Tools, Commitment</span></h2>
+                            <div class="ui-decor-1 bg-primary" style="background:#d35410;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <div class="b-advantages-group">
+                            <section class="b-advantages b-advantages-2 b-advantages_3-col"><i class="b-advantages__icon stroke flaticon-screen"></i>
+                                <div class="b-advantages__inner effect-border">
+                                    <h3 class="b-advantages__title ui-title-inner">residential</h3>
+                                    <div class="b-advantages__info">Our experience in the Residential sector allows us to provide Title Insurance policies promptly.</div>
+                                </div>
+                            </section>
+                            <!-- end .b-advantages-->
+                            <section class="b-advantages b-advantages-2  b-advantages_3-col"><i class="b-advantages__icon stroke flaticon-layers"></i>
+                                <div class="b-advantages__inner effect-border effect-active ">
+                                    <h3 class="b-advantages__title ui-title-inner">commercial</h3>
+                                    <div class="b-advantages__info">Our commercial sector is ready to meet all the demands brought by these large transactions.</div>
+                                </div>
+                            </section>
+                            <!-- end .b-advantages-->
+                            <section class="b-advantages b-advantages-2 b-advantages_3-col"><i class="b-advantages__icon stroke flaticon-presentation	"></i>
+                                <div class="b-advantages__inner effect-border">
+                                    <h3 class="b-advantages__title ui-title-inner">escrow</h3>
+                                    <div class="b-advantages__info">Our escrow division is ready to help ensure all conditions are met and all funds are dispersed.</div>
+                                </div>
+                            </section>
+                            <!-- end .b-advantages-->
+                            <section class="b-advantages b-advantages-2 b-advantages_3-col"><i class="b-advantages__icon stroke flaticon-worldwide"></i>
+                                <div class="b-advantages__inner effect-border">
+                                    <h3 class="b-advantages__title ui-title-inner">nationwide</h3>
+                                    <div class="b-advantages__info">Our nationwide network helps us provide our services on residential & commercial transactions within the United States.
+
+</div>
+                                </div>
+                            </section>
+                            <!-- end .b-advantages-->
+                            <section class="b-advantages b-advantages-2 b-advantages_3-col"><i class="b-advantages__icon stroke flaticon-analytics"></i>
+                                <div class="b-advantages__inner effect-border">
+                                    <h3 class="b-advantages__title ui-title-inner">technology</h3>
+                                    <div class="b-advantages__info">Our dedication to technology keeps us at the forefont of innovation which helps us provide the serives you need.</div>
+                                </div>
+                            </section>
+                            <!-- end .b-advantages-->
+                            <section class="b-advantages b-advantages-2 b-advantages_3-col"><i class="b-advantages__icon stroke flaticon-big-handbag"></i>
+                                <div class="b-advantages__inner effect-border">
+                                    <h3 class="b-advantages__title ui-title-inner">people</h3>
+                                    <div class="b-advantages__info">Our team is what makes it all come together. The company culture at Pacific Coast Title Company is unlike any other.</div>
+                                </div>
+                            </section>
+                            <!-- end .b-advantages-->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- end .section-default-->
+		
+        <!-- end .section-area-->
+       <!-- <section class="section-default">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <div class="text-center">
+                            <div class="ui-subtitle-block">Tempor incididunt labore dolore veniam</div>
+                            <h2 class="ui-title-block-2"><span class="shuffle">projects we do</span></h2>
+                            <div class="ui-decor-1 bg-primary"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <div class="b-isotope b-isotope-1">
+                            <ul class="b-isotope-filter list-inline">
+                                <li><a class="current" href="" data-filter="*">all works</a></li>
+                                <li><a href="" data-filter=".design">web design</a></li>
+                                <li><a href="" data-filter=".wordpress">wordpress</a></li>
+                                <li><a href="" data-filter=".mockups">mockups</a></li>
+                                <li><a href="" data-filter=".animation">animation</a></li>
+                                <li><a href="" data-filter=".print">print design</a></li>
+                            </ul>
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-xs-12">
+                                        <ul class="b-isotope-grid grid list-unstyled">
+                                            <li class="grid-sizer"></li>
+                                            <li class="b-isotope-grid__item grid-item wordpress print ">
+                                                <a class="b-isotope-grid__inner" href="portfolio-1.html"><img src="assets/media/content/gallery/360x360/1.jpg" alt="foto"><span class="b-isotope-grid__wrap-info"><span class="b-isotope-grid__info"><span class="b-isotope-grid__title">the glass bottle</span><span class="b-isotope-grid__categorie">branding / print</span></span>
+                                                    </span>
+                                                </a>
+                                            </li>
+                                            <li class="b-isotope-grid__item grid-item design animation">
+                                                <a class="b-isotope-grid__inner" href="portfolio-1.html"><img src="assets/media/content/gallery/360x260/1.jpg" alt="foto"><span class="b-isotope-grid__wrap-info"><span class="b-isotope-grid__info"><span class="b-isotope-grid__title">the glass bottle</span><span class="b-isotope-grid__categorie">branding / print</span></span>
+                                                    </span>
+                                                </a>
+                                            </li>
+                                            <li class="b-isotope-grid__item grid-item wordpress mockups animation">
+                                                <a class="b-isotope-grid__inner" href="portfolio-1.html"><img src="assets/media/content/gallery/360x450/1.jpg" alt="foto"><span class="b-isotope-grid__wrap-info"><span class="b-isotope-grid__info"><span class="b-isotope-grid__title">the glass bottle</span><span class="b-isotope-grid__categorie">branding / print</span></span>
+                                                    </span>
+                                                </a>
+                                            </li>
+                                            <li class="b-isotope-grid__item grid-item wordpress animation print effect-active">
+                                                <a class="b-isotope-grid__inner" href="portfolio-1.html"><img src="assets/media/content/gallery/360x260/2.jpg" alt="foto"><span class="b-isotope-grid__wrap-info"><span class="b-isotope-grid__info"><span class="b-isotope-grid__title">the glass bottle</span><span class="b-isotope-grid__categorie">branding / print</span></span>
+                                                    </span>
+                                                </a>
+                                            </li>
+                                            <li class="b-isotope-grid__item grid-item design">
+                                                <a class="b-isotope-grid__inner" href="portfolio-1.html"><img src="assets/media/content/gallery/360x450/2.jpg" alt="foto"><span class="b-isotope-grid__wrap-info"><span class="b-isotope-grid__info"><span class="b-isotope-grid__title">the glass bottle</span><span class="b-isotope-grid__categorie">branding / print</span></span>
+                                                    </span>
+                                                </a>
+                                            </li>
+                                            <li class="b-isotope-grid__item grid-item wordpress mockups animation">
+                                                <a class="b-isotope-grid__inner" href="portfolio-1.html"><img src="assets/media/content/gallery/360x360/2.jpg" alt="foto"><span class="b-isotope-grid__wrap-info"><span class="b-isotope-grid__info"><span class="b-isotope-grid__title">the glass bottle</span><span class="b-isotope-grid__categorie">branding / print</span></span>
+                                                    </span>
+                                                </a>
+                                            </li>
+                                            <li class="b-isotope-grid__item grid-item design print">
+                                                <a class="b-isotope-grid__inner" href="portfolio-1.html"><img src="assets/media/content/gallery/360x260/3.jpg" alt="foto"><span class="b-isotope-grid__wrap-info"><span class="b-isotope-grid__info"><span class="b-isotope-grid__title">the glass bottle</span><span class="b-isotope-grid__categorie">branding / print</span></span>
+                                                    </span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- end .b-isotope
+                    </div>
+                </div>
+            </div>
+        </section> -->
+        <!-- end .section-default-->
+        <section class="section-type-1 section-sm parallax area-bg area-bg_grad-2 area-bg_op_75">
+            <div class="area-bg__inner">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h2 class="ui-title-block-3">Want to Know More about Us?</h2>
+                            <div class="ui-subtitle-block-2">we would love to tell you!</div>
+                        </div>
+                        <div class="col-md-4"><a class="btn btn-default btn-lg pull-right" href="industry-documents/PCTInfoSheet.pdf">View Company Overview</a></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- end .section-type-1-->
+        
+         <section class="section-type-4 section-default">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="ui-subtitle-block">in the real estate transaction</div>
+                        <h2 class="ui-title-block ui-title-block_light">How We Protect<br> Your Clients</h2>
+                        <div class="ui-decor-1 bg-primary"></div>
+                        
+                        <p>After your sales contract has been accepted, Pacific Coast Title Company will search all related public records to look for any problems with the home’s title. This search typically involves a review of land records going back many years. More than 1/3 of all title searches reveal a problem with the title that we will make sure is fixed before you go to closing. For instance, a previous owner may have had minor construction done on the property, but never fully paid the contractor. Or the previous owner may have failed to pay local or state taxes. Pacific Coast Title Company seeks to resolve problems like these before you go to closing. Once we issue a title policy, if for some reason any claim which is covered under your title policy is ever filed against your property, Contact Pacific Coast Title Company and we will work diligently to process and help resolve your claim.</p>
+                       
+                    </div>
+                    <div class="col-md-6">
+                        <div class="owl-carousel owl-theme owl-theme_mod-b enable-owl-carousel" data-pagination="true" data-navigation="false" data-single-item="true" data-auto-play="7000" data-transition-style="fade" data-main-text-animation="true" data-after-init-delay="3000" data-after-move-delay="1000" data-stop-on-hover="true"><img class="img-responsive" src="assets/media/content/carousel-1/4.jpg" alt="foto"><!--<img class="img-responsive" src="assets/media/content/carousel-1/1.png" alt="foto"><img class="img-responsive" src="assets/media/content/carousel-1/1.png" alt="foto">--></div>
+                        <!-- end carousel-->
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- end .section-default-->
+        <!-- b-progress width parallax-->
+		
+		 <section class="section-type-8 parallax area-bg area-bg_grad-2 area-bg_op_75">
+            <div class="area-bg__inner">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="b-video player fixed-controls play-button">
+                                <video poster="assets/media/components/b-video/poster-3.jpg">
+                                    <source src="assets/media/content/video/4.mp4" type="video/mp4">
+                                </video>
+                            </div>
+                            <!-- end .b-video-->
+                        </div>
+                        <div class="col-md-6">
+                            <div class="section-type-8__inner">
+                                <div class="ui-subtitle-block">Want to know...</div>
+                                <h2 class="ui-title-block ui-title-block_light">Why Real Estate Agents Trust Pacific Coast Title Company</h2>
+                                <div class="ui-decor-1 bg-white"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section><br><br><br><br>
+		<!-- end .section-type-8-->
+      
+       
+        <section class="section-type-4 scrollme-section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="ui-subtitle-block">In real estate</div>
+                        <h2 class="ui-title-block ui-title-block_light"><span class="shuffle">Title Insurance is Your Best Bet.</span></h2>
+                        <div class="ui-decor-1 bg-primary"></div>
+                        
+                        <p>Dollar for dollar, title insurance is the best investment you can make to protect your
+interest in one of the most valuable assets you own: your home. Title insurance insures
+a real estate investment, unlocking its potential as a financial asset for the owner. As
+such, title insurance plays a major role in the confidence that lies at the heart of our
+nation’s real estate market and economy.</p><a class="btn btn-default btn-round btn_mrg-top_45" href="residential-title.html">learn more about title</a>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="section-type-4__img">
+                            <div class="scrollme">
+                                <div class="animateme" data-when="enter" data-from="1" data-to="0" data-opacity="0" data-translatex="300" data-rotatez="0">
+                                    <img src="assets/media/content/657x498/2.jpg" alt="foto">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- end .section-type-4-->
+         <section class="section-type-1a section-sm parallax area-bg area-bg_grad-2a area-bg_op_80">
+        <div class="area-bg__inner">
+          <div class="container">
+            <div class="row">
+              <div class="col-md-7">
+                <h2 class="ui-title-block-3">Ready to work with us?</h2>
+                <div class="ui-subtitle-block-2">we are ready to help.</div>
+              </div>
+              <div class="col-md-5"><a class="btn btn-default btn-round pull-right" href="https://clients.pacificcoasttitle.com/login.aspx?ReturnUrl=/&officeid=1">open orders</a><a class="btn btn-default btn-round pull-right" href="rate-book.html">get rates</a></div>
+            </div>
+          </div>
+        </div>
+      </section>
+        <!-- end .section-area-->
+        <footer class="footer">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <ul class="footer-social-nets">
+                            <li class="footer-social-nets__item"><a class="footer-social-nets__link" href="https://www.facebook.com/PacificCoastTitleCompany/">facebook</a></li>
+                            <li class="footer-social-nets__item"><a class="footer-social-nets__link" href="https://twitter.com/mypct?lang=en">twitter</a></li>                      
+                            <li class="footer-social-nets__item"><a class="footer-social-nets__link" href="#">instagram</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer__main">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div class="footer-section">
+                                <a class="footer__logo" href="index.html"><img class="img-responsive" src="assets/media/general/logo-lg2.png" alt="Logo"></a>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <section class="footer-section footer-section_links">
+                                <h3 class="footer-section__title">useful links</h3>
+                                <ul class="footer-list list-unstyled">
+                                    <li class="footer-list__item"><a class="footer-list__link" href="about.html">About Us</a></li>
+                                    <li class="footer-list__item"><a class="footer-list__link" href="contact.html">Contact Us</a></li>
+                                    <li class="footer-list__item"><a class="footer-list__link" href="how-we-protect-you.html">Our Role</a></li>
+                                    <li class="footer-list__item"><a class="footer-list__link" href="blank-forms.html">Blank Forms</a></li>
+                                    <li class="footer-list__item"><a class="footer-list__link" href="what-is-title-insurance.html">What Is Title Ins.</a></li>
+                                    <li class="footer-list__item"><a class="footer-list__link" href="information-flyers.html">Info Flyers</a></li>
+									<li class="footer-list__item"><a class="footer-list__link" href="notices.html">Notices</a></li>
+												<li class="footer-list__item"><a class="footer-list__link" href="fin-cen.html">FinCEN</a></li>
+                                   <li class="footer-list__item"><a class="footer-list__link" href="sb2-forms.html">SB2-Forms</a></li>
+                                </ul>
+                            </section>
+                        </div>
+                        <div class="col-sm-4">
+                            <section class="footer-section">
+                                <h3 class="footer-section__title">Corporate Contact Info</h3>
+                                <p>Address: 1111 E. Katella Ave Ste. 120 Orange, CA 92867</p>
+                                <p>Phone: (714) 516-6700 / (866) 724-1050</p>
+                                <p>Email: info@pct.com</p><a class="footer__link" href="https://goo.gl/maps/Hrjgqrh1imP2">get directions</a>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright">
+                <div class="container">
+                <div class="row">
+                    <div class="col-xs-12">
+<img class="img-responsive2" src="/assets/media/content/associations/SiVet.png" alt="Logo"><img class="img-responsive2" src="/assets/media/content/associations/ss.png" alt="Logo">©<a class="copyright__link" href="index.html"> PACIFIC COAST TITLE COMPANY</a> All rights reserved.</div>
+                </div>
+                    </div>
+            </div>
+        </footer>
+        <!-- .footer-->
+    </div>
+    <!-- end layout-theme-->
+	
+
+
+
+
+	
+
+
+    <!-- ++++++++++++-->
+    <!-- MAIN SCRIPTS-->
+    <!-- ++++++++++++-->
+    <script src="assets/libs/jquery-1.12.4.min.js"></script>
+    <script src="assets/libs/jquery-migrate-1.2.1.js"></script>
+    <!-- Bootstrap-->
+    <script src="assets/libs/bootstrap/bootstrap.min.js"></script>
+
+    <!---->
+    <!-- Select customization & Color scheme-->
+    <script src="assets/plugins/bootstrap-select/js/bootstrap-select.js"></script>
+    <!-- Slider-->
+    <script src="assets/plugins/owl-carousel/owl.carousel.min.js"></script>
+    <!-- Pop-up window-->
+    <script src="assets/plugins/magnific-popup/jquery.magnific-popup.min.js"></script>
+    <!-- Headers scripts-->
+    <script src="assets/plugins/headers/slidebar.js"></script>
+    <script src="assets/plugins/headers/header.js"></script>
+    <!-- Mail scripts-->
+    <script src="assets/plugins/jqBootstrapValidation.js"></script>
+   
+    <!-- Video player-->
+    <script src="assets/plugins/flowplayer/flowplayer.min.js"></script>
+    <!-- Filter and sorting images-->
+    <script src="assets/plugins/isotope/isotope.pkgd.min.js"></script>
+    <script src="assets/plugins/isotope/imagesLoaded.js"></script>
+    <!-- Progress numbers-->
+    <script src="assets/plugins/rendro-easy-pie-chart/jquery.easypiechart.min.js"></script>
+    <script src="assets/plugins/rendro-easy-pie-chart/waypoints.min.js"></script>
+    <!-- Animations-->
+    <script src="assets/plugins/scrollreveal/scrollreveal.min.js"></script>
+    <script src="assets/plugins/revealer/js/anime.min.js"></script>
+    <script src="assets/plugins/revealer/js/scrollMonitor.js"></script>
+    <script src="assets/plugins/revealer/js/main.js"></script>
+    <script src="assets/plugins/animate/wow.min.js"></script>
+    <script src="assets/plugins/animate/jquery.shuffleLetters.js"></script>
+    <script src="assets/plugins/animate/jquery.scrollme.min.js"></script>
+	
+
+    <!-- User customization-->
+    <script src="assets/js/custom.js"></script>
+
+
+    <!-- Main slider-->
+    <script src="assets/plugins/slider-pro/jquery.sliderPro.min.js"></script>
+	<script src="assets/js/slider-init.js"></script>
+	
+	<script type="text/javascript">
+  jQuery(document).ready(function($) {
+    $('#main-slider').sliderPro({
+      // Your data attributes can be overridden here if needed
+      width: '100%',
+      height: 600,
+      arrows: true,
+      buttons: true,
+      // Add more options as needed: https://github.com/bqworks/slider-pro/blob/master/docs/modules/javascript-api.md
+    });
+  });
+</script>
+
+
+	
+	<!-- Facebook Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '307916942954456', {
+});
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=307916942954456&ev=PageView&noscript=1"
+/></noscript>
+<!-- DO NOT MODIFY -->
+<!-- End Facebook Pixel Code -->
+
+
+<!-- Tessa Modal -->
+<div class="modal fade" id="tessaModal" tabindex="-1" role="dialog" aria-labelledby="tessaModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Tessa™ Enhanced (Beta)</h4>
+        <button type="button" class="close tessa-close-btn" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" style="max-height: 500px; overflow-y: auto;">
+        <div id="tessaResponses"></div>
+        <div id="tessaTyping" style="display: none; text-align: center;">
+          <div class="tessa-loader"></div>
+          <p style="color: #999; margin-top: 10px;">Tessa is thinking…</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <input type="text" id="tessaModalInput" class="form-control" placeholder="Have another question about Title or Escrow?" style="width: 70%; display: inline-block;">
+        <button id="tessaModalSendBtn" class="btn tessa-btn">Ask Tessa™</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PDF.js Library for PDF text extraction -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<!-- Tessa Enhanced Script 2.3 -->
+<script src="assets/js/tessa-enhanced-script-3.3.0-guardrails.js"></script>
+
+
+
+	
+</body>
+
+</html>

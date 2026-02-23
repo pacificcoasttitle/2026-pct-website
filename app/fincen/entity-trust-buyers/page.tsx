@@ -1,8 +1,7 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
-import { KeyTakeaways } from "@/components/fincen/key-takeaways"
-import { CTABox } from "@/components/fincen/cta-box"
+import { FinCENPageLayout } from "@/components/fincen/fincen-page-layout"
 import { CheckCircle, Home, UserCheck, Building2, Shield, DollarSign, Clock } from "lucide-react"
 import type { Metadata } from "next"
 
@@ -30,9 +29,17 @@ export default function EntityTrustBuyersPage() {
         subtitle="If your residential purchase is non-financed and the buyer is an entity or trust, expect identity and ownership requests. The faster you provide them, the smoother the closing."
       />
 
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
-        <KeyTakeaways items={takeaways} />
-
+      <FinCENPageLayout
+        takeaways={takeaways}
+        cta={{
+          heading: "Want a Head Start Checklist?",
+          body: "Tell us how the buyer plans to take title and how the purchase will be funded. We'll outline the likely next steps.",
+          buttons: [
+            { label: "Start FinCEN Intake", href: "/fincen/contact" },
+            { label: "Check if it's reportable", href: "/fincen/is-it-reportable", variant: "outline" },
+          ],
+        }}
+      >
         <div className="space-y-14">
 
           {/* Section 1: When This Usually Applies */}
@@ -217,15 +224,7 @@ export default function EntityTrustBuyersPage() {
           </section>
         </div>
 
-        <CTABox
-          heading="Want a Head Start Checklist?"
-          body="Tell us how the buyer plans to take title and how the purchase will be funded. We'll outline the likely next steps."
-          buttons={[
-            { label: "Start FinCEN Intake", href: "/fincen/contact" },
-            { label: "Check if it's reportable", href: "/fincen/is-it-reportable", variant: "outline" },
-          ]}
-        />
-      </div>
+      </FinCENPageLayout>
 
       <Footer />
     </main>
