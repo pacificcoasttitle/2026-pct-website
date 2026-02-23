@@ -1,7 +1,7 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
-import { FinCENPageLayout } from "@/components/fincen/fincen-page-layout"
+import { CTABox } from "@/components/fincen/cta-box"
 import { Shield, AlertCircle, Users, ClipboardList, CheckCircle, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import type { Metadata } from "next"
@@ -11,14 +11,6 @@ export const metadata: Metadata = {
   description:
     "Learn how FinCEN's Residential Real Estate Reporting Rule may affect certain non-financed residential closings starting March 1, 2026. PCT helps you prepare and avoid closing delays.",
 }
-
-const takeaways = [
-  "Effective for closings on or after <strong>March 1, 2026</strong>",
-  "Typically impacts <strong>non-financed</strong> purchases (all-cash or certain private money)",
-  "Most relevant when the buyer is a <strong>legal entity or trust</strong>",
-  "Requires collecting <strong>beneficial ownership information (BOI)</strong> and ID",
-  "Early preparation helps prevent <strong>closing delays</strong>",
-]
 
 const sections = [
   {
@@ -93,17 +85,7 @@ export default function FinCENLandingPage() {
         ]}
       />
 
-      <FinCENPageLayout
-        takeaways={takeaways}
-        cta={{
-          heading: "Keep the Deal Moving — Don't Let FinCEN Surprise You",
-          body: "If a purchase looks like it may fall under FinCEN reporting, we'll help you understand what's needed and when.",
-          buttons: [
-            { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
-            { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
-          ],
-        }}
-      >
+      <div className="container mx-auto px-4 py-16 max-w-4xl">
         <div className="space-y-16">
           {sections.map((section) => {
             const Icon = section.icon
@@ -193,7 +175,15 @@ export default function FinCENLandingPage() {
           ))}
         </div>
 
-      </FinCENPageLayout>
+      <CTABox
+        heading="Keep the Deal Moving — Don't Let FinCEN Surprise You"
+        body="If a purchase looks like it may fall under FinCEN reporting, we'll help you understand what's needed and when."
+        buttons={[
+          { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
+          { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
+        ]}
+      />
+      </div>
 
       <Footer />
     </main>

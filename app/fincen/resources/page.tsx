@@ -1,7 +1,7 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
-import { FinCENPageLayout } from "@/components/fincen/fincen-page-layout"
+import { CTABox } from "@/components/fincen/cta-box"
 import { ArrowRight, Download, BookOpen, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import type { Metadata } from "next"
@@ -11,14 +11,6 @@ export const metadata: Metadata = {
   description:
     "Downloadable resources, a practical glossary, and quick links to help buyers, agents, and investors prepare for FinCEN real estate reporting starting March 1, 2026.",
 }
-
-const takeaways = [
-  "Use these resources to set expectations early",
-  "Entity/trust buyers should prepare BOI + documents",
-  'Trustee sale buyers should pre-build a \u201cready file\u201d',
-  "Exemptions exist—document them when applicable",
-  "Confirm deal-specific applicability with escrow",
-]
 
 const quickLinks = [
   { label: "Is it reportable?", href: "/fincen/is-it-reportable", desc: "Quick 3-question checker" },
@@ -84,17 +76,7 @@ export default function ResourcesPage() {
         subtitle="Save, share, and keep your next closing moving."
       />
 
-      <FinCENPageLayout
-        takeaways={takeaways}
-        cta={{
-          heading: "Want the Checklist Tailored to Your Deal?",
-          body: "Tell us how the buyer will take title and how the deal will be funded. We'll help you plan what's needed next.",
-          buttons: [
-            { label: "Start FinCEN Intake", href: "/fincen/contact" },
-            { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
-          ],
-        }}
-      >
+      <div className="container mx-auto px-4 py-16 max-w-4xl">
         <div className="space-y-16">
 
           {/* Quick Links */}
@@ -190,7 +172,15 @@ export default function ResourcesPage() {
           </section>
         </div>
 
-      </FinCENPageLayout>
+      <CTABox
+        heading="Want the Checklist Tailored to Your Deal?"
+        body="Tell us how the buyer will take title and how the deal will be funded. We'll help you plan what's needed next."
+        buttons={[
+          { label: "Start FinCEN Intake", href: "/fincen/contact" },
+          { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
+        ]}
+      />
+      </div>
 
       <Footer />
     </main>

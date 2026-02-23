@@ -1,7 +1,7 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
-import { FinCENPageLayout } from "@/components/fincen/fincen-page-layout"
+import { CTABox } from "@/components/fincen/cta-box"
 import { CheckCircle, Home, UserCheck, Building2, Shield, DollarSign, Clock } from "lucide-react"
 import type { Metadata } from "next"
 
@@ -10,14 +10,6 @@ export const metadata: Metadata = {
   description:
     "If you're buying residential property through an LLC, corporation, partnership, or trust in a non-financed transaction, prepare beneficial ownership info and documents early to avoid delays.",
 }
-
-const takeaways = [
-  "Entity/trust buyers should expect BOI + ID collection in impacted transactions",
-  "You may need to identify beneficial owners (25%+ ownership and/or substantial control, as applicable)",
-  "Have entity/trust documents ready before escrow asks",
-  "Private money can increase reportability likelihood",
-  "Early prep helps avoid last-minute closing delays",
-]
 
 export default function EntityTrustBuyersPage() {
   return (
@@ -29,17 +21,7 @@ export default function EntityTrustBuyersPage() {
         subtitle="If your residential purchase is non-financed and the buyer is an entity or trust, expect identity and ownership requests. The faster you provide them, the smoother the closing."
       />
 
-      <FinCENPageLayout
-        takeaways={takeaways}
-        cta={{
-          heading: "Want a Head Start Checklist?",
-          body: "Tell us how the buyer plans to take title and how the purchase will be funded. We'll outline the likely next steps.",
-          buttons: [
-            { label: "Start FinCEN Intake", href: "/fincen/contact" },
-            { label: "Check if it's reportable", href: "/fincen/is-it-reportable", variant: "outline" },
-          ],
-        }}
-      >
+      <div className="container mx-auto px-4 py-16 max-w-4xl">
         <div className="space-y-14">
 
           {/* Section 1: When This Usually Applies */}
@@ -224,7 +206,15 @@ export default function EntityTrustBuyersPage() {
           </section>
         </div>
 
-      </FinCENPageLayout>
+      <CTABox
+        heading="Want a Head Start Checklist?"
+        body="Tell us how the buyer plans to take title and how the purchase will be funded. We'll outline the likely next steps."
+        buttons={[
+          { label: "Start FinCEN Intake", href: "/fincen/contact" },
+          { label: "Check if it's reportable", href: "/fincen/is-it-reportable", variant: "outline" },
+        ]}
+      />
+      </div>
 
       <Footer />
     </main>

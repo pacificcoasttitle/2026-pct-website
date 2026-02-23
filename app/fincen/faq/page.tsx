@@ -4,16 +4,8 @@ import { useState } from "react"
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
-import { FinCENPageLayout } from "@/components/fincen/fincen-page-layout"
+import { CTABox } from "@/components/fincen/cta-box"
 import { ChevronDown, HelpCircle } from "lucide-react"
-
-const takeaways = [
-  'Not every deal is reportable—watch the \u201cthree-part trigger\u201d',
-  "Entity/trust buyers should expect BOI + ID requests in impacted deals",
-  "Exemptions exist but can be technical",
-  "Early coordination prevents closing delays",
-  "Confirm final applicability with escrow and counsel",
-]
 
 const faqs = [
   {
@@ -78,17 +70,7 @@ export default function FAQPage() {
         subtitle="The questions we're hearing most—answered in plain English."
       />
 
-      <FinCENPageLayout
-        takeaways={takeaways}
-        cta={{
-          heading: "Still Unsure? We'll Walk You Through It.",
-          body: "Send us the basics (property type, buyer type, and financing). We'll help you plan next steps.",
-          buttons: [
-            { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
-            { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
-          ],
-        }}
-      >
+      <div className="container mx-auto px-4 py-16 max-w-4xl">
         <section className="mb-16">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -128,7 +110,15 @@ export default function FAQPage() {
           </div>
         </section>
 
-      </FinCENPageLayout>
+      <CTABox
+        heading="Still Unsure? We'll Walk You Through It."
+        body="Send us the basics (property type, buyer type, and financing). We'll help you plan next steps."
+        buttons={[
+          { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
+          { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
+        ]}
+      />
+      </div>
 
       <Footer />
     </main>

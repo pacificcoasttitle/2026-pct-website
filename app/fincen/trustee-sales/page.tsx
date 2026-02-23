@@ -1,7 +1,7 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
-import { FinCENPageLayout } from "@/components/fincen/fincen-page-layout"
+import { CTABox } from "@/components/fincen/cta-box"
 import { CheckCircle, Gavel, HelpCircle, UserCheck, Users, Shield, XCircle } from "lucide-react"
 import type { Metadata } from "next"
 
@@ -10,14 +10,6 @@ export const metadata: Metadata = {
   description:
     "Many trustee sale purchases may be impacted starting March 1, 2026 when buyers use entities or trusts and purchase all-cash or with private financing. Learn what to prepare.",
 }
-
-const takeaways = [
-  "Trustee sales often involve <strong>cash</strong> or <strong>private money</strong>",
-  "Entity/trust buyers are more likely to trigger reporting in residential purchases",
-  "Be ready with BOI + IDs + entity/trust documents",
-  "If buying as an individual in your personal name, reporting may be less likely",
-  "Early readiness avoids post-auction scramble",
-]
 
 export default function TrusteeSalesPage() {
   return (
@@ -29,17 +21,7 @@ export default function TrusteeSalesPage() {
         subtitle="If you buy trustee sales using an entity or trust—and you're paying cash or using private funds—your purchase may trigger FinCEN reporting. Preparation is everything."
       />
 
-      <FinCENPageLayout
-        takeaways={takeaways}
-        cta={{
-          heading: "Buying Trustee Sales with an LLC or Trust?",
-          body: "Start the process early—especially if you're purchasing residential property with cash or private funds.",
-          buttons: [
-            { label: "Start FinCEN Intake", href: "/fincen/contact" },
-            { label: "Check if it's reportable", href: "/fincen/is-it-reportable", variant: "outline" },
-          ],
-        }}
-      >
+      <div className="container mx-auto px-4 py-16 max-w-4xl">
         <div className="space-y-14">
 
           {/* Section 1: Quick Overview */}
@@ -214,7 +196,15 @@ export default function TrusteeSalesPage() {
           </section>
         </div>
 
-      </FinCENPageLayout>
+      <CTABox
+        heading="Buying Trustee Sales with an LLC or Trust?"
+        body="Start the process early—especially if you're purchasing residential property with cash or private funds."
+        buttons={[
+          { label: "Start FinCEN Intake", href: "/fincen/contact" },
+          { label: "Check if it's reportable", href: "/fincen/is-it-reportable", variant: "outline" },
+        ]}
+      />
+      </div>
 
       <Footer />
     </main>

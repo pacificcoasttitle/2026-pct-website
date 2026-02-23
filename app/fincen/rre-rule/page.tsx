@@ -1,7 +1,7 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
-import { FinCENPageLayout } from "@/components/fincen/fincen-page-layout"
+import { CTABox } from "@/components/fincen/cta-box"
 import { CheckCircle, Home, List, FileText, Users, GitBranch, Archive, AlertTriangle, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import type { Metadata } from "next"
@@ -11,15 +11,6 @@ export const metadata: Metadata = {
   description:
     "Overview of FinCEN's Residential Real Estate Reporting Rule effective March 1, 2026—what triggers reporting, what's collected, and how reporting responsibility is determined.",
 }
-
-const takeaways = [
-  "Effective for closings on/after <strong>March 1, 2026</strong>",
-  "Focused on <strong>non-financed</strong> residential purchases",
-  "Trigger commonly includes buyer as an <strong>entity or trust</strong>",
-  "Requires <strong>transferee + beneficial owner</strong> information and ID",
-  "Reporting responsibility follows a <strong>cascade</strong>, adjustable by <strong>designation agreement</strong>",
-  "Records must be retained for <strong>5 years</strong> from filing",
-]
 
 export default function RREPage() {
   return (
@@ -31,17 +22,7 @@ export default function RREPage() {
         subtitle="What triggers reporting, what gets collected, and why early coordination matters."
       />
 
-      <FinCENPageLayout
-        takeaways={takeaways}
-        cta={{
-          heading: "Want to Know If Your Deal Triggers Reporting?",
-          body: "Use the quick checker to get a directional answer, then confirm with escrow.",
-          buttons: [
-            { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
-            { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
-          ],
-        }}
-      >
+      <div className="container mx-auto px-4 py-16 max-w-4xl">
         <div className="space-y-14">
 
           {/* Section 1: What the Rule Covers */}
@@ -217,7 +198,15 @@ export default function RREPage() {
           </div>
         </div>
 
-      </FinCENPageLayout>
+      <CTABox
+        heading="Want to Know If Your Deal Triggers Reporting?"
+        body="Use the quick checker to get a directional answer, then confirm with escrow."
+        buttons={[
+          { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
+          { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
+        ]}
+      />
+      </div>
 
       <Footer />
     </main>
