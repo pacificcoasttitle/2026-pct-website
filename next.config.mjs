@@ -6,6 +6,16 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  webpack: (config) => {
+    // pdfjs-dist includes a NodeCanvasFactory that does require('canvas').
+    // We only use pdfjs in the browser, so stub canvas out to prevent
+    // the "Can't resolve 'canvas'" Turbopack build error.
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      canvas: false,
+    }
+    return config
+  },
   async redirects() {
     return [
       // Consolidate /title-services/* → /learn/* or /services/*
