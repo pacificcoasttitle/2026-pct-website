@@ -6,10 +6,15 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Turbopack (Next.js 16 default bundler) alias for pdfjs-dist's optional
+  // require('canvas') — we only use pdfjs in the browser so stub it out.
+  turbopack: {
+    resolveAlias: {
+      canvas: './lib/canvas-stub.js',
+    },
+  },
+  // Webpack fallback (used when --webpack flag or older Next.js)
   webpack: (config) => {
-    // pdfjs-dist includes a NodeCanvasFactory that does require('canvas').
-    // We only use pdfjs in the browser, so stub canvas out to prevent
-    // the "Can't resolve 'canvas'" Turbopack build error.
     config.resolve.alias = {
       ...config.resolve.alias,
       canvas: false,
