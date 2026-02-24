@@ -4,8 +4,7 @@
 // Runs entirely in the browser — PDF never sent to storage.
 // ============================================================
 
-// NOTE: This module is client-side only.
-// Import dynamically with 'use client' directive in consumers.
+'use client'
 
 const MAX_CHARS = 50000
 
@@ -13,8 +12,9 @@ export async function extractPdfText(file: File): Promise<string> {
   // Dynamically import pdfjs-dist to keep it client-side only
   const pdfjsLib = await import('pdfjs-dist')
 
-  // Use CDN worker to avoid Next.js bundling complexity
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+  // Use pdfjsLib.version so the CDN worker always matches the installed package exactly.
+  // This prevents the "API version does not match Worker version" error.
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`
 
   const arrayBuffer = await file.arrayBuffer()
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
