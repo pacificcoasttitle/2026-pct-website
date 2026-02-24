@@ -1,17 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
 import { CTABox } from "@/components/fincen/cta-box"
 import { MiniDisclaimer } from "@/components/fincen/mini-disclaimer"
-import { CheckCircle, XCircle, HelpCircle, AlertTriangle, ChevronDown } from "lucide-react"
+import { CheckCircle, XCircle, HelpCircle, AlertTriangle, ChevronDown, Loader2 } from "lucide-react"
 import Link from "next/link"
 
 type Answer = "yes" | "no" | "unsure" | null
 
-export default function IsItReportablePage() {
+// Inner component that reads search params (requires Suspense wrapper)
+function IsItReportableContent() {
+  const params = useSearchParams()
   const [q1, setQ1] = useState<Answer>(null)
   const [q2, setQ2] = useState<Answer>(null)
   const [q3, setQ3] = useState<Answer>(null)
@@ -31,6 +34,18 @@ export default function IsItReportablePage() {
     setQ2(null)
     setQ3(null)
     setShowResult(false)
+  }
+
+  // Build intake URL forwarding both checker answers and all prefill params from email
+  function buildIntakeUrl() {
+    const p = new URLSearchParams()
+    p.set("result", "likely_reportable")
+    if (q1) p.set("residential", q1)
+    p.set("financing", q2 === "yes" ? "cash" : "financed")
+    p.set("buyerType", q3 === "yes" ? "entity" : "individual")
+    const PREFILL_KEYS = ["escrow","street","city","state","zip","county","price","closing","officer","email","phone","branch","proptype"]
+    PREFILL_KEYS.forEach(key => { const v = params.get(key); if (v) p.set(key, v) })
+    return `/fincen/intake?${p.toString()}`
   }
 
   const RadioGroup = ({
@@ -177,7 +192,7 @@ export default function IsItReportablePage() {
                     {isLikelyReportable && (
                       <div className="mt-4 flex flex-col sm:flex-row gap-3">
                         <Link
-                          href={`/fincen/intake?result=likely_reportable&residential=${q1}&financing=${q2 === "yes" ? "cash" : "financed"}&buyerType=${q3 === "yes" ? "entity" : "individual"}`}
+                          href={buildIntakeUrl()}
                           className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
                         >
                           Continue — Start FinCEN Intake Form →
@@ -307,5 +322,17 @@ export default function IsItReportablePage() {
 
       <Footer />
     </main>
+  )
+}
+
+export default function IsItReportablePage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-white flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </main>
+    }>
+      <IsItReportableContent />
+    </Suspense>
   )
 }

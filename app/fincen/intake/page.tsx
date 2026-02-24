@@ -143,18 +143,37 @@ const STEPS = [
   { label: "Review",     icon: ClipboardList },
 ]
 
+// ── Proptype URL param → display name ────────────────────────────────────────
+const PROPTYPE_MAP: Record<string, string> = {
+  single_family:  "Single Family",
+  condo:          "Condo / Townhome",
+  condo_townhome: "Condo / Townhome",
+  "2_4_unit":     "2–4 Unit",
+  coop:           "Co-op",
+  co_op:          "Co-op",
+  vacant_land:    "Vacant Land (Residential)",
+  other:          "Other",
+}
+
 // ── Shared field components ───────────────────────────────────────────────────
 
 function Field({
-  label, required, hint, error, children,
+  label, required, hint, error, prefilled, children,
 }: {
-  label: string; required?: boolean; hint?: string; error?: string; children: React.ReactNode
+  label: string; required?: boolean; hint?: string; error?: string; prefilled?: boolean; children: React.ReactNode
 }) {
   return (
     <div>
-      <label className="block text-sm font-semibold text-secondary mb-1">
-        {label}{required && <span className="text-red-500 ml-1">*</span>}
-      </label>
+      <div className="flex items-center gap-2 mb-1">
+        <label className="block text-sm font-semibold text-secondary">
+          {label}{required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+        {prefilled && (
+          <span className="text-xs text-green-700 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full font-normal whitespace-nowrap">
+            ✓ Pre-filled from order
+          </span>
+        )}
+      </div>
       {hint && <p className="text-xs text-gray-500 mb-1">{hint}</p>}
       {children}
       {error && <p className="text-xs text-red-600 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{error}</p>}
@@ -247,13 +266,52 @@ function RadioGroup({
 function IntakeFormContent() {
   const params = useSearchParams()
   const [step, setStep] = useState(1)
+
+  // Compute prefilled set once (stable — params don't change on this page)
+  const prefilledFields = useState<Set<string>>(() => {
+    const pf = new Set<string>()
+    const check = (key: string, field: string) => { if (params.get(key)) pf.add(field) }
+    check("officer",  "officerName");    check("email",   "officerEmail")
+    check("phone",    "officerPhone");   check("branch",  "branchOffice")
+    check("escrow",   "escrowNumber");   check("street",  "propertyStreet")
+    check("city",     "propertyCity");   check("state",   "propertyState")
+    check("zip",      "propertyZip");    check("county",  "propertyCounty")
+    check("proptype", "propertyType");   check("closing", "closingDate")
+    check("price",    "purchasePrice")
+    return pf
+  })[0]
+
+  const hasPrefill = prefilledFields.size > 0
+  const pf = (field: string) => prefilledFields.has(field)
+
   const [data, setData] = useState<FormData>(() => {
     const init = { ...INITIAL }
-    // Pre-populate buyer type from checker params
+    // Buyer type from checker
     const bt = params.get("buyerType")
     if (bt === "entity") init.buyerType = "llc"
     else if (bt === "trust") init.buyerType = "trust"
     else if (bt === "individual") init.buyerType = "individual"
+    // Step 1 prefill from email link params
+    if (params.get("officer"))  init.officerName    = decodeURIComponent(params.get("officer")!)
+    if (params.get("email"))    init.officerEmail   = decodeURIComponent(params.get("email")!)
+    if (params.get("phone"))    init.officerPhone   = decodeURIComponent(params.get("phone")!)
+    if (params.get("branch"))   init.branchOffice   = decodeURIComponent(params.get("branch")!)
+    if (params.get("escrow"))   init.escrowNumber   = decodeURIComponent(params.get("escrow")!)
+    if (params.get("street"))   init.propertyStreet = decodeURIComponent(params.get("street")!)
+    if (params.get("city"))     init.propertyCity   = decodeURIComponent(params.get("city")!)
+    if (params.get("state"))    init.propertyState  = params.get("state")!.toUpperCase()
+    if (params.get("zip"))      init.propertyZip    = params.get("zip")!
+    if (params.get("county"))   init.propertyCounty = decodeURIComponent(params.get("county")!)
+    if (params.get("closing"))  init.closingDate    = params.get("closing")!
+    if (params.get("price")) {
+      const raw = params.get("price")!
+      const n = parseFloat(raw.replace(/[,$]/g, ""))
+      if (!isNaN(n) && n > 0) init.purchasePrice = n.toLocaleString("en-US")
+    }
+    if (params.get("proptype")) {
+      const mapped = PROPTYPE_MAP[params.get("proptype")!.toLowerCase()]
+      if (mapped) init.propertyType = mapped
+    }
     return init
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -535,20 +593,30 @@ function IntakeFormContent() {
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-secondary border-b border-gray-100 pb-4">Step 1 — Transaction Details</h2>
 
+              {/* Pre-fill banner */}
+              {hasPrefill && (
+                <div className="flex items-start gap-3 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-green-800">
+                    <strong>Fields pre-filled from your order confirmation.</strong> Please review the information below, make any corrections, and click Next.
+                  </p>
+                </div>
+              )}
+
               <div className="grid md:grid-cols-2 gap-4">
-                <Field label="Escrow Officer Name" required error={errors.officerName}>
+                <Field label="Escrow Officer Name" required error={errors.officerName} prefilled={pf("officerName")}>
                   <TextInput value={data.officerName} onChange={setStr("officerName")} placeholder="Full name" />
                 </Field>
-                <Field label="Officer Email" required error={errors.officerEmail}>
+                <Field label="Officer Email" required error={errors.officerEmail} prefilled={pf("officerEmail")}>
                   <TextInput value={data.officerEmail} onChange={setStr("officerEmail")} type="email" placeholder="you@pct.com" />
                 </Field>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
-                <Field label="Officer Phone" error={errors.officerPhone}>
+                <Field label="Officer Phone" error={errors.officerPhone} prefilled={pf("officerPhone")}>
                   <TextInput value={data.officerPhone} onChange={setStr("officerPhone")} type="tel" placeholder="(714) 000-0000" />
                 </Field>
-                <Field label="PCT Branch / Office" required error={errors.branchOffice}>
+                <Field label="PCT Branch / Office" required error={errors.branchOffice} prefilled={pf("branchOffice")}>
                   <SelectInput
                     value={data.branchOffice}
                     onChange={setStr("branchOffice")}
@@ -558,29 +626,29 @@ function IntakeFormContent() {
                 </Field>
               </div>
 
-              <Field label="Escrow / File Number" required error={errors.escrowNumber}>
+              <Field label="Escrow / File Number" required error={errors.escrowNumber} prefilled={pf("escrowNumber")}>
                 <TextInput value={data.escrowNumber} onChange={setStr("escrowNumber")} placeholder="e.g. ESC-2026-1234" />
               </Field>
 
               <div className="pt-2">
                 <p className="text-sm font-bold text-secondary mb-3">Property Address</p>
                 <div className="space-y-3">
-                  <Field label="Street Address" required error={errors.propertyStreet}>
+                  <Field label="Street Address" required error={errors.propertyStreet} prefilled={pf("propertyStreet")}>
                     <TextInput value={data.propertyStreet} onChange={setStr("propertyStreet")} placeholder="123 Main St" />
                   </Field>
                   <div className="grid grid-cols-2 gap-3">
-                    <Field label="City" required error={errors.propertyCity}>
+                    <Field label="City" required error={errors.propertyCity} prefilled={pf("propertyCity")}>
                       <TextInput value={data.propertyCity} onChange={setStr("propertyCity")} placeholder="Los Angeles" />
                     </Field>
-                    <Field label="State">
+                    <Field label="State" prefilled={pf("propertyState")}>
                       <SelectInput value={data.propertyState} onChange={setStr("propertyState")} options={US_STATES} />
                     </Field>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <Field label="ZIP Code" required error={errors.propertyZip}>
+                    <Field label="ZIP Code" required error={errors.propertyZip} prefilled={pf("propertyZip")}>
                       <TextInput value={data.propertyZip} onChange={setStr("propertyZip")} placeholder="90001" />
                     </Field>
-                    <Field label="County">
+                    <Field label="County" prefilled={pf("propertyCounty")}>
                       <TextInput value={data.propertyCounty} onChange={setStr("propertyCounty")} placeholder="Los Angeles" />
                     </Field>
                   </div>
@@ -588,19 +656,19 @@ function IntakeFormContent() {
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
-                <Field label="Property Type" required error={errors.propertyType}>
+                <Field label="Property Type" required error={errors.propertyType} prefilled={pf("propertyType")}>
                   <SelectInput
                     value={data.propertyType} onChange={setStr("propertyType")}
                     placeholder="Select type..."
                     options={["Single Family", "Condo / Townhome", "2–4 Unit", "Co-op", "Vacant Land (Residential)", "Other"]}
                   />
                 </Field>
-                <Field label="Estimated Closing Date" required error={errors.closingDate}>
+                <Field label="Estimated Closing Date" required error={errors.closingDate} prefilled={pf("closingDate")}>
                   <TextInput value={data.closingDate} onChange={setStr("closingDate")} type="date" />
                 </Field>
               </div>
 
-              <Field label="Purchase Price" required error={errors.purchasePrice}>
+              <Field label="Purchase Price" required error={errors.purchasePrice} prefilled={pf("purchasePrice")}>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
                   <input
