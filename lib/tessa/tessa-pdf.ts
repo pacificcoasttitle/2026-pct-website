@@ -2,16 +2,20 @@
 
 // ============================================================
 // TESSA™ PDF Extraction
-// Client-side PDF text extraction using PDF.js v4.4.168.
+// Client-side PDF text extraction using PDF.js v3.11.174.
 // Runs entirely in the browser — PDF never sent to storage.
+//
+// Version note: pinned to v3.11.174 — the same version the
+// legacy PCT production site runs. V4+ has worker loading
+// issues with Next.js bundlers. V3 .js worker file loads
+// cleanly from cdnjs with no dynamic import complications.
 // ============================================================
 
 import * as pdfjsLib from 'pdfjs-dist'
 
-// v4.x uses .js worker files on cdnjs (not .mjs).
-// Pinned to 4.4.168 — matches the installed pdfjs-dist version exactly.
+// v3.11.174 — proven stable .js worker, exists on cdnjs, no mjs/bundler issues
 pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
 
 const MAX_CHARS = 50000
 
