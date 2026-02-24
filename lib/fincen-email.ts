@@ -72,9 +72,6 @@ export async function sendNotificationEmail(submission: Record<string, any>): Pr
     .map((s, i) => `  Seller ${i + 1} (${s.seller_type}): ${s.name}${s.trustee_name ? " / Trustee: " + s.trustee_name : ""}`)
     .join("\n")
 
-  const cashFlag =
-    ["All Cash", "Wire Transfer", "Cryptocurrency", "Private Lender"].includes(submission.payment_method) ? "⚠️ " : ""
-
   const text = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 NEW FINCEN INTAKE SUBMISSION
 Reference: ${submission.reference_number}
@@ -98,9 +95,8 @@ ${buildBuyerBlock(submission)}
 SELLER(S)
 ${sellerLines}
 
-PAYMENT ${cashFlag}${submission.payment_method.toUpperCase()}
-  Method: ${submission.payment_method}
-  Total:  ${fmt$(submission.total_amount)}${submission.financial_institution ? "\n  Institution: " + submission.financial_institution : ""}${submission.lender_aml_regulated ? "\n  Lender AML Regulated: " + submission.lender_aml_regulated : ""}${submission.financing_notes ? "\n  Notes: " + submission.financing_notes : ""}
+NOTE: Payment method, financial institution, and AML details will be
+collected directly by the PCT compliance coordinator during the filing process.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Checker Result: ${submission.checker_result

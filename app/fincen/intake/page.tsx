@@ -14,7 +14,6 @@ import {
   Building2,
   User,
   Users,
-  DollarSign,
   ClipboardList,
   FileCheck,
   Phone,
@@ -32,11 +31,6 @@ interface SellerData {
   zip: string
   phone: string
   email: string
-}
-
-interface PaymentSource {
-  method: string
-  amount: string
 }
 
 interface FormData {
@@ -96,14 +90,7 @@ interface FormData {
   trustEin: string
   // Step 3
   sellers: SellerData[]
-  // Step 4
-  paymentMethod: string
-  paymentSources: PaymentSource[]
-  totalAmount: string
-  financialInstitution: string
-  lenderAmlRegulated: string
-  financingNotes: string
-  // Step 5
+  // Step 4 — Review & Submit
   certified: boolean
 }
 
@@ -124,8 +111,6 @@ const INITIAL: FormData = {
   trustStreet: "", trustCity: "", trustState: "CA", trustZip: "",
   settlorName: "", trustEin: "",
   sellers: [{ sellerType: "individual", name: "", trusteeName: "", street: "", city: "", state: "CA", zip: "", phone: "", email: "" }],
-  paymentMethod: "", paymentSources: [{ method: "", amount: "" }],
-  totalAmount: "", financialInstitution: "", lenderAmlRegulated: "", financingNotes: "",
   certified: false,
 }
 
@@ -139,7 +124,6 @@ const STEPS = [
   { label: "Transaction", icon: Building2 },
   { label: "Buyer",       icon: User },
   { label: "Seller(s)",  icon: Users },
-  { label: "Payment",    icon: DollarSign },
   { label: "Review",     icon: ClipboardList },
 ]
 
@@ -379,11 +363,6 @@ function IntakeFormContent() {
     }
 
     if (step === 4) {
-      if (!data.paymentMethod) e.paymentMethod = "Required"
-      if (!data.totalAmount || parseFloat(data.totalAmount.replace(/[,$]/g, "")) <= 0) e.totalAmount = "Valid amount required"
-    }
-
-    if (step === 5) {
       if (!data.certified) e.certified = "You must confirm the information before submitting"
     }
 
@@ -411,8 +390,6 @@ function IntakeFormContent() {
     setIsSubmitting(true)
     setSubmitError(null)
 
-    const isEntityType = !["individual", "trust"].includes(data.buyerType)
-
     const buyerData = data.buyerType === "individual"
       ? { first_name: data.buyerFirstName, middle_name: data.buyerMiddleName, last_name: data.buyerLastName, date_of_birth: data.buyerDob, address: { street: data.buyerStreet, city: data.buyerCity, state: data.buyerState, zip: data.buyerZip }, phone: data.buyerPhone, email: data.buyerEmail }
       : data.buyerType === "trust"
@@ -424,10 +401,6 @@ function IntakeFormContent() {
       address: s.street ? { street: s.street, city: s.city, state: s.state, zip: s.zip } : null,
       phone: s.phone, email: s.email,
     }))
-
-    const paymentSources = data.paymentMethod === "Multiple Sources"
-      ? data.paymentSources.filter(ps => ps.method && ps.amount).map(ps => ({ method: ps.method, amount: parseFloat(ps.amount.replace(/[,$]/g, "")) }))
-      : null
 
     const payload = {
       checker_result: checkerResult || null,
@@ -451,12 +424,6 @@ function IntakeFormContent() {
       buyer_type:              data.buyerType,
       buyer_data:              buyerData,
       sellers_data:            sellersData,
-      payment_method:          data.paymentMethod,
-      payment_sources:         paymentSources,
-      total_amount:            parseFloat(data.totalAmount.replace(/[,$]/g, "")),
-      financial_institution:   data.financialInstitution,
-      lender_aml_regulated:    data.lenderAmlRegulated,
-      financing_notes:         data.financingNotes,
       certified:               true,
     }
 
@@ -474,9 +441,6 @@ function IntakeFormContent() {
     } finally {
       setIsSubmitting(false)
     }
-
-    // Suppress unused variable warnings
-    void isEntityType
   }
 
   // ── Success screen ──────────────────────────────────────────────────────────
@@ -940,95 +904,10 @@ function IntakeFormContent() {
             </div>
           )}
 
-          {/* ── STEP 4: Payment / Financing ───────────────────────────── */}
+          {/* ── STEP 4: Review & Submit ───────────────────────────────── */}
           {step === 4 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-bold text-secondary border-b border-gray-100 pb-4">Step 4 — Payment & Financing</h2>
-
-              <Field label="Payment Method" required error={errors.paymentMethod}>
-                <SelectInput
-                  value={data.paymentMethod} onChange={setStr("paymentMethod")}
-                  placeholder="Select method..."
-                  options={["All Cash","Wire Transfer","Cashier&apos;s Check","Personal Check","Cryptocurrency","Private Lender","Seller Financing","Other","Multiple Sources"]}
-                />
-              </Field>
-
-              {data.paymentMethod === "Multiple Sources" && (
-                <div className="space-y-3">
-                  <p className="text-sm font-semibold text-secondary">Payment Sources</p>
-                  {data.paymentSources.map((ps, i) => (
-                    <div key={i} className="flex gap-3 items-center">
-                      <SelectInput
-                        value={ps.method}
-                        onChange={v => { const u = [...data.paymentSources]; u[i] = { ...u[i], method: v }; set("paymentSources", u) }}
-                        placeholder="Method..."
-                        options={["All Cash","Wire Transfer","Cashier's Check","Cryptocurrency","Private Lender","Other"]}
-                      />
-                      <div className="relative flex-1">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                        <input
-                          type="text" value={ps.amount}
-                          onChange={e => { const u = [...data.paymentSources]; u[i] = { ...u[i], amount: e.target.value }; set("paymentSources", u) }}
-                          placeholder="Amount"
-                          className="w-full h-11 pl-7 pr-4 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                        />
-                      </div>
-                      {data.paymentSources.length > 1 && (
-                        <button type="button" onClick={() => set("paymentSources", data.paymentSources.filter((_,idx)=>idx!==i))} className="text-red-400 text-xs">✕</button>
-                      )}
-                    </div>
-                  ))}
-                  {data.paymentSources.length < 5 && (
-                    <button type="button" onClick={() => set("paymentSources", [...data.paymentSources, { method: "", amount: "" }])} className="text-sm text-primary hover:underline">
-                      + Add Source
-                    </button>
-                  )}
-                </div>
-              )}
-
-              <Field label="Total Transaction Amount" required error={errors.totalAmount}>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                  <input
-                    type="text" value={data.totalAmount} onChange={e => setStr("totalAmount")(e.target.value)}
-                    placeholder="1,250,000"
-                    className="w-full h-11 pl-8 pr-4 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  />
-                </div>
-              </Field>
-
-              {["Wire Transfer","Cashier's Check","Personal Check","Multiple Sources"].includes(data.paymentMethod) && (
-                <Field label="Financial Institution" hint="Name of bank or institution funds are coming from">
-                  <TextInput value={data.financialInstitution} onChange={setStr("financialInstitution")} placeholder="e.g. Chase Bank" />
-                </Field>
-              )}
-
-              {["Private Lender","Seller Financing","Other"].includes(data.paymentMethod) && (
-                <Field label="Is the Lender AML-Regulated?">
-                  <RadioGroup
-                    value={data.lenderAmlRegulated}
-                    onChange={setStr("lenderAmlRegulated")}
-                    options={[{ label: "Yes", value: "yes" }, { label: "No", value: "no" }, { label: "Not Sure", value: "not_sure" }]}
-                  />
-                </Field>
-              )}
-
-              <Field label="Additional Notes" hint="Anything unusual about the financing or payment structure?">
-                <textarea
-                  value={data.financingNotes}
-                  onChange={e => setStr("financingNotes")(e.target.value)}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
-                  placeholder="Optional notes..."
-                />
-              </Field>
-            </div>
-          )}
-
-          {/* ── STEP 5: Review & Submit ────────────────────────────────── */}
-          {step === 5 && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-bold text-secondary border-b border-gray-100 pb-4">Step 5 — Review & Submit</h2>
+              <h2 className="text-xl font-bold text-secondary border-b border-gray-100 pb-4">Step 4 — Review & Submit</h2>
 
               {/* Transaction */}
               <ReviewSection title="Transaction" onEdit={() => setStep(1)}>
@@ -1072,12 +951,9 @@ function IntakeFormContent() {
                 ))}
               </ReviewSection>
 
-              {/* Payment */}
-              <ReviewSection title="Payment" onEdit={() => setStep(4)}>
-                <ReviewRow label="Method" value={data.paymentMethod} />
-                <ReviewRow label="Total" value={`$${parseFloat(data.totalAmount.replace(/[,$]/g,"")).toLocaleString()}`} />
-                {data.financialInstitution && <ReviewRow label="Institution" value={data.financialInstitution} />}
-              </ReviewSection>
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-800">
+                💼 <strong>Payment & Financing:</strong> A PCT compliance coordinator will collect payment method, financial institution, and AML details directly during the filing process.
+              </div>
 
               {/* Certification */}
               <div className={`border-2 rounded-xl p-5 ${errors.certified ? "border-red-200 bg-red-50" : "border-gray-100 bg-gray-50"}`}>
@@ -1123,7 +999,7 @@ function IntakeFormContent() {
               </Link>
             )}
 
-            {step < 5 ? (
+            {step < 4 ? (
               <button
                 type="button"
                 onClick={handleNext}

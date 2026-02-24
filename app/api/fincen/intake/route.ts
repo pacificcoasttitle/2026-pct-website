@@ -92,11 +92,7 @@ export async function POST(request: NextRequest) {
       if (!s.name?.trim()) throw new Error("Each seller must have a name")
     }
 
-    // ── Step 4: Payment ────────────────────────────────────────────────
-    const paymentMethod = requireString(body.payment_method, "Payment method")
-    const totalAmount   = requirePositiveNumber(body.total_amount, "Total amount")
-
-    // ── Step 5: Certification ──────────────────────────────────────────
+    // ── Step 4: Certification ──────────────────────────────────────────
     if (!body.certified) throw new Error("Certification is required")
 
     // ── Build submission object ────────────────────────────────────────
@@ -126,12 +122,6 @@ export async function POST(request: NextRequest) {
       buyer_type:              buyerType,
       buyer_data:              buyerData,
       sellers_data:            sellersData,
-      payment_method:          sanitize(paymentMethod),
-      payment_sources:         body.payment_sources || null,
-      total_amount:            totalAmount,
-      financial_institution:   sanitize(body.financial_institution as string),
-      lender_aml_regulated:    sanitize(body.lender_aml_regulated as string),
-      financing_notes:         sanitize(body.financing_notes as string),
       certified:               true,
       certified_at:            submittedAt,
     }
