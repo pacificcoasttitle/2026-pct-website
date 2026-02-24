@@ -1,11 +1,15 @@
-import { Resend } from "resend"
+import sgMail from "@sendgrid/mail"
 
-let resendClient: Resend | null = null
+let initialized = false
 
-function getResend(): Resend | null {
-  if (!process.env.RESEND_API_KEY) return null
-  if (!resendClient) resendClient = new Resend(process.env.RESEND_API_KEY)
-  return resendClient
+function getSg(): typeof sgMail | null {
+  const key = process.env.SENDGRID_API_KEY
+  if (!key) return null
+  if (!initialized) {
+    sgMail.setApiKey(key)
+    initialized = true
+  }
+  return sgMail
 }
 
 function fmt$(amount: number): string {
@@ -41,7 +45,6 @@ function buildBuyerBlock(submission: Record<string, any>): string {
   Address: ${buyer.address?.street}, ${buyer.address?.city}, ${buyer.address?.state} ${buyer.address?.zip}`
   }
 
-  // Entity types
   const boLine =
     buyer.beneficial_owners_known === "yes"
       ? `Yes (${buyer.beneficial_owner_count || "?"}${buyer.beneficial_owner_names ? " — " + buyer.beneficial_owner_names : ""})`
@@ -61,7 +64,7 @@ function buildBuyerBlock(submission: Record<string, any>): string {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function sendNotificationEmail(submission: Record<string, any>): Promise<boolean> {
-  const r = getResend()
+  const sg = getSg()
   const addr = submission.property_address
   const sellers = submission.sellers_data as Array<Record<string, string>>
 
@@ -106,15 +109,15 @@ Checker Result: ${submission.checker_result
 Submitted: ${new Date(submission.submitted_at).toLocaleString("en-US", { timeZone: "America/Los_Angeles" })} PT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
 
-  if (!r) {
-    console.log("[FinCEN Email] RESEND_API_KEY not set. Notification email content:\n", text)
+  if (!sg) {
+    console.log("[FinCEN Email] SENDGRID_API_KEY not set. Notification email content:\n", text)
     return false
   }
 
   try {
-    await r.emails.send({
-      from: "PCT FinCEN System <noreply@pct.com>",
-      to: ["fincen@pct.com"],
+    await sg.send({
+      from: { name: "PCT FinCEN System", email: "noreply@pct.com" },
+      to: "fincen@pct.com",
       subject: `[FinCEN Intake] New Submission — ${submission.escrow_number} — ${addr.street}, ${addr.city}`,
       text,
     })
@@ -127,8 +130,8 @@ Submitted: ${new Date(submission.submitted_at).toLocaleString("en-US", { timeZon
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function sendConfirmationEmail(submission: Record<string, any>): Promise<boolean> {
-  const r = getResend()
-  if (!r) return false
+  const sg = getSg()
+  if (!sg) return false
 
   const firstName = submission.officer_name.split(" ")[0]
   const addr = submission.property_address
@@ -156,9 +159,9 @@ Thank you,
 Pacific Coast Title — FinCEN Reporting Division`
 
   try {
-    await r.emails.send({
-      from: "PCT FinCEN Reporting Desk <noreply@pct.com>",
-      to: [submission.officer_email],
+    await sg.send({
+      from: { name: "PCT FinCEN Reporting Desk", email: "noreply@pct.com" },
+      to: submission.officer_email,
       subject: `FinCEN Submission Received — ${submission.reference_number}`,
       text,
     })
