@@ -1,21 +1,21 @@
+'use client'
+
 // ============================================================
 // TESSA™ PDF Extraction
-// Client-side PDF text extraction using PDF.js.
+// Client-side PDF text extraction using PDF.js v4.4.168.
 // Runs entirely in the browser — PDF never sent to storage.
 // ============================================================
 
-'use client'
+import * as pdfjsLib from 'pdfjs-dist'
+
+// v4.x uses .js worker files on cdnjs (not .mjs).
+// Pinned to 4.4.168 — matches the installed pdfjs-dist version exactly.
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js'
 
 const MAX_CHARS = 50000
 
 export async function extractPdfText(file: File): Promise<string> {
-  // Dynamically import pdfjs-dist to keep it client-side only
-  const pdfjsLib = await import('pdfjs-dist')
-
-  // Use pdfjsLib.version so the CDN worker always matches the installed package exactly.
-  // This prevents the "API version does not match Worker version" error.
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`
-
   const arrayBuffer = await file.arrayBuffer()
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
 
