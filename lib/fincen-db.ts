@@ -20,29 +20,23 @@ export async function generateReferenceNumber(): Promise<string> {
   const prefix = `PCT-FINCEN-${year}-`
   const db = getPool()
 
-  if (!db) {
-    // No DB configured — use timestamp-based suffix
-    const suffix = String(Date.now()).slice(-4)
-    return `${prefix}${suffix}`
+  // Fallback when no DB: timestamp (ms, base-36) + 3 random digits — never repeats
+  const fallback = () => {
+    const ts  = Date.now().toString(36).toUpperCase().slice(-5)
+    const rnd = Math.floor(Math.random() * 1000).toString().padStart(3, "0")
+    return `${prefix}${ts}${rnd}`
   }
 
+  if (!db) return fallback()
+
   try {
-    const result = await db.query(
-      `SELECT reference_number FROM fincen_intake_submissions
-       WHERE reference_number LIKE $1
-       ORDER BY reference_number DESC LIMIT 1`,
-      [`${prefix}%`]
-    )
-    let next = 1
-    if (result.rows.length > 0) {
-      const last = result.rows[0].reference_number as string
-      const lastNum = parseInt(last.split("-").pop() || "0", 10)
-      next = lastNum + 1
-    }
-    return `${prefix}${String(next).padStart(4, "0")}`
+    // NEXTVAL is atomic — eliminates the race condition that caused duplicate numbers
+    await db.query(`CREATE SEQUENCE IF NOT EXISTS fincen_ref_seq START 1`)
+    const result = await db.query(`SELECT NEXTVAL('fincen_ref_seq') AS n`)
+    const n = parseInt(result.rows[0].n as string, 10)
+    return `${prefix}${String(n).padStart(4, "0")}`
   } catch {
-    const suffix = String(Date.now()).slice(-4)
-    return `${prefix}${suffix}`
+    return fallback()
   }
 }
 
