@@ -112,7 +112,7 @@ Submitted: ${new Date(submission.submitted_at).toLocaleString("en-US", { timeZon
 
   try {
     await sg.send({
-      from: { name: "PCT FinCEN System", email: "noreply@pct.com" },
+      from: { name: "PCT FinCEN System", email: "fincen@pct.com" },
       to: "fincen@pct.com",
       subject: `[FinCEN Intake] New Submission — ${submission.escrow_number} — ${addr.street}, ${addr.city}`,
       text,
@@ -156,7 +156,7 @@ Pacific Coast Title — FinCEN Reporting Division`
 
   try {
     await sg.send({
-      from: { name: "PCT FinCEN Reporting Desk", email: "noreply@pct.com" },
+      from: { name: "PCT FinCEN Reporting Desk", email: "fincen@pct.com" },
       to: submission.officer_email,
       subject: `FinCEN Submission Received — ${submission.reference_number}`,
       text,
