@@ -172,6 +172,23 @@ const PROPTYPE_MAP: Record<string, string> = {
   other:                          "Other",
 }
 
+// ── Branch code → office name (auto-detected from escrow number suffix) ──────
+const BRANCH_CODE_MAP: Record<string, string> = {
+  GLT: "PCT — Glendale",
+  OCT: "PCT — Orange (HQ)",
+  PRV: "PCT — Porterville",
+  DWN: "PCT — Downey",
+  INL: "PCT — Inland Empire",
+}
+
+function detectBranchFromEscrow(escrow: string): string | null {
+  const parts = escrow.toUpperCase().split(/[-\s]+/)
+  for (const part of parts) {
+    if (BRANCH_CODE_MAP[part]) return BRANCH_CODE_MAP[part]
+  }
+  return null
+}
+
 // ── Shared field components ───────────────────────────────────────────────────
 
 function Field({
@@ -211,6 +228,30 @@ function TextInput({
       placeholder={placeholder}
       disabled={disabled}
       className="w-full h-11 px-4 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:bg-gray-50 disabled:text-gray-400"
+    />
+  )
+}
+
+// ── Phone masking ─────────────────────────────────────────────────────────────
+function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 10)
+  if (digits.length === 0) return ""
+  if (digits.length <= 3) return `(${digits}`
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+}
+
+function PhoneInput({ value, onChange, placeholder = "(714) 000-0000" }: {
+  value: string; onChange: (v: string) => void; placeholder?: string
+}) {
+  return (
+    <input
+      type="tel"
+      value={value}
+      onChange={e => onChange(formatPhone(e.target.value))}
+      placeholder={placeholder}
+      maxLength={14}
+      className="w-full h-11 px-4 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
     />
   )
 }
@@ -315,9 +356,14 @@ function IntakeFormContent() {
     // Step 1 prefill from email link params
     if (params.get("officer"))  init.officerName    = decodeURIComponent(params.get("officer")!)
     if (params.get("email"))    init.officerEmail   = decodeURIComponent(params.get("email")!)
-    if (params.get("phone"))    init.officerPhone   = decodeURIComponent(params.get("phone")!)
+    if (params.get("phone"))    init.officerPhone   = formatPhone(decodeURIComponent(params.get("phone")!))
     if (params.get("branch"))   init.branchOffice   = decodeURIComponent(params.get("branch")!)
     if (params.get("escrow"))   init.escrowNumber   = decodeURIComponent(params.get("escrow")!)
+    // Auto-detect branch from escrow code if branch param not present
+    if (!init.branchOffice && init.escrowNumber) {
+      const detected = detectBranchFromEscrow(init.escrowNumber)
+      if (detected) init.branchOffice = detected
+    }
     if (params.get("street"))   init.propertyStreet = decodeURIComponent(params.get("street")!)
     if (params.get("city"))     init.propertyCity   = decodeURIComponent(params.get("city")!)
     if (params.get("state"))    init.propertyState  = params.get("state")!.toUpperCase()
@@ -354,6 +400,11 @@ function IntakeFormContent() {
       // Keep entityLegalType in sync so user never has to answer the same question twice
       if (field === "buyerType" && typeof value === "string" && ENTITY_LEGAL_TYPE_SYNC[value]) {
         next.entityLegalType = ENTITY_LEGAL_TYPE_SYNC[value]
+      }
+      // Auto-detect branch from escrow number as user types
+      if (field === "escrowNumber" && typeof value === "string") {
+        const detected = detectBranchFromEscrow(value)
+        if (detected) next.branchOffice = detected
       }
       return next
     })
@@ -659,14 +710,14 @@ function IntakeFormContent() {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <Field label="Officer Phone" error={errors.officerPhone} prefilled={pf("officerPhone")}>
-                  <TextInput value={data.officerPhone} onChange={setStr("officerPhone")} type="tel" placeholder="(714) 000-0000" />
+                  <PhoneInput value={data.officerPhone} onChange={setStr("officerPhone")} placeholder="(714) 000-0000" />
                 </Field>
                 <Field label="PCT Branch / Office" required error={errors.branchOffice} prefilled={pf("branchOffice")}>
                   <SelectInput
                     value={data.branchOffice}
                     onChange={setStr("branchOffice")}
                     placeholder="Select office..."
-                    options={["PCT — Orange (HQ)", "PCT — Glendale", "PCT — Downey", "PCT — Inland Empire", "Other"]}
+                    options={["PCT — Orange (HQ)", "PCT — Glendale", "PCT — Porterville", "PCT — Downey", "PCT — Inland Empire", "Other"]}
                   />
                 </Field>
               </div>
@@ -774,7 +825,7 @@ function IntakeFormContent() {
                   </Field>
                   <div className="grid md:grid-cols-2 gap-4">
                     <Field label="Phone">
-                      <TextInput value={data.buyerPhone} onChange={setStr("buyerPhone")} type="tel" placeholder="(555) 000-0000" />
+                      <PhoneInput value={data.buyerPhone} onChange={setStr("buyerPhone")} placeholder="(555) 000-0000" />
                     </Field>
                     <Field label="Email">
                       <TextInput value={data.buyerEmail} onChange={setStr("buyerEmail")} type="email" placeholder="buyer@example.com" />
@@ -820,7 +871,7 @@ function IntakeFormContent() {
                   </Field>
                   <div className="grid md:grid-cols-2 gap-4">
                     <Field label="Contact Phone">
-                      <TextInput value={data.entityContactPhone} onChange={setStr("entityContactPhone")} type="tel" />
+                      <PhoneInput value={data.entityContactPhone} onChange={setStr("entityContactPhone")} />
                     </Field>
                     <Field label="Contact Email">
                       <TextInput value={data.entityContactEmail} onChange={setStr("entityContactEmail")} type="email" />
@@ -875,7 +926,7 @@ function IntakeFormContent() {
                   </Field>
                   <div className="grid md:grid-cols-2 gap-4">
                     <Field label="Trustee Phone">
-                      <TextInput value={data.trusteePhone} onChange={setStr("trusteePhone")} type="tel" />
+                      <PhoneInput value={data.trusteePhone} onChange={setStr("trusteePhone")} />
                     </Field>
                     <Field label="Trustee Email">
                       <TextInput value={data.trusteeEmail} onChange={setStr("trusteeEmail")} type="email" />
@@ -960,7 +1011,7 @@ function IntakeFormContent() {
 
                   <div className="grid md:grid-cols-2 gap-4">
                     <Field label="Phone">
-                      <TextInput value={seller.phone} onChange={v => { const u = [...data.sellers]; u[i] = { ...u[i], phone: v }; set("sellers", u) }} type="tel" />
+                      <PhoneInput value={seller.phone} onChange={v => { const u = [...data.sellers]; u[i] = { ...u[i], phone: v }; set("sellers", u) }} />
                     </Field>
                     <Field label="Email">
                       <TextInput value={seller.email} onChange={v => { const u = [...data.sellers]; u[i] = { ...u[i], email: v }; set("sellers", u) }} type="email" />
