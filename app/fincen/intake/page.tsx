@@ -128,15 +128,48 @@ const STEPS = [
 ]
 
 // ── Proptype URL param → display name ────────────────────────────────────────
+// Normalizes incoming value: lowercase, collapse spaces/hyphens to underscores
+function normalizeProptype(raw: string): string {
+  return raw.toLowerCase().trim().replace(/[\s\-\/]+/g, "_").replace(/_+/g, "_")
+}
+
 const PROPTYPE_MAP: Record<string, string> = {
-  single_family:  "Single Family",
-  condo:          "Condo / Townhome",
-  condo_townhome: "Condo / Townhome",
-  "2_4_unit":     "2–4 Unit",
-  coop:           "Co-op",
-  co_op:          "Co-op",
-  vacant_land:    "Vacant Land (Residential)",
-  other:          "Other",
+  // Single family variants (LOS systems send many flavors)
+  single_family:                  "Single Family",
+  single_family_residential:      "Single Family",
+  sfr:                            "Single Family",
+  single_family_home:             "Single Family",
+  detached:                       "Single Family",
+  // Condo / townhome
+  condo:                          "Condo / Townhome",
+  condo_townhome:                 "Condo / Townhome",
+  condominium:                    "Condo / Townhome",
+  townhouse:                      "Condo / Townhome",
+  townhome:                       "Condo / Townhome",
+  attached:                       "Condo / Townhome",
+  pud:                            "Condo / Townhome",
+  // 2–4 unit
+  "2_4_unit":                     "2–4 Unit",
+  two_to_four_unit:               "2–4 Unit",
+  multi_family:                   "2–4 Unit",
+  multifamily:                    "2–4 Unit",
+  duplex:                         "2–4 Unit",
+  triplex:                        "2–4 Unit",
+  fourplex:                       "2–4 Unit",
+  "2_unit":                       "2–4 Unit",
+  "3_unit":                       "2–4 Unit",
+  "4_unit":                       "2–4 Unit",
+  // Co-op
+  coop:                           "Co-op",
+  co_op:                          "Co-op",
+  cooperative:                    "Co-op",
+  // Vacant land
+  vacant_land:                    "Vacant Land (Residential)",
+  land:                           "Vacant Land (Residential)",
+  lot:                            "Vacant Land (Residential)",
+  vacant_lot:                     "Vacant Land (Residential)",
+  // Other
+  other:                          "Other",
 }
 
 // ── Shared field components ───────────────────────────────────────────────────
@@ -271,10 +304,14 @@ function IntakeFormContent() {
   const [data, setData] = useState<FormData>(() => {
     const init = { ...INITIAL }
     // Buyer type from checker
+    const ENTITY_LEGAL_TYPE: Record<string, string> = {
+      llc: "LLC", corporation: "Corporation", partnership: "Partnership", other_entity: "Other",
+    }
     const bt = params.get("buyerType")
-    if (bt === "entity") init.buyerType = "llc"
+    if (bt === "entity") { init.buyerType = "llc"; init.entityLegalType = "LLC" }
     else if (bt === "trust") init.buyerType = "trust"
     else if (bt === "individual") init.buyerType = "individual"
+    else if (bt && ENTITY_LEGAL_TYPE[bt]) { init.buyerType = bt; init.entityLegalType = ENTITY_LEGAL_TYPE[bt] }
     // Step 1 prefill from email link params
     if (params.get("officer"))  init.officerName    = decodeURIComponent(params.get("officer")!)
     if (params.get("email"))    init.officerEmail   = decodeURIComponent(params.get("email")!)
@@ -293,8 +330,10 @@ function IntakeFormContent() {
       if (!isNaN(n) && n > 0) init.purchasePrice = n.toLocaleString("en-US")
     }
     if (params.get("proptype")) {
-      const mapped = PROPTYPE_MAP[params.get("proptype")!.toLowerCase()]
-      if (mapped) init.propertyType = mapped
+      const normalized = normalizeProptype(params.get("proptype")!)
+      const mapped = PROPTYPE_MAP[normalized]
+      // Use mapped value if found, otherwise fall back to raw value so it's not silently lost
+      init.propertyType = mapped || params.get("proptype")!.trim()
     }
     return init
   })
@@ -305,8 +344,19 @@ function IntakeFormContent() {
 
   const checkerResult = params.get("result")
 
+  const ENTITY_LEGAL_TYPE_SYNC: Record<string, string> = {
+    llc: "LLC", corporation: "Corporation", partnership: "Partnership", other_entity: "Other",
+  }
+
   const set = (field: keyof FormData, value: unknown) => {
-    setData(prev => ({ ...prev, [field]: value }))
+    setData(prev => {
+      const next = { ...prev, [field]: value }
+      // Keep entityLegalType in sync so user never has to answer the same question twice
+      if (field === "buyerType" && typeof value === "string" && ENTITY_LEGAL_TYPE_SYNC[value]) {
+        next.entityLegalType = ENTITY_LEGAL_TYPE_SYNC[value]
+      }
+      return next
+    })
     setErrors(prev => { const next = { ...prev }; delete next[field]; return next })
   }
 
@@ -345,8 +395,7 @@ function IntakeFormContent() {
         if (!data.trustCity.trim())     e.trustCity     = "Required"
         if (!data.trustZip.trim())      e.trustZip      = "Required"
       } else {
-        if (!data.entityName.trim())        e.entityName        = "Required"
-        if (!data.entityLegalType)          e.entityLegalType   = "Required"
+        if (!data.entityName.trim())        e.entityName           = "Required"
         if (!data.entityFormationState)     e.entityFormationState = "Required"
         if (!data.entityContactName.trim()) e.entityContactName = "Required"
         if (!data.entityStreet.trim())      e.entityStreet      = "Required"
@@ -720,7 +769,7 @@ function IntakeFormContent() {
                     <AddressFields
                       prefix="buyer"
                       values={{ street: data.buyerStreet, city: data.buyerCity, state: data.buyerState, zip: data.buyerZip }}
-                      onChange={setStr as (f: string) => (v: string) => void}
+                      onChange={(field, val) => set(field as keyof FormData, val)}
                     />
                   </Field>
                   <div className="grid md:grid-cols-2 gap-4">
@@ -744,12 +793,11 @@ function IntakeFormContent() {
                     <Field label="Entity Legal Name" required error={errors.entityName}>
                       <TextInput value={data.entityName} onChange={setStr("entityName")} placeholder="Sunrise Holdings LLC" />
                     </Field>
-                    <Field label="Entity Type" required error={errors.entityLegalType}>
-                      <SelectInput
-                        value={data.entityLegalType} onChange={setStr("entityLegalType")}
-                        placeholder="Select type..."
-                        options={["LLC","Corporation","Partnership","Other"]}
-                      />
+                    {/* Entity type is already captured by the Buyer Type dropdown above — show read-only */}
+                    <Field label="Entity Type">
+                      <div className="h-11 px-4 flex items-center border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 font-medium">
+                        {data.entityLegalType || "—"}
+                      </div>
                     </Field>
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
@@ -764,7 +812,7 @@ function IntakeFormContent() {
                     <AddressFields
                       prefix="entity"
                       values={{ street: data.entityStreet, city: data.entityCity, state: data.entityState, zip: data.entityZip }}
-                      onChange={setStr as (f: string) => (v: string) => void}
+                      onChange={(field, val) => set(field as keyof FormData, val)}
                     />
                   </Field>
                   <Field label="Primary Contact Name" required error={errors.entityContactName} hint="Person PCT can reach at the entity">
@@ -837,7 +885,7 @@ function IntakeFormContent() {
                     <AddressFields
                       prefix="trust"
                       values={{ street: data.trustStreet, city: data.trustCity, state: data.trustState, zip: data.trustZip }}
-                      onChange={setStr as (f: string) => (v: string) => void}
+                      onChange={(field, val) => set(field as keyof FormData, val)}
                     />
                   </Field>
                   <Field label="Settlor / Grantor Name">
