@@ -90,6 +90,19 @@ function IsItReportableContent() {
     </div>
   )
 
+  // ── Order context from prefill params ───────────────────────────────────────
+  const orderEscrow   = params.get("escrow")   ? decodeURIComponent(params.get("escrow")!)   : null
+  const orderStreet   = params.get("street")   ? decodeURIComponent(params.get("street")!)   : null
+  const orderCity     = params.get("city")     ? decodeURIComponent(params.get("city")!)     : null
+  const orderState    = params.get("state")    ? params.get("state")!.toUpperCase()          : null
+  const orderOfficer  = params.get("officer")  ? decodeURIComponent(params.get("officer")!)  : null
+  const orderRawPrice = params.get("price")
+  const orderPrice    = orderRawPrice
+    ? (() => { const n = parseFloat(orderRawPrice.replace(/[,$]/g,"")); return isNaN(n) ? null : `$${n.toLocaleString("en-US")}` })()
+    : null
+
+  const hasOrderContext = !!(orderEscrow || orderStreet)
+
   return (
     <main className="min-h-screen bg-white">
       <Navigation variant="light" />
@@ -108,9 +121,43 @@ function IsItReportableContent() {
             </div>
             <h2 className="text-2xl font-bold text-secondary">Quick Checker</h2>
           </div>
-          <p className="text-gray-600 mb-8 ml-14 text-sm">
+          <p className="text-gray-600 mb-6 ml-14 text-sm">
             This checker is a simplified guide based on the rule&apos;s core triggers and common exemptions. Results are informational.
           </p>
+
+          {/* Order context banner — shown when arriving via a prefill link */}
+          {hasOrderContext && (
+            <div className="mb-6 bg-green-50 border border-green-200 rounded-2xl px-5 py-4 flex items-start gap-4">
+              <div className="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-green-900 mb-1">
+                  We have your transaction on file ✓
+                </p>
+                <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-green-800 mb-2">
+                  {orderEscrow && (
+                    <span><span className="text-green-600 font-medium">Escrow #</span> {orderEscrow}</span>
+                  )}
+                  {orderStreet && (
+                    <span>
+                      <span className="text-green-600 font-medium">Property </span>
+                      {orderStreet}{orderCity ? `, ${orderCity}` : ""}{orderState ? `, ${orderState}` : ""}
+                    </span>
+                  )}
+                  {orderPrice && (
+                    <span><span className="text-green-600 font-medium">Price </span> {orderPrice}</span>
+                  )}
+                  {orderOfficer && (
+                    <span><span className="text-green-600 font-medium">Officer </span> {orderOfficer}</span>
+                  )}
+                </div>
+                <p className="text-xs text-green-700">
+                  We just need to confirm whether this transaction requires a FinCEN filing. Answer the three questions below — if a filing is needed, your order details will be pre-filled into the intake form automatically.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="bg-white border border-gray-100 rounded-2xl p-6 md:p-8 shadow-sm space-y-8">
             {/* Q1 */}
