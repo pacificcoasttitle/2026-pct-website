@@ -10,7 +10,7 @@ import { MiniDisclaimer } from "@/components/fincen/mini-disclaimer"
 import { CheckCircle, XCircle, HelpCircle, AlertTriangle, ChevronDown, Loader2 } from "lucide-react"
 import Link from "next/link"
 
-type Answer = "yes" | "no" | "unsure" | null
+type Answer = string | null
 
 // Inner component that reads search params (requires Suspense wrapper)
 function IsItReportableContent() {
@@ -22,8 +22,19 @@ function IsItReportableContent() {
 
   const allAnswered = q1 !== null && q2 !== null && q3 !== null
 
+  // Likely reportable when: residential + (cash/private/unsure financing) + (entity or trust buyer)
   const isLikelyReportable =
-    q1 === "yes" && (q2 === "yes" || q2 === "unsure") && q3 === "yes"
+    q1 === "yes" &&
+    (q2 === "cash" || q2 === "private" || q2 === "unsure") &&
+    (q3 === "entity" || q3 === "trust")
+
+  // Plain-English reason when NOT reportable — used in the result card
+  function notReportableReason(): string {
+    if (q1 === "no") return "The FinCEN rule only applies to residential property (1–4 units, condos, co-ops). Commercial and industrial transfers are not covered."
+    if (q3 === "individual") return "The FinCEN rule only applies when a legal entity or trust is the buyer. Purchases in an individual's personal name are not subject to these reporting requirements."
+    if (q2 === "bank") return "When a bank or credit union is providing the mortgage, that lender's existing anti-money laundering program satisfies the rule. The transfer is typically exempt."
+    return "Based on your answers, this transaction does not appear to meet all three triggers for FinCEN reporting."
+  }
 
   function handleCheck() {
     if (allAnswered) setShowResult(true)
@@ -40,9 +51,9 @@ function IsItReportableContent() {
   function buildIntakeUrl() {
     const p = new URLSearchParams()
     p.set("result", "likely_reportable")
-    if (q1) p.set("residential", q1)
-    p.set("financing", q2 === "yes" ? "cash" : "financed")
-    p.set("buyerType", q3 === "yes" ? "entity" : "individual")
+    p.set("residential", q1 ?? "yes")
+    p.set("financing", q2 === "bank" ? "financed" : "cash")
+    p.set("buyerType", q3 === "trust" ? "trust" : q3 === "entity" ? "entity" : "individual")
     const PREFILL_KEYS = ["escrow","street","city","state","zip","county","price","closing","officer","email","phone","branch","proptype"]
     PREFILL_KEYS.forEach(key => { const v = params.get(key); if (v) p.set(key, v) })
     return `/fincen/intake?${p.toString()}`
@@ -55,20 +66,25 @@ function IsItReportableContent() {
   }: {
     value: Answer
     onChange: (v: Answer) => void
-    options: { label: string; value: Answer }[]
+    options: { label: string; sublabel?: string; value: string }[]
   }) => (
-    <div className="flex flex-wrap gap-3 mt-3">
+    <div className="flex flex-col gap-2 mt-3">
       {options.map((opt) => (
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}
-          className={`px-5 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
+          className={`text-left px-5 py-3 rounded-xl border-2 text-sm transition-all ${
             value === opt.value
-              ? "border-primary bg-primary text-white"
-              : "border-gray-200 bg-white text-gray-700 hover:border-primary/50"
+              ? "border-primary bg-primary/5 text-secondary"
+              : "border-gray-200 bg-white text-gray-700 hover:border-primary/40 hover:bg-gray-50"
           }`}
         >
-          {opt.label}
+          <span className={`font-semibold ${value === opt.value ? "text-primary" : ""}`}>
+            {value === opt.value ? "● " : "○ "}{opt.label}
+          </span>
+          {opt.sublabel && (
+            <span className="block text-xs text-gray-500 mt-0.5 ml-4">{opt.sublabel}</span>
+          )}
         </button>
       ))}
     </div>
@@ -101,17 +117,17 @@ function IsItReportableContent() {
             <div>
               <p className="font-semibold text-secondary">
                 <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-xs mr-2">1</span>
-                Is the property residential?
+                What type of property is being transferred?
               </p>
-              <p className="text-sm text-gray-500 ml-8 mt-1">
-                (1–4 units, condo/townhome, co-op, or qualifying land intended for residential construction)
+              <p className="text-xs text-gray-500 ml-8 mt-1">
+                The FinCEN rule only covers residential real property.
               </p>
               <RadioGroup
                 value={q1}
                 onChange={setQ1}
                 options={[
-                  { label: "Yes", value: "yes" },
-                  { label: "No", value: "no" },
+                  { label: "Residential", sublabel: "Single family home, condo, townhome, co-op, 2–4 units, or vacant land intended for residential construction", value: "yes" },
+                  { label: "Commercial, industrial, or 5+ units", sublabel: "Office, retail, warehouse, apartment building with 5+ units, or other non-residential", value: "no" },
                 ]}
               />
             </div>
@@ -120,15 +136,19 @@ function IsItReportableContent() {
             <div>
               <p className="font-semibold text-secondary">
                 <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-xs mr-2">2</span>
-                Is the purchase non-financed (all-cash or certain private money), OR does the lender lack an anti-money laundering (AML) program?
+                How is the buyer financing the purchase?
+              </p>
+              <p className="text-xs text-gray-500 ml-8 mt-1">
+                Transactions financed through a bank or credit union are typically exempt — the lender's own compliance program covers it.
               </p>
               <RadioGroup
                 value={q2}
                 onChange={setQ2}
                 options={[
-                  { label: "Yes", value: "yes" },
-                  { label: "No", value: "no" },
-                  { label: "Not sure", value: "unsure" },
+                  { label: "All cash — no mortgage or loan", sublabel: "Wire, cashier's check, cryptocurrency, or any combination not involving a lender", value: "cash" },
+                  { label: "Mortgage from a bank or credit union", sublabel: "Conventional, FHA, VA, jumbo, or other loan from a regulated financial institution", value: "bank" },
+                  { label: "Hard money, private lender, or seller carry-back", sublabel: "Non-institutional financing — private individual, fund, or seller-financed note", value: "private" },
+                  { label: "Not sure", sublabel: "Financing details haven't been confirmed yet", value: "unsure" },
                 ]}
               />
             </div>
@@ -137,14 +157,18 @@ function IsItReportableContent() {
             <div>
               <p className="font-semibold text-secondary">
                 <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-xs mr-2">3</span>
-                Is the buyer (transferee) a legal entity or trust (LLC, corporation, partnership, trust), rather than an individual?
+                Who is taking title as the buyer?
+              </p>
+              <p className="text-xs text-gray-500 ml-8 mt-1">
+                The rule applies when a legal entity or trust — not a person — is on title.
               </p>
               <RadioGroup
                 value={q3}
                 onChange={setQ3}
                 options={[
-                  { label: "Yes", value: "yes" },
-                  { label: "No", value: "no" },
+                  { label: "An individual (buying in their own name)", sublabel: "Natural person — no entity, no trust", value: "individual" },
+                  { label: "An LLC, corporation, or partnership", sublabel: "Any business entity, including LLPs, LLCs, S-corps, C-corps, etc.", value: "entity" },
+                  { label: "A trust", sublabel: "Living trust, family trust, irrevocable trust, land trust, or other trust arrangement", value: "trust" },
                 ]}
               />
             </div>
@@ -186,8 +210,8 @@ function IsItReportableContent() {
                       isLikelyReportable ? "text-red-700" : "text-green-700"
                     }`}>
                       {isLikelyReportable
-                        ? "Based on your answers, this transaction may require FinCEN reporting. Plan for beneficial ownership information (BOI) collection and ID verification."
-                        : "Based on your answers, this transaction is less likely to require FinCEN reporting. However, exemptions and details matter—confirm with escrow."}
+                        ? "Based on your answers, this transaction appears to require FinCEN reporting. You'll need to collect beneficial ownership information (BOI) and ID verification for the buyer. Use the intake form below to start."
+                        : notReportableReason()}
                     </p>
                     {isLikelyReportable && (
                       <div className="mt-4 flex flex-col sm:flex-row gap-3">

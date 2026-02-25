@@ -509,11 +509,45 @@ function IntakeFormContent() {
         <div className="container mx-auto px-4 py-8 max-w-3xl">
           <p className="text-primary font-semibold text-sm uppercase tracking-wide mb-1">FinCEN Reporting</p>
           <h1 className="text-2xl md:text-3xl font-bold text-secondary">Transaction Intake Form</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            {checkerResult === "likely_reportable"
-              ? "Your transaction flagged as likely reportable. Please complete the form below."
+          <p className="text-gray-500 text-sm mt-2">
+            {hasPrefill
+              ? "Your transaction details are already loaded — review each step and submit when ready."
+              : checkerResult === "likely_reportable"
+              ? "Your transaction was flagged as likely reportable. Please complete all steps below."
               : "Complete all steps to submit your transaction to the PCT FinCEN Reporting Desk."}
           </p>
+
+          {/* Pre-fill transaction summary — visible immediately on arrival */}
+          {hasPrefill && (
+            <div className="mt-4 bg-green-50 border border-green-200 rounded-2xl px-5 py-4 flex items-start gap-4">
+              <div className="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-green-900 mb-1">Your transaction details are pre-loaded ✓</p>
+                <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-green-800">
+                  {data.escrowNumber && (
+                    <span><span className="text-green-600 font-medium">Escrow #</span> {data.escrowNumber}</span>
+                  )}
+                  {data.propertyStreet && (
+                    <span>
+                      <span className="text-green-600 font-medium">Property </span>
+                      {data.propertyStreet}{data.propertyCity ? `, ${data.propertyCity}` : ""}{data.propertyState ? `, ${data.propertyState}` : ""}
+                    </span>
+                  )}
+                  {data.purchasePrice && (
+                    <span><span className="text-green-600 font-medium">Price </span> ${data.purchasePrice}</span>
+                  )}
+                  {data.officerName && (
+                    <span><span className="text-green-600 font-medium">Officer </span> {data.officerName}</span>
+                  )}
+                </div>
+                <p className="text-xs text-green-700 mt-2">
+                  Review each step to confirm accuracy, then click <strong>Submit</strong> when done. Nothing is filed until you confirm on the final step.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -557,13 +591,11 @@ function IntakeFormContent() {
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-secondary border-b border-gray-100 pb-4">Step 1 — Transaction Details</h2>
 
-              {/* Pre-fill banner */}
+              {/* Step 1 pre-fill reminder */}
               {hasPrefill && (
-                <div className="flex items-start gap-3 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
-                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-green-800">
-                    <strong>Fields pre-filled from your order confirmation.</strong> Please review the information below, make any corrections, and click Next.
-                  </p>
+                <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-2.5">
+                  <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                  Fields marked <strong className="mx-1">✓ Pre-filled from order</strong> came from your link. Verify they're correct before continuing.
                 </div>
               )}
 
