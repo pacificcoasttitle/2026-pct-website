@@ -69,7 +69,15 @@ export async function sendNotificationEmail(submission: Record<string, any>): Pr
   const sellers = submission.sellers_data as Array<Record<string, string>>
 
   const sellerLines = sellers
-    .map((s, i) => `  Seller ${i + 1} (${s.seller_type}): ${s.name}${s.trustee_name ? " / Trustee: " + s.trustee_name : ""}`)
+    .map((s, i) => {
+      const lines: string[] = []
+      lines.push(`  Seller ${i + 1} (${s.sellerType || s.seller_type || "individual"}): ${s.name}`)
+      if (s.trusteeName || s.trustee_name) lines.push(`    Trustee: ${s.trusteeName || s.trustee_name}`)
+      if (s.street)                         lines.push(`    Address: ${s.street}, ${s.city}, ${s.state} ${s.zip}`)
+      if (s.phone)                          lines.push(`    Phone:   ${s.phone}`)
+      if (s.email)                          lines.push(`    Email:   ${s.email}`)
+      return lines.join("\n")
+    })
     .join("\n")
 
   const text = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
