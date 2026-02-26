@@ -200,7 +200,7 @@ export default function TrusteeSalesPage() {
         heading="Buying Trustee Sales with an LLC or Trust?"
         body="Start the process early—especially if you're purchasing residential property with cash or private funds."
         buttons={[
-          { label: "Start FinCEN Intake", href: "/fincen/contact" },
+          { label: "Start FinCEN Intake", href: "/fincen/intake" },
           { label: "Check if it's reportable", href: "/fincen/is-it-reportable", variant: "outline" },
         ]}
       />

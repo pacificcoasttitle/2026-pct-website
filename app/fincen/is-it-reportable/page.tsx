@@ -385,7 +385,7 @@ function IsItReportableContent() {
         heading="Want a Clean Answer Before You Write the Offer?"
         body="Loop escrow in early—especially if the buyer plans to purchase in an entity or trust."
         buttons={[
-          { label: "Talk to an Escrow Officer", href: "/fincen/contact" },
+          { label: "Talk to an Escrow Officer", modal: "escrow" },
           { label: "Guidance for agents", href: "/fincen/agents", variant: "outline" },
         ]}
       />

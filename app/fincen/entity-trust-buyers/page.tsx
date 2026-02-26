@@ -210,7 +210,7 @@ export default function EntityTrustBuyersPage() {
         heading="Want a Head Start Checklist?"
         body="Tell us how the buyer plans to take title and how the purchase will be funded. We'll outline the likely next steps."
         buttons={[
-          { label: "Start FinCEN Intake", href: "/fincen/contact" },
+          { label: "Start FinCEN Intake", href: "/fincen/intake" },
           { label: "Check if it's reportable", href: "/fincen/is-it-reportable", variant: "outline" },
         ]}
       />

@@ -176,8 +176,8 @@ export default function ResourcesPage() {
         heading="Want the Checklist Tailored to Your Deal?"
         body="Tell us how the buyer will take title and how the deal will be funded. We'll help you plan what's needed next."
         buttons={[
-          { label: "Start FinCEN Intake", href: "/fincen/contact" },
-          { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
+          { label: "Start FinCEN Intake", href: "/fincen/intake" },
+          { label: "Talk to an Escrow Officer", modal: "escrow", variant: "outline" },
         ]}
       />
       </div>

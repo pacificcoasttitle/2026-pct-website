@@ -203,7 +203,7 @@ export default function RREPage() {
         body="Use the quick checker to get a directional answer, then confirm with escrow."
         buttons={[
           { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
-          { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
+          { label: "Talk to an Escrow Officer", modal: "escrow", variant: "outline" },
         ]}
       />
       </div>

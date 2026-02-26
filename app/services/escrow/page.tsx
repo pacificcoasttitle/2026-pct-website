@@ -238,10 +238,10 @@ export default function EscrowServicesPage() {
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <a
-                  href="tel:+17145166700"
+                  href="tel:+18667241050"
                   className="flex items-center justify-center w-full bg-primary text-white px-6 py-4 rounded-xl font-semibold hover:bg-primary/90 transition-colors"
                 >
-                  Call (714) 516-6700
+                  Call (866) 724-1050
                 </a>
               </div>
             </div>

@@ -232,7 +232,7 @@ export function TessaPrelimModal({ isOpen, onClose, file }: Props) {
         {/* ── Footer ── */}
         <div className="flex-shrink-0 px-8 py-4 border-t border-gray-100 bg-gray-50/60 flex flex-col sm:flex-row items-center justify-between gap-2 rounded-b-2xl">
           <p className="text-xs text-gray-500 text-center sm:text-left">
-            📞 Questions? Call PCT: <a href="tel:7145166700" className="text-[#f26b2b] font-semibold hover:underline">(714) 516-6700</a>
+            📞 Questions? Call PCT: <a href="tel:+18667241050" className="text-[#f26b2b] font-semibold hover:underline">(866) 724-1050</a>
           </p>
           <p className="text-xs text-gray-400 text-center sm:text-right max-w-xs">
             ⚠️ AI-generated summary for informational purposes only. Read the full prelim and contact your title officer.

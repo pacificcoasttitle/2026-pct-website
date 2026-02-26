@@ -479,7 +479,7 @@ export function RateCalculator() {
                     <p className="text-sm font-medium text-amber-800">Call for Quote</p>
                     <p className="text-xs text-amber-700 mt-0.5">
                       Properties over $3,000,000 require a custom quote. Please call us at{' '}
-                      <a href="tel:7145166700" className="underline font-medium">(714) 516-6700</a>.
+                      <a href="tel:+18667241050" className="underline font-medium">(866) 724-1050</a>.
                     </p>
                   </div>
                 </div>

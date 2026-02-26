@@ -214,10 +214,10 @@ export default function LenderSolutionsPage() {
               Contact Our Lender Team
             </Link>
             <a
-              href="tel:+17145166700"
+              href="tel:+18667241050"
               className="bg-accent text-white px-8 py-4 rounded-xl font-semibold hover:bg-accent/90 transition-colors"
             >
-              Call (714) 516-6700
+              Call (866) 724-1050
             </a>
           </div>
         </div>

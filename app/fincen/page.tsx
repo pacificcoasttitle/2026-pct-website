@@ -180,7 +180,7 @@ export default function FinCENLandingPage() {
         body="If a purchase looks like it may fall under FinCEN reporting, we'll help you understand what's needed and when."
         buttons={[
           { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
-          { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
+          { label: "Talk to an Escrow Officer", modal: "escrow", variant: "outline" },
         ]}
       />
       </div>

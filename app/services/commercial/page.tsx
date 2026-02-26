@@ -262,11 +262,11 @@ export default function CommercialServicesPage() {
               commercial@pct.com
             </a>
             <a
-              href="tel:+17145166700"
+              href="tel:+18667241050"
               className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/20 transition-colors"
             >
               <Phone className="w-5 h-5" />
-              (714) 516-6700
+              (866) 724-1050
             </a>
           </div>
         </div>

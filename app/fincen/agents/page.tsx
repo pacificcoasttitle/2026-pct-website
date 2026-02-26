@@ -171,7 +171,7 @@ export default function AgentsPage() {
         body="Send us the scenario early—property type, buyer type, and financing. We'll help you set the right expectations."
         buttons={[
           { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
-          { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
+          { label: "Talk to an Escrow Officer", modal: "escrow", variant: "outline" },
         ]}
       />
       </div>

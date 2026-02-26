@@ -96,7 +96,7 @@ export function TessaProvider({ children }: { children: ReactNode }) {
       const data = await response.json()
       const assistantMessage: Message = {
         role: 'assistant',
-        content: data.choices?.[0]?.message?.content || "I'm sorry, I couldn't process that request. Please try again or contact Pacific Coast Title directly at (714) 516-6700."
+        content: data.choices?.[0]?.message?.content || "I'm sorry, I couldn't process that request. Please try again or contact Pacific Coast Title directly at (866) 724-1050."
       }
 
       setMessages([...newMessages, assistantMessage])
@@ -106,7 +106,7 @@ export function TessaProvider({ children }: { children: ReactNode }) {
         ...newMessages,
         { 
           role: 'assistant', 
-          content: "I'm having trouble connecting right now. This may be due to a cold start - please wait a moment and try again. Or contact us directly at (714) 516-6700." 
+          content: "I'm having trouble connecting right now. This may be due to a cold start - please wait a moment and try again. Or contact us directly at (866) 724-1050." 
         }
       ])
     } finally {

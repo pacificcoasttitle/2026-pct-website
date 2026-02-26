@@ -3,6 +3,7 @@
 import { TessaSectionCard } from './TessaSectionCard'
 import { TessaCheatSheet } from './TessaCheatSheet'
 import { TessaComplexityScore } from './TessaComplexityScore'
+import { ContactButton } from '@/components/ContactButton'
 import type { ParsedSection, PrelimFacts, CheatSheetItem } from '@/lib/tessa/tessa-types'
 
 interface Props {
@@ -70,12 +71,13 @@ export function TessaPrelimResults({
         >
           📄 Analyze New File
         </button>
-        <a
-          href="/contact"
+        <ContactButton
+          defaultType="escrow"
+          title="Talk to a Title Officer"
           className="flex-1 py-3 px-5 rounded-xl bg-gray-900 text-white font-bold text-sm text-center hover:bg-gray-700 transition-colors"
         >
           📞 Talk to a Title Officer
-        </a>
+        </ContactButton>
       </div>
     </div>
   )

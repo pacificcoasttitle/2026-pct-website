@@ -148,11 +148,11 @@ export default function NoticesPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="tel:+17145166700"
+                href="tel:+18667241050"
                 className="inline-flex items-center justify-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors"
               >
                 <Phone className="w-5 h-5" />
-                (714) 516-6700
+                (866) 724-1050
               </a>
               <a
                 href="mailto:info@pct.com"

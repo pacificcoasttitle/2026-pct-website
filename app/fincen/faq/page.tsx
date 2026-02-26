@@ -115,7 +115,7 @@ export default function FAQPage() {
         body="Send us the basics (property type, buyer type, and financing). We'll help you plan next steps."
         buttons={[
           { label: "Check if it's reportable", href: "/fincen/is-it-reportable" },
-          { label: "Talk to an Escrow Officer", href: "/fincen/contact", variant: "outline" },
+          { label: "Talk to an Escrow Officer", modal: "escrow", variant: "outline" },
         ]}
       />
       </div>
