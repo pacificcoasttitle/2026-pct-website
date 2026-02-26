@@ -20,20 +20,29 @@ export async function generateReferenceNumber(): Promise<string> {
   const prefix = `PCT-FINCEN-${year}-`
   const db = getPool()
 
-  // Fallback when no DB: timestamp (ms, base-36) + 3 random digits — never repeats
+  // No-DB fallback: MMDD + 4-digit random (e.g. PCT-FINCEN-2026-02264821)
   const fallback = () => {
-    const ts  = Date.now().toString(36).toUpperCase().slice(-5)
-    const rnd = Math.floor(Math.random() * 1000).toString().padStart(3, "0")
-    return `${prefix}${ts}${rnd}`
+    const d = new Date()
+    const mmdd = `${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`
+    const rnd = Math.floor(Math.random() * 9000 + 1000)
+    return `${prefix}${mmdd}${rnd}`
   }
 
   if (!db) return fallback()
 
   try {
-    // NEXTVAL is atomic — eliminates the race condition that caused duplicate numbers
-    await db.query(`CREATE SEQUENCE IF NOT EXISTS fincen_ref_seq START 1`)
-    const result = await db.query(`SELECT NEXTVAL('fincen_ref_seq') AS n`)
-    const n = parseInt(result.rows[0].n as string, 10)
+    // Read the actual max stored in the table — survives redeployments and restarts
+    const { rows } = await db.query(
+      `SELECT COALESCE(MAX(
+         CASE WHEN reference_number ~ $1
+              THEN CAST(SPLIT_PART(reference_number, '-', 4) AS INTEGER)
+              ELSE 0
+         END
+       ), 0) + 1 AS next_n
+       FROM fincen_intake_submissions`,
+      [`^PCT-FINCEN-${year}-[0-9]+$`]
+    )
+    const n = parseInt(rows[0].next_n as string, 10)
     return `${prefix}${String(n).padStart(4, "0")}`
   } catch {
     return fallback()
