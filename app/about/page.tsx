@@ -17,11 +17,27 @@ const stats = [
   { value: "45+", label: "Combined Years Experience" },
 ]
 
-const underwriters = [
-  "First American Title Insurance Company",
-  "Fidelity National Title Insurance Company",
-  "Old Republic National Title Insurance Company",
-  "Stewart Title Guaranty Company",
+const protectionCapabilities = [
+  {
+    title: "Nationwide Coverage on Every Transaction",
+    description:
+      "We carry relationships with multiple top-rated national underwriters, which means we can match the right policy to any deal — residential, commercial, lender, or complex.",
+  },
+  {
+    title: "Competitive Rates Across All Policy Types",
+    description:
+      "Because we work with multiple insurers, we're not locked into a single pricing structure. We find you the best rate for your specific transaction type and county.",
+  },
+  {
+    title: "Multi-Underwriter Flexibility",
+    description:
+      "Certain transactions require specific policy forms or state-approved language. We have the breadth to accommodate lender requirements, 1031 exchanges, and commercial deals without ever needing to turn away a file.",
+  },
+  {
+    title: "Financial Strength Behind Every Policy",
+    description:
+      "All of our underwriting partners carry A or better ratings from major financial rating agencies — so your coverage is backed by some of the strongest balance sheets in the industry.",
+  },
 ]
 
 const values = [
@@ -144,31 +160,31 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Underwriters Section */}
+      {/* Protection Capabilities Section */}
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-secondary mb-4">
-              Your Policy Is Backed By The Best
-            </h2>
-            <p className="text-xl text-gray-600 mb-12">
-              We partner with America's largest and most financially secure title insurers, 
-              so your protection is rock-solid.
-            </p>
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-secondary mb-4">
+                What Our Underwriting Relationships Mean for You
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                We work with multiple top-rated national title insurers — not because we have to, 
+                but because it gives us the flexibility to do right by every client.
+              </p>
+            </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              {underwriters.map((underwriter) => (
-                <div key={underwriter} className="flex items-center gap-3 bg-white p-4 rounded-lg border border-gray-100">
-                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                  <span className="text-gray-700 font-medium">{underwriter}</span>
+            <div className="grid md:grid-cols-2 gap-6">
+              {protectionCapabilities.map((cap) => (
+                <div key={cap.title} className="flex items-start gap-4 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                  <CheckCircle className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-bold text-secondary mb-2">{cap.title}</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">{cap.description}</p>
+                  </div>
                 </div>
               ))}
             </div>
-
-            <p className="text-sm text-gray-500 mt-8">
-              Each underwriter is rated A or higher by major rating agencies, ensuring your policy 
-              is backed by companies with proven financial strength.
-            </p>
           </div>
         </div>
       </section>

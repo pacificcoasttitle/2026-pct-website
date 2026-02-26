@@ -162,19 +162,12 @@ export function Footer() {
                 </Link>
               </div>
 
-              {/* Contact CTA buttons */}
-              <div className="flex flex-col gap-2 pt-1">
-                <ContactButton
-                  defaultType="escrow"
-                  title="Contact an Escrow Officer"
-                  className="w-full bg-primary hover:bg-primary/90 text-white py-2.5 px-4 rounded-lg text-sm font-semibold transition-colors"
-                >
-                  Contact an Escrow Officer
-                </ContactButton>
+              {/* Contact CTA button */}
+              <div className="pt-1">
                 <ContactButton
                   defaultType="general"
                   title="Contact Our Team"
-                  className="w-full border border-white/20 hover:border-white/40 text-white/80 hover:text-white py-2.5 px-4 rounded-lg text-sm font-medium transition-colors"
+                  className="w-full bg-primary hover:bg-primary/90 text-white py-2.5 px-4 rounded-lg text-sm font-semibold transition-colors"
                 >
                   General Inquiry
                 </ContactButton>

@@ -173,10 +173,12 @@ export function Navigation({ variant = "transparent" }: NavigationProps) {
 
             {/* CTA Buttons */}
             <div className="hidden md:flex items-center gap-3">
-              <Button className="bg-primary hover:bg-primary/90 text-white shadow-md">
-                <Calculator className="w-4 h-4 mr-2" />
-                Get Quote
-              </Button>
+              <Link href="/#tools">
+                <Button className="bg-primary hover:bg-primary/90 text-white shadow-md">
+                  <Calculator className="w-4 h-4 mr-2" />
+                  Get Quote
+                </Button>
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -230,10 +232,12 @@ export function Navigation({ variant = "transparent" }: NavigationProps) {
               </div>
             ))}
             <div className="mt-6">
-              <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-white">
-                <Calculator className="w-4 h-4 mr-2" />
-                Get Quote
-              </Button>
+              <Link href="/#tools" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-white">
+                  <Calculator className="w-4 h-4 mr-2" />
+                  Get Quote
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
