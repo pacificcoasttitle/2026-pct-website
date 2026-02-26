@@ -144,9 +144,8 @@ export async function sendConfirmationEmail(submission: Record<string, any>): Pr
 
 Your FinCEN intake submission has been received.
 
-  Reference Number: ${submission.reference_number}
-  Escrow Number:    ${submission.escrow_number}
-  Property:         ${addr.street}, ${addr.city}, ${addr.state}
+  File Number:    ${submission.escrow_number}
+  Property:       ${addr.street}, ${addr.city}, ${addr.state}
 
 What happens next:
   1. A compliance coordinator will review your submission within 1 business day
@@ -166,7 +165,7 @@ Pacific Coast Title — FinCEN Reporting Division`
     await sg.send({
       from: { name: "PCT FinCEN Reporting Desk", email: "fincen@pct.com" },
       to: submission.officer_email,
-      subject: `FinCEN Submission Received — ${submission.reference_number}`,
+      subject: `FinCEN Submission Received — ${submission.escrow_number}`,
       text,
     })
     return true
