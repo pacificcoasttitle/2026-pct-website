@@ -225,7 +225,7 @@ export function TessaLiensContent({
   }, 0)
 
   return (
-    <div className="pt-4 space-y-4">
+    <div className="pt-4 space-y-5">
       {/* Structured DOT cards */}
       {dots.map((dot) => (
         <DotCard key={dot.item_no} dot={dot} />

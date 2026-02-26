@@ -94,12 +94,16 @@ function getSectionSubtitle(section: ParsedSection, facts: PrelimFacts | null | 
 export function TessaSectionCard({ section, defaultExpanded = false, facts }: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded)
   const subtitle = getSectionSubtitle(section, facts)
+  const isSummary = section.title === 'SUMMARY'
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+    <div
+      className={`rounded-xl border bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow
+        ${isSummary ? 'border-blue-200 bg-blue-50/30 ring-1 ring-blue-100' : 'border-gray-200'}`}
+    >
       {/* Header / toggle */}
       <button
-        className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-gray-50/80 transition-colors"
         onClick={() => setExpanded((e) => !e)}
         aria-expanded={expanded}
       >
@@ -141,7 +145,7 @@ export function TessaSectionCard({ section, defaultExpanded = false, facts }: Pr
 
       {/* Body — fade+slide in when expanded */}
       {expanded && (
-        <div className="px-5 pb-5 pt-1 border-t border-gray-100 tessa-card-body-enter">
+        <div className="px-6 pb-6 pt-3 border-t border-gray-100 tessa-card-body-enter">
           <SectionBody section={section} facts={facts} />
         </div>
       )}

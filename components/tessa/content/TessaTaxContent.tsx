@@ -25,7 +25,7 @@ function TaxParcel({ tax }: { tax: PropertyTax }) {
         {/* Installment rows */}
         <div>
           {tax.first_installment_amount && (
-            <div className="flex items-center justify-between py-3 border-b border-gray-100">
+            <div className="flex items-center justify-between py-3.5 border-b border-gray-100">
               <div>
                 <div className="text-sm font-medium text-gray-800">1st Installment</div>
                 {NS(tax.first_penalty) && (
@@ -39,7 +39,7 @@ function TaxParcel({ tax }: { tax: PropertyTax }) {
             </div>
           )}
           {tax.second_installment_amount && (
-            <div className="flex items-center justify-between py-3">
+            <div className="flex items-center justify-between py-3.5">
               <div>
                 <div className="text-sm font-medium text-gray-800">2nd Installment</div>
                 {NS(tax.second_penalty) && (

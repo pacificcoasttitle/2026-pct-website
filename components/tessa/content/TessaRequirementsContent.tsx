@@ -132,7 +132,7 @@ export function TessaRequirementsContent({ content }: { content: string }) {
   }
 
   return (
-    <div className="space-y-3 pt-4">
+    <div className="space-y-4 pt-4">
       {/* Severity count strip */}
       {blockers + material + informational > 0 && (
         <div className="flex flex-wrap gap-4 mb-1">
@@ -159,7 +159,7 @@ export function TessaRequirementsContent({ content }: { content: string }) {
 
       {/* Action list */}
       {actionList.length > 0 && (
-        <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 mb-2">
+        <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 mb-3">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
             📋 Action List
           </p>
@@ -178,7 +178,7 @@ export function TessaRequirementsContent({ content }: { content: string }) {
       {items.map((req, i) => (
         <div
           key={i}
-          className={`border-l-4 ${borderFor[req.severity] ?? 'border-l-gray-300'} bg-gray-50 rounded-r-lg p-4`}
+          className={`border-l-4 ${borderFor[req.severity] ?? 'border-l-gray-300'} bg-gray-50 rounded-r-lg p-5`}
         >
           <div className="flex items-start justify-between mb-2 gap-2">
             <SeverityBadgeInline severity={req.severity} />

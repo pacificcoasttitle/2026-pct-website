@@ -179,15 +179,20 @@ export function TessaSummaryContent({ content }: { content: string }) {
 
   return (
     <div className="pt-4 space-y-4">
+      {/* Quick file identifier */}
+      <div className="flex items-center justify-between text-xs text-gray-400">
+        <span>Transaction overview for the parties and their representatives</span>
+      </div>
+
       {/* Top Closing Risks */}
       {risks.length > 0 && (
-        <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+        <div className="bg-slate-50 rounded-lg p-5 border border-slate-200">
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
             ⚡ Top Closing Risks
           </h4>
-          <div className="space-y-3">
+          <div className="space-y-3.5">
             {risks.map((r, i) => (
-              <div key={i} className="flex gap-3 text-sm">
+              <div key={i} className="flex gap-3">
                 <span className="shrink-0 mt-1">
                   <span
                     className={`w-2.5 h-2.5 rounded-full inline-block ${
@@ -196,11 +201,15 @@ export function TessaSummaryContent({ content }: { content: string }) {
                   />
                 </span>
                 <div>
-                  <span className="font-medium text-gray-800">{highlightDollars(r.title)}</span>
+                  <span className="font-semibold text-gray-800 text-sm leading-relaxed">
+                    {highlightDollars(r.title)}
+                  </span>
                   {r.explanation && (
                     <>
                       <span className="text-gray-400"> — </span>
-                      <span className="text-gray-600">{highlightDollars(r.explanation)}</span>
+                      <span className="text-gray-600 text-sm leading-relaxed">
+                        {highlightDollars(r.explanation)}
+                      </span>
                     </>
                   )}
                 </div>
@@ -212,7 +221,7 @@ export function TessaSummaryContent({ content }: { content: string }) {
 
       {/* Narrative paragraph */}
       {narrative && (
-        <p className="text-sm text-gray-600 leading-relaxed">
+        <p className="text-[15px] text-gray-600 leading-relaxed">
           {highlightDollars(narrative)}
         </p>
       )}

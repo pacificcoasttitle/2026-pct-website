@@ -21,7 +21,7 @@ export function TessaPrelimResults({
   onReset,
 }: Props) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* File header bar */}
       <div className="flex items-center justify-between bg-gray-50 rounded-xl border border-gray-200 px-5 py-3">
         <div>

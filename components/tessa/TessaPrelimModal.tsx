@@ -126,11 +126,11 @@ export function TessaPrelimModal({ isOpen, onClose, file }: Props) {
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/50 backdrop-blur-sm tessa-modal-backdrop"
       onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col tessa-modal-enter
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl flex flex-col tessa-modal-enter
         h-full max-h-full sm:max-h-[88vh]">
 
         {/* ── Header ── */}
-        <div className="flex-shrink-0 flex items-start justify-between px-6 pt-5 pb-4 border-b border-gray-100">
+        <div className="flex-shrink-0 flex items-start justify-between px-8 pt-6 pb-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#f26b2b] flex items-center justify-center text-white font-black text-base flex-shrink-0">
               T
@@ -156,7 +156,7 @@ export function TessaPrelimModal({ isOpen, onClose, file }: Props) {
 
         {/* ── Progress (shown while processing) ── */}
         {isProcessing && (
-          <div className="flex-shrink-0 px-6 py-4 border-b border-gray-100 bg-gray-50/70 space-y-3">
+          <div className="flex-shrink-0 px-8 py-4 border-b border-gray-100 bg-gray-50/70 space-y-3">
             <ProgressBar progress={progress} label={progressLabel} />
             <StepIndicator status={status} />
           </div>
@@ -165,7 +165,7 @@ export function TessaPrelimModal({ isOpen, onClose, file }: Props) {
         {/* ── Scrollable body ── */}
         <div
           ref={bodyRef}
-          className="flex-1 overflow-y-auto tessa-modal-body px-6 py-5"
+          className="flex-1 overflow-y-auto tessa-modal-body px-8 py-6"
         >
 
           {/* Processing: dimmed placeholder cards */}
@@ -230,7 +230,7 @@ export function TessaPrelimModal({ isOpen, onClose, file }: Props) {
         </div>
 
         {/* ── Footer ── */}
-        <div className="flex-shrink-0 px-6 py-3 border-t border-gray-100 bg-gray-50/60 flex flex-col sm:flex-row items-center justify-between gap-2 rounded-b-2xl">
+        <div className="flex-shrink-0 px-8 py-4 border-t border-gray-100 bg-gray-50/60 flex flex-col sm:flex-row items-center justify-between gap-2 rounded-b-2xl">
           <p className="text-xs text-gray-500 text-center sm:text-left">
             📞 Questions? Call PCT: <a href="tel:7145166700" className="text-[#f26b2b] font-semibold hover:underline">(714) 516-6700</a>
           </p>

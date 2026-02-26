@@ -13,8 +13,8 @@ export function KV({
   mono?: boolean
 }) {
   return (
-    <div className="flex justify-between items-baseline py-2 border-b border-gray-100 last:border-0 gap-4">
-      <span className="text-xs uppercase tracking-wider text-gray-400 font-medium shrink-0">
+    <div className="flex justify-between items-baseline py-2.5 border-b border-gray-100 last:border-0 gap-4">
+      <span className="text-xs uppercase tracking-widest text-gray-400 font-medium shrink-0 mr-6">
         {label}
       </span>
       <span className={`text-sm text-right ${mono ? 'font-mono' : ''} text-gray-800`}>

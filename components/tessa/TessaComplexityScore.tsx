@@ -49,7 +49,7 @@ export function TessaComplexityScore({ sections, fileName, facts }: Props) {
       : 'Review informational items with your title officer.'
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-3 gap-2">
         <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
           File Complexity
