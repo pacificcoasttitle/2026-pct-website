@@ -35,7 +35,7 @@ export function TessaPrelimResults({
       </div>
 
       {/* Complexity score header */}
-      <TessaComplexityScore sections={sections} fileName={fileName} />
+      <TessaComplexityScore sections={sections} fileName={fileName} facts={facts} />
 
       {/* Section cards — pass facts so structured renderers can use ground-truth data */}
       {sections.map((section, i) => (

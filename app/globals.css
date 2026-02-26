@@ -206,6 +206,15 @@
   animation: tessa-backdrop-enter 0.15s ease-out forwards;
 }
 
+/* Section card body — fade + slide down on expand */
+@keyframes tessa-card-expand {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.tessa-card-body-enter {
+  animation: tessa-card-expand 0.18s ease-out forwards;
+}
+
 /* Progress bar shimmer while AI is working */
 @keyframes tessa-shimmer {
   0%   { background-position: -200% center; }

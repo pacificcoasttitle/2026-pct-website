@@ -1,10 +1,11 @@
 'use client'
 
-import type { ParsedSection } from '@/lib/tessa/tessa-types'
+import type { ParsedSection, PrelimFacts } from '@/lib/tessa/tessa-types'
 
 interface Props {
   sections: ParsedSection[]
   fileName: string
+  facts?: PrelimFacts | null
 }
 
 function countSeverities(content: string) {
@@ -20,7 +21,7 @@ function countSeverities(content: string) {
   return { blockers, material, informational }
 }
 
-export function TessaComplexityScore({ sections, fileName }: Props) {
+export function TessaComplexityScore({ sections, fileName, facts }: Props) {
   const reqSection = sections.find((s) => s.title === 'TITLE REQUIREMENTS')
   const { blockers, material, informational } = reqSection
     ? countSeverities(reqSection.content)
@@ -53,9 +54,11 @@ export function TessaComplexityScore({ sections, fileName }: Props) {
         <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
           File Complexity
         </h3>
-        {fileName && (
-          <span className="text-xs text-gray-400 truncate max-w-[220px]">{fileName}</span>
-        )}
+        <span className="text-xs text-gray-400 truncate max-w-[280px] text-right">
+          {facts?.property?.address
+            ? `${facts.property.address}${facts.property.apn ? ` · ${facts.property.apn}` : ''}`
+            : fileName}
+        </span>
       </div>
 
       {/* Counts */}

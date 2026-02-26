@@ -12,6 +12,17 @@ import { TessaTaxContent } from './content/TessaTaxContent'
 import { TessaOtherFindingsContent } from './content/TessaOtherFindingsContent'
 import { TessaDocStatusContent } from './content/TessaDocStatusContent'
 
+// Letter/symbol shown inside the colored square icon
+const SECTION_ICON_LETTERS: Record<string, string> = {
+  'TITLE REQUIREMENTS': '✓',
+  'SUMMARY': 'Σ',
+  'PROPERTY INFORMATION': 'P',
+  'LIENS AND JUDGMENTS': '$',
+  'TAXES AND ASSESSMENTS': 'T',
+  'OTHER FINDINGS': '!',
+  'DOCUMENT STATUS': 'i',
+}
+
 interface Props {
   section: ParsedSection
   defaultExpanded?: boolean
@@ -59,38 +70,62 @@ function SectionBody({
   }
 }
 
+// Compute a short subtitle for sections that have extra context
+function getSectionSubtitle(section: ParsedSection, facts: PrelimFacts | null | undefined): string | null {
+  if (section.title === 'LIENS AND JUDGMENTS') {
+    const dots = facts?.deeds_of_trust ?? []
+    if (dots.length === 0) return null
+    const total = dots.reduce((sum, d) => {
+      const n = parseFloat((d.amount ?? '').replace(/[$,]/g, ''))
+      return isNaN(n) ? sum : sum + n
+    }, 0)
+    const totalStr = total > 0
+      ? ` · $${total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+      : ''
+    return `${dots.length} DOT${dots.length > 1 ? 's' : ''}${totalStr}`
+  }
+  if (section.title === 'TAXES AND ASSESSMENTS') {
+    const count = facts?.taxes?.property_taxes?.length ?? 0
+    return count > 0 ? `${count} parcel${count > 1 ? 's' : ''}` : null
+  }
+  return null
+}
+
 export function TessaSectionCard({ section, defaultExpanded = false, facts }: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded)
-
-  const badgeBg =
-    section.title === 'TITLE REQUIREMENTS'
-      ? 'bg-green-100 text-green-800'
-      : section.title === 'LIENS AND JUDGMENTS'
-      ? 'bg-red-100 text-red-800'
-      : section.title === 'TAXES AND ASSESSMENTS'
-      ? 'bg-amber-100 text-amber-800'
-      : 'bg-gray-100 text-gray-700'
+  const subtitle = getSectionSubtitle(section, facts)
 
   return (
-    <div
-      className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow"
-      style={{ borderLeft: `4px solid ${section.borderColor}` }}
-    >
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow">
       {/* Header / toggle */}
       <button
         className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-gray-50 transition-colors"
         onClick={() => setExpanded((e) => !e)}
         aria-expanded={expanded}
       >
-        <span className="text-xl flex-shrink-0">{section.icon}</span>
+        {/* Colored square icon — matches prototype */}
+        <span
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+          style={{ backgroundColor: section.borderColor }}
+        >
+          {SECTION_ICON_LETTERS[section.title] ?? section.title[0]}
+        </span>
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-gray-900 text-sm uppercase tracking-wide">
+            <span className="font-semibold text-gray-900 text-sm tracking-tight">
               {section.title}
             </span>
+            {/* Neutral count badge */}
             {section.itemCount > 0 && (
-              <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${badgeBg}`}>
+              <span className="text-xs font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
                 {section.itemCount}
+              </span>
+            )}
+            {/* Section-specific subtitle (DOT total, parcel count) */}
+            {subtitle && (
+              <span className="text-xs font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                {subtitle}
               </span>
             )}
           </div>
@@ -98,14 +133,15 @@ export function TessaSectionCard({ section, defaultExpanded = false, facts }: Pr
             <p className="text-xs text-gray-500 mt-0.5 truncate">{section.preview}</p>
           )}
         </div>
+
         <span className="flex-shrink-0 text-gray-400">
           {expanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
         </span>
       </button>
 
-      {/* Body */}
+      {/* Body — fade+slide in when expanded */}
       {expanded && (
-        <div className="px-5 pb-5 pt-1 border-t border-gray-100">
+        <div className="px-5 pb-5 pt-1 border-t border-gray-100 tessa-card-body-enter">
           <SectionBody section={section} facts={facts} />
         </div>
       )}

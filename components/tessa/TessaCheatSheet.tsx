@@ -18,23 +18,23 @@ export function TessaCheatSheet({ items, facts }: Props) {
   if (!items.length && !taxDefaults.length) return null
 
   return (
-    <div
-      className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden"
-      style={{ borderLeft: '4px solid #f59e0b' }}
-    >
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow">
       {/* Header */}
       <button
         className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-gray-50 transition-colors"
         onClick={() => setExpanded((e) => !e)}
         aria-expanded={expanded}
       >
-        <span className="text-xl flex-shrink-0">🧭</span>
+        {/* Colored square icon — matches section card style */}
+        <span className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 bg-amber-500">
+          🧭
+        </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-gray-900 text-sm uppercase tracking-wide">
+            <span className="font-semibold text-gray-900 text-sm tracking-tight">
               REALTOR CHEAT SHEET
             </span>
-            <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-800">
+            <span className="text-xs font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
               {items.length}
             </span>
           </div>
@@ -49,7 +49,7 @@ export function TessaCheatSheet({ items, facts }: Props) {
 
       {/* Body */}
       {expanded && (
-        <div className="px-5 pb-5 pt-1 border-t border-gray-100 space-y-4">
+        <div className="px-5 pb-5 pt-1 border-t border-gray-100 space-y-4 tessa-card-body-enter">
           <p className="text-sm text-gray-500 mb-2">
             Use this as your quick talk track with sellers/buyers. It explains <strong>what</strong> is needed,{' '}
             <strong>who</strong> typically supplies it, and <strong>why</strong> it impacts closing.
