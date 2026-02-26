@@ -2,6 +2,7 @@
 
 import { TessaSectionCard } from './TessaSectionCard'
 import { TessaCheatSheet } from './TessaCheatSheet'
+import { TessaComplexityScore } from './TessaComplexityScore'
 import type { ParsedSection, PrelimFacts, CheatSheetItem } from '@/lib/tessa/tessa-types'
 
 interface Props {
@@ -12,27 +13,37 @@ interface Props {
   onReset: () => void
 }
 
-export function TessaPrelimResults({ sections, facts, cheatSheetItems, fileName, onReset }: Props) {
+export function TessaPrelimResults({
+  sections,
+  facts,
+  cheatSheetItems,
+  fileName,
+  onReset,
+}: Props) {
   return (
     <div className="space-y-4">
-      {/* File header */}
+      {/* File header bar */}
       <div className="flex items-center justify-between bg-gray-50 rounded-xl border border-gray-200 px-5 py-3">
         <div>
           <p className="text-xs text-gray-500">Analyzed document</p>
           <p className="font-semibold text-gray-900 text-sm">{fileName}</p>
         </div>
         <div className="text-right text-xs text-gray-400">
-          <p>Tessa™ AI &nbsp;|&nbsp; v3.3.0 (Guardrails)</p>
+          <p>Tessa™ AI&nbsp;|&nbsp;v3.3.0 (Guardrails)</p>
           <p>{new Date().toLocaleDateString()}</p>
         </div>
       </div>
 
-      {/* Section cards */}
+      {/* Complexity score header */}
+      <TessaComplexityScore sections={sections} fileName={fileName} />
+
+      {/* Section cards — pass facts so structured renderers can use ground-truth data */}
       {sections.map((section, i) => (
         <TessaSectionCard
           key={section.title}
           section={section}
           defaultExpanded={i === 0}
+          facts={facts}
         />
       ))}
 
