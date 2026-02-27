@@ -53,7 +53,7 @@ export default function RateBookPage() {
                   </li>
                 </ul>
                 <a
-                  href="https://pct.com/assets/downloads/ratebook/2026-Schedule-of-Title-Fees.pdf"
+                  href="https://documents.pct.com/assets/downloads/ratebook/2026-Schedule-of-Title-Fees.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-xl font-semibold transition-colors"
@@ -93,7 +93,7 @@ export default function RateBookPage() {
                   </li>
                 </ul>
                 <a
-                  href="https://pct.com/assets/downloads/ratebook/Refinance-Ratesheet.pdf"
+                  href="https://documents.pct.com/assets/downloads/ratebook/Refinance-Ratesheet.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full bg-secondary hover:bg-secondary/90 text-white py-4 rounded-xl font-semibold transition-colors"

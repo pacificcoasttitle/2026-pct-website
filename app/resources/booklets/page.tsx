@@ -57,7 +57,7 @@ export default function BookletsPage() {
                       ) : (
                         <a
                           key={index}
-                          href={`https://pct.com/assets/downloads/booklets/${download.file}`}
+                          href={`https://documents.pct.com/assets/downloads/booklets/${download.file}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center justify-between py-2 px-4 bg-gray-50 rounded-lg hover:bg-primary/5 transition-colors group"

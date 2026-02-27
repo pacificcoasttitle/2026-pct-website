@@ -121,7 +121,7 @@ export default function FlyersPage() {
               {filteredFlyers.map((flyer, index) => (
                 <a
                   key={index}
-                  href={`https://pct.com/assets/downloads/flyers/${flyer.file}`}
+                  href={`https://documents.pct.com/assets/downloads/flyers/${flyer.file}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group bg-white border border-gray-100 rounded-xl p-4 hover:border-primary/30 hover:shadow-md transition-all"

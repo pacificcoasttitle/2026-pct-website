@@ -85,22 +85,22 @@ const resources = [
     title: "Commercial Guide to Title & Escrow",
     description: "In-depth guide for commercial transactions",
     downloads: [
-      { label: "PDF", href: "https://pct.com/assets/downloads/booklets/commercial-guidebook-title-escrow.pdf" },
-      { label: "Digital Book", href: "https://pct.com/assets/downloads/booklets/commercial-guidebook-title-escrow-digital.pdf" },
+      { label: "PDF", href: "https://documents.pct.com/assets/downloads/booklets/commercial-guidebook-title-escrow.pdf" },
+      { label: "Digital Book", href: "https://documents.pct.com/assets/downloads/booklets/commercial-guidebook-title-escrow-digital.pdf" },
     ],
   },
   {
     title: "Commercial Endorsement Guide",
     description: "Understanding commercial title endorsements",
     downloads: [
-      { label: "PDF", href: "https://pct.com/assets/downloads/guides/commercial-endorsement-guide.pdf" },
+      { label: "PDF", href: "https://documents.pct.com/assets/downloads/guides/commercial-endorsement-guide.pdf" },
     ],
   },
   {
     title: "Real Estate Laws & Customs",
     description: "State-specific guide for real estate professionals",
     downloads: [
-      { label: "PDF", href: "https://pct.com/assets/downloads/guides/real-estate-laws-customs.pdf" },
+      { label: "PDF", href: "https://documents.pct.com/assets/downloads/guides/real-estate-laws-customs.pdf" },
     ],
   },
 ]

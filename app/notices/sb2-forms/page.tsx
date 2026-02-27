@@ -29,17 +29,17 @@ const forms = [
   {
     title: "SB2 Fee Exemption Declaration",
     description: "Declaration of exemption from the SB2 recording fee. Use this form when your document qualifies for an exemption.",
-    href: "https://pct.com/assets/downloads/forms/sb2-exemption-declaration.pdf",
+    href: "https://documents.pct.com/assets/downloads/forms/sb2-exemption-declaration.pdf",
   },
   {
     title: "SB2 Fee Payment Form",
     description: "Standard form for documenting SB2 fee payment when recording documents.",
-    href: "https://pct.com/assets/downloads/forms/sb2-fee-payment-form.pdf",
+    href: "https://documents.pct.com/assets/downloads/forms/sb2-fee-payment-form.pdf",
   },
   {
     title: "SB2 Affordable Housing Exemption",
     description: "Special exemption form for documents related to affordable housing transactions.",
-    href: "https://pct.com/assets/downloads/forms/sb2-affordable-housing-exemption.pdf",
+    href: "https://documents.pct.com/assets/downloads/forms/sb2-affordable-housing-exemption.pdf",
   },
 ]
 

@@ -103,7 +103,7 @@ export default function RecordersCalendarPage() {
               Get a printable PDF version of the 2026 Recorders Holiday Calendar.
             </p>
             <a
-              href="https://pct.com/assets/downloads/calendars/2026-recorders-holiday-calendar.pdf"
+              href="https://documents.pct.com/assets/downloads/calendars/2026-recorders-holiday-calendar.pdf"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-primary text-white px-8 py-4 rounded-xl font-semibold hover:bg-primary/90 transition-colors shadow-lg"

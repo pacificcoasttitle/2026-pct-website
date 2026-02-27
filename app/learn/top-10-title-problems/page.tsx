@@ -191,7 +191,7 @@ export default function Top10TitleProblemsPage() {
           Download our "Top 10 Title Concerns" flyer to share with clients.
         </p>
         <a
-          href="https://pct.com/assets/downloads/flyers/top-10-title-concerns.pdf"
+          href="https://documents.pct.com/assets/downloads/flyers/top-10-title-concerns.pdf"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors"

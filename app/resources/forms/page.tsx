@@ -110,7 +110,7 @@ export default function FormsPage() {
                       {category.forms.map((form, index) => (
                         <li key={index}>
                           <a
-                            href={`https://pct.com/assets/downloads/forms/${form.file}`}
+                            href={`https://documents.pct.com/assets/downloads/forms/${form.file}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center justify-between py-3 px-4 rounded-xl bg-gray-50 hover:bg-primary/5 transition-colors group"
