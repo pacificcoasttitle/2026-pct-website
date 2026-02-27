@@ -177,7 +177,7 @@ export function Prop19SeniorCalc({ initial = {} }: { initial?: Prop19SeniorIniti
 </head>
 <body>
 <div style="text-align:center;margin-bottom:28px;">
-  <img src="https://documents.pct.com/assets/media/general/logo2-dark.png" alt="Pacific Coast Title" style="height:44px;">
+  <img src="/logo2-dark.png" alt="Pacific Coast Title" style="height:44px;">
 </div>
 <h1>Prop 19 — Senior / Disabled Transfer Analysis</h1>
 

@@ -48,7 +48,7 @@ export function Footer() {
           <div className="space-y-5">
             <Link href="/" className="inline-block">
               <Image
-                src="https://documents.pct.com/assets/media/general/logo2.png"
+                src="/logo2.png"
                 alt="Pacific Coast Title Company"
                 width={180}
                 height={54}

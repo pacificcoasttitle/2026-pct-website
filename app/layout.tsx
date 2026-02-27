@@ -17,6 +17,10 @@ export const metadata: Metadata = {
   description:
     "California's first AI-powered title company. Experience unprecedented efficiency with TESSA AI, smart document processing, and 72 hours saved per transaction.",
   generator: "v0.app",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-icon.png",
+  },
 }
 
 export default function RootLayout({
