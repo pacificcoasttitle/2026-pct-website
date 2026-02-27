@@ -243,7 +243,7 @@ export function TeamMemberPage({ member }: { member: TeamMember }) {
                 </span>
                 <span>
                   {member.cell}{" "}
-                  <span className="text-white/30 text-xs">· Cell</span>
+                  <span className="text-white/30 text-xs">· CS</span>
                 </span>
               </a>
             )}

@@ -61,14 +61,14 @@ export interface TeamMember {
 export const teamMembers: TeamMember[] = [
   {
     slug: "david",
-    name: "David Hernandez",           // ← update with real last name
-    title: "Senior Escrow Officer",
-    department: "Escrow",
-    email: "david@pct.com",            // ← update with real email
-    phone: "(714) 516-6700",
-    cell: "(714) 555-0100",            // ← update with real cell
+    name: "David Gomez",
+    title: "Senior Account Executive",
+    department: "Sales",
+    email: "Dgomez@pct.com",
+    phone: "(562) 619-6062",
+    cell: "(866) 724-1050",
     photo: "https://pub-dbe01c2b9ef0457c979ef76b8d8618f3.r2.dev/sales-rep-photos/WebThumb/David.png",
-    bio: "With over 15 years of experience in title and escrow, David specializes in residential and commercial transactions throughout Southern California. His attention to detail and commitment to smooth closings have made him a trusted partner for agents, lenders, and buyers alike.",
+    bio: "David is dedicated to helping real estate agents and lending partners across Los Angeles and Orange County grow their business with Pacific Coast Title. With a hands-on approach and deep knowledge of the title and escrow process, he makes sure your clients feel supported from contract to close — every time.",
     specialties: [
       "Residential Resale",
       "New Construction",
@@ -76,7 +76,7 @@ export const teamMembers: TeamMember[] = [
       "REO / Short Sale",
       "Commercial",
     ],
-    office: "Orange County",
+    office: "Los Angeles & Orange County",
     licenseNumber: "CA Notary #XXXXXXX", // ← update
 
     mailchimp: {
