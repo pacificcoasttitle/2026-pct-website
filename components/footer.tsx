@@ -25,9 +25,9 @@ export function Footer() {
 
   const company = [
     { label: "About Us",   href: "/about" },
-    { label: "Our Team",   href: "/about/our-team" },
+    { label: "Our Team",   href: "/about" },
     { label: "Careers",    href: "/careers" },
-    { label: "Locations",  href: "/contact" },
+    { label: "Locations",  href: "/locations" },
   ]
 
   const fincenLinks = [

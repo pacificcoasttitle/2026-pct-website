@@ -15,13 +15,13 @@ const tools = [
   {
     icon: Home,
     label: "Prop 19",
-    href: "https://pct.com/prop-19-calculator.html",
-    external: true,
+    href: "/resources/prop-19-calculator",
+    external: false,
   },
   {
     icon: FileText,
     label: "Forms",
-    href: "/resources/blank-forms",
+    href: "/resources/forms",
     external: false,
   },
   {

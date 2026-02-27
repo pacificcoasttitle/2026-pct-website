@@ -36,7 +36,7 @@ export function ToolsSection() {
         {/* Additional Resources - Customer-benefit focused */}
         <div className="grid md:grid-cols-2 gap-6">
           {/* Title Flyers */}
-          <Link href="/resources/title-flyers" className="block group">
+          <Link href="/resources/flyers" className="block group">
             <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 p-6 border border-gray-100 h-full">
               <div className="flex items-start gap-4">
                 <div className="w-14 h-14 bg-secondary rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-secondary/90 transition-colors shadow-md">
