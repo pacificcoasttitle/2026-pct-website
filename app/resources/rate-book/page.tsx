@@ -31,7 +31,7 @@ export default function RateBookPage() {
                   <FileText className="w-8 h-8" />
                 </div>
                 <h2 className="text-2xl font-bold mb-2">Schedule of Title Fees</h2>
-                <p className="text-white/80">2026 Ratebook</p>
+                <p className="text-white/80">2024 Ratebook</p>
               </div>
               <div className="p-6">
                 <ul className="space-y-3 mb-8">
@@ -53,7 +53,7 @@ export default function RateBookPage() {
                   </li>
                 </ul>
                 <a
-                  href="https://documents.pct.com/assets/downloads/ratebook/2026-Schedule-of-Title-Fees.pdf"
+                  href="https://documents.pct.com/industry-documents/2024-Ratebook.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-xl font-semibold transition-colors"
@@ -93,7 +93,7 @@ export default function RateBookPage() {
                   </li>
                 </ul>
                 <a
-                  href="https://documents.pct.com/assets/downloads/ratebook/Refinance-Ratesheet.pdf"
+                  href="https://documents.pct.com/industry-documents/RefinanceRate.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full bg-secondary hover:bg-secondary/90 text-white py-4 rounded-xl font-semibold transition-colors"
