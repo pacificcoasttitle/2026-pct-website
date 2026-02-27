@@ -190,8 +190,8 @@ export function RateCalculator() {
           cityName: selectedCity,
           salesPrice: transactionType === 'purchase' ? parseNumberInput(salesPrice) : 0,
           loanAmount: parseNumberInput(loanAmount),
-          ownerPolicyType: 'clta',
-          lenderPolicyType: 'clta',
+          ownerPolicyType: 'alta',   // ALTA Homeowner's Policy (Column 3) — default per PCT
+          lenderPolicyType: 'alta',  // ALTA Lenders Concurrent (Column 4) when concurrent
           includeOwnerPolicy: transactionType === 'purchase' ? includeOwnerPolicy : false,
         }),
       })

@@ -90,8 +90,8 @@ export function calculateTitleFees(input: CalculatorInput): TitleFees {
     transactionType,
     salesPrice,
     loanAmount,
-    ownerPolicyType = 'clta',
-    lenderPolicyType = 'clta',
+    ownerPolicyType = 'alta',   // Default: ALTA Homeowner's Policy (Column 3)
+    lenderPolicyType = 'alta',  // Default: ALTA Concurrent (Column 4) when concurrent
     selectedEndorsementIds = [],
     includeOwnerPolicy = true,
   } = input
@@ -121,21 +121,20 @@ export function calculateTitleFees(input: CalculatorInput): TitleFees {
   // ── Lender's Policy ──
   let lenderPolicy = 0
   let lenderPolicyLabel = ''
-  if (loanAmount > 0) {
+    if (loanAmount > 0) {
     const row = lookupTitleRate(loanAmount)
     if (row) {
       if (isPurchase && includeOwnerPolicy) {
         // Concurrent issue (issued simultaneously with owner's policy)
-        lenderPolicy = lenderPolicyType === 'alta'
-          ? row.conFullLoanRate
-          : row.conLoanRate
-        lenderPolicyLabel = lenderPolicyType === 'alta'
-          ? 'ALTA Lender\'s Policy (Concurrent)'
-          : 'CLTA Lender\'s Policy (Concurrent)'
+        // Always use Column 4 — ALTA Lenders Concurrent Loan Rate (conLoanRate)
+        // conFullLoanRate (Column 6) is the NON-concurrent rate — never use it here
+        lenderPolicy = row.conLoanRate
+        lenderPolicyLabel = 'ALTA Lender\'s Policy (Concurrent)'
       } else {
-        // Standalone (refinance or purchase without owner's)
+        // Standalone: refinance or purchase without owner's policy
+        // Column 5 — Residential Loan Rate
         lenderPolicy = row.resiLoanRate
-        lenderPolicyLabel = 'CLTA Lender\'s Policy (Standalone)'
+        lenderPolicyLabel = 'Lender\'s Policy (Standalone)'
       }
     }
   }
