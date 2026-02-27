@@ -119,8 +119,8 @@ export function Navigation({ variant = "transparent" }: NavigationProps) {
             <Link href="/" className="flex items-center">
               <Image
                 src={useDarkText 
-                  ? "https://pct.com/assets/media/general/logo2-dark.png"
-                  : "https://pct.com/assets/media/general/logo2.png"
+                  ? "https://documents.pct.com/assets/media/general/logo2-dark.png"
+                  : "https://documents.pct.com/assets/media/general/logo2.png"
                 }
                 alt="Pacific Coast Title Company"
                 width={200}

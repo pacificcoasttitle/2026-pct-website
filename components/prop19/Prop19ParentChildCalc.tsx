@@ -102,7 +102,7 @@ export function Prop19ParentChildCalc({ initial = {} }: { initial?: Prop19Parent
 </head>
 <body>
 <div style="text-align:center;margin-bottom:28px;">
-  <img src="https://pct.com/assets/media/general/logo2-dark.png" alt="Pacific Coast Title" style="height:44px;">
+  <img src="https://documents.pct.com/assets/media/general/logo2-dark.png" alt="Pacific Coast Title" style="height:44px;">
 </div>
 <h1>Prop 19 — Parent-Child Inheritance Analysis</h1>
 <div class="card">
