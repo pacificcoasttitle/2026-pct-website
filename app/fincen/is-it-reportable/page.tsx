@@ -12,7 +12,61 @@ import Link from "next/link"
 
 type Answer = string | null
 
-// Inner component that reads search params (requires Suspense wrapper)
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function safeDecode(value: string | null): string | null {
+  if (!value) return null
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value // return raw value if decoding fails
+  }
+}
+
+// ── RadioGroup — defined OUTSIDE the page component to prevent re-creation ──
+
+interface RadioOption {
+  label: string
+  sublabel?: string
+  value: string
+}
+
+function RadioGroup({
+  value,
+  onChange,
+  options,
+}: {
+  value: Answer
+  onChange: (v: Answer) => void
+  options: RadioOption[]
+}) {
+  return (
+    <div className="flex flex-col gap-2 mt-3">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={`text-left px-5 py-3 rounded-xl border-2 text-sm transition-all ${
+            value === opt.value
+              ? "border-primary bg-primary/5 text-secondary"
+              : "border-gray-200 bg-white text-gray-700 hover:border-primary/40 hover:bg-gray-50"
+          }`}
+        >
+          <span className={`font-semibold ${value === opt.value ? "text-primary" : ""}`}>
+            {value === opt.value ? "● " : "○ "}{opt.label}
+          </span>
+          {opt.sublabel && (
+            <span className="block text-xs text-gray-500 mt-0.5 ml-4">{opt.sublabel}</span>
+          )}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ── Inner component that reads search params (requires Suspense wrapper) ─────
+
 function IsItReportableContent() {
   const params = useSearchParams()
   const [q1, setQ1] = useState<Answer>(null)
@@ -59,46 +113,22 @@ function IsItReportableContent() {
     return `/fincen/intake?${p.toString()}`
   }
 
-  const RadioGroup = ({
-    value,
-    onChange,
-    options,
-  }: {
-    value: Answer
-    onChange: (v: Answer) => void
-    options: { label: string; sublabel?: string; value: string }[]
-  }) => (
-    <div className="flex flex-col gap-2 mt-3">
-      {options.map((opt) => (
-        <button
-          key={opt.value}
-          onClick={() => onChange(opt.value)}
-          className={`text-left px-5 py-3 rounded-xl border-2 text-sm transition-all ${
-            value === opt.value
-              ? "border-primary bg-primary/5 text-secondary"
-              : "border-gray-200 bg-white text-gray-700 hover:border-primary/40 hover:bg-gray-50"
-          }`}
-        >
-          <span className={`font-semibold ${value === opt.value ? "text-primary" : ""}`}>
-            {value === opt.value ? "● " : "○ "}{opt.label}
-          </span>
-          {opt.sublabel && (
-            <span className="block text-xs text-gray-500 mt-0.5 ml-4">{opt.sublabel}</span>
-          )}
-        </button>
-      ))}
-    </div>
-  )
-
-  // ── Order context from prefill params ───────────────────────────────────────
-  const orderEscrow   = params.get("escrow")   ? decodeURIComponent(params.get("escrow")!)   : null
-  const orderStreet   = params.get("street")   ? decodeURIComponent(params.get("street")!)   : null
-  const orderCity     = params.get("city")     ? decodeURIComponent(params.get("city")!)     : null
-  const orderState    = params.get("state")    ? params.get("state")!.toUpperCase()          : null
-  const orderOfficer  = params.get("officer")  ? decodeURIComponent(params.get("officer")!)  : null
+  // ── Order context from prefill params ────────────────────────────────────
+  const orderEscrow   = safeDecode(params.get("escrow"))
+  const orderStreet   = safeDecode(params.get("street"))
+  const orderCity     = safeDecode(params.get("city"))
+  const orderState    = params.get("state") ? params.get("state")!.toUpperCase() : null
+  const orderOfficer  = safeDecode(params.get("officer"))
   const orderRawPrice = params.get("price")
   const orderPrice    = orderRawPrice
-    ? (() => { const n = parseFloat(orderRawPrice.replace(/[,$]/g,"")); return isNaN(n) ? null : `$${n.toLocaleString("en-US")}` })()
+    ? (() => {
+        try {
+          const n = parseFloat(orderRawPrice.replace(/[,$]/g, ""))
+          return isNaN(n) ? null : `$${n.toLocaleString("en-US")}`
+        } catch {
+          return null
+        }
+      })()
     : null
 
   const hasOrderContext = !!(orderEscrow || orderStreet)
@@ -186,7 +216,7 @@ function IsItReportableContent() {
                 How is the buyer financing the purchase?
               </p>
               <p className="text-xs text-gray-500 ml-8 mt-1">
-                Transactions financed through a bank or credit union are typically exempt — the lender's own compliance program covers it.
+                Transactions financed through a bank or credit union are typically exempt — the lender&apos;s own compliance program covers it.
               </p>
               <RadioGroup
                 value={q2}
@@ -223,6 +253,7 @@ function IsItReportableContent() {
             {/* Check Button */}
             {!showResult && (
               <button
+                type="button"
                 onClick={handleCheck}
                 disabled={!allAnswered}
                 className="w-full bg-primary text-white py-4 rounded-xl font-semibold text-lg hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -288,6 +319,7 @@ function IsItReportableContent() {
                 </div>
                 <MiniDisclaimer />
                 <button
+                  type="button"
                   onClick={handleReset}
                   className="mt-4 text-sm text-gray-500 hover:text-primary underline"
                 >
@@ -304,7 +336,7 @@ function IsItReportableContent() {
             <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
               <XCircle className="w-5 h-5 text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold text-secondary">Common "Stop" Scenarios</h2>
+            <h2 className="text-2xl font-bold text-secondary">Common &ldquo;Stop&rdquo; Scenarios</h2>
           </div>
           <p className="text-gray-700 mb-4">If any of these apply, reporting may not be required:</p>
           <div className="grid sm:grid-cols-3 gap-4">
@@ -381,14 +413,14 @@ function IsItReportableContent() {
           </div>
         </section>
 
-      <CTABox
-        heading="Want a Clean Answer Before You Write the Offer?"
-        body="Loop escrow in early—especially if the buyer plans to purchase in an entity or trust."
-        buttons={[
-          { label: "Talk to an Escrow Officer", modal: "escrow" },
-          { label: "Guidance for agents", href: "/fincen/agents", variant: "outline" },
-        ]}
-      />
+        <CTABox
+          heading="Want a Clean Answer Before You Write the Offer?"
+          body="Loop escrow in early—especially if the buyer plans to purchase in an entity or trust."
+          buttons={[
+            { label: "Talk to an Escrow Officer", modal: "escrow" },
+            { label: "Guidance for agents", href: "/fincen/agents", variant: "outline" },
+          ]}
+        />
       </div>
 
       <Footer />
