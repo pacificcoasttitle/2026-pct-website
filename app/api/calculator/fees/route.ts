@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
       cityName: body.cityName,
       salesPrice: body.transactionType === 'purchase' ? (body.salesPrice || 0) : 0,
       loanAmount: body.loanAmount,
-      ownerPolicyType: body.ownerPolicyType || 'clta',
-      lenderPolicyType: body.lenderPolicyType || 'clta',
+      ownerPolicyType: body.ownerPolicyType || 'alta',
+      lenderPolicyType: body.lenderPolicyType || 'alta',
       selectedEndorsementIds: body.selectedEndorsementIds || [],
       includeOwnerPolicy: body.includeOwnerPolicy !== false,
     }
