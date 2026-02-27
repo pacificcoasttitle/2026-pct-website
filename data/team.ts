@@ -67,7 +67,7 @@ export const teamMembers: TeamMember[] = [
     email: "david@pct.com",            // ← update with real email
     phone: "(714) 516-6700",
     cell: "(714) 555-0100",            // ← update with real cell
-    photo: "/team/david.jpg",          // ← drop photo at public/team/david.jpg
+    photo: "https://pub-dbe01c2b9ef0457c979ef76b8d8618f3.r2.dev/sales-rep-photos/WebThumb/David.png",
     bio: "With over 15 years of experience in title and escrow, David specializes in residential and commercial transactions throughout Southern California. His attention to detail and commitment to smooth closings have made him a trusted partner for agents, lenders, and buyers alike.",
     specialties: [
       "Residential Resale",
@@ -98,7 +98,7 @@ export const teamMembers: TeamMember[] = [
   //   title: "Title Officer",
   //   email: "sarah@pct.com",
   //   phone: "(714) 516-6700",
-  //   photo: "/team/sarah.jpg",
+  //   photo: "https://pub-dbe01c2b9ef0457c979ef76b8d8618f3.r2.dev/sales-rep-photos/WebThumb/Sarah.png",
   //   bio: "...",
   //   specialties: ["Commercial", "1031 Exchange"],
   //   office: "Los Angeles",

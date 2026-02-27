@@ -184,7 +184,7 @@ export function TeamMemberPage({ member }: { member: TeamMember }) {
               alt="Pacific Coast Title"
               width={160}
               height={40}
-              className="brightness-0 invert opacity-90 hover:opacity-100 transition-opacity"
+              className="opacity-90 hover:opacity-100 transition-opacity"
             />
           </Link>
         </div>
