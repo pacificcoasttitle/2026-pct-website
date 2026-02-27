@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Calculator, Wrench, FileText, ShieldCheck, MapPin, ClipboardList } from 'lucide-react'
+import { Calculator, Wrench, ShieldCheck, MapPin, ClipboardList, AlertCircle } from 'lucide-react'
 
 const quickLinks = [
   {
@@ -16,9 +16,9 @@ const quickLinks = [
     icon: Wrench,
   },
   {
-    title: 'Property Info',
-    href: '/resources/title-flyers',
-    icon: FileText,
+    title: 'FinCEN Check',
+    href: '/fincen/is-it-reportable',
+    icon: AlertCircle,
     internal: true,
   },
   {
