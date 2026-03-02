@@ -9,7 +9,7 @@ import { SmsStudioSender } from '@/components/admin/SmsStudioSender'
 import { SmsServiceBadge } from '@/components/admin/SmsServiceBadge'
 
 export const metadata = { title: 'SMS | PCT Team Admin' }
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 export default async function SmsPage() {
   const employees = await getSmsEmployees()
@@ -17,44 +17,23 @@ export default async function SmsPage() {
   const totalOptIns = employees.reduce((sum, e) => sum + e.sms_opt_ins, 0)
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pt-2 lg:pt-0">
+    <div className="space-y-6 pt-2 lg:pt-0">
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-[#03374f]">SMS Marketing</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          Agents text a rep&apos;s personal code to your Twilio number and receive their contact info instantly.
-        </p>
-        <div className="mt-2">
+      {/* Header row */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[#03374f]">SMS Command Center</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Send MMS campaigns, manage rep codes, and monitor SMS activity.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
           <SmsServiceBadge />
+          <a href="https://console.twilio.com" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2 bg-[#03374f] text-white text-xs font-semibold rounded-xl hover:bg-[#03374f]/90 transition-colors flex-shrink-0">
+            Twilio Console <ExternalLink className="w-3.5 h-3.5" />
+          </a>
         </div>
-      </div>
-
-      {/* Setup callout */}
-      <div className="bg-[#03374f] rounded-2xl p-6 flex flex-col sm:flex-row gap-4 items-start">
-        <div className="w-10 h-10 rounded-xl bg-[#f26b2b]/20 flex items-center justify-center flex-shrink-0">
-          <MessageSquare className="w-5 h-5 text-[#f26b2b]" />
-        </div>
-        <div className="flex-1 space-y-1">
-          <h2 className="font-bold text-white">Twilio Webhook Setup</h2>
-          <p className="text-white/60 text-sm">
-            In your Twilio console, set your phone number&apos;s incoming SMS webhook to:
-          </p>
-          <code className="block mt-2 bg-white/10 text-[#f26b2b] px-4 py-2 rounded-lg text-sm font-mono">
-            https://www.pct.com/api/sms
-          </code>
-          <p className="text-white/40 text-xs mt-2">
-            HTTP Method: POST &nbsp;·&nbsp; An agent texts any rep&apos;s SMS code → receives profile link + contact info automatically.
-          </p>
-        </div>
-        <a
-          href="https://console.twilio.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-xl transition-colors flex-shrink-0"
-        >
-          Twilio Console <ExternalLink className="w-3.5 h-3.5" />
-        </a>
       </div>
 
       {/* Stats */}
@@ -71,7 +50,28 @@ export default async function SmsPage() {
         ))}
       </div>
 
+      {/* Studio — full width */}
       <SmsStudioSender repCount={employees.length} />
+
+      {/* Webhook setup — collapsible info */}
+      <details className="bg-[#03374f] rounded-2xl overflow-hidden">
+        <summary className="px-6 py-4 flex items-center gap-3 cursor-pointer select-none text-white font-semibold text-sm">
+          <MessageSquare className="w-4 h-4 text-[#f26b2b]" />
+          Twilio Webhook Setup
+          <span className="text-white/40 text-xs font-normal ml-1">— click to expand</span>
+        </summary>
+        <div className="px-6 pb-5 space-y-2">
+          <p className="text-white/60 text-sm">
+            In your Twilio console, set your phone number&apos;s incoming SMS webhook to:
+          </p>
+          <code className="block bg-white/10 text-[#f26b2b] px-4 py-2 rounded-lg text-sm font-mono">
+            https://www.pct.com/api/sms
+          </code>
+          <p className="text-white/40 text-xs">
+            HTTP Method: POST &nbsp;·&nbsp; An agent texts any rep&apos;s SMS code → receives their contact info automatically.
+          </p>
+        </div>
+      </details>
 
       {/* Rep table */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

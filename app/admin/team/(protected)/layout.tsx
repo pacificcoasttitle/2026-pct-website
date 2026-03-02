@@ -24,9 +24,9 @@ export default async function TeamAdminLayout({
     <div className="min-h-screen flex bg-[#f0ede9]">
       <AdminSidebar username={session.username} role={session.role} />
 
-      {/* Main content */}
-      <main className="flex-1 min-w-0 flex flex-col">
-        <div className="flex-1 p-6 lg:p-8">
+      {/* Main content — full width for command-center UIs */}
+      <main className="flex-1 min-w-0 flex flex-col overflow-x-hidden">
+        <div className="flex-1 p-4 lg:p-6">
           {children}
         </div>
       </main>

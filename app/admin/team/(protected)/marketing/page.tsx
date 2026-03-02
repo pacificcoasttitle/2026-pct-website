@@ -69,36 +69,30 @@ export default async function MarketingPage() {
   }))
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pt-2 lg:pt-0">
+    <div className="space-y-6 pt-2 lg:pt-0">
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-[#03374f]">Email Marketing</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          Mailchimp audience stats for each rep. Subscribers come from their profile page sign-up form.
-        </p>
-      </div>
-
-      {/* Mailchimp not configured warning */}
-      {!configured && (
-        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-5">
-          <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold text-amber-800 text-sm">Mailchimp not configured</p>
-            <p className="text-amber-700 text-sm mt-1">
-              Add <code className="bg-amber-100 px-1 rounded">MAILCHIMP_API_KEY</code> and{' '}
-              <code className="bg-amber-100 px-1 rounded">MAILCHIMP_SERVER</code> to your Vercel environment variables to see live subscriber counts.
-            </p>
-          </div>
+      {/* Header row */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[#03374f]">Email Marketing</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Build templates, send Mailchimp campaigns, and track rep audience performance.
+          </p>
         </div>
-      )}
+        {!configured && (
+          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-xs text-amber-700">
+            <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+            Add <code className="bg-amber-100 px-1 rounded font-mono">MAILCHIMP_API_KEY</code> to enable live stats.
+          </div>
+        )}
+      </div>
 
       {/* Stats summary */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Reps with Audience',    value: withMc.length },
-          { label: 'Total Subscribers',     value: totalSubscribers.toLocaleString() },
-          { label: 'Reps Needing Setup',    value: noAudienceReps.length },
+          { label: 'Reps with Audience', value: withMc.length },
+          { label: 'Total Subscribers',  value: totalSubscribers.toLocaleString() },
+          { label: 'Reps Needing Setup', value: noAudienceReps.length },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="text-2xl font-bold text-[#03374f]">{s.value}</div>
@@ -106,6 +100,9 @@ export default async function MarketingPage() {
           </div>
         ))}
       </div>
+
+      {/* Studio — full width */}
+      <MarketingStudioClient audiences={audienceOptions} />
 
       {/* Rep audience cards */}
       {withMc.length > 0 && (
@@ -134,32 +131,15 @@ export default async function MarketingPage() {
                       <div className="font-medium text-[#03374f]">{e.name}</div>
                       <div className="text-xs text-gray-400 font-mono">{e.mailchimp_audience_id}</div>
                     </td>
-                    <td className="px-5 py-3 text-right font-bold text-[#03374f]">
-                      {st ? st.member_count.toLocaleString() : '—'}
-                    </td>
-                    <td className="px-5 py-3 text-right text-gray-600">
-                      {st ? `${(st.open_rate * 100).toFixed(1)}%` : '—'}
-                    </td>
-                    <td className="px-5 py-3 text-right text-gray-600">
-                      {st ? `${(st.click_rate * 100).toFixed(1)}%` : '—'}
-                    </td>
-                    <td className="px-5 py-3 text-right text-gray-600">
-                      {st?.campaign_count ?? '—'}
-                    </td>
+                    <td className="px-5 py-3 text-right font-bold text-[#03374f]">{st ? st.member_count.toLocaleString() : '—'}</td>
+                    <td className="px-5 py-3 text-right text-gray-600">{st ? `${(st.open_rate * 100).toFixed(1)}%` : '—'}</td>
+                    <td className="px-5 py-3 text-right text-gray-600">{st ? `${(st.click_rate * 100).toFixed(1)}%` : '—'}</td>
+                    <td className="px-5 py-3 text-right text-gray-600">{st?.campaign_count ?? '—'}</td>
                     <td className="px-5 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/admin/team/employees/${e.slug}`}
-                          className="text-xs text-[#f26b2b] hover:underline"
-                        >
-                          Edit
-                        </Link>
-                        <a
-                          href={`https://${mailchimpServer}.admin.mailchimp.com/lists/members/?id=${e.mailchimp_audience_id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
-                        >
+                        <Link href={`/admin/team/employees/${e.slug}`} className="text-xs text-[#f26b2b] hover:underline">Edit</Link>
+                        <a href={`https://${mailchimpServer}.admin.mailchimp.com/lists/members/?id=${e.mailchimp_audience_id}`}
+                          target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600">
                           Mailchimp <ExternalLink className="w-3 h-3" />
                         </a>
                       </div>
@@ -171,8 +151,6 @@ export default async function MarketingPage() {
           </table>
         </div>
       )}
-
-      <MarketingStudioClient audiences={audienceOptions} />
 
       {/* Reps needing setup */}
       {noAudienceReps.length > 0 && (
@@ -189,12 +167,7 @@ export default async function MarketingPage() {
                   <span className="font-medium text-[#03374f] text-sm">{e.name}</span>
                   <span className="text-xs text-gray-400 ml-2">{e.title}</span>
                 </div>
-                <Link
-                  href={`/admin/team/employees/${e.slug}`}
-                  className="text-xs text-[#f26b2b] hover:underline"
-                >
-                  Add Audience ID →
-                </Link>
+                <Link href={`/admin/team/employees/${e.slug}`} className="text-xs text-[#f26b2b] hover:underline">Add Audience ID →</Link>
               </div>
             ))}
           </div>
