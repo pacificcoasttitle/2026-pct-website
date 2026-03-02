@@ -1,7 +1,19 @@
 "use client"
 
 import { useEffect, useMemo, useState } from 'react'
-import { AlertCircle, CheckCircle2, ExternalLink, Loader2, Mail, Plus, Save } from 'lucide-react'
+import {
+  AlertCircle,
+  CheckCircle2,
+  ExternalLink,
+  Eye,
+  Loader2,
+  Mail,
+  Monitor,
+  Plus,
+  Save,
+  Smartphone,
+  Wand2,
+} from 'lucide-react'
 
 interface AudienceOption {
   slug: string
@@ -35,9 +47,11 @@ interface Props {
 }
 
 type Tab = 'templates' | 'campaigns' | 'history'
+type PreviewMode = 'desktop' | 'mobile'
 
 export function MarketingStudioClient({ audiences }: Props) {
   const [tab, setTab] = useState<Tab>('templates')
+  const [previewMode, setPreviewMode] = useState<PreviewMode>('desktop')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [sending, setSending] = useState(false)
@@ -59,6 +73,11 @@ export function MarketingStudioClient({ audiences }: Props) {
   const [replyTo, setReplyTo] = useState('info@pct.com')
   const [sendNow, setSendNow] = useState(false)
   const [lastEditUrl, setLastEditUrl] = useState('')
+  const [imageUrlInput, setImageUrlInput] = useState('')
+  const [imageUrls, setImageUrls] = useState<string[]>([])
+  const [loadedDraft, setLoadedDraft] = useState(false)
+
+  const DRAFT_KEY = 'pct-marketing-studio-draft-v1'
 
   async function loadStudio() {
     setLoading(true)
@@ -92,7 +111,33 @@ export function MarketingStudioClient({ audiences }: Props) {
     setPreheader(selectedTemplate.preheader || '')
     setThumbnailUrl(selectedTemplate.thumbnail_url || '')
     setHtml(selectedTemplate.html_content || '')
+    setImageUrls([])
   }, [selectedTemplate])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const raw = window.localStorage.getItem(DRAFT_KEY)
+    if (!raw) return
+    try {
+      const d = JSON.parse(raw) as {
+        templateName?: string
+        subject?: string
+        preheader?: string
+        thumbnailUrl?: string
+        html?: string
+        imageUrls?: string[]
+      }
+      if (d.templateName) setTemplateName(d.templateName)
+      if (d.subject) setSubject(d.subject)
+      if (d.preheader) setPreheader(d.preheader)
+      if (d.thumbnailUrl) setThumbnailUrl(d.thumbnailUrl)
+      if (d.html) setHtml(d.html)
+      if (Array.isArray(d.imageUrls)) setImageUrls(d.imageUrls)
+      setLoadedDraft(true)
+    } catch {
+      // ignore malformed draft
+    }
+  }, [])
 
   async function saveTemplate() {
     setSaving(true)
@@ -164,6 +209,79 @@ export function MarketingStudioClient({ audiences }: Props) {
     setPreheader('')
     setThumbnailUrl('')
     setHtml('<h1>Hello from Pacific Coast Title</h1><p>Replace this content.</p>')
+    setImageUrls([])
+  }
+
+  function saveLocalDraft() {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({
+        templateName,
+        subject,
+        preheader,
+        thumbnailUrl,
+        html,
+        imageUrls,
+      })
+    )
+    setOk('Local draft saved in this browser.')
+  }
+
+  function clearLocalDraft() {
+    if (typeof window === 'undefined') return
+    window.localStorage.removeItem(DRAFT_KEY)
+    setLoadedDraft(false)
+    setOk('Local draft cleared.')
+  }
+
+  function addImageUrl() {
+    const url = imageUrlInput.trim()
+    if (!url) return
+    if (imageUrls.includes(url)) {
+      setImageUrlInput('')
+      return
+    }
+    setImageUrls((prev) => [...prev, url])
+    setImageUrlInput('')
+  }
+
+  function insertImageTag(url: string) {
+    setHtml((prev) => `${prev}\n\n<img src="${url}" alt="" style="max-width:100%;height:auto;border-radius:8px;" />`)
+  }
+
+  function applyStarterTemplate(kind: 'newsletter' | 'market') {
+    const isNewsletter = kind === 'newsletter'
+    setHtml(
+      isNewsletter
+        ? `
+<table width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,sans-serif;background:#f8f6f3;padding:24px;">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;">
+      <tr><td style="background:#03374f;color:#fff;padding:24px;font-size:22px;font-weight:700;">Pacific Coast Title Update</td></tr>
+      <tr><td style="padding:24px;color:#1f2937;">
+        <h2 style="margin:0 0 12px;">Hello from your PCT team</h2>
+        <p style="margin:0 0 16px;">Add this week's market insight, key updates, and a clear CTA.</p>
+        <a href="https://www.pct.com" style="display:inline-block;padding:10px 16px;border-radius:8px;background:#f26b2b;color:#fff;text-decoration:none;">Visit PCT</a>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>`
+        : `
+<table width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,sans-serif;background:#f8f6f3;padding:24px;">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;">
+      <tr><td style="background:#03374f;color:#fff;padding:24px;font-size:22px;font-weight:700;">Monthly Market Snapshot</td></tr>
+      <tr><td style="padding:24px;color:#1f2937;">
+        <p style="margin:0 0 12px;"><strong>Inventory:</strong> Add your local trend</p>
+        <p style="margin:0 0 12px;"><strong>Rates:</strong> Add your update</p>
+        <p style="margin:0 0 16px;"><strong>Opportunity:</strong> Add your CTA</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>`
+    )
+    setOk(`Loaded ${isNewsletter ? 'newsletter' : 'market snapshot'} starter template.`)
   }
 
   if (loading) {
@@ -227,17 +345,53 @@ export function MarketingStudioClient({ audiences }: Props) {
                   ))}
                 </select>
               </div>
-              <div className="flex items-end">
-                <button
-                  type="button"
-                  onClick={resetTemplate}
-                  className="h-11 px-4 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100"
-                >
+              <div className="flex items-end gap-2 flex-wrap">
+                <button type="button" onClick={resetTemplate} className="h-11 px-4 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100">
                   <Plus className="w-4 h-4 inline mr-1" />
-                  New Blank Template
+                  New Blank
+                </button>
+                <button type="button" onClick={() => applyStarterTemplate('newsletter')} className="h-11 px-4 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100">
+                  <Wand2 className="w-4 h-4 inline mr-1" />
+                  Newsletter Starter
+                </button>
+                <button type="button" onClick={() => applyStarterTemplate('market')} className="h-11 px-4 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100">
+                  <Wand2 className="w-4 h-4 inline mr-1" />
+                  Market Starter
                 </button>
               </div>
             </div>
+
+            {templates.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Template Library</p>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {templates.slice(0, 9).map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setTemplateId(t.id)}
+                      className={`text-left rounded-xl border transition-all overflow-hidden ${
+                        templateId === t.id
+                          ? 'border-[#03374f] ring-2 ring-[#03374f]/10'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="h-24 bg-gray-100">
+                        {t.thumbnail_url ? (
+                          <img src={t.thumbnail_url} alt={t.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">No thumbnail</div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <p className="font-semibold text-[#03374f] text-sm truncate">{t.name}</p>
+                        <p className="text-xs text-gray-400 mt-1">{new Date(t.updated_at).toLocaleDateString()}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
@@ -266,22 +420,77 @@ export function MarketingStudioClient({ audiences }: Props) {
               <textarea value={html} onChange={(e) => setHtml(e.target.value)} rows={14} className="w-full px-4 py-3 bg-[#f8f6f3] border border-gray-200 rounded-xl text-sm font-mono" />
             </div>
 
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Image Blocks</p>
+              <div className="flex items-center gap-2">
+                <input
+                  value={imageUrlInput}
+                  onChange={(e) => setImageUrlInput(e.target.value)}
+                  placeholder="Paste image URL and click Add"
+                  className="flex-1 h-10 px-3 bg-white border border-gray-200 rounded-lg text-sm"
+                />
+                <button type="button" onClick={addImageUrl} className="h-10 px-3 rounded-lg bg-[#03374f] text-white text-sm font-semibold">Add</button>
+              </div>
+              {imageUrls.length > 0 && (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {imageUrls.map((url) => (
+                    <div key={url} className="rounded-lg border border-gray-200 bg-white p-2 space-y-2">
+                      <img src={url} alt="Block preview" className="w-full h-20 object-cover rounded-md" />
+                      <div className="flex items-center justify-between gap-2">
+                        <button type="button" onClick={() => insertImageTag(url)} className="text-xs px-2 py-1 rounded bg-[#f26b2b] text-white">Insert</button>
+                        <button type="button" onClick={() => setImageUrls((prev) => prev.filter((u) => u !== url))} className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">Remove</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Live Preview</p>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Live Preview</p>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewMode('desktop')}
+                    className={`px-2 py-1 rounded text-xs ${previewMode === 'desktop' ? 'bg-[#03374f] text-white' : 'bg-white border border-gray-200 text-gray-600'}`}
+                  >
+                    <Monitor className="w-3 h-3 inline mr-1" /> Desktop
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewMode('mobile')}
+                    className={`px-2 py-1 rounded text-xs ${previewMode === 'mobile' ? 'bg-[#03374f] text-white' : 'bg-white border border-gray-200 text-gray-600'}`}
+                  >
+                    <Smartphone className="w-3 h-3 inline mr-1" /> Mobile
+                  </button>
+                </div>
+              </div>
               {thumbnailUrl ? (
                 <img src={thumbnailUrl} alt="Template preview" className="w-full max-h-52 object-cover rounded-lg border border-gray-200 mb-3" />
               ) : null}
-              <iframe title="Email Preview" className="w-full h-72 rounded-lg border border-gray-200 bg-white" srcDoc={html} />
+              <div className={`${previewMode === 'mobile' ? 'max-w-[390px] mx-auto' : 'w-full'}`}>
+                <iframe
+                  title="Email Preview"
+                  className="w-full h-72 rounded-lg border border-gray-200 bg-white"
+                  srcDoc={html}
+                  sandbox="allow-same-origin"
+                />
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={saveTemplate}
-              disabled={saving}
-              className="h-11 px-5 rounded-xl bg-[#03374f] text-white text-sm font-semibold hover:bg-[#03374f]/90 disabled:opacity-60"
-            >
-              {saving ? <><Loader2 className="w-4 h-4 animate-spin inline mr-1" />Saving...</> : <><Save className="w-4 h-4 inline mr-1" />Save Template</>}
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button type="button" onClick={saveTemplate} disabled={saving} className="h-11 px-5 rounded-xl bg-[#03374f] text-white text-sm font-semibold hover:bg-[#03374f]/90 disabled:opacity-60">
+                {saving ? <><Loader2 className="w-4 h-4 animate-spin inline mr-1" />Saving...</> : <><Save className="w-4 h-4 inline mr-1" />Save Template</>}
+              </button>
+              <button type="button" onClick={saveLocalDraft} className="h-11 px-4 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100">
+                <Eye className="w-4 h-4 inline mr-1" /> Save Local Draft
+              </button>
+              <button type="button" onClick={clearLocalDraft} className="h-11 px-4 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100">
+                Clear Draft
+              </button>
+              {loadedDraft && <span className="text-xs text-amber-600">Loaded local draft</span>}
+            </div>
           </div>
         )}
 
