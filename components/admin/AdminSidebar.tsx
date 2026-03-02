@@ -13,11 +13,17 @@ import {
   ChevronRight,
   ExternalLink,
   Shield,
+  List,
+  MessageSquare,
+  Mail,
 } from 'lucide-react'
 
 const NAV = [
-  { href: '/admin/team',            label: 'Dashboard',  icon: LayoutDashboard },
-  { href: '/admin/team/employees',  label: 'Employees',  icon: Users },
+  { href: '/admin/team',             label: 'Dashboard',  icon: LayoutDashboard },
+  { href: '/admin/team/employees',   label: 'Employees',  icon: Users },
+  { href: '/admin/team/farms',       label: 'Farm Requests', icon: List },
+  { href: '/admin/team/sms',         label: 'SMS',        icon: MessageSquare },
+  { href: '/admin/team/marketing',   label: 'Marketing',  icon: Mail },
 ]
 
 function roleLabel(role: string) {

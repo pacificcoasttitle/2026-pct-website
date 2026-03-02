@@ -6,7 +6,7 @@ import { Pool } from 'pg'
 import type { Employee } from '@/types/employee'
 
 let _pool: Pool | null = null
-function getPool(): Pool {
+export function getPool(): Pool {
   if (!_pool) {
     _pool = new Pool({
       connectionString: process.env.DATABASE_URL,
@@ -221,6 +221,146 @@ export async function updateEmployee(slug: string, data: EmployeeUpdatePayload):
     [slug, ...values]
   )
   return getEmployeeAdminBySlug(slug)
+}
+
+// ── Farm Requests ─────────────────────────────────────────────
+
+export interface FarmRequest {
+  id:                number
+  list_type:         string
+  city_area:         string
+  property_address:  string | null
+  radius:            string | null
+  list_size:         string
+  output_formats:    string[]
+  notes:             string | null
+  contact_name:      string
+  contact_email:     string
+  contact_phone:     string | null
+  rep_id:            string | null
+  rep_name:          string | null
+  rep_email:         string | null
+  source_channel:    string
+  status:            string
+  notification_sent: boolean
+  submitted_at:      string
+  updated_at:        string
+}
+
+export async function getAllFarmRequests(): Promise<FarmRequest[]> {
+  const db  = getPool()
+  const res = await db.query(`
+    SELECT id, list_type, city_area, property_address, radius, list_size,
+           output_formats, notes, contact_name, contact_email, contact_phone,
+           rep_id, rep_name, rep_email, source_channel, status,
+           notification_sent, submitted_at, updated_at
+    FROM vcard_farm_requests
+    ORDER BY submitted_at DESC
+  `)
+  return res.rows.map((r) => ({
+    ...r,
+    output_formats: r.output_formats ?? [],
+  }))
+}
+
+export async function updateFarmStatus(id: number, status: string): Promise<void> {
+  await getPool().query(
+    `UPDATE vcard_farm_requests SET status = $1, updated_at = NOW() WHERE id = $2`,
+    [status, id]
+  )
+}
+
+export async function insertFarmRequest(data: {
+  list_type:        string
+  city_area:        string
+  property_address: string
+  radius:           string
+  list_size:        string
+  output_formats:   string[]
+  notes:            string
+  contact_name:     string
+  contact_email:    string
+  contact_phone:    string
+  rep_id:           string
+  rep_name:         string
+  rep_email:        string
+  source_channel:   string
+}): Promise<number> {
+  const db  = getPool()
+  const res = await db.query(`
+    INSERT INTO vcard_farm_requests
+      (list_type, city_area, property_address, radius, list_size,
+       output_formats, notes, contact_name, contact_email, contact_phone,
+       rep_id, rep_name, rep_email, source_channel, status, notification_sent)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'pending',false)
+    RETURNING id
+  `, [
+    data.list_type, data.city_area, data.property_address || null, data.radius || null,
+    data.list_size, JSON.stringify(data.output_formats), data.notes || null,
+    data.contact_name, data.contact_email, data.contact_phone || null,
+    data.rep_id || null, data.rep_name || null, data.rep_email || null,
+    data.source_channel || 'web',
+  ])
+  return res.rows[0].id
+}
+
+// ── SMS ────────────────────────────────────────────────────────
+
+export interface SmsEmployee {
+  id:            number
+  slug:          string
+  name:          string
+  sms_code:      string
+  email:         string | null
+  active:        boolean
+  sms_opt_ins:   number
+  last_sms_at:   string | null
+}
+
+export async function getSmsEmployees(): Promise<SmsEmployee[]> {
+  const db  = getPool()
+  const res = await db.query(`
+    SELECT
+      e.id, e.slug,
+      e.first_name || ' ' || e.last_name AS name,
+      e.sms_code, e.email, e.active,
+      COUNT(a.id)::int AS sms_opt_ins,
+      MAX(a.created_at)::text AS last_sms_at
+    FROM vcard_employees e
+    LEFT JOIN vcard_employee_activity a
+      ON a.employee_id = e.id AND a.activity_type = 'sms_optin'
+    WHERE e.sms_code IS NOT NULL AND e.sms_code <> ''
+    GROUP BY e.id, e.slug, e.first_name, e.last_name, e.sms_code, e.email, e.active
+    ORDER BY e.last_name ASC
+  `)
+  return res.rows
+}
+
+export async function getEmployeeBySmsCode(code: string): Promise<{ slug: string; name: string; email: string | null; phone: string | null } | null> {
+  const db  = getPool()
+  const res = await db.query(
+    `SELECT slug, first_name || ' ' || last_name AS name, email, phone
+     FROM vcard_employees WHERE UPPER(sms_code) = UPPER($1) AND active = true LIMIT 1`,
+    [code]
+  )
+  return res.rows[0] ?? null
+}
+
+export async function getSmsEmployeeId(code: string): Promise<number | null> {
+  const db  = getPool()
+  const res = await db.query(
+    `SELECT id FROM vcard_employees WHERE UPPER(sms_code) = UPPER($1) AND active = true LIMIT 1`,
+    [code]
+  )
+  return res.rows[0]?.id ?? null
+}
+
+export async function logSmsActivity(employeeId: number, ip: string, meta: string): Promise<void> {
+  await getPool().query(
+    `INSERT INTO vcard_employee_activity (employee_id, activity_type, ip_address, metadata)
+     VALUES ($1, 'sms_optin', $2, $3)`,
+    [employeeId, ip, meta]
+  )
 }
 
 // ── Offices & Departments (for dropdowns) ────────────────────

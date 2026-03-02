@@ -16,8 +16,10 @@ import {
   Star,
   ExternalLink,
   Bell,
+  List,
 } from "lucide-react"
 import type { TeamMember } from "@/data/team"
+import { FarmRequestForm } from "@/components/team/FarmRequestForm"
 
 // ── vCard generator ─────────────────────────────────────────────────────────
 
@@ -104,6 +106,7 @@ export function TeamMemberPage({ member }: { member: TeamMember }) {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
   const [errorMsg, setErrorMsg] = useState("")
 
+  const [activeTab, setActiveTab] = useState<"subscribe" | "farm">("subscribe")
   const formRef = useRef<HTMLDivElement>(null)
   const firstName = member.name.split(" ")[0]
   const mc = member.mailchimp
@@ -379,141 +382,134 @@ export function TeamMemberPage({ member }: { member: TeamMember }) {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          RIGHT PANEL — Subscribe Form
+          RIGHT PANEL — Tabbed: Subscribe / Farm Request
       ═══════════════════════════════════════════════════════════════════ */}
       <div className="flex-1 bg-[#f8f6f3] flex items-start justify-center px-6 py-12 lg:px-14 lg:py-16">
         <div ref={formRef} className="w-full max-w-lg scroll-mt-8">
 
-          {/* Heading */}
-          <div className="mb-8">
-            <div className="inline-flex items-center gap-2 bg-[#f26b2b]/10 text-[#f26b2b] text-xs font-semibold px-3 py-1.5 rounded-full mb-4 uppercase tracking-wider">
-              <Bell className="w-3.5 h-3.5" />
-              Stay Informed
-            </div>
-            <h2 className="text-3xl font-bold text-[#03374f] leading-tight">
-              {subscribeHeading}
-            </h2>
-            <p className="text-gray-500 mt-2 text-sm leading-relaxed">
-              {subscribeSubHeading}
-            </p>
+          {/* ── Tab Switcher ── */}
+          <div className="flex bg-white border border-gray-200 rounded-2xl p-1 mb-8 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setActiveTab("subscribe")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === "subscribe"
+                  ? "bg-[#03374f] text-white shadow"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <Bell className="w-4 h-4" />
+              Subscribe
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("farm")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === "farm"
+                  ? "bg-[#03374f] text-white shadow"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <List className="w-4 h-4" />
+              Farm Request
+            </button>
           </div>
 
-          {/* ── Success State ── */}
-          {status === "success" ? (
-            <div className="text-center py-14 space-y-4 bg-white rounded-2xl border border-gray-100 shadow-sm px-8">
-              <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto">
-                <CheckCircle className="w-8 h-8 text-green-500" />
-              </div>
-              <h3 className="text-xl font-bold text-[#03374f]">
-                You&apos;re Subscribed!
-              </h3>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                Thanks for subscribing. You&apos;ll start receiving {firstName}&apos;s
-                updates in your inbox soon.
-              </p>
-              <button
-                type="button"
-                onClick={() => setStatus("idle")}
-                className="mt-2 inline-flex items-center gap-2 px-6 py-2.5 bg-[#03374f] text-white rounded-xl font-medium text-sm hover:bg-[#03374f]/90 transition-colors"
-              >
-                Subscribe Another Email
-              </button>
-            </div>
-          ) : (
-            /* ── Mailchimp-styled Subscribe Form ── */
-            <form
-              onSubmit={handleSubmit}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-7 space-y-5"
-            >
-              {/* Email — required */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Email Address <span className="text-[#f26b2b]">*</span>
-                </label>
-                <input
-                  type="email"
-                  value={subEmail}
-                  onChange={(e) => setSubEmail(e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                  className="w-full h-12 px-4 bg-[#f8f6f3] border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 transition-all text-sm"
-                />
-              </div>
-
-              {/* First Name */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  value={subFirstName}
-                  onChange={(e) => setSubFirstName(e.target.value)}
-                  placeholder="Jane"
-                  className="w-full h-12 px-4 bg-[#f8f6f3] border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 transition-all text-sm"
-                />
-              </div>
-
-              {/* Company */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Company / Brokerage
-                </label>
-                <input
-                  type="text"
-                  value={subCompany}
-                  onChange={(e) => setSubCompany(e.target.value)}
-                  placeholder="ABC Realty"
-                  className="w-full h-12 px-4 bg-[#f8f6f3] border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 transition-all text-sm"
-                />
-              </div>
-
-              {/* Phone */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Phone{" "}
-                  <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
-                <input
-                  type="tel"
-                  value={subPhone}
-                  onChange={(e) => setSubPhone(e.target.value)}
-                  placeholder="(714) 555-0100"
-                  className="w-full h-12 px-4 bg-[#f8f6f3] border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 transition-all text-sm"
-                />
-              </div>
-
-              {/* Error */}
-              {status === "error" && errorMsg && (
-                <div className="flex items-start gap-2.5 p-3.5 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>{errorMsg}</span>
+          {activeTab === "subscribe" ? (
+            <>
+              {/* Heading */}
+              <div className="mb-8">
+                <div className="inline-flex items-center gap-2 bg-[#f26b2b]/10 text-[#f26b2b] text-xs font-semibold px-3 py-1.5 rounded-full mb-4 uppercase tracking-wider">
+                  <Bell className="w-3.5 h-3.5" />
+                  Stay Informed
                 </div>
+                <h2 className="text-3xl font-bold text-[#03374f] leading-tight">
+                  {subscribeHeading}
+                </h2>
+                <p className="text-gray-500 mt-2 text-sm leading-relaxed">
+                  {subscribeSubHeading}
+                </p>
+              </div>
+
+              {/* ── Success State ── */}
+              {status === "success" ? (
+                <div className="text-center py-14 space-y-4 bg-white rounded-2xl border border-gray-100 shadow-sm px-8">
+                  <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto">
+                    <CheckCircle className="w-8 h-8 text-green-500" />
+                  </div>
+                  <h3 className="text-xl font-bold text-[#03374f]">You&apos;re Subscribed!</h3>
+                  <p className="text-gray-500 text-sm leading-relaxed">
+                    Thanks for subscribing. You&apos;ll start receiving {firstName}&apos;s updates in your inbox soon.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setStatus("idle")}
+                    className="mt-2 inline-flex items-center gap-2 px-6 py-2.5 bg-[#03374f] text-white rounded-xl font-medium text-sm hover:bg-[#03374f]/90 transition-colors"
+                  >
+                    Subscribe Another Email
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-7 space-y-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Email Address <span className="text-[#f26b2b]">*</span>
+                    </label>
+                    <input type="email" value={subEmail} onChange={(e) => setSubEmail(e.target.value)} required placeholder="you@example.com"
+                      className="w-full h-12 px-4 bg-[#f8f6f3] border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 transition-all text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">First Name</label>
+                    <input type="text" value={subFirstName} onChange={(e) => setSubFirstName(e.target.value)} placeholder="Jane"
+                      className="w-full h-12 px-4 bg-[#f8f6f3] border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 transition-all text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Company / Brokerage</label>
+                    <input type="text" value={subCompany} onChange={(e) => setSubCompany(e.target.value)} placeholder="ABC Realty"
+                      className="w-full h-12 px-4 bg-[#f8f6f3] border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 transition-all text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Phone <span className="text-gray-400 font-normal">(optional)</span>
+                    </label>
+                    <input type="tel" value={subPhone} onChange={(e) => setSubPhone(e.target.value)} placeholder="(714) 555-0100"
+                      className="w-full h-12 px-4 bg-[#f8f6f3] border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 transition-all text-sm" />
+                  </div>
+                  {status === "error" && errorMsg && (
+                    <div className="flex items-start gap-2.5 p-3.5 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <span>{errorMsg}</span>
+                    </div>
+                  )}
+                  <button type="submit" disabled={isSubmitting || !mc}
+                    className="w-full h-12 bg-[#f26b2b] hover:bg-[#e05d1e] disabled:opacity-60 text-white font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-sm">
+                    {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" />Subscribing…</> : <><Bell className="w-4 h-4" />Subscribe</>}
+                  </button>
+                  <p className="text-xs text-center text-gray-400">No spam. Unsubscribe at any time.</p>
+                </form>
               )}
-
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={isSubmitting || !mc}
-                className="w-full h-12 bg-[#f26b2b] hover:bg-[#e05d1e] disabled:opacity-60 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-[#f26b2b]/25 hover:shadow-lg flex items-center justify-center gap-2 text-sm"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Subscribing…
-                  </>
-                ) : (
-                  <>
-                    <Bell className="w-4 h-4" />
-                    Subscribe
-                  </>
-                )}
-              </button>
-
-              <p className="text-xs text-center text-gray-400">
-                No spam. Unsubscribe at any time.
-              </p>
-            </form>
+            </>
+          ) : (
+            <>
+              {/* Farm Request heading */}
+              <div className="mb-8">
+                <div className="inline-flex items-center gap-2 bg-[#f26b2b]/10 text-[#f26b2b] text-xs font-semibold px-3 py-1.5 rounded-full mb-4 uppercase tracking-wider">
+                  <List className="w-3.5 h-3.5" />
+                  Farm List
+                </div>
+                <h2 className="text-3xl font-bold text-[#03374f] leading-tight">
+                  Request a Farm List
+                </h2>
+                <p className="text-gray-500 mt-2 text-sm leading-relaxed">
+                  Tell {firstName} what you need and they&apos;ll put together a targeted mailing list for your next farm campaign.
+                </p>
+              </div>
+              <FarmRequestForm
+                repSlug={member.slug}
+                repName={member.name}
+                repEmail={member.email}
+              />
+            </>
           )}
 
           {/* ── Trust Badges ── */}
@@ -523,24 +519,16 @@ export function TeamMemberPage({ member }: { member: TeamMember }) {
               { icon: <Star className="w-5 h-5" />, label: "Top-Rated Service" },
               { icon: <Award className="w-5 h-5" />, label: "Since 1973" },
             ].map((item) => (
-              <div
-                key={item.label}
-                className="flex flex-col items-center gap-2 bg-white rounded-xl border border-gray-100 p-4 text-center"
-              >
+              <div key={item.label} className="flex flex-col items-center gap-2 bg-white rounded-xl border border-gray-100 p-4 text-center">
                 <span className="text-[#f26b2b]">{item.icon}</span>
-                <span className="text-xs text-gray-500 font-medium leading-tight">
-                  {item.label}
-                </span>
+                <span className="text-xs text-gray-500 font-medium leading-tight">{item.label}</span>
               </div>
             ))}
           </div>
 
           {/* Back link */}
           <div className="mt-8 text-center">
-            <Link
-              href="/"
-              className="text-xs text-gray-400 hover:text-[#03374f] transition-colors"
-            >
+            <Link href="/" className="text-xs text-gray-400 hover:text-[#03374f] transition-colors">
               ← Pacific Coast Title Home
             </Link>
           </div>
