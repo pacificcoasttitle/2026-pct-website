@@ -11,7 +11,7 @@ import { getAllActiveEmployees } from '@/lib/vcard-db'
 import { resolvePhotoUrl, parseLangs, parseSpecs } from '@/types/employee'
 import type { Employee } from '@/types/employee'
 import Navigation from '@/components/navigation'
-import Footer from '@/components/footer'
+import { Footer } from '@/components/footer'
 
 export const metadata: Metadata = {
   title: 'Our Team | Pacific Coast Title Company',
