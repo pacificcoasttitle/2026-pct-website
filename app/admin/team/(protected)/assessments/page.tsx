@@ -3,10 +3,15 @@ import { getAssessments } from '@/lib/admin-db'
 import { AssessmentsClient } from '@/components/admin/AssessmentsClient'
 
 export const metadata = { title: 'Assessments | PCT Team Admin' }
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 export default async function AssessmentsPage() {
-  const rows = await getAssessments(300)
+  let rows: Awaited<ReturnType<typeof getAssessments>> = []
+  try {
+    rows = await getAssessments(300)
+  } catch {
+    // DB unavailable – show empty state
+  }
   return (
     <div className="max-w-5xl mx-auto space-y-6 pt-2 lg:pt-0">
       <div>

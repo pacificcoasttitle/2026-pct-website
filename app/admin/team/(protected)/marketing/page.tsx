@@ -7,7 +7,7 @@ import { getAllEmployeesAdmin } from '@/lib/admin-db'
 import { MarketingStudioClient } from '@/components/admin/MarketingStudioClient'
 
 export const metadata = { title: 'Email Marketing | PCT Team Admin' }
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 // Fetch Mailchimp stats server-side for a single audience
 async function fetchAudienceStats(audienceId: string) {
@@ -37,7 +37,12 @@ async function fetchAudienceStats(audienceId: string) {
 }
 
 export default async function MarketingPage() {
-  const employees = await getAllEmployeesAdmin()
+  let employees: Awaited<ReturnType<typeof getAllEmployeesAdmin>> = []
+  try {
+    employees = await getAllEmployeesAdmin()
+  } catch {
+    // DB may not be reachable; show empty state
+  }
   const mailchimpServer = process.env.MAILCHIMP_SERVER || 'us1'
 
   // Only reps with a Mailchimp audience ID
