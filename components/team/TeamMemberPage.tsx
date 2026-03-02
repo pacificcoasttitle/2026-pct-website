@@ -17,6 +17,7 @@ import {
   ExternalLink,
   Bell,
   List,
+  ClipboardCheck,
 } from "lucide-react"
 import type { TeamMember } from "@/data/team"
 import { FarmRequestForm } from "@/components/team/FarmRequestForm"
@@ -106,7 +107,7 @@ export function TeamMemberPage({ member }: { member: TeamMember }) {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
   const [errorMsg, setErrorMsg] = useState("")
 
-  const [activeTab, setActiveTab] = useState<"subscribe" | "farm">("subscribe")
+  const [activeTab, setActiveTab] = useState<"subscribe" | "farm" | "assessment">("subscribe")
   const formRef = useRef<HTMLDivElement>(null)
   const firstName = member.name.split(" ")[0]
   const mc = member.mailchimp
@@ -413,6 +414,18 @@ export function TeamMemberPage({ member }: { member: TeamMember }) {
               <List className="w-4 h-4" />
               Farm Request
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("assessment")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === "assessment"
+                  ? "bg-[#03374f] text-white shadow"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <ClipboardCheck className="w-4 h-4" />
+              Assessment
+            </button>
           </div>
 
           {activeTab === "subscribe" ? (
@@ -489,7 +502,7 @@ export function TeamMemberPage({ member }: { member: TeamMember }) {
                 </form>
               )}
             </>
-          ) : (
+          ) : activeTab === "farm" ? (
             <>
               {/* Farm Request heading */}
               <div className="mb-8">
@@ -509,6 +522,33 @@ export function TeamMemberPage({ member }: { member: TeamMember }) {
                 repName={member.name}
                 repEmail={member.email}
               />
+            </>
+          ) : (
+            <>
+              <div className="mb-8">
+                <div className="inline-flex items-center gap-2 bg-[#f26b2b]/10 text-[#f26b2b] text-xs font-semibold px-3 py-1.5 rounded-full mb-4 uppercase tracking-wider">
+                  <ClipboardCheck className="w-3.5 h-3.5" />
+                  Assessment
+                </div>
+                <h2 className="text-3xl font-bold text-[#03374f] leading-tight">
+                  Assess Your Tool Readiness
+                </h2>
+                <p className="text-gray-500 mt-2 text-sm leading-relaxed">
+                  Take a quick multi-step assessment so {firstName} can tailor support and training around your workflow.
+                </p>
+              </div>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-7 space-y-4">
+                <p className="text-sm text-gray-600">
+                  This takes about 4-6 minutes and covers Title Profile, Toolbox, Pacific Agent One, Smart Direct, Website tools, trainings, and sales dashboard.
+                </p>
+                <Link
+                  href={`/assessment?rep=${encodeURIComponent(member.slug)}`}
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#f26b2b] hover:bg-[#e05d1e] text-white font-semibold text-sm"
+                >
+                  Start Assessment
+                  <ExternalLink className="w-4 h-4" />
+                </Link>
+              </div>
             </>
           )}
 

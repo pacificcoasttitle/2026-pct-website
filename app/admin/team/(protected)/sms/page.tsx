@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { MessageSquare, ExternalLink, CheckCircle, XCircle } from 'lucide-react'
 import { getSmsEmployees } from '@/lib/admin-db'
 import { CopyButton } from '@/components/admin/CopyButton'
+import { SmsStudioSender } from '@/components/admin/SmsStudioSender'
+import { SmsServiceBadge } from '@/components/admin/SmsServiceBadge'
 
 export const metadata = { title: 'SMS | PCT Team Admin' }
 export const revalidate = 60
@@ -23,6 +25,9 @@ export default async function SmsPage() {
         <p className="text-gray-500 text-sm mt-1">
           Agents text a rep&apos;s personal code to your Twilio number and receive their contact info instantly.
         </p>
+        <div className="mt-2">
+          <SmsServiceBadge />
+        </div>
       </div>
 
       {/* Setup callout */}
@@ -65,6 +70,8 @@ export default async function SmsPage() {
           </div>
         ))}
       </div>
+
+      <SmsStudioSender repCount={employees.length} />
 
       {/* Rep table */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

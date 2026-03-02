@@ -16,6 +16,7 @@ import {
   List,
   MessageSquare,
   Mail,
+  ClipboardCheck,
 } from 'lucide-react'
 
 const NAV = [
@@ -24,6 +25,7 @@ const NAV = [
   { href: '/admin/team/farms',       label: 'Farm Requests', icon: List },
   { href: '/admin/team/sms',         label: 'SMS',        icon: MessageSquare },
   { href: '/admin/team/marketing',   label: 'Marketing',  icon: Mail },
+  { href: '/admin/team/assessments', label: 'Assessments', icon: ClipboardCheck },
 ]
 
 function roleLabel(role: string) {

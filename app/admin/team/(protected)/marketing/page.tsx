@@ -2,8 +2,9 @@
  * /admin/team/marketing — Email marketing overview (Mailchimp)
  */
 import Link from 'next/link'
-import { Mail, Users, ExternalLink, BarChart2, AlertCircle } from 'lucide-react'
+import { Mail, ExternalLink, AlertCircle } from 'lucide-react'
 import { getAllEmployeesAdmin } from '@/lib/admin-db'
+import { MarketingStudioClient } from '@/components/admin/MarketingStudioClient'
 
 export const metadata = { title: 'Email Marketing | PCT Team Admin' }
 export const revalidate = 300
@@ -37,6 +38,7 @@ async function fetchAudienceStats(audienceId: string) {
 
 export default async function MarketingPage() {
   const employees = await getAllEmployeesAdmin()
+  const mailchimpServer = process.env.MAILCHIMP_SERVER || 'us1'
 
   // Only reps with a Mailchimp audience ID
   const withMc = employees.filter((e) => e.mailchimp_audience_id)
@@ -55,6 +57,11 @@ export default async function MarketingPage() {
 
   const configured    = process.env.MAILCHIMP_API_KEY && process.env.MAILCHIMP_SERVER
   const noAudienceReps = employees.filter((e) => !e.mailchimp_audience_id && e.active && e.website_active)
+  const audienceOptions = withMc.map((e) => ({
+    slug: e.slug,
+    name: e.name,
+    audienceId: e.mailchimp_audience_id!,
+  }))
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pt-2 lg:pt-0">
@@ -143,7 +150,7 @@ export default async function MarketingPage() {
                           Edit
                         </Link>
                         <a
-                          href={`https://us1.admin.mailchimp.com/lists/members/?id=${e.mailchimp_audience_id}`}
+                          href={`https://${mailchimpServer}.admin.mailchimp.com/lists/members/?id=${e.mailchimp_audience_id}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
@@ -159,6 +166,8 @@ export default async function MarketingPage() {
           </table>
         </div>
       )}
+
+      <MarketingStudioClient audiences={audienceOptions} />
 
       {/* Reps needing setup */}
       {noAudienceReps.length > 0 && (

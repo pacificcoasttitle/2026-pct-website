@@ -1,26 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sgMail from '@sendgrid/mail'
-import { insertFarmRequest } from '@/lib/admin-db'
+import { getEmployeeAdminBySlug, insertFarmRequest } from '@/lib/admin-db'
+import { sendSingleSms } from '@/lib/render-sms'
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!)
 
 const LIST_TYPE_LABELS: Record<string, string> = {
-  OUT_OF_STATE:  'Out-of-State Owners',
-  EMPTY_NESTER:  'Empty Nesters',
-  ABSENTEE:      'Absentee Owners',
-  JUST_LISTED:   'Just Listed',
-  JUST_SOLD:     'Just Sold',
-  NEW_MOVER:     'New Movers',
-  INVESTOR:      'Investors',
-  OTHER:         'Other',
+  OUT_OF_STATE:   'Out-of-State Owners',
+  ABSENTEE_OWNER: 'Absentee Owners (CA)',
+  EMPTY_NESTER:   'Long-time Owners (20+ years)',
+  NEXT_SELLER:    'Likely Upcoming Sellers',
+  CENTROID:       'Homes Near a Property',
+  WALKING_FARM:   'Walking Distance List',
+  SURNAME_FARM:   'Surname / Cultural Targeting',
+  CUSTOM_FARMS:   'Custom List Request',
 }
 
 const LIST_SIZE_LABELS: Record<string, string> = {
-  UNDER_100:  'Under 100',
   '100_250':  '100–250',
   '250_500':  '250–500',
   '500_1000': '500–1,000',
-  '1000_PLUS':'1,000+',
+  '1000_PLUS': '1,000+',
+  BEST_MATCH:  'Best Match',
+}
+
+const OUTPUT_FORMAT_LABELS: Record<string, string> = {
+  pdf: 'PDF',
+  csv: 'CSV',
+  mailing_labels: 'Mailing Labels',
 }
 
 export async function POST(req: NextRequest) {
@@ -30,7 +37,7 @@ export async function POST(req: NextRequest) {
     const {
       list_type, city_area, property_address, radius, list_size,
       output_formats, notes, contact_name, contact_email, contact_phone,
-      rep_slug, rep_name, rep_email,
+      rep_slug, rep_name, rep_email, source,
     } = body
 
     // Basic validation
@@ -53,12 +60,14 @@ export async function POST(req: NextRequest) {
       rep_id:           rep_slug || '',
       rep_name:         rep_name || '',
       rep_email:        rep_email || '',
-      source_channel:   'web',
+      source_channel:   source?.channel || 'web',
     })
 
     const listLabel = LIST_TYPE_LABELS[list_type] ?? list_type
     const sizeLabel = LIST_SIZE_LABELS[list_size] ?? list_size
-    const formats   = (output_formats as string[] ?? ['pdf']).map((f) => f.toUpperCase()).join(', ')
+    const formats = ((output_formats as string[] | undefined) ?? ['pdf'])
+      .map((f) => OUTPUT_FORMAT_LABELS[f] ?? f.toUpperCase())
+      .join(', ')
 
     // Email to rep (if they have email)
     if (rep_email) {
@@ -145,6 +154,28 @@ export async function POST(req: NextRequest) {
         </div>
       `,
     })
+
+    const rep = rep_slug ? await getEmployeeAdminBySlug(rep_slug) : null
+    const repPhone = rep?.mobile || rep?.phone
+    if (repPhone) {
+      const smsBody =
+        `New Farm Request #${id}\n` +
+        `From: ${contact_name}\n` +
+        `Type: ${listLabel}\n` +
+        `Area: ${city_area}\n` +
+        `Size: ${sizeLabel}\n` +
+        `Email: ${contact_email}`
+      try {
+        await sendSingleSms({
+          phone: repPhone,
+          message: smsBody.slice(0, 900),
+          preview_mode: process.env.RENDER_SMS_PREVIEW_MODE === 'true',
+          test_phone: process.env.RENDER_SMS_TEST_PHONE || undefined,
+        })
+      } catch (smsErr) {
+        console.warn('Farm request SMS notify failed:', smsErr)
+      }
+    }
 
     return NextResponse.json({ success: true, id })
   } catch (err) {

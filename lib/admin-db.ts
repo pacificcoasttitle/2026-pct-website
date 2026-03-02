@@ -376,3 +376,249 @@ export async function getOfficesAndDepts() {
     depts:   depts.rows   as { id: number; name: string; color: string }[],
   }
 }
+
+let _extraTablesReady = false
+async function ensureExtraTables() {
+  if (_extraTablesReady) return
+  const db = getPool()
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS vcard_email_templates (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      preheader TEXT,
+      html_content TEXT NOT NULL,
+      thumbnail_url TEXT,
+      created_by TEXT,
+      updated_by TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `)
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS vcard_email_campaigns (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      audience_id TEXT,
+      template_id INT REFERENCES vcard_email_templates(id) ON DELETE SET NULL,
+      mailchimp_campaign_id TEXT,
+      mailchimp_web_id TEXT,
+      status TEXT NOT NULL DEFAULT 'draft',
+      scheduled_at TIMESTAMPTZ,
+      notes TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `)
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS vcard_assessments (
+      id SERIAL PRIMARY KEY,
+      respondent_name TEXT NOT NULL,
+      respondent_email TEXT NOT NULL,
+      respondent_phone TEXT,
+      rep_id TEXT,
+      rep_name TEXT,
+      source_channel TEXT DEFAULT 'web',
+      capability_score NUMERIC(5,2) NOT NULL,
+      avg_confidence_score NUMERIC(3,2) NOT NULL,
+      responses_json JSONB NOT NULL,
+      confidence_json JSONB NOT NULL,
+      user_agent TEXT,
+      submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `)
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_vcard_assessments_rep_id ON vcard_assessments(rep_id)`)
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_vcard_assessments_submitted ON vcard_assessments(submitted_at DESC)`)
+  _extraTablesReady = true
+}
+
+export interface EmailTemplate {
+  id: number
+  name: string
+  subject: string
+  preheader: string | null
+  html_content: string
+  thumbnail_url: string | null
+  created_by: string | null
+  updated_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export async function getEmailTemplates(): Promise<EmailTemplate[]> {
+  await ensureExtraTables()
+  const db = getPool()
+  const res = await db.query(`
+    SELECT id, name, subject, preheader, html_content, thumbnail_url, created_by, updated_by, created_at::text, updated_at::text
+    FROM vcard_email_templates
+    ORDER BY updated_at DESC
+  `)
+  return res.rows
+}
+
+export async function upsertEmailTemplate(input: {
+  id?: number
+  name: string
+  subject: string
+  preheader?: string
+  html_content: string
+  thumbnail_url?: string
+  actor?: string
+}): Promise<EmailTemplate> {
+  await ensureExtraTables()
+  const db = getPool()
+  if (input.id) {
+    const updated = await db.query(`
+      UPDATE vcard_email_templates
+      SET name = $1, subject = $2, preheader = $3, html_content = $4, thumbnail_url = $5, updated_by = $6, updated_at = NOW()
+      WHERE id = $7
+      RETURNING id, name, subject, preheader, html_content, thumbnail_url, created_by, updated_by, created_at::text, updated_at::text
+    `, [
+      input.name,
+      input.subject,
+      input.preheader || null,
+      input.html_content,
+      input.thumbnail_url || null,
+      input.actor || null,
+      input.id,
+    ])
+    return updated.rows[0]
+  }
+  const created = await db.query(`
+    INSERT INTO vcard_email_templates (name, subject, preheader, html_content, thumbnail_url, created_by, updated_by)
+    VALUES ($1, $2, $3, $4, $5, $6, $6)
+    RETURNING id, name, subject, preheader, html_content, thumbnail_url, created_by, updated_by, created_at::text, updated_at::text
+  `, [
+    input.name,
+    input.subject,
+    input.preheader || null,
+    input.html_content,
+    input.thumbnail_url || null,
+    input.actor || null,
+  ])
+  return created.rows[0]
+}
+
+export interface EmailCampaignLog {
+  id: number
+  name: string
+  subject: string
+  audience_id: string | null
+  template_id: number | null
+  mailchimp_campaign_id: string | null
+  mailchimp_web_id: string | null
+  status: string
+  scheduled_at: string | null
+  notes: string | null
+  created_at: string
+}
+
+export async function createEmailCampaignLog(input: {
+  name: string
+  subject: string
+  audience_id?: string
+  template_id?: number
+  mailchimp_campaign_id?: string
+  mailchimp_web_id?: string
+  status: string
+  scheduled_at?: string
+  notes?: string
+}): Promise<EmailCampaignLog> {
+  await ensureExtraTables()
+  const db = getPool()
+  const res = await db.query(`
+    INSERT INTO vcard_email_campaigns
+      (name, subject, audience_id, template_id, mailchimp_campaign_id, mailchimp_web_id, status, scheduled_at, notes)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+    RETURNING id, name, subject, audience_id, template_id, mailchimp_campaign_id, mailchimp_web_id, status, scheduled_at::text, notes, created_at::text
+  `, [
+    input.name,
+    input.subject,
+    input.audience_id || null,
+    input.template_id || null,
+    input.mailchimp_campaign_id || null,
+    input.mailchimp_web_id || null,
+    input.status,
+    input.scheduled_at || null,
+    input.notes || null,
+  ])
+  return res.rows[0]
+}
+
+export async function getEmailCampaignLogs(limit = 50): Promise<EmailCampaignLog[]> {
+  await ensureExtraTables()
+  const db = getPool()
+  const res = await db.query(`
+    SELECT id, name, subject, audience_id, template_id, mailchimp_campaign_id, mailchimp_web_id, status, scheduled_at::text, notes, created_at::text
+    FROM vcard_email_campaigns
+    ORDER BY created_at DESC
+    LIMIT $1
+  `, [limit])
+  return res.rows
+}
+
+export interface AssessmentRecord {
+  id: number
+  respondent_name: string
+  respondent_email: string
+  respondent_phone: string | null
+  rep_id: string | null
+  rep_name: string | null
+  source_channel: string
+  capability_score: number
+  avg_confidence_score: number
+  responses_json: Record<string, unknown>
+  confidence_json: Record<string, unknown>
+  user_agent: string | null
+  submitted_at: string
+}
+
+export async function createAssessment(input: {
+  respondent_name: string
+  respondent_email: string
+  respondent_phone?: string
+  rep_id?: string
+  rep_name?: string
+  source_channel?: string
+  capability_score: number
+  avg_confidence_score: number
+  responses_json: Record<string, unknown>
+  confidence_json: Record<string, unknown>
+  user_agent?: string
+}): Promise<AssessmentRecord> {
+  await ensureExtraTables()
+  const db = getPool()
+  const res = await db.query(`
+    INSERT INTO vcard_assessments
+      (respondent_name, respondent_email, respondent_phone, rep_id, rep_name, source_channel, capability_score, avg_confidence_score, responses_json, confidence_json, user_agent)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+    RETURNING id, respondent_name, respondent_email, respondent_phone, rep_id, rep_name, source_channel,
+              capability_score::float, avg_confidence_score::float, responses_json, confidence_json, user_agent, submitted_at::text
+  `, [
+    input.respondent_name,
+    input.respondent_email,
+    input.respondent_phone || null,
+    input.rep_id || null,
+    input.rep_name || null,
+    input.source_channel || 'web',
+    input.capability_score,
+    input.avg_confidence_score,
+    JSON.stringify(input.responses_json),
+    JSON.stringify(input.confidence_json),
+    input.user_agent || null,
+  ])
+  return res.rows[0]
+}
+
+export async function getAssessments(limit = 200): Promise<AssessmentRecord[]> {
+  await ensureExtraTables()
+  const db = getPool()
+  const res = await db.query(`
+    SELECT id, respondent_name, respondent_email, respondent_phone, rep_id, rep_name, source_channel,
+           capability_score::float, avg_confidence_score::float, responses_json, confidence_json, user_agent, submitted_at::text
+    FROM vcard_assessments
+    ORDER BY submitted_at DESC
+    LIMIT $1
+  `, [limit])
+  return res.rows
+}

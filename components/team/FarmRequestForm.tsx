@@ -5,24 +5,29 @@ import { CheckCircle, AlertCircle, Loader2, MapPin, List } from 'lucide-react'
 
 const LIST_TYPES = [
   { value: 'OUT_OF_STATE', label: 'Out-of-State Owners' },
-  { value: 'EMPTY_NESTER', label: 'Empty Nesters' },
-  { value: 'ABSENTEE',     label: 'Absentee Owners' },
-  { value: 'JUST_LISTED',  label: 'Just Listed' },
-  { value: 'JUST_SOLD',    label: 'Just Sold' },
-  { value: 'NEW_MOVER',    label: 'New Movers' },
-  { value: 'INVESTOR',     label: 'Investors' },
-  { value: 'OTHER',        label: 'Other' },
+  { value: 'ABSENTEE_OWNER', label: 'Absentee Owners (CA)' },
+  { value: 'EMPTY_NESTER',   label: 'Long-time Owners (20+ years)' },
+  { value: 'NEXT_SELLER',    label: 'Likely Upcoming Sellers' },
+  { value: 'CENTROID',       label: 'Homes Near a Property' },
+  { value: 'WALKING_FARM',   label: 'Walking Distance List' },
+  { value: 'SURNAME_FARM',   label: 'Surname / Cultural Targeting' },
+  { value: 'CUSTOM_FARMS',   label: 'Custom List Request' },
 ]
 
 const LIST_SIZES = [
-  { value: 'UNDER_100',  label: 'Under 100' },
-  { value: '100_250',    label: '100 – 250' },
-  { value: '250_500',    label: '250 – 500' },
-  { value: '500_1000',   label: '500 – 1,000' },
+  { value: '100_250',    label: '100 - 250' },
+  { value: '250_500',    label: '250 - 500' },
+  { value: '500_1000',   label: '500 - 1,000' },
   { value: '1000_PLUS',  label: '1,000+' },
+  { value: 'BEST_MATCH', label: 'Best Match' },
 ]
 
-const RADII = ['0.25 mi', '0.5 mi', '1 mi', '2 mi', '5 mi']
+const RADII = [
+  { value: 'quarter_mile', label: '1/4 mile' },
+  { value: 'half_mile', label: '1/2 mile' },
+  { value: 'one_mile', label: '1 mile' },
+  { value: 'two_miles', label: '2 miles' },
+]
 
 interface Props {
   repSlug:  string
@@ -37,7 +42,7 @@ export function FarmRequestForm({ repSlug, repName, repEmail }: Props) {
     property_address: '',
     radius:           '',
     list_size:        '',
-    output_formats:   ['pdf'] as string[],
+      output_formats:   ['pdf'] as string[],
     notes:            '',
     contact_name:     '',
     contact_email:    '',
@@ -45,6 +50,7 @@ export function FarmRequestForm({ repSlug, repName, repEmail }: Props) {
   })
   const [status,      setStatus]      = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg,    setErrorMsg]    = useState('')
+  const needsAddress = form.list_type === 'CENTROID' || form.list_type === 'WALKING_FARM'
 
   function set(key: string, value: string) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -70,7 +76,21 @@ export function FarmRequestForm({ repSlug, repName, repEmail }: Props) {
       const res = await fetch('/api/farm-request', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ ...form, rep_slug: repSlug, rep_name: repName, rep_email: repEmail }),
+        body: JSON.stringify({
+          ...form,
+          rep_slug: repSlug,
+          rep_name: repName,
+          rep_email: repEmail,
+          source: {
+            channel: 'web',
+            rep_id: repSlug,
+            rep_name: repName,
+          },
+          meta: {
+            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+            submitted_at: new Date().toISOString(),
+          },
+        }),
       })
       if (res.ok) {
         setStatus('success')
@@ -154,14 +174,15 @@ export function FarmRequestForm({ repSlug, repName, repEmail }: Props) {
             value={form.property_address}
             onChange={(e) => set('property_address', e.target.value)}
             placeholder="123 Main St"
+            required={needsAddress}
             className={fieldClass}
           />
         </div>
         <div>
-          <label className={labelClass}>Radius</label>
-          <select value={form.radius} onChange={(e) => set('radius', e.target.value)} className={selectClass}>
+          <label className={labelClass}>Radius {needsAddress ? <span className="text-[#f26b2b]">*</span> : null}</label>
+          <select value={form.radius} onChange={(e) => set('radius', e.target.value)} className={selectClass} required={needsAddress}>
             <option value="">Any</option>
-            {RADII.map((r) => <option key={r} value={r}>{r}</option>)}
+            {RADII.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
           </select>
         </div>
       </div>
@@ -193,15 +214,19 @@ export function FarmRequestForm({ repSlug, repName, repEmail }: Props) {
       <div>
         <label className={labelClass}>Output Format</label>
         <div className="flex gap-3">
-          {['pdf', 'excel'].map((fmt) => (
+          {[
+            { value: 'pdf', label: 'PDF' },
+            { value: 'csv', label: 'CSV' },
+            { value: 'mailing_labels', label: 'Mailing Labels' },
+          ].map((fmt) => (
             <label key={fmt} className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={form.output_formats.includes(fmt)}
-                onChange={() => toggleFormat(fmt)}
+                checked={form.output_formats.includes(fmt.value)}
+                onChange={() => toggleFormat(fmt.value)}
                 className="w-4 h-4 rounded accent-[#f26b2b]"
               />
-              <span className="text-sm text-gray-700 uppercase font-medium">{fmt}</span>
+              <span className="text-sm text-gray-700 font-medium">{fmt.label}</span>
             </label>
           ))}
         </div>
