@@ -1,31 +1,56 @@
-import { NextRequest, NextResponse } from "next/server"
-import { validateCredentials, generateSession, SESSION_COOKIE } from "@/lib/admin-auth"
+import { NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
+import { getAdminByUsername, updateLastLogin } from '@/lib/admin-db'
+import { createAdminToken, ADMIN_COOKIE } from '@/lib/admin-auth'
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const { username, password } = await request.json()
+    const { username, password } = await req.json()
 
     if (!username || !password) {
-      return NextResponse.json({ error: "Username and password required" }, { status: 400 })
+      return NextResponse.json({ error: 'Username and password required' }, { status: 400 })
     }
 
-    if (!validateCredentials(username, password)) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+    const user = await getAdminByUsername(username.toLowerCase().trim())
+
+    if (!user || !user.active) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
-    const session = generateSession(username)
-    const response = NextResponse.json({ success: true })
-    
-    response.cookies.set(SESSION_COOKIE, session, {
+    // bcryptjs handles both $2y$ (PHP) and $2b$ (Node) prefixes
+    const valid = await bcrypt.compare(password, user.password_hash)
+    if (!valid) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+    }
+
+    // Create JWT
+    const token = await createAdminToken({
+      userId:   user.id,
+      username: user.username,
+      role:     user.role,
+      officeId: user.office_id,
+    })
+
+    // Update last login (fire-and-forget)
+    updateLastLogin(user.id).catch(() => {})
+
+    const response = NextResponse.json({
+      ok:       true,
+      username: user.username,
+      role:     user.role,
+    })
+
+    response.cookies.set(ADMIN_COOKIE, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 24 * 60 * 60, // 24 hours
-      path: "/",
+      secure:   process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path:     '/',
+      maxAge:   8 * 60 * 60, // 8 hours
     })
 
     return response
-  } catch {
-    return NextResponse.json({ error: "Server error" }, { status: 500 })
+  } catch (err) {
+    console.error('[admin/login]', err)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
