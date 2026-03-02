@@ -1,5 +1,5 @@
 /**
- * /admin — Dashboard
+ * /admin/team — Team Dashboard
  */
 import Link from 'next/link'
 import {
@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { getDashboardStats } from '@/lib/admin-db'
 
-export const metadata = { title: 'Dashboard | PCT Admin' }
+export const metadata = { title: 'Dashboard | PCT Team Admin' }
 export const revalidate = 60
 
 export default async function AdminDashboard() {
@@ -115,7 +115,7 @@ export default async function AdminDashboard() {
               <h2 className="font-semibold text-[#03374f] text-sm">Most Viewed Profiles</h2>
             </div>
             <Link
-              href="/admin/employees"
+              href="/admin/team/employees"
               className="text-xs text-[#f26b2b] hover:underline flex items-center gap-1"
             >
               View all <ArrowRight className="w-3 h-3" />
@@ -128,7 +128,7 @@ export default async function AdminDashboard() {
                   {i + 1}
                 </span>
                 <Link
-                  href={`/admin/employees/${e.slug}`}
+                  href={`/admin/team/employees/${e.slug}`}
                   className="flex-1 text-sm font-medium text-[#03374f] hover:text-[#f26b2b] transition-colors truncate"
                 >
                   {e.name}
@@ -150,7 +150,7 @@ export default async function AdminDashboard() {
           <p className="text-white/50 text-sm mt-0.5">Edit profiles, toggle pages live, update photos.</p>
         </div>
         <Link
-          href="/admin/employees"
+          href="/admin/team/employees"
           className="flex-shrink-0 inline-flex items-center gap-2 bg-[#f26b2b] hover:bg-[#e05d1e] text-white font-bold px-5 py-2.5 rounded-xl transition-all text-sm shadow"
         >
           <Users className="w-4 h-4" />

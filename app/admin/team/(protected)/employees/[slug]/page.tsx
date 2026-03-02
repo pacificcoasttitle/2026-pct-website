@@ -1,5 +1,5 @@
 /**
- * /admin/employees/[slug] — Edit employee profile
+ * /admin/team/employees/[slug] — Edit employee profile
  */
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -14,7 +14,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params
   const emp = await getEmployeeAdminBySlug(slug)
-  return { title: emp ? `Edit ${emp.name} | PCT Admin` : 'Not Found | PCT Admin' }
+  return { title: emp ? `Edit ${emp.name} | PCT Team Admin` : 'Not Found | PCT Team Admin' }
 }
 
 export default async function EditEmployeePage({
@@ -22,8 +22,8 @@ export default async function EditEmployeePage({
 }: {
   params: Promise<{ slug: string }>
 }) {
-  const { slug }             = await params
-  const [emp, { offices, depts }] = await Promise.all([
+  const { slug }                   = await params
+  const [emp, { offices, depts }]  = await Promise.all([
     getEmployeeAdminBySlug(slug),
     getOfficesAndDepts(),
   ])

@@ -1,18 +1,16 @@
 /**
- * /admin/employees — Employee list
+ * /admin/team/employees — Employee list
  */
-import Link from 'next/link'
 import { getAllEmployeesAdmin } from '@/lib/admin-db'
 import { resolvePhotoUrl } from '@/types/employee'
 import EmployeeListClient from '@/components/admin/EmployeeListClient'
 
-export const metadata = { title: 'Employees | PCT Admin' }
+export const metadata = { title: 'Employees | PCT Team Admin' }
 export const revalidate = 60
 
 export default async function EmployeesPage() {
   const employees = await getAllEmployeesAdmin()
 
-  // Serialize for the client component
   const data = employees.map((e) => ({
     id:             e.id,
     slug:           e.slug,

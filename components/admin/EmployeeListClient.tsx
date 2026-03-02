@@ -118,7 +118,7 @@ export default function EmployeeListClient({ employees }: { employees: EmployeeR
             {filtered.map((emp) => (
               <Link
                 key={emp.id}
-                href={`/admin/employees/${emp.slug}`}
+                href={`/admin/team/employees/${emp.slug}`}
                 className="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50/80 transition-colors group"
               >
                 {/* Photo */}

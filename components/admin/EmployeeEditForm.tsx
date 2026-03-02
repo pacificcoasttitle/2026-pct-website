@@ -124,7 +124,7 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
-          href="/admin/employees"
+          href="/admin/team/employees"
           className="p-2 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 transition text-gray-500 hover:text-[#03374f]"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -426,7 +426,7 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
       {/* Bottom save */}
       <div className="flex justify-end gap-3 pt-2">
         <Link
-          href="/admin/employees"
+          href="/admin/team/employees"
           className="px-5 py-2.5 text-sm text-gray-500 hover:text-[#03374f] transition-colors"
         >
           Cancel

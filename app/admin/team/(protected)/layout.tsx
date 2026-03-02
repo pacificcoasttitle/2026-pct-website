@@ -1,17 +1,15 @@
 /**
- * Admin panel shell — sidebar + content area.
+ * /admin/team — Team admin shell with sidebar.
  * Middleware guarantees only authenticated users reach this layout.
  */
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import Image from 'next/image'
-import Link from 'next/link'
 import { verifyAdminToken, ADMIN_COOKIE } from '@/lib/admin-auth'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 
-export const metadata = { title: 'PCT Admin' }
+export const metadata = { title: 'PCT Team Admin' }
 
-export default async function AdminLayout({
+export default async function TeamAdminLayout({
   children,
 }: {
   children: React.ReactNode
