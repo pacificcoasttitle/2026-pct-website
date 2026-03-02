@@ -3,6 +3,7 @@
 // ============================================================
 
 import { SignJWT, jwtVerify } from 'jose'
+import { cookies } from 'next/headers'
 
 export const ADMIN_COOKIE = 'pct_admin'
 const EXPIRES = '8h'
@@ -35,5 +36,20 @@ export async function verifyAdminToken(token: string): Promise<AdminSession | nu
     return payload as unknown as AdminSession
   } catch {
     return null
+  }
+}
+
+/**
+ * Convenience helper for Node.js API routes.
+ * Reads the session cookie and returns true if the token is valid.
+ */
+export async function isAuthenticated(): Promise<boolean> {
+  try {
+    const jar   = await cookies()
+    const token = jar.get(ADMIN_COOKIE)?.value
+    if (!token) return false
+    return (await verifyAdminToken(token)) !== null
+  } catch {
+    return false
   }
 }
