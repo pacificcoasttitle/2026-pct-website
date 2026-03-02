@@ -29,20 +29,30 @@ function ProgressBar({ progress, label }: { progress: number; label: string }) {
 
 // ── Step indicator ────────────────────────────────────────────
 const STEPS = [
-  { key: 'extracting', label: 'Extracting text from PDF…',   icon: '📄' },
-  { key: 'analyzing',  label: 'TESSA™ is analyzing…',        icon: '🤖' },
-  { key: 'validating', label: 'Validating results…',          icon: '✅' },
+  { key: 'extracting',      label: 'Extracting PDF text…',    icon: '📄' },
+  { key: 'computing_facts', label: 'Computing facts…',        icon: '🔍' },
+  { key: 'analyzing',       label: 'Extracting findings…',    icon: '🤖' },
+  { key: 'validating',      label: 'Validating results…',     icon: '✅' },
+  { key: 'summarizing',     label: 'Generating summary…',     icon: '📝' },
 ]
+
+const PROCESSING_STATUSES = new Set([
+  'extracting',
+  'computing_facts',
+  'analyzing',
+  'validating',
+  'summarizing',
+])
 
 function StepIndicator({ status }: { status: string }) {
   return (
-    <ol className="flex items-center gap-3 mt-4">
+    <ol className="flex items-center gap-2 mt-4 flex-wrap">
       {STEPS.map((step, i) => {
-        const stepIdx  = STEPS.findIndex((s) => s.key === status)
-        const done     = i < stepIdx
-        const active   = step.key === status
+        const stepIdx = STEPS.findIndex((s) => s.key === status)
+        const done   = i < stepIdx
+        const active = step.key === status
         return (
-          <li key={step.key} className="flex items-center gap-2">
+          <li key={step.key} className="flex items-center gap-1.5">
             <span
               className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors
                 ${done   ? 'bg-green-500 border-green-500 text-white'
@@ -51,7 +61,11 @@ function StepIndicator({ status }: { status: string }) {
             >
               {done ? '✓' : step.icon}
             </span>
-            <span className={`text-xs hidden sm:block ${active ? 'text-gray-800 font-semibold' : done ? 'text-green-700' : 'text-gray-400'}`}>
+            <span
+              className={`text-xs hidden sm:block ${
+                active ? 'text-gray-800 font-semibold' : done ? 'text-green-700' : 'text-gray-400'
+              }`}
+            >
               {step.label}
             </span>
             {i < STEPS.length - 1 && (
@@ -73,10 +87,17 @@ interface Props {
 
 export function TessaPrelimModal({ isOpen, onClose, file }: Props) {
   const {
-    status, progress, progressLabel,
-    sections, facts, cheatSheetItems,
-    error, fileName,
-    analyzePrelim, reset,
+    status,
+    progress,
+    progressLabel,
+    extracted,
+    summary,
+    facts,
+    cheatSheetItems,
+    error,
+    fileName,
+    analyzePrelim,
+    reset,
   } = usePrelimAnalysis()
 
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -96,6 +117,7 @@ export function TessaPrelimModal({ isOpen, onClose, file }: Props) {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
   // Scroll to top when results appear
@@ -117,7 +139,7 @@ export function TessaPrelimModal({ isOpen, onClose, file }: Props) {
 
   if (!isOpen) return null
 
-  const isProcessing = status === 'extracting' || status === 'analyzing' || status === 'validating'
+  const isProcessing = PROCESSING_STATUSES.has(status)
   const isComplete   = status === 'complete'
   const hasError     = status === 'error'
 
@@ -207,7 +229,7 @@ export function TessaPrelimModal({ isOpen, onClose, file }: Props) {
           )}
 
           {/* Results */}
-          {isComplete && sections && (
+          {isComplete && extracted && (
             <div>
               {/* ── Results divider ── */}
               <div className="flex items-center gap-3 mb-5">
@@ -219,7 +241,8 @@ export function TessaPrelimModal({ isOpen, onClose, file }: Props) {
               </div>
 
               <TessaPrelimResults
-                sections={sections}
+                extracted={extracted}
+                summary={summary}
                 facts={facts}
                 cheatSheetItems={cheatSheetItems}
                 fileName={fileName ?? ''}

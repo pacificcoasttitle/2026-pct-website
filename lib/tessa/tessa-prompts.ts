@@ -244,6 +244,125 @@ Here is the document text excerpt:
 ${excerpt}`
 }
 
+// ── Extraction System Prompt (Step 1 – JSON output) ──────────
+
+export const EXTRACTION_SYSTEM_PROMPT = `You are a title document analysis engine.
+You extract structured data from Preliminary Title Reports.
+You MUST respond with valid JSON only — no markdown, no backticks, no preamble.
+Never invent data. If a value is not stated in the document, use null.
+Use exact dollar amounts with $ and commas. Never round.`
+
+export function buildExtractionPrompt(
+  pdfText: string,
+  factsJson: string
+): string {
+  return `Analyze this Preliminary Title Report and return a JSON object matching this exact structure.
+
+GROUND TRUTH (pre-extracted facts — do NOT contradict these):
+${factsJson}
+
+REQUIRED JSON STRUCTURE:
+{
+  "title_requirements": [
+    {
+      "item_number": <number or null>,
+      "description": "<exact text from document>",
+      "action": "<short directive: Obtain, Record, Provide, Pay, etc.>",
+      "severity": "blocker" | "material" | "informational",
+      "type": "<payoff|reconveyance|trust_cert|soi|affidavit|lien_release|tax_clearance|other>",
+      "related_instrument": "<recording number or null>",
+      "assignee": "<who handles this: Escrow|Seller|Buyer|Lender|Title|null>"
+    }
+  ],
+  "property_info": {
+    "apn": "<string or null>",
+    "address": "<string or null>",
+    "legal_description": "<string or null>",
+    "vesting": "<current owner names and manner of holding or null>",
+    "property_type": "<SFR|condo|commercial|multi-unit|null>",
+    "ownership_structure": "<individual|joint_tenants|community_property|trust|llc|tic|null>"
+  },
+  "liens": [
+    {
+      "position": <number>,
+      "type": "deed_of_trust" | "tax_lien" | "mechanics_lien" | "judgment" | "hoa" | "ucc" | "other",
+      "amount": "<exact dollar string or null>",
+      "beneficiary": "<string>",
+      "trustor": "<string or null>",
+      "recording_ref": "<instrument number or null>",
+      "recording_date": "<date string or null>",
+      "assigned_to": "<current holder if assigned, or null>",
+      "action_required": "<payoff|reconveyance|release|subordination|null>"
+    }
+  ],
+  "taxes": [
+    {
+      "tax_id": "<parcel number>",
+      "fiscal_year": "<string or null>",
+      "first_installment": { "amount": "<string>", "status": "paid" | "open" | "delinquent" | "defaulted" },
+      "second_installment": { "amount": "<string>", "status": "paid" | "open" | "delinquent" | "defaulted" },
+      "exemption": "<string or null>",
+      "code_area": "<string or null>",
+      "total_tax": "<string or null>",
+      "penalties": "<string or null>"
+    }
+  ],
+  "tax_defaults": [
+    {
+      "tax_id": "<parcel number>",
+      "default_year": "<string>",
+      "amount": "<string>",
+      "redemption_info": "<string or null>"
+    }
+  ],
+  "other_findings": [
+    {
+      "item_number": <number or null>,
+      "type": "easement" | "ccr" | "hoa" | "mineral_rights" | "restriction" | "other",
+      "description": "<string>",
+      "impact": "high" | "medium" | "low",
+      "action": "<string or null>",
+      "recording_ref": "<string or null>"
+    }
+  ],
+  "document_status": {
+    "appears_complete": true | false,
+    "document_date": "<string or null>",
+    "order_number": "<string or null>",
+    "missing_sections": ["<string>"],
+    "notes": "<string or null>"
+  },
+  "schedule_a_subjects": [<item numbers from Schedule A subject-to clause>],
+  "foreclosure_detected": true | false,
+  "recent_conveyance_detected": true | false
+}
+
+DOCUMENT TEXT:
+${pdfText.slice(0, 50000)}`
+}
+
+// ── Summary System Prompt (Step 2 – markdown output) ─────────
+
+export const SUMMARY_SYSTEM_PROMPT = `You are a title industry expert writing a plain-English
+summary of a preliminary title report analysis. Write for a real estate professional.
+Be concise. Lead with what matters most for closing.`
+
+export function buildSummaryPrompt(extractedJson: string): string {
+  return `Based on this extracted analysis of a Preliminary Title Report, write:
+
+1. A section headed "TOP CLOSING RISKS" — numbered list, one risk per line in this format:
+   1) **Risk Title** — brief explanation of why it delays closing
+   Include only risks with material or higher impact. Max 5 items.
+
+2. A 2-3 sentence narrative summarizing the overall title condition, property address (if known),
+   and what must happen before this transaction can close.
+
+Extracted analysis data:
+${extractedJson}
+
+Format as plain markdown. No extra headers beyond "TOP CLOSING RISKS".`
+}
+
 // ── Agent Mode Reprompt ───────────────────────────────────────
 
 export const AGENT_MODE_SYSTEM_PROMPT = `You are TESSA™, translating title report analysis into plain English for real estate agents.

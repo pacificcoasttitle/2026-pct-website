@@ -300,8 +300,97 @@ export interface CheatSheetItem {
 
 export type AnalysisStatus =
   | 'idle'
-  | 'extracting'
-  | 'analyzing'
-  | 'validating'
+  | 'extracting'          // PDF.js pulling text
+  | 'computing_facts'     // Pre-parser running (client-side, no LLM)
+  | 'analyzing'           // LLM Call 1: structured JSON extraction
+  | 'validating'          // Guardrails: validate extraction against pre-parser facts
+  | 'summarizing'         // LLM Call 2: plain-English summary
   | 'complete'
   | 'error'
+
+// ── Extracted Analysis Types (JSON pipeline) ─────────────────
+// These match the JSON schema returned by the extraction LLM call.
+
+export interface ExtractedRequirement {
+  item_number: number | null
+  description: string
+  action: string
+  severity: 'blocker' | 'material' | 'informational'
+  type: string
+  related_instrument: string | null
+  assignee: string | null
+}
+
+export interface ExtractedPropertyInfo {
+  apn: string | null
+  address: string | null
+  legal_description: string | null
+  vesting: string | null
+  property_type: string | null
+  ownership_structure: string | null
+}
+
+export interface ExtractedLien {
+  position: number
+  type: string
+  amount: string | null
+  beneficiary: string
+  trustor: string | null
+  recording_ref: string | null
+  recording_date: string | null
+  assigned_to: string | null
+  action_required: string | null
+}
+
+export interface ExtractedTaxInstallment {
+  amount: string
+  status: 'paid' | 'open' | 'delinquent' | 'defaulted'
+}
+
+export interface ExtractedTax {
+  tax_id: string
+  fiscal_year: string | null
+  first_installment: ExtractedTaxInstallment
+  second_installment: ExtractedTaxInstallment
+  exemption: string | null
+  code_area: string | null
+  total_tax: string | null
+  penalties: string | null
+}
+
+export interface ExtractedTaxDefault {
+  tax_id: string
+  default_year: string
+  amount: string
+  redemption_info: string | null
+}
+
+export interface ExtractedOtherFinding {
+  item_number: number | null
+  type: string
+  description: string
+  impact: 'high' | 'medium' | 'low'
+  action: string | null
+  recording_ref: string | null
+}
+
+export interface ExtractedDocumentStatus {
+  appears_complete: boolean
+  document_date: string | null
+  order_number: string | null
+  missing_sections: string[]
+  notes: string | null
+}
+
+export interface ExtractedAnalysis {
+  title_requirements: ExtractedRequirement[]
+  property_info: ExtractedPropertyInfo
+  liens: ExtractedLien[]
+  taxes: ExtractedTax[]
+  tax_defaults: ExtractedTaxDefault[]
+  other_findings: ExtractedOtherFinding[]
+  document_status: ExtractedDocumentStatus
+  schedule_a_subjects: number[]
+  foreclosure_detected: boolean
+  recent_conveyance_detected: boolean
+}

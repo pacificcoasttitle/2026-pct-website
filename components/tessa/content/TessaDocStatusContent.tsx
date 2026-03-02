@@ -1,87 +1,68 @@
 'use client'
 
-import type { ReactNode } from 'react'
-import { KV } from './TessaShared'
+import type { ExtractedDocumentStatus } from '@/lib/tessa/tessa-types'
 
-function parseDocStatus(content: string): {
-  description: string | null
-  rows: { label: string; value: ReactNode }[]
-} {
-  const kv: Record<string, string> = {}
-  for (const line of content.split('\n')) {
-    const m = line.trim().match(/^-?\s*([^:]+):\s*(.+)$/)
-    if (m) kv[m[1].trim().toLowerCase()] = m[2].trim()
-  }
-
-  // Description from the opening sentence
-  const firstSentence = content.split(/\.\s/)[0]?.trim() ?? ''
-  const description =
-    firstSentence.toLowerCase().startsWith('this is') ? firstSentence + '.' : null
-
-  // Ordered field map
-  const fieldMap: [string[], string][] = [
-    [['report type', 'type'], 'Report Type'],
-    [['effective date', 'date'], 'Effective Date'],
-    [['title order', 'order no', 'order number', 'title order no'], 'Title Order No.'],
-    [['underwriter', 'underwriting company'], 'Underwriter'],
-    [['title officer', 'officer'], 'Title Officer'],
-    [['scope'], 'Scope'],
-    [['pages', 'page count'], 'Pages'],
-    [['status', 'completeness'], 'Status'],
-  ]
-
-  const rows: { label: string; value: ReactNode }[] = []
-  const shown = new Set<string>()
-
-  for (const [keys, label] of fieldMap) {
-    for (const k of keys) {
-      const v = kv[k]
-      if (v && v !== 'Not stated' && v !== 'Unclear') {
-        rows.push({ label, value: v })
-        keys.forEach((key) => shown.add(key))
-        break
-      }
-    }
-  }
-
-  // Remaining fields not already shown
-  for (const [key, val] of Object.entries(kv)) {
-    if (!shown.has(key) && val && val !== 'Not stated' && val !== 'Unclear') {
-      rows.push({ label: key.charAt(0).toUpperCase() + key.slice(1), value: val })
-    }
-  }
-
-  return { description, rows }
+interface Props {
+  docStatus: ExtractedDocumentStatus
 }
 
-export function TessaDocStatusContent({ content }: { content: string }) {
-  const { description, rows } = parseDocStatus(content)
-
-  if (rows.length === 0 && !description) {
-    return (
-      <div
-        className="pt-4 prose prose-sm max-w-none text-gray-700"
-        dangerouslySetInnerHTML={{
-          __html: content
-            .replace(/\n/g, '<br/>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
-        }}
-      />
-    )
-  }
-
+export function TessaDocStatusContent({ docStatus }: Props) {
   return (
-    <div className="pt-4">
-      {description && (
-        <p className="text-sm text-gray-600 mb-4 leading-relaxed">{description}</p>
+    <div className="space-y-3">
+      {/* Completeness */}
+      <div className="flex items-center gap-2">
+        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+          docStatus.appears_complete
+            ? 'bg-green-100 text-green-700'
+            : 'bg-yellow-100 text-yellow-700'
+        }`}>
+          {docStatus.appears_complete ? '✓' : '?'}
+        </span>
+        <span className={`text-sm font-medium ${
+          docStatus.appears_complete ? 'text-green-700' : 'text-yellow-700'
+        }`}>
+          {docStatus.appears_complete ? 'Document appears complete' : 'Document may be incomplete'}
+        </span>
+      </div>
+
+      {/* Metadata */}
+      {(docStatus.document_date || docStatus.order_number) && (
+        <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 flex flex-wrap gap-x-6 gap-y-1">
+          {docStatus.document_date && (
+            <div>
+              <span className="text-xs text-gray-500 block">Document Date</span>
+              <span className="text-sm font-medium text-gray-800">{docStatus.document_date}</span>
+            </div>
+          )}
+          {docStatus.order_number && (
+            <div>
+              <span className="text-xs text-gray-500 block">Order Number</span>
+              <span className="text-sm font-medium text-gray-800">{docStatus.order_number}</span>
+            </div>
+          )}
+        </div>
       )}
-      {rows.length > 0 && (
-        <div className="divide-y divide-gray-100">
-          {rows.map(({ label, value }, i) => (
-            <KV key={i} label={label}>
-              {value}
-            </KV>
-          ))}
+
+      {/* Missing sections */}
+      {docStatus.missing_sections && docStatus.missing_sections.length > 0 && (
+        <div>
+          <span className="text-xs font-semibold text-red-600 uppercase tracking-wide block mb-1">Missing Sections</span>
+          <ul className="space-y-0.5">
+            {docStatus.missing_sections.map((s, i) => (
+              <li key={i} className="text-sm text-red-700 flex gap-2">
+                <span className="text-red-400 flex-shrink-0">–</span>
+                {s}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Notes */}
+      {docStatus.notes && (
+        <div>
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Notes</span>
+          <p className="text-sm text-gray-700">{docStatus.notes}</p>
         </div>
       )}
     </div>

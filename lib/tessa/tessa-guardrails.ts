@@ -5,7 +5,7 @@
 // Ported from tessa-enhanced-script-3.3.0-guardrails.js
 // ============================================================
 
-import type { PrelimFacts } from './tessa-types'
+import type { PrelimFacts, ExtractedAnalysis } from './tessa-types'
 
 // ── Section helpers ───────────────────────────────────────────
 
@@ -510,6 +510,120 @@ export function runGuardrailsStep2(response: string, facts: PrelimFacts): string
   }
 
   return r
+}
+
+// ── JSON Extraction Validator ─────────────────────────────────
+
+/**
+ * Validates the LLM's JSON extraction against the deterministic pre-parser facts.
+ * Injects any missing items and overrides tax data with ground-truth facts.
+ */
+export function validateAndRepairExtraction(
+  extracted: ExtractedAnalysis,
+  facts: PrelimFacts
+): ExtractedAnalysis {
+  // 1. Ensure all pre-parser requirements are represented
+  for (const req of facts?.requirements ?? []) {
+    const needle = (req.text || '').toLowerCase().slice(0, 30)
+    const found = extracted.title_requirements.some(
+      (r) =>
+        r.description.toLowerCase().includes(needle) ||
+        (r.item_number !== null && r.item_number === req.item_no)
+    )
+    if (!found) {
+      extracted.title_requirements.push({
+        item_number: req.item_no ?? null,
+        description: req.text || '',
+        action: 'Review',
+        severity:
+          (req.classification?.severity as 'blocker' | 'material' | 'informational') ||
+          'material',
+        type: req.classification?.type || 'other',
+        related_instrument: null,
+        assignee: null,
+      })
+    }
+  }
+
+  // 2. Ensure all pre-parser DOTs appear in liens
+  for (const dot of facts?.deeds_of_trust ?? []) {
+    const found = extracted.liens.some(
+      (l) =>
+        (dot.recording_no && l.recording_ref === dot.recording_no) ||
+        (l.amount === dot.amount &&
+          dot.beneficiary &&
+          l.beneficiary?.toLowerCase().includes(dot.beneficiary.slice(0, 15).toLowerCase()))
+    )
+    if (!found) {
+      extracted.liens.push({
+        position: extracted.liens.length + 1,
+        type: 'deed_of_trust',
+        amount: dot.amount || null,
+        beneficiary: dot.beneficiary || 'Unknown',
+        trustor: dot.trustor || null,
+        recording_ref: dot.recording_no || null,
+        recording_date: dot.recording_date || null,
+        assigned_to:
+          dot.assignments?.length
+            ? dot.assignments[dot.assignments.length - 1].assignee
+            : null,
+        action_required: 'payoff',
+      })
+    }
+  }
+
+  // 3. Replace AI tax data with deterministic pre-parser taxes (ground truth)
+  const propertyTaxes = facts?.taxes?.property_taxes ?? []
+  if (propertyTaxes.length > 0) {
+    extracted.taxes = propertyTaxes.map((tax) => ({
+      tax_id: tax.tax_id || '',
+      fiscal_year: tax.fiscal_year || null,
+      first_installment: {
+        amount:
+          tax.first_installment_amount || tax.first_installment || 'Not stated',
+        status: normalizeInstallmentStatus(tax.first_installment_status),
+      },
+      second_installment: {
+        amount:
+          tax.second_installment_amount || tax.second_installment || 'Not stated',
+        status: normalizeInstallmentStatus(tax.second_installment_status),
+      },
+      exemption: tax.homeowners_exemption || null,
+      code_area: tax.code_area || null,
+      total_tax: null,
+      penalties:
+        [tax.first_penalty, tax.second_penalty].filter(Boolean).join('; ') || null,
+    }))
+  }
+
+  // 4. Inject tax defaults from pre-parser
+  const taxDefaults = facts?.taxes?.tax_defaults ?? []
+  if (taxDefaults.length > 0) {
+    extracted.tax_defaults = taxDefaults.map((td) => ({
+      tax_id: td.apn || '',
+      default_year: td.default_no || '',
+      amount: td.redemption_schedule?.[0]?.amount || '',
+      redemption_info: td.message || null,
+    }))
+  }
+
+  // 5. Enforce foreclosure flag from pre-parser
+  if ((facts?.foreclosure_flags ?? []).some((f) => f.type === 'notice_of_trustee_sale')) {
+    extracted.foreclosure_detected = true
+  }
+
+  return extracted
+}
+
+function normalizeInstallmentStatus(
+  status: string | undefined
+): 'paid' | 'open' | 'delinquent' | 'defaulted' {
+  if (!status) return 'open'
+  const s = status.toUpperCase()
+  if (s === 'PAID') return 'paid'
+  if (s === 'DELINQUENT') return 'delinquent'
+  if (s === 'DEFAULTED' || s === 'DEFAULT') return 'defaulted'
+  return 'open'
 }
 
 export function stitchRepairSections(original: string, repairText: string): string {

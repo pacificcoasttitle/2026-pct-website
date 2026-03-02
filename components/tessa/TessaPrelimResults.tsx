@@ -1,84 +1,151 @@
 'use client'
 
-import { TessaSectionCard } from './TessaSectionCard'
-import { TessaCheatSheet } from './TessaCheatSheet'
-import { TessaComplexityScore } from './TessaComplexityScore'
-import { ContactButton } from '@/components/ContactButton'
-import type { ParsedSection, PrelimFacts, CheatSheetItem } from '@/lib/tessa/tessa-types'
+import type { ExtractedAnalysis, PrelimFacts, CheatSheetItem } from '@/lib/tessa/tessa-types'
+import { TessaSectionCard }          from './TessaSectionCard'
+import { TessaComplexityScore }      from './TessaComplexityScore'
+import { TessaRequirementsContent }  from './content/TessaRequirementsContent'
+import { TessaSummaryContent }       from './content/TessaSummaryContent'
+import { TessaPropertyContent }      from './content/TessaPropertyContent'
+import { TessaLiensContent }         from './content/TessaLiensContent'
+import { TessaTaxContent }           from './content/TessaTaxContent'
+import { TessaOtherFindingsContent } from './content/TessaOtherFindingsContent'
+import { TessaDocStatusContent }     from './content/TessaDocStatusContent'
+import { ContactButton }             from '@/components/ContactButton'
+
+// ── Section icon map ──────────────────────────────────────────
+const ICON: Record<string, { letter: string; color: string }> = {
+  REQUIREMENTS: { letter: '✓', color: '#16a34a' },
+  SUMMARY:      { letter: 'Σ', color: '#2563eb' },
+  PROPERTY:     { letter: 'P', color: '#0891b2' },
+  LIENS:        { letter: '$', color: '#dc2626' },
+  TAXES:        { letter: 'T', color: '#d97706' },
+  OTHER:        { letter: '!', color: '#7c3aed' },
+  DOCSTATUS:    { letter: 'i', color: '#6b7280' },
+}
 
 interface Props {
-  sections: ParsedSection[]
-  facts: PrelimFacts | null
-  cheatSheetItems: CheatSheetItem[]
+  extracted: ExtractedAnalysis
+  summary: string
+  facts?: PrelimFacts | null
+  cheatSheetItems?: CheatSheetItem[]
   fileName: string
   onReset: () => void
 }
 
-export function TessaPrelimResults({
-  sections,
-  facts,
-  cheatSheetItems,
-  fileName,
-  onReset,
-}: Props) {
+export function TessaPrelimResults({ extracted, summary, facts, cheatSheetItems, fileName, onReset }: Props) {
+  const reqs  = extracted.title_requirements ?? []
+  const liens = extracted.liens ?? []
+  const taxes = extracted.taxes ?? []
+  const other = extracted.other_findings ?? []
+  const ds    = extracted.document_status
+  const prop  = extracted.property_info
+
   return (
     <div className="space-y-5">
-      {/* File header bar */}
-      <div className="flex items-center justify-between bg-gray-50 rounded-xl border border-gray-200 px-5 py-3">
-        <div>
-          <p className="text-xs text-gray-500">Analyzed document</p>
-          <p className="font-semibold text-gray-900 text-sm">{fileName}</p>
-        </div>
-        <div className="text-right text-xs text-gray-400">
-          <p>Tessa™ AI&nbsp;|&nbsp;v3.3.0 (Guardrails)</p>
-          <p>{new Date().toLocaleDateString()}</p>
-        </div>
-      </div>
+      {/* Complexity Score */}
+      <TessaComplexityScore extracted={extracted} facts={facts} />
 
-      {/* Complexity score header */}
-      <TessaComplexityScore sections={sections} fileName={fileName} facts={facts} />
-
-      {/* Section cards — pass facts so structured renderers can use ground-truth data */}
-      {sections.map((section, i) => (
+      {/* SUMMARY */}
+      {summary && (
         <TessaSectionCard
-          key={section.title}
-          section={section}
-          defaultExpanded={i === 0}
-          facts={facts}
-        />
-      ))}
-
-      {/* Realtor cheat sheet */}
-      <TessaCheatSheet items={cheatSheetItems} facts={facts} />
-
-      {/* Disclaimer */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
-        <p className="font-semibold text-amber-800 text-sm mb-1">⚠️ Important Disclaimer</p>
-        <p className="text-sm text-amber-700">
-          This is an AI-generated <strong>summary</strong> of your Preliminary Title Report for
-          informational purposes only. You must read the entire preliminary title report for complete
-          information. If you have questions, contact your sales representative or title officer for
-          clarification and guidance.
-        </p>
-      </div>
-
-      {/* Footer CTAs */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <button
-          type="button"
-          onClick={onReset}
-          className="flex-1 py-3 px-5 rounded-xl border-2 border-[#f26b2b] text-[#f26b2b] font-bold text-sm hover:bg-orange-50 transition-colors"
+          title="Summary"
+          iconLetter={ICON.SUMMARY.letter}
+          iconColor={ICON.SUMMARY.color}
+          defaultOpen
         >
-          📄 Analyze New File
-        </button>
+          <TessaSummaryContent summary={summary} />
+        </TessaSectionCard>
+      )}
+
+      {/* PROPERTY INFORMATION */}
+      {prop && (
+        <TessaSectionCard
+          title="Property Information"
+          iconLetter={ICON.PROPERTY.letter}
+          iconColor={ICON.PROPERTY.color}
+        >
+          <TessaPropertyContent prop={prop} />
+        </TessaSectionCard>
+      )}
+
+      {/* TITLE REQUIREMENTS */}
+      {reqs.length > 0 && (
+        <TessaSectionCard
+          title="Title Requirements"
+          iconLetter={ICON.REQUIREMENTS.letter}
+          iconColor={ICON.REQUIREMENTS.color}
+          badge={`${reqs.length} item${reqs.length !== 1 ? 's' : ''}`}
+        >
+          <TessaRequirementsContent requirements={reqs} />
+        </TessaSectionCard>
+      )}
+
+      {/* LIENS AND JUDGMENTS */}
+      <TessaSectionCard
+        title="Liens & Judgments"
+        iconLetter={ICON.LIENS.letter}
+        iconColor={ICON.LIENS.color}
+        badge={liens.length > 0 ? `${liens.length} found` : 'Clear'}
+      >
+        <TessaLiensContent liens={liens} />
+      </TessaSectionCard>
+
+      {/* TAXES AND ASSESSMENTS */}
+      <TessaSectionCard
+        title="Taxes & Assessments"
+        iconLetter={ICON.TAXES.letter}
+        iconColor={ICON.TAXES.color}
+        badge={taxes.length > 0 ? `${taxes.length} parcel${taxes.length !== 1 ? 's' : ''}` : 'None'}
+      >
+        <TessaTaxContent taxes={taxes} />
+      </TessaSectionCard>
+
+      {/* OTHER FINDINGS */}
+      {other.length > 0 && (
+        <TessaSectionCard
+          title="Other Findings"
+          iconLetter={ICON.OTHER.letter}
+          iconColor={ICON.OTHER.color}
+          badge={`${other.length} item${other.length !== 1 ? 's' : ''}`}
+        >
+          <TessaOtherFindingsContent findings={other} />
+        </TessaSectionCard>
+      )}
+
+      {/* DOCUMENT STATUS */}
+      {ds && (
+        <TessaSectionCard
+          title="Document Status"
+          iconLetter={ICON.DOCSTATUS.letter}
+          iconColor={ICON.DOCSTATUS.color}
+        >
+          <TessaDocStatusContent docStatus={ds} />
+        </TessaSectionCard>
+      )}
+
+      {/* CTA */}
+      <div className="flex flex-col sm:flex-row items-center gap-3 pt-3">
         <ContactButton
           defaultType="escrow"
           title="Talk to a Title Officer"
-          className="flex-1 py-3 px-5 rounded-xl bg-gray-900 text-white font-bold text-sm text-center hover:bg-gray-700 transition-colors"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-[#f26b2b] text-white font-bold text-sm hover:bg-[#e05a1f] transition-colors"
         >
           📞 Talk to a Title Officer
         </ContactButton>
+        <button
+          type="button"
+          onClick={onReset}
+          className="w-full sm:w-auto flex items-center justify-center gap-2 py-3 px-6 rounded-xl border-2 border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors"
+        >
+          ↩ Analyze Another Prelim
+        </button>
       </div>
+
+      {/* Disclaimer */}
+      <p className="text-xs text-gray-400 text-center pt-2 pb-1">
+        TESSA™ is an AI-powered analysis tool. Always review the complete Preliminary Title Report
+        and consult a licensed title officer for guidance. ©{new Date().getFullYear()} Pacific Coast Title Company.
+      </p>
     </div>
   )
 }
