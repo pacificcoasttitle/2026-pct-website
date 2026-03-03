@@ -5,6 +5,7 @@ import {
   getEmailCampaignLogs,
   getEmailTemplates,
   upsertEmailTemplate,
+  seedDefaultTemplates,
 } from '@/lib/admin-db'
 import { cookies } from 'next/headers'
 
@@ -30,6 +31,8 @@ export async function GET() {
   if (!(await isAuthenticated())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  // Seed 4 default templates on first load
+  await seedDefaultTemplates()
   const [templates, campaigns] = await Promise.all([
     getEmailTemplates(),
     getEmailCampaignLogs(100),
@@ -61,6 +64,7 @@ export async function POST(req: NextRequest) {
         preheader: String(body.preheader || ''),
         html_content,
         thumbnail_url: String(body.thumbnail_url || ''),
+        category: body.category ? String(body.category) : undefined,
         actor: actor || undefined,
       })
       return NextResponse.json({ success: true, template })

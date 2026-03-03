@@ -389,12 +389,15 @@ async function ensureExtraTables() {
       preheader TEXT,
       html_content TEXT NOT NULL,
       thumbnail_url TEXT,
+      category TEXT,
       created_by TEXT,
       updated_by TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `)
+  // Add category column if missing (existing installs)
+  await db.query(`ALTER TABLE vcard_email_templates ADD COLUMN IF NOT EXISTS category TEXT;`)
   await db.query(`
     CREATE TABLE IF NOT EXISTS vcard_email_campaigns (
       id SERIAL PRIMARY KEY,
@@ -439,6 +442,7 @@ export interface EmailTemplate {
   preheader: string | null
   html_content: string
   thumbnail_url: string | null
+  category: string | null
   created_by: string | null
   updated_by: string | null
   created_at: string
@@ -449,7 +453,7 @@ export async function getEmailTemplates(): Promise<EmailTemplate[]> {
   await ensureExtraTables()
   const db = getPool()
   const res = await db.query(`
-    SELECT id, name, subject, preheader, html_content, thumbnail_url, created_by, updated_by, created_at::text, updated_at::text
+    SELECT id, name, subject, preheader, html_content, thumbnail_url, category, created_by, updated_by, created_at::text, updated_at::text
     FROM vcard_email_templates
     ORDER BY updated_at DESC
   `)
@@ -463,6 +467,7 @@ export async function upsertEmailTemplate(input: {
   preheader?: string
   html_content: string
   thumbnail_url?: string
+  category?: string
   actor?: string
 }): Promise<EmailTemplate> {
   await ensureExtraTables()
@@ -470,9 +475,9 @@ export async function upsertEmailTemplate(input: {
   if (input.id) {
     const updated = await db.query(`
       UPDATE vcard_email_templates
-      SET name = $1, subject = $2, preheader = $3, html_content = $4, thumbnail_url = $5, updated_by = $6, updated_at = NOW()
+      SET name = $1, subject = $2, preheader = $3, html_content = $4, thumbnail_url = $5, updated_by = $6, updated_at = NOW(), category = COALESCE($8, category)
       WHERE id = $7
-      RETURNING id, name, subject, preheader, html_content, thumbnail_url, created_by, updated_by, created_at::text, updated_at::text
+      RETURNING id, name, subject, preheader, html_content, thumbnail_url, category, created_by, updated_by, created_at::text, updated_at::text
     `, [
       input.name,
       input.subject,
@@ -481,22 +486,148 @@ export async function upsertEmailTemplate(input: {
       input.thumbnail_url || null,
       input.actor || null,
       input.id,
+      input.category || null,
     ])
     return updated.rows[0]
   }
   const created = await db.query(`
-    INSERT INTO vcard_email_templates (name, subject, preheader, html_content, thumbnail_url, created_by, updated_by)
-    VALUES ($1, $2, $3, $4, $5, $6, $6)
-    RETURNING id, name, subject, preheader, html_content, thumbnail_url, created_by, updated_by, created_at::text, updated_at::text
+    INSERT INTO vcard_email_templates (name, subject, preheader, html_content, thumbnail_url, category, created_by, updated_by)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
+    RETURNING id, name, subject, preheader, html_content, thumbnail_url, category, created_by, updated_by, created_at::text, updated_at::text
   `, [
     input.name,
     input.subject,
     input.preheader || null,
     input.html_content,
     input.thumbnail_url || null,
+    input.category || null,
     input.actor || null,
   ])
   return created.rows[0]
+}
+
+// ── Seed 4 default templates (Product, Title News, Market Update, Holidays) ──
+let _seeded = false
+export async function seedDefaultTemplates(): Promise<void> {
+  if (_seeded) return
+  _seeded = true
+  await ensureExtraTables()
+  const db = getPool()
+  const existing = await db.query(`SELECT DISTINCT category FROM vcard_email_templates WHERE category IS NOT NULL`)
+  const cats = new Set(existing.rows.map((r: { category: string }) => r.category))
+
+  const repCard = `<tr><td style="padding:24px 32px;background:#f8f6f3;border-radius:0 0 16px 16px;">
+    <table width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td width="60" valign="top"><img src="{{REP_PHOTO}}" alt="{{REP_NAME}}" width="52" height="52" style="border-radius:50%;object-fit:cover;display:block;" /></td>
+      <td style="padding-left:12px;">
+        <p style="margin:0;font-weight:700;color:#03374f;font-size:14px;">{{REP_NAME}}</p>
+        <p style="margin:2px 0 0;color:#6b7280;font-size:12px;">{{REP_TITLE}}</p>
+        <p style="margin:4px 0 0;font-size:12px;"><a href="mailto:{{REP_EMAIL}}" style="color:#f26b2b;text-decoration:none;">{{REP_EMAIL}}</a> &middot; <a href="tel:{{REP_PHONE}}" style="color:#f26b2b;text-decoration:none;">{{REP_PHONE}}</a></p>
+      </td>
+    </tr></table>
+  </td></tr>`
+
+  const footer = `<tr><td style="padding:16px 32px;text-align:center;color:#9ca3af;font-size:11px;">
+    Pacific Coast Title Company &middot; <a href="https://www.pct.com" style="color:#f26b2b;text-decoration:none;">pct.com</a><br/>
+    <a href="{{REP_URL}}" style="color:#f26b2b;text-decoration:none;font-size:11px;">View My Page</a>
+  </td></tr>`
+
+  const wrap = (inner: string) => `<table width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,sans-serif;background:#f0ede9;padding:32px 16px;">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.06);">
+${inner}
+${repCard}
+${footer}
+    </table>
+  </td></tr></table>`
+
+  const defaults: Record<string, { name: string; subject: string; preheader: string; html: string }> = {
+    product: {
+      name: 'Product Spotlight',
+      subject: 'New from Pacific Coast Title — {{REP_NAME}}',
+      preheader: 'A new service designed to streamline your next transaction.',
+      html: wrap(`
+      <tr><td style="background:#03374f;padding:24px 32px;"><img src="https://www.pct.com/logo2.png" alt="Pacific Coast Title" width="140" style="display:block;opacity:.95;" /></td></tr>
+      <tr><td><img src="{{HERO_IMAGE}}" alt="Product" width="600" style="display:block;width:100%;height:auto;" /></td></tr>
+      <tr><td style="padding:32px;">
+        <h2 style="margin:0 0 12px;color:#03374f;font-size:22px;">Introducing Our Latest Service</h2>
+        <p style="margin:0 0 16px;color:#4b5563;line-height:1.7;">Share details about a new product, service, or capability your clients should know about. Highlight the value proposition and how it makes their next transaction easier.</p>
+        <a href="https://www.pct.com" style="display:inline-block;padding:12px 28px;border-radius:8px;background:#f26b2b;color:#fff;text-decoration:none;font-weight:600;font-size:14px;">Learn More</a>
+      </td></tr>`)
+    },
+    title_news: {
+      name: 'Title Industry News',
+      subject: 'Title Industry Update — {{REP_NAME}}',
+      preheader: 'Important regulatory and industry changes you should know.',
+      html: wrap(`
+      <tr><td style="background:#03374f;padding:24px 32px;">
+        <p style="margin:0;color:rgba(255,255,255,0.5);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">Industry Update</p>
+        <h1 style="margin:6px 0 0;color:#fff;font-size:24px;">Title News Briefing</h1>
+      </td></tr>
+      <tr><td><img src="{{HERO_IMAGE}}" alt="News" width="600" style="display:block;width:100%;height:auto;" /></td></tr>
+      <tr><td style="padding:32px;">
+        <h2 style="margin:0 0 12px;color:#03374f;font-size:20px;">Headline Goes Here</h2>
+        <p style="margin:0 0 16px;color:#4b5563;line-height:1.7;">Write about a regulatory change, new compliance requirement, or industry trend. Keep it concise and actionable — agents want to know what it means for their deals.</p>
+        <p style="margin:0 0 16px;color:#4b5563;line-height:1.7;"><strong style="color:#03374f;">What This Means for You:</strong> Add practical takeaways here.</p>
+        <a href="https://www.pct.com" style="display:inline-block;padding:12px 28px;border-radius:8px;background:#f26b2b;color:#fff;text-decoration:none;font-weight:600;font-size:14px;">Read Full Article</a>
+      </td></tr>`)
+    },
+    market_update: {
+      name: 'Market Update',
+      subject: 'Market Snapshot — {{REP_NAME}}',
+      preheader: 'Your local real estate market at a glance.',
+      html: wrap(`
+      <tr><td style="background:#03374f;padding:24px 32px;">
+        <p style="margin:0;color:rgba(255,255,255,0.5);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">Monthly Report</p>
+        <h1 style="margin:6px 0 0;color:#fff;font-size:24px;">Market Snapshot</h1>
+      </td></tr>
+      <tr><td><img src="{{HERO_IMAGE}}" alt="Market" width="600" style="display:block;width:100%;height:auto;" /></td></tr>
+      <tr><td style="padding:32px;">
+        <table width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td width="48%" style="background:#f0ede9;border-radius:12px;padding:20px;text-align:center;">
+            <p style="margin:0 0 4px;color:#9ca3af;font-size:11px;">Active Inventory</p>
+            <p style="margin:0;color:#03374f;font-size:28px;font-weight:700;">+12%</p>
+            <p style="margin:4px 0 0;color:#6b7280;font-size:11px;">vs last month</p>
+          </td>
+          <td width="4%"></td>
+          <td width="48%" style="background:#f0ede9;border-radius:12px;padding:20px;text-align:center;">
+            <p style="margin:0 0 4px;color:#9ca3af;font-size:11px;">Avg Days on Market</p>
+            <p style="margin:0;color:#f26b2b;font-size:28px;font-weight:700;">18</p>
+            <p style="margin:4px 0 0;color:#6b7280;font-size:11px;">days</p>
+          </td>
+        </tr></table>
+        <h3 style="margin:24px 0 8px;color:#03374f;font-size:16px;">Key Takeaway</h3>
+        <p style="margin:0 0 16px;color:#4b5563;line-height:1.7;">Replace with your local market commentary. What are you seeing on the ground? What should agents prepare for?</p>
+        <a href="https://www.pct.com" style="display:inline-block;padding:12px 28px;border-radius:8px;background:#f26b2b;color:#fff;text-decoration:none;font-weight:600;font-size:14px;">View Full Report</a>
+      </td></tr>`)
+    },
+    holidays: {
+      name: 'Holiday Greeting',
+      subject: 'Warm Wishes from {{REP_NAME}} at PCT',
+      preheader: 'Wishing you and your family a wonderful season.',
+      html: wrap(`
+      <tr><td style="background:linear-gradient(135deg,#03374f,#065a7a);padding:32px;text-align:center;">
+        <img src="https://www.pct.com/logo2.png" alt="PCT" width="120" style="display:inline-block;opacity:.9;margin-bottom:16px;" /><br/>
+        <h1 style="margin:0;color:#fff;font-size:28px;font-weight:300;letter-spacing:0.02em;">Season&rsquo;s Greetings</h1>
+      </td></tr>
+      <tr><td><img src="{{HERO_IMAGE}}" alt="Happy Holidays" width="600" style="display:block;width:100%;height:auto;" /></td></tr>
+      <tr><td style="padding:32px;text-align:center;">
+        <h2 style="margin:0 0 16px;color:#03374f;font-size:22px;">Wishing You a Wonderful Season</h2>
+        <p style="margin:0 0 16px;color:#4b5563;line-height:1.8;max-width:460px;display:inline-block;">Thank you for your trust and partnership this year. I look forward to helping you and your clients with all of their title and escrow needs in the coming year.</p>
+        <p style="margin:0;color:#4b5563;line-height:1.8;font-style:italic;">Warm regards,<br/><strong style="color:#03374f;">{{REP_NAME}}</strong></p>
+      </td></tr>`)
+    },
+  }
+
+  for (const [cat, d] of Object.entries(defaults)) {
+    if (!cats.has(cat)) {
+      await db.query(
+        `INSERT INTO vcard_email_templates (name, subject, preheader, html_content, category, created_by, updated_by)
+         VALUES ($1, $2, $3, $4, $5, 'system', 'system')`,
+        [d.name, d.subject, d.preheader, d.html, cat]
+      )
+    }
+  }
 }
 
 export interface EmailCampaignLog {
