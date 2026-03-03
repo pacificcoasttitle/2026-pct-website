@@ -6,15 +6,18 @@ import {
   getEmailTemplates,
   upsertEmailTemplate,
   seedDefaultTemplates,
+  getEmployeeAdminBySlug,
 } from '@/lib/admin-db'
 import { cookies } from 'next/headers'
 
 export const runtime = 'nodejs'
 
+/* ─── Mailchimp Basic Auth (official pattern) ─────────────────── */
 function mcAuthHeader(apiKey: string) {
   return `Basic ${Buffer.from(`any:${apiKey}`).toString('base64')}`
 }
 
+/* ─── Actor username from JWT cookie ──────────────────────────── */
 async function getActorUsername() {
   try {
     const jar = await cookies()
@@ -27,6 +30,29 @@ async function getActorUsername() {
   }
 }
 
+/* ─── Replace our {{REP_*}} merge tags with real data ─────────── */
+function replaceMergeTags(
+  html: string,
+  rep: {
+    name: string
+    title: string | null
+    email: string | null
+    phone: string | null
+    photo_url: string | null
+    slug: string
+  }
+): string {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pct.com'
+  return html
+    .replace(/\{\{REP_NAME\}\}/g,  rep.name || '')
+    .replace(/\{\{REP_TITLE\}\}/g, rep.title || '')
+    .replace(/\{\{REP_EMAIL\}\}/g, rep.email || '')
+    .replace(/\{\{REP_PHONE\}\}/g, rep.phone || '')
+    .replace(/\{\{REP_PHOTO\}\}/g, rep.photo_url || '')
+    .replace(/\{\{REP_URL\}\}/g,   `${siteUrl}/${rep.slug}`)
+}
+
+/* ─── GET — templates + campaigns ─────────────────────────────── */
 export async function GET() {
   if (!(await isAuthenticated())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -40,6 +66,7 @@ export async function GET() {
   return NextResponse.json({ templates, campaigns })
 }
 
+/* ─── POST — save-template | create-campaign ──────────────────── */
 export async function POST(req: NextRequest) {
   if (!(await isAuthenticated())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -49,6 +76,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const action = String(body.action || '')
 
+    /* ── Save template ──────────────────────────────────────────── */
     if (action === 'save-template') {
       const name = String(body.name || '').trim()
       const subject = String(body.subject || '').trim()
@@ -70,6 +98,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, template })
     }
 
+    /* ── Create Mailchimp campaign ──────────────────────────────── */
     if (action === 'create-campaign') {
       const apiKey = process.env.MAILCHIMP_API_KEY
       const server = process.env.MAILCHIMP_SERVER
@@ -78,18 +107,35 @@ export async function POST(req: NextRequest) {
       }
 
       const campaignName = String(body.campaignName || '').trim()
-      const fromName = String(body.fromName || 'Pacific Coast Title').trim()
-      const replyTo = String(body.replyTo || 'info@pct.com').trim()
-      const audienceId = String(body.audienceId || '').trim()
-      const subject = String(body.subject || '').trim()
-      const html = String(body.html_content || '')
-      const templateId = body.templateId ? Number(body.templateId) : undefined
-      const sendNow = Boolean(body.sendNow)
+      const fromName     = String(body.fromName || 'Pacific Coast Title').trim()
+      const replyTo      = String(body.replyTo || 'info@pct.com').trim()
+      const audienceId   = String(body.audienceId || '').trim()
+      const subject      = String(body.subject || '').trim()
+      const preheader    = String(body.preheader || '').trim()
+      const rawHtml      = String(body.html_content || '')
+      const templateId   = body.templateId ? Number(body.templateId) : undefined
+      const sendNow      = Boolean(body.sendNow)
+      const repSlug      = String(body.repSlug || '').trim()
 
-      if (!campaignName || !audienceId || !subject || !html) {
+      if (!campaignName || !audienceId || !subject || !rawHtml) {
         return NextResponse.json({ error: 'Campaign name, audience, subject, and html are required' }, { status: 400 })
       }
 
+      // ── Resolve merge tags with real rep data ─────────────────
+      let html = rawHtml
+      if (repSlug) {
+        try {
+          const rep = await getEmployeeAdminBySlug(repSlug)
+          if (rep) {
+            html = replaceMergeTags(html, rep)
+          }
+        } catch (err) {
+          console.warn('Failed to resolve rep merge tags:', err)
+          // Continue with raw HTML rather than failing the campaign
+        }
+      }
+
+      // ── 1. Create campaign ────────────────────────────────────
       const createRes = await fetch(`https://${server}.api.mailchimp.com/3.0/campaigns`, {
         method: 'POST',
         headers: {
@@ -101,9 +147,15 @@ export async function POST(req: NextRequest) {
           recipients: { list_id: audienceId },
           settings: {
             subject_line: subject,
+            preview_text: preheader || undefined,   // ← preheader now reaches Mailchimp
             title: campaignName,
             from_name: fromName,
             reply_to: replyTo,
+          },
+          tracking: {
+            opens: true,
+            html_clicks: true,
+            text_clicks: true,
           },
         }),
       })
@@ -113,8 +165,9 @@ export async function POST(req: NextRequest) {
       }
 
       const campaignId = String(createData.id)
-      const webId = String(createData.web_id ?? '')
+      const webId      = String(createData.web_id ?? '')
 
+      // ── 2. Set campaign content ───────────────────────────────
       const contentRes = await fetch(`https://${server}.api.mailchimp.com/3.0/campaigns/${campaignId}/content`, {
         method: 'PUT',
         headers: {
@@ -128,6 +181,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: contentData.detail || 'Failed to set campaign content' }, { status: contentRes.status })
       }
 
+      // ── 3. Optionally send immediately ────────────────────────
       let status = 'draft'
       if (sendNow) {
         const sendRes = await fetch(`https://${server}.api.mailchimp.com/3.0/campaigns/${campaignId}/actions/send`, {
@@ -144,6 +198,7 @@ export async function POST(req: NextRequest) {
         status = 'sent'
       }
 
+      // ── 4. Log in our database ────────────────────────────────
       const log = await createEmailCampaignLog({
         name: campaignName,
         subject,
@@ -155,6 +210,7 @@ export async function POST(req: NextRequest) {
         notes: sendNow ? 'Sent immediately from Team Admin' : 'Draft created from Team Admin',
       })
 
+      // ── Use configured server in admin URL (not hardcoded) ────
       return NextResponse.json({
         success: true,
         campaignId,
@@ -171,4 +227,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
-

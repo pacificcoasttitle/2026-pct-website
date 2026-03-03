@@ -34,7 +34,7 @@ interface CampaignLog {
   mailchimp_campaign_id: string | null; mailchimp_web_id: string | null
   status: string; created_at: string
 }
-interface Props { audiences: AudienceOption[] }
+interface Props { audiences: AudienceOption[]; mailchimpServer?: string }
 
 type View = 'editor' | 'campaign' | 'history'
 type PreviewSize = 'desktop' | 'mobile'
@@ -136,7 +136,7 @@ function ImageUploader({ assets, setAssets, onInsert }: {
 // ══════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ══════════════════════════════════════════════════════════════════════
-export function MarketingStudioClient({ audiences }: Props) {
+export function MarketingStudioClient({ audiences, mailchimpServer = 'us1' }: Props) {
   const [view, setView] = useState<View>('editor')
   const [previewSize, setPreviewSize] = useState<PreviewSize>('desktop')
   const [showPreview, setShowPreview] = useState(false)
@@ -243,12 +243,26 @@ export function MarketingStudioClient({ audiences }: Props) {
       height: '100%',
       menubar: 'file edit view insert format table',
       plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
-      toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | image link media | table | code preview fullscreen',
-      content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; padding: 16px; }',
+      toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | image link | table | code preview fullscreen',
+      // ── Email-safe settings ──────────────────────────────────
+      paste_as_text: true,                         // strip Word/web formatting on paste
+      paste_block_drop: false,
+      table_default_styles: { 'border-collapse': 'collapse', width: '100%' },
+      valid_styles: {
+        '*': 'color,background-color,background,font-family,font-size,font-weight,font-style,text-align,text-decoration,line-height,padding,padding-top,padding-bottom,padding-left,padding-right,margin,margin-top,margin-bottom,margin-left,margin-right,border,border-top,border-bottom,border-left,border-right,border-collapse,border-color,border-width,border-style,border-radius,width,max-width,min-width,height,display,vertical-align,list-style-type,opacity,box-shadow,overflow',
+      },
+      invalid_styles: { '*': 'position float clear' },  // email clients ignore these
+      content_style: `
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; padding: 16px; max-width: 600px; margin: 0 auto; color: #333; }
+        img  { max-width: 100%; height: auto; }
+        table { border-collapse: collapse; width: 100%; }
+        a { color: #f26b2b; }
+      `,
       branding: false,
       promotion: false,
       skin: 'oxide',
       content_css: 'default',
+      convert_urls: false,                          // keep absolute image URLs
       images_upload_handler: async (blobInfo: { blob: () => Blob; filename: () => string }) => {
         const formData = new FormData()
         formData.append('file', blobInfo.blob(), blobInfo.filename())
@@ -347,8 +361,10 @@ export function MarketingStudioClient({ audiences }: Props) {
             campaignName: campaignAllReps ? `${campaignName} — ${audience.name}` : campaignName,
             audienceId: audience.audienceId,
             subject: tpl.subject,
+            preheader: tpl.preheader || '',    // ← send preheader to Mailchimp
             html_content: tpl.html_content,
             templateId: tpl.id,
+            repSlug: audience.slug,            // ← resolve {{REP_*}} merge tags
             fromName, replyTo, sendNow,
           }),
         })
@@ -780,7 +796,7 @@ export function MarketingStudioClient({ audiences }: Props) {
                         <td className="px-5 py-3"><p className="font-semibold text-[#03374f]">{h.name}</p><p className="text-xs text-gray-400 truncate max-w-[220px]">{h.subject}</p></td>
                         <td className="px-5 py-3 text-xs text-gray-500">{audiences.find((a) => a.audienceId === h.audience_id)?.name || h.audience_id || '—'}</td>
                         <td className="px-5 py-3 text-center"><span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${h.status === 'sent' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{h.status}</span></td>
-                        <td className="px-5 py-3 text-right">{h.mailchimp_web_id ? <a href={`https://us1.admin.mailchimp.com/campaigns/edit?id=${h.mailchimp_web_id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-[#f26b2b] hover:underline">Open <ExternalLink className="w-3 h-3" /></a> : '—'}</td>
+                        <td className="px-5 py-3 text-right">{h.mailchimp_web_id ? <a href={`https://${mailchimpServer}.admin.mailchimp.com/campaigns/edit?id=${h.mailchimp_web_id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-[#f26b2b] hover:underline">Open <ExternalLink className="w-3 h-3" /></a> : '—'}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -19,7 +19,7 @@ async function fetchAudienceStats(audienceId: string) {
     const res = await fetch(
       `https://${server}.api.mailchimp.com/3.0/lists/${audienceId}?fields=id,name,stats`,
       {
-        headers: { Authorization: `Bearer ${apiKey}` },
+        headers: { Authorization: `Basic ${Buffer.from(`any:${apiKey}`).toString('base64')}` },
         next:    { revalidate: 300 },
       }
     )
@@ -102,7 +102,7 @@ export default async function MarketingPage() {
       </div>
 
       {/* Studio — full width */}
-      <MarketingStudioClient audiences={audienceOptions} />
+      <MarketingStudioClient audiences={audienceOptions} mailchimpServer={mailchimpServer} />
 
       {/* Rep audience cards */}
       {withMc.length > 0 && (

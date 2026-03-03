@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       `https://${server}.api.mailchimp.com/3.0/lists/${audienceId}?fields=id,name,stats`,
       {
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Basic ${Buffer.from(`any:${apiKey}`).toString('base64')}`,
           'Content-Type': 'application/json',
         },
         next: { revalidate: 300 }, // cache 5 min
