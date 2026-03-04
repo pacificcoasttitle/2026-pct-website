@@ -23,9 +23,9 @@ export async function POST(req: NextRequest) {
     let totalQuestions = 0
     for (const section of ASSESSMENT_SECTIONS) {
       const r = responses[section.key] || {}
-      for (let i = 1; i <= section.questions; i++) {
+      for (const q of section.questions) {
         totalQuestions += 1
-        if (r[`q${i}`] === true) yesCount += 1
+        if (r[q.key] === true) yesCount += 1
       }
     }
 
