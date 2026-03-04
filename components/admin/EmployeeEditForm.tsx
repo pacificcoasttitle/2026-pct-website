@@ -80,13 +80,14 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
   const [saving,  setSaving]  = useState(false)
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
-  /** Auto-parse Mailchimp form action URL or embed code snippet */
+  /** Auto-parse Mailchimp form action URL or full embed code */
   function handleMcUrlChange(value: string) {
     setMcUrl(value)
     setSaveMsg(null)
-    // Parse from URL like: https://pct.us17.list-manage.com/subscribe/post?u=xxx&id=yyy&f_id=zzz
-    // Or from embed code containing that URL
-    const urlMatch = value.match(/https?:\/\/[^"'\s]*list-manage\.com\/subscribe\/post[^"'\s]*/i)
+    // Decode HTML entities (&amp; → &) since Mailchimp embed code uses them
+    const decoded = value.replace(/&amp;/g, '&')
+    // Find the list-manage subscribe URL anywhere in the pasted content
+    const urlMatch = decoded.match(/https?:\/\/[^"'\s]*list-manage\.com\/subscribe\/post[^"'\s]*/i)
     if (urlMatch) {
       try {
         const url = new URL(urlMatch[0])
