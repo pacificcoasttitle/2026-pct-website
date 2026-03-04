@@ -20,6 +20,8 @@ import { TeamMemberPage } from '@/components/team/TeamMemberPage'
 
 // Allow slugs not in generateStaticParams to be rendered on-demand
 export const dynamicParams = true
+/** Re-fetch from DB every 60 s so admin edits (photos, bios, etc.) appear quickly */
+export const revalidate = 60
 
 // Pre-render all known team members (from data/team.ts) at build time
 export function generateStaticParams() {

@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 }
 
 // Revalidate every 10 minutes so new employees show up quickly without a full rebuild
-export const revalidate = 600
+export const revalidate = 60
 
 // ── Department order / display config ────────────────────────────────────────
 const DEPT_ORDER = ['Sales', 'Escrow', 'Title', 'Administration', 'Marketing']

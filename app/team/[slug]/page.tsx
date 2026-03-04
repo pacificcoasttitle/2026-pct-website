@@ -17,6 +17,8 @@ import { TeamMemberPage } from '@/components/team/TeamMemberPage'
 import type { TeamMember } from '@/data/team'
 
 export const dynamicParams = true
+/** Re-fetch from DB every 60 s so admin edits (photos, bios, etc.) appear quickly */
+export const revalidate = 60
 
 // Pre-render all active employees at build time
 export async function generateStaticParams() {
