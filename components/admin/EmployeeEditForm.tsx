@@ -64,20 +64,45 @@ const INPUT = "w-full h-10 px-3.5 bg-gray-50 border border-gray-200 rounded-xl t
 const TEXTAREA = "w-full px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 transition-all resize-none"
 
 export default function EmployeeEditForm({ employee: initial, offices, depts }: Props) {
-  // Parse mailchimp_form_code JSON into individual fields for editing
-  const parsedMc = (() => {
-    try { return initial.mailchimp_form_code ? JSON.parse(initial.mailchimp_form_code) : {} } catch { return {} }
+  // Rebuild the Mailchimp action URL from stored JSON for display
+  const storedMcUrl = (() => {
+    try {
+      const mc = initial.mailchimp_form_code ? JSON.parse(initial.mailchimp_form_code) : null
+      if (mc?.server && mc?.u && mc?.audienceId)
+        return `https://pct.${mc.server}.list-manage.com/subscribe/post?u=${mc.u}&id=${mc.audienceId}${mc.formId ? `&f_id=${mc.formId}` : ''}`
+      return ''
+    } catch { return '' }
   })()
 
   const [emp, setEmp] = useState(initial)
-  const [mcServer,    setMcServer]    = useState<string>(parsedMc.server    ?? '')
-  const [mcU,         setMcU]         = useState<string>(parsedMc.u         ?? '')
-  const [mcFormId,    setMcFormId]    = useState<string>(parsedMc.formId    ?? '')
-  const [mcTags,      setMcTags]      = useState<string>(parsedMc.tags      ?? '')
-  const [mcHeading,   setMcHeading]   = useState<string>(parsedMc.subscribeHeading    ?? '')
-  const [mcSubHead,   setMcSubHead]   = useState<string>(parsedMc.subscribeSubHeading ?? '')
+  const [mcUrl, setMcUrl] = useState(storedMcUrl)
+  const [mcParsed, setMcParsed] = useState<{ server?: string; u?: string; audienceId?: string; formId?: string } | null>(null)
   const [saving,  setSaving]  = useState(false)
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
+  /** Auto-parse Mailchimp form action URL or embed code snippet */
+  function handleMcUrlChange(value: string) {
+    setMcUrl(value)
+    setSaveMsg(null)
+    // Parse from URL like: https://pct.us17.list-manage.com/subscribe/post?u=xxx&id=yyy&f_id=zzz
+    // Or from embed code containing that URL
+    const urlMatch = value.match(/https?:\/\/[^"'\s]*list-manage\.com\/subscribe\/post[^"'\s]*/i)
+    if (urlMatch) {
+      try {
+        const url = new URL(urlMatch[0])
+        const hostParts = url.hostname.split('.')
+        const server = hostParts.length >= 3 ? hostParts[hostParts.length - 3] : ''
+        const u = url.searchParams.get('u') || ''
+        const id = url.searchParams.get('id') || ''
+        const fid = url.searchParams.get('f_id') || ''
+        if (server && u && id) {
+          setMcParsed({ server, u, audienceId: id, formId: fid })
+          return
+        }
+      } catch { /* fall through */ }
+    }
+    setMcParsed(null)
+  }
 
   function update(field: string, value: unknown) {
     setEmp((prev) => ({ ...prev, [field]: value }))
@@ -88,16 +113,16 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
     setSaving(true)
     setSaveMsg(null)
     try {
-      // Build Mailchimp form config JSON from individual fields
-      const mcConfig: Record<string, string> = {}
-      if (mcServer.trim())  mcConfig.server              = mcServer.trim()
-      if (mcU.trim())       mcConfig.u                   = mcU.trim()
-      if (emp.mailchimp_audience_id?.trim()) mcConfig.audienceId = emp.mailchimp_audience_id.trim()
-      if (mcFormId.trim())  mcConfig.formId              = mcFormId.trim()
-      if (mcTags.trim())    mcConfig.tags                = mcTags.trim()
-      if (mcHeading.trim()) mcConfig.subscribeHeading    = mcHeading.trim()
-      if (mcSubHead.trim()) mcConfig.subscribeSubHeading = mcSubHead.trim()
-      const mailchimpFormCode = Object.keys(mcConfig).length > 0 ? JSON.stringify(mcConfig) : null
+      // Build Mailchimp form config JSON from parsed URL
+      let mailchimpFormCode: string | null = null
+      if (mcParsed?.server && mcParsed?.u && mcParsed?.audienceId) {
+        mailchimpFormCode = JSON.stringify({
+          server:     mcParsed.server,
+          u:          mcParsed.u,
+          audienceId: mcParsed.audienceId,
+          formId:     mcParsed.formId || '',
+        })
+      }
 
       const res = await fetch(`/api/admin/employees/${emp.slug}`, {
         method:  'PATCH',
@@ -123,7 +148,7 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
           website_specialties:      emp.website_specialties,
           website_custom_title:     emp.website_custom_title,
           website_meta_description: emp.website_meta_description,
-          mailchimp_audience_id:    emp.mailchimp_audience_id,
+          mailchimp_audience_id:    mcParsed?.audienceId ?? emp.mailchimp_audience_id,
           mailchimp_form_code:      mailchimpFormCode,
         }),
       })
@@ -438,52 +463,38 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
         <div className="border-t border-gray-100 pt-4 mt-2">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
             <Mail className="w-3.5 h-3.5" />
-            Mailchimp Subscription Form
-          </p>
-          <p className="text-[11px] text-gray-400 mb-4 leading-relaxed">
-            These values come from the Mailchimp embedded form URL for this rep&apos;s audience.
-            In Mailchimp → Audience → Signup Forms → Embedded Forms, look at the form&apos;s{' '}
-            <code className="bg-gray-100 px-1 rounded text-[10px]">action</code> URL to find these params.
+            Mailchimp Subscribe Form
           </p>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Server Prefix (e.g. us17)">
-              <input type="text" value={mcServer} onChange={(e) => { setMcServer(e.target.value); setSaveMsg(null) }}
-                placeholder="us17" className={INPUT} />
-            </Field>
-            <Field label="Account ID (u param)">
-              <input type="text" value={mcU} onChange={(e) => { setMcU(e.target.value); setSaveMsg(null) }}
-                placeholder="3f123598483b787fa180fff0f" className={INPUT} />
-            </Field>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Audience / List ID (id param)">
-              <input type="text" value={emp.mailchimp_audience_id ?? ''}
-                onChange={(e) => update('mailchimp_audience_id', e.target.value)}
-                placeholder="a8f29f3045" className={INPUT} />
-            </Field>
-            <Field label="Form ID (f_id param)">
-              <input type="text" value={mcFormId} onChange={(e) => { setMcFormId(e.target.value); setSaveMsg(null) }}
-                placeholder="00babae2f0" className={INPUT} />
-            </Field>
-          </div>
-
-          <Field label="Tags (comma-separated tag IDs)">
-            <input type="text" value={mcTags} onChange={(e) => { setMcTags(e.target.value); setSaveMsg(null) }}
-              placeholder="8368532,8368533,8368534" className={INPUT} />
+          <Field label="Paste Mailchimp Form URL or Embed Code">
+            <textarea
+              value={mcUrl}
+              onChange={(e) => handleMcUrlChange(e.target.value)}
+              placeholder="Paste the form action URL or the full embed code from Mailchimp here…"
+              rows={3}
+              className={TEXTAREA}
+            />
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Subscribe Heading (optional)">
-              <input type="text" value={mcHeading} onChange={(e) => { setMcHeading(e.target.value); setSaveMsg(null) }}
-                placeholder={`${emp.first_name}'s Weekly Updates`} className={INPUT} />
-            </Field>
-            <Field label="Subscribe Sub-heading (optional)">
-              <input type="text" value={mcSubHead} onChange={(e) => { setMcSubHead(e.target.value); setSaveMsg(null) }}
-                placeholder="Subscribe to receive market trends..." className={INPUT} />
-            </Field>
-          </div>
+          {/* Auto-parsed feedback */}
+          {mcUrl.trim() && (
+            mcParsed ? (
+              <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-100 rounded-xl text-xs text-green-700">
+                <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                Detected: server <strong>{mcParsed.server}</strong> · audience <strong>{mcParsed.audienceId}</strong>
+                {mcParsed.formId && <> · form <strong>{mcParsed.formId}</strong></>}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700">
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                Could not detect Mailchimp URL. Make sure it contains <code className="bg-amber-100/50 px-1 rounded">list-manage.com/subscribe/post?u=...&amp;id=...</code>
+              </div>
+            )
+          )}
+
+          <p className="text-[11px] text-gray-400 leading-relaxed mt-1">
+            In Mailchimp → Audience → Signup Forms → Embedded Forms → copy the form <code className="bg-gray-100 px-1 rounded text-[10px]">action</code> URL. We&apos;ll parse everything automatically.
+          </p>
         </div>
       </Section>
 
