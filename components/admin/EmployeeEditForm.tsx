@@ -64,7 +64,18 @@ const INPUT = "w-full h-10 px-3.5 bg-gray-50 border border-gray-200 rounded-xl t
 const TEXTAREA = "w-full px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 transition-all resize-none"
 
 export default function EmployeeEditForm({ employee: initial, offices, depts }: Props) {
+  // Parse mailchimp_form_code JSON into individual fields for editing
+  const parsedMc = (() => {
+    try { return initial.mailchimp_form_code ? JSON.parse(initial.mailchimp_form_code) : {} } catch { return {} }
+  })()
+
   const [emp, setEmp] = useState(initial)
+  const [mcServer,    setMcServer]    = useState<string>(parsedMc.server    ?? '')
+  const [mcU,         setMcU]         = useState<string>(parsedMc.u         ?? '')
+  const [mcFormId,    setMcFormId]    = useState<string>(parsedMc.formId    ?? '')
+  const [mcTags,      setMcTags]      = useState<string>(parsedMc.tags      ?? '')
+  const [mcHeading,   setMcHeading]   = useState<string>(parsedMc.subscribeHeading    ?? '')
+  const [mcSubHead,   setMcSubHead]   = useState<string>(parsedMc.subscribeSubHeading ?? '')
   const [saving,  setSaving]  = useState(false)
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
@@ -77,6 +88,17 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
     setSaving(true)
     setSaveMsg(null)
     try {
+      // Build Mailchimp form config JSON from individual fields
+      const mcConfig: Record<string, string> = {}
+      if (mcServer.trim())  mcConfig.server              = mcServer.trim()
+      if (mcU.trim())       mcConfig.u                   = mcU.trim()
+      if (emp.mailchimp_audience_id?.trim()) mcConfig.audienceId = emp.mailchimp_audience_id.trim()
+      if (mcFormId.trim())  mcConfig.formId              = mcFormId.trim()
+      if (mcTags.trim())    mcConfig.tags                = mcTags.trim()
+      if (mcHeading.trim()) mcConfig.subscribeHeading    = mcHeading.trim()
+      if (mcSubHead.trim()) mcConfig.subscribeSubHeading = mcSubHead.trim()
+      const mailchimpFormCode = Object.keys(mcConfig).length > 0 ? JSON.stringify(mcConfig) : null
+
       const res = await fetch(`/api/admin/employees/${emp.slug}`, {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -102,6 +124,7 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
           website_custom_title:     emp.website_custom_title,
           website_meta_description: emp.website_meta_description,
           mailchimp_audience_id:    emp.mailchimp_audience_id,
+          mailchimp_form_code:      mailchimpFormCode,
         }),
       })
 
@@ -412,15 +435,56 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
           />
         </Field>
 
-        <Field label="Mailchimp Audience ID">
-          <input
-            type="text"
-            value={emp.mailchimp_audience_id ?? ''}
-            onChange={(e) => update('mailchimp_audience_id', e.target.value)}
-            placeholder="a8f29f3045"
-            className={INPUT}
-          />
-        </Field>
+        <div className="border-t border-gray-100 pt-4 mt-2">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Mail className="w-3.5 h-3.5" />
+            Mailchimp Subscription Form
+          </p>
+          <p className="text-[11px] text-gray-400 mb-4 leading-relaxed">
+            These values come from the Mailchimp embedded form URL for this rep&apos;s audience.
+            In Mailchimp → Audience → Signup Forms → Embedded Forms, look at the form&apos;s{' '}
+            <code className="bg-gray-100 px-1 rounded text-[10px]">action</code> URL to find these params.
+          </p>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Server Prefix (e.g. us17)">
+              <input type="text" value={mcServer} onChange={(e) => { setMcServer(e.target.value); setSaveMsg(null) }}
+                placeholder="us17" className={INPUT} />
+            </Field>
+            <Field label="Account ID (u param)">
+              <input type="text" value={mcU} onChange={(e) => { setMcU(e.target.value); setSaveMsg(null) }}
+                placeholder="3f123598483b787fa180fff0f" className={INPUT} />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Audience / List ID (id param)">
+              <input type="text" value={emp.mailchimp_audience_id ?? ''}
+                onChange={(e) => update('mailchimp_audience_id', e.target.value)}
+                placeholder="a8f29f3045" className={INPUT} />
+            </Field>
+            <Field label="Form ID (f_id param)">
+              <input type="text" value={mcFormId} onChange={(e) => { setMcFormId(e.target.value); setSaveMsg(null) }}
+                placeholder="00babae2f0" className={INPUT} />
+            </Field>
+          </div>
+
+          <Field label="Tags (comma-separated tag IDs)">
+            <input type="text" value={mcTags} onChange={(e) => { setMcTags(e.target.value); setSaveMsg(null) }}
+              placeholder="8368532,8368533,8368534" className={INPUT} />
+          </Field>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Subscribe Heading (optional)">
+              <input type="text" value={mcHeading} onChange={(e) => { setMcHeading(e.target.value); setSaveMsg(null) }}
+                placeholder={`${emp.first_name}'s Weekly Updates`} className={INPUT} />
+            </Field>
+            <Field label="Subscribe Sub-heading (optional)">
+              <input type="text" value={mcSubHead} onChange={(e) => { setMcSubHead(e.target.value); setSaveMsg(null) }}
+                placeholder="Subscribe to receive market trends..." className={INPUT} />
+            </Field>
+          </div>
+        </div>
       </Section>
 
       {/* Bottom save */}

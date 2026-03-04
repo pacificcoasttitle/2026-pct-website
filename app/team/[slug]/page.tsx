@@ -27,6 +27,27 @@ export async function generateStaticParams() {
 }
 
 // ── Adapter ───────────────────────────────────────────────────────────────────
+function parseMailchimpConfig(emp: Employee): TeamMember['mailchimp'] {
+  // Try JSON stored in mailchimp_form_code first
+  if (emp.mailchimp_form_code) {
+    try {
+      const mc = JSON.parse(emp.mailchimp_form_code)
+      if (mc.server && mc.u && (mc.audienceId || emp.mailchimp_audience_id)) {
+        return {
+          server:              mc.server,
+          u:                   mc.u,
+          audienceId:          mc.audienceId ?? emp.mailchimp_audience_id,
+          formId:              mc.formId ?? '',
+          tags:                mc.tags,
+          subscribeHeading:    mc.subscribeHeading,
+          subscribeSubHeading: mc.subscribeSubHeading,
+        }
+      }
+    } catch { /* ignore bad JSON */ }
+  }
+  return undefined
+}
+
 function employeeToTeamMember(emp: Employee): TeamMember {
   const officeLabel = emp.office
     ? [emp.office.city, emp.office.state].filter(Boolean).join(', ')
@@ -46,6 +67,7 @@ function employeeToTeamMember(emp: Employee): TeamMember {
     languages:   parseLangs(emp.languages),
     office:      officeLabel,
     linkedin:    emp.linkedin ?? undefined,
+    mailchimp:   parseMailchimpConfig(emp),
   }
 }
 

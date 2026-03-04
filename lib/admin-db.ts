@@ -206,6 +206,7 @@ export interface EmployeeUpdatePayload {
   website_custom_title?:    string
   website_meta_description?: string
   mailchimp_audience_id?:   string
+  mailchimp_form_code?:     string
 }
 
 export async function updateEmployee(slug: string, data: EmployeeUpdatePayload): Promise<AdminEmployee | null> {

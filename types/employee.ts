@@ -64,13 +64,27 @@ export interface Employee {
   department?: Department | null
 }
 
-// Helpers
+// Helpers — handles both JSON arrays and comma-separated plain strings
+function smartParse(raw: string | null): string[] {
+  if (!raw || !raw.trim()) return []
+  const trimmed = raw.trim()
+  // Try JSON first (e.g. '["English","Spanish"]')
+  if (trimmed.startsWith('[')) {
+    try { return JSON.parse(trimmed) } catch { /* fall through */ }
+  }
+  // Fallback: comma-separated or period-separated plain string
+  return trimmed
+    .split(/[,.]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
 export function parseLangs(raw: string | null): string[] {
-  try { return raw ? JSON.parse(raw) : [] } catch { return [] }
+  return smartParse(raw)
 }
 
 export function parseSpecs(raw: string | null): string[] {
-  try { return raw ? JSON.parse(raw) : [] } catch { return [] }
+  return smartParse(raw)
 }
 
 export const R2_BASE = 'https://pub-dbe01c2b9ef0457c979ef76b8d8618f3.r2.dev/sales-rep-photos/WebThumb'

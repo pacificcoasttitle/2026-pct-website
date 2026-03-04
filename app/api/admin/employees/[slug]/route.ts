@@ -42,7 +42,7 @@ export async function PATCH(
     'bio', 'photo_url', 'languages', 'specialties', 'linkedin',
     'office_id', 'department_id', 'active', 'featured', 'website_active',
     'website_bio', 'website_specialties', 'website_custom_title',
-    'website_meta_description', 'mailchimp_audience_id',
+    'website_meta_description', 'mailchimp_audience_id', 'mailchimp_form_code',
   ]
 
   const data: Record<string, unknown> = {}
