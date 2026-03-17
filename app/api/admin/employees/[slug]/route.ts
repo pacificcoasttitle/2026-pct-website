@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { verifyAdminToken, ADMIN_COOKIE } from '@/lib/admin-auth'
 import { updateEmployee, getEmployeeAdminBySlug } from '@/lib/admin-db'
@@ -52,6 +53,10 @@ export async function PATCH(
 
   const updated = await updateEmployee(slug, data)
   if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  revalidatePath(`/team/${slug}`)
+  revalidatePath(`/${slug}`)
+  revalidatePath('/team')
 
   return NextResponse.json(updated)
 }

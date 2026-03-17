@@ -368,8 +368,8 @@ export const booklets = [
     title: "Home Buyer's & Seller's Guide to Title & Escrow",
     description: "A comprehensive guide for clients navigating the title and escrow process",
     downloads: [
-      { label: "English PDF", file: "HomeBuyersGuide-English.pdf" },
-      { label: "Spanish PDF", file: "HomeBuyersGuide-Spanish.pdf" },
+      { label: "English PDF", href: "https://documents.pct.com/industry-documents/TitleCompany-Buy-Sell-Web.pdf" },
+      { label: "Spanish PDF", href: "https://documents.pct.com/industry-documents/Buyers-SellGuide-Spanish.pdf" },
     ],
     image: "/booklet-homebuyers.jpg",
   },
@@ -378,8 +378,8 @@ export const booklets = [
     title: "Introduction to Title Documents",
     description: "Understanding the documents involved in a real estate transaction",
     downloads: [
-      { label: "PDF", file: "IntroToTitleDocuments.pdf" },
-      { label: "Digital Book", href: "https://pct.com/digital-books/title-documents" },
+      { label: "PDF", href: "https://documents.pct.com/industry-documents/Introduction-TitleDocuments-WebVersion.pdf" },
+      { label: "Digital Book", href: "http://flipbooks.pct.com/introduction-to-documents-ftmsb35jv.html" },
     ],
     image: "/booklet-titledocs.jpg",
   },
@@ -388,8 +388,8 @@ export const booklets = [
     title: "How to Read a Preliminary Title Report",
     description: "A guide to understanding and interpreting preliminary title reports",
     downloads: [
-      { label: "PDF", file: "HowToReadPrelim.pdf" },
-      { label: "Digital Book", href: "https://pct.com/digital-books/prelim-report" },
+      { label: "PDF", href: "https://documents.pct.com/industry-documents/pctReadPrelim.pdf" },
+      { label: "Digital Book", href: "http://flipbooks.pct.com/pctreadprelim.html" },
     ],
     image: "/booklet-prelim.jpg",
   },
@@ -398,8 +398,8 @@ export const booklets = [
     title: "Commercial Guidebook to Title & Escrow",
     description: "Title and escrow essentials for commercial real estate transactions",
     downloads: [
-      { label: "PDF", file: "CommercialGuidebook.pdf" },
-      { label: "Digital Book", href: "https://pct.com/digital-books/commercial" },
+      { label: "PDF", href: "https://documents.pct.com/industry-documents/commercialguide.pdf" },
+      { label: "Digital Book", href: "http://flipbooks.pct.com/pct-commercial-guidebook.html" },
     ],
     image: "/booklet-commercial.jpg",
   },
@@ -408,7 +408,7 @@ export const booklets = [
     title: "First Time Homeowners Guidebook",
     description: "Everything first-time buyers need to know about title and escrow",
     downloads: [
-      { label: "PDF", file: "FirstTimeHomeowners.pdf" },
+      { label: "PDF", href: "https://gallery.mailchimp.com/3f123598483b787fa180fff0f/files/498240dc-af0b-479b-a8ad-f2c3f9cc2d96/FirstTimeHomeBuyers_8.5x11.pdf" },
     ],
     image: "/booklet-firsttime.jpg",
   },
@@ -417,7 +417,7 @@ export const booklets = [
     title: "Homeowners Guide to Earthquake Safety",
     description: "Important information about earthquake safety and disclosure requirements",
     downloads: [
-      { label: "PDF", file: "EarthquakeSafety.pdf" },
+      { label: "PDF", href: "https://gallery.mailchimp.com/3f123598483b787fa180fff0f/files/f2aa6827-b9b0-4afe-a76c-16b2b030eb5c/PCT_Earthquake.pdf" },
     ],
     image: "/booklet-earthquake.jpg",
   },
