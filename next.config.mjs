@@ -80,6 +80,13 @@ const nextConfig = {
         destination: "/services/tsg",
         permanent: true,
       },
+      // Legacy PDF links — QR codes and old bookmarks point to pct.com/industry-documents/
+      // but the files live on documents.pct.com
+      {
+        source: "/industry-documents/:path*",
+        destination: "https://documents.pct.com/industry-documents/:path*",
+        permanent: true,
+      },
     ]
   },
 }
