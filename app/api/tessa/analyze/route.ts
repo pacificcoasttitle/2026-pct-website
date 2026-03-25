@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server"
+import { cookies } from "next/headers"
+import { TESSA_COOKIE, isValidSession, isAuthRequired } from "@/lib/tessa-auth"
 
 export async function POST(request: Request) {
+  if (isAuthRequired()) {
+    const jar = await cookies()
+    const session = jar.get(TESSA_COOKIE)?.value
+    if (!isValidSession(session)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+  }
+
   try {
     const formData = await request.formData()
     const file = formData.get("pdf") as File
@@ -9,13 +19,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ analysis: "No PDF file provided." }, { status: 400 })
     }
 
-    // In a full implementation, this would:
-    // 1. Extract text from PDF using PDF.js or similar
-    // 2. Parse the preliminary title report structure
-    // 3. Send to TESSA API for analysis
-    // 4. Return formatted analysis
-
-    // For now, return a placeholder response
     const analysis = `
 📋 PRELIMINARY TITLE REPORT ANALYSIS
 

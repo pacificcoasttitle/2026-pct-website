@@ -2,12 +2,15 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { Sparkles, FileText, X } from 'lucide-react'
+import { useTessa } from '@/contexts/TessaContext'
 import { TessaModal } from './tessa-modal'
 import { TessaPrelimModal } from './tessa/TessaPrelimModal'
 
 type Mode = 'ask' | 'analyze'
 
 export function HeroSimple() {
+  const { requireAuth } = useTessa()
+
   // ── Ask mode ──────────────────────────────────────────────
   const [isTessaOpen, setIsTessaOpen]   = useState(false)
   const [tessaQuery, setTessaQuery]     = useState('')
@@ -30,12 +33,13 @@ export function HeroSimple() {
   }
 
   // ── Handlers ──────────────────────────────────────────────
-  const handleAskSubmit = (e: React.FormEvent) => {
+  const handleAskSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (question.trim()) {
-      setTessaQuery(question)
-      setIsTessaOpen(true)
-    }
+    if (!question.trim()) return
+    const ok = await requireAuth()
+    if (!ok) return
+    setTessaQuery(question)
+    setIsTessaOpen(true)
   }
 
   const handleFileChange = useCallback((file: File) => {
@@ -53,9 +57,12 @@ export function HeroSimple() {
     setSelectedFile(file)
   }, [])
 
-  const handleAnalyzeSubmit = (e: React.FormEvent) => {
+  const handleAnalyzeSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (selectedFile) setIsPrelimOpen(true)
+    if (!selectedFile) return
+    const ok = await requireAuth()
+    if (!ok) return
+    setIsPrelimOpen(true)
   }
 
   const handleDrop = useCallback((e: React.DragEvent) => {
