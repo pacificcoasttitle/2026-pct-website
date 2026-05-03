@@ -119,7 +119,7 @@ export const locations: Location[] = [
       state: "CA",
       zip: "91203",
     },
-    phone: "(818) 507-5050",
+    phone: "(818) 662-6700",
     tollFree: "(866) 724-1050",
     fax: "(818) 507-5051",
     email: "glendale@pct.com",

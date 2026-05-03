@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 💰 Taxes and Assessments
 📄 Other Findings
 
-For now, please contact your title officer directly for report analysis at (800) 234-5678.
+For now, please contact your title officer directly for report analysis at (866) 724-1050.
 
 Thank you for your patience as we enhance TESSA™ to serve you better!
     `

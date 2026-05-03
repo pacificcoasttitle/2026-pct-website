@@ -30,7 +30,7 @@ const locations = [
     name: "Glendale",
     address: "516 Burchett St.",
     city: "Glendale, CA 91203",
-    phone: "(818) 244-9644",
+    phone: "(818) 662-6700",
     fax: "(818) 244-9656",
     email: "glendale@pct.com",
     hours: "Mon-Fri 8:00 AM - 5:00 PM",

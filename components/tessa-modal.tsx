@@ -66,7 +66,7 @@ export function TessaModal({ isOpen, onClose, initialQuery, initialMode, initial
         {
           role: "tessa",
           content:
-            "I apologize, but I'm having trouble connecting right now. Please try again or contact us directly at (800) 234-5678.",
+            "I apologize, but I'm having trouble connecting right now. Please try again or contact us directly at (866) 724-1050.",
         },
       ])
     } finally {
