@@ -188,17 +188,16 @@ export default function Top10TitleProblemsPage() {
       <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 text-center mb-12">
         <h2 className="text-xl font-bold text-secondary mb-3">Want a Printable Version?</h2>
         <p className="text-gray-600 mb-6">
-          Download our "Top 10 Title Concerns" flyer to share with clients.
+          Browse our informational flyers for printable one-page guides you can share with clients,
+          including Identifying Red Flags and many other title topics.
         </p>
-        <a
-          href="https://documents.pct.com/assets/downloads/flyers/top-10-title-concerns.pdf"
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href="/resources/flyers"
           className="inline-flex items-center gap-2 bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors"
         >
           <Download className="w-5 h-5" />
-          Download PDF
-        </a>
+          Browse informational flyers
+        </Link>
       </div>
 
       {/* CTA Banner */}

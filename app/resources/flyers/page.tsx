@@ -5,8 +5,8 @@ import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { PageHero } from "@/components/page-hero"
 import Link from "next/link"
-import { FileText, Download, ChevronRight, Search, X } from "lucide-react"
-import { flyers } from "@/data/resources"
+import { FileText, Download, Search, X } from "lucide-react"
+import { flyers, documentsFlyerHref } from "@/data/resources"
 
 type FilterType = "all" | "title" | "escrow" | "propertyTax"
 
@@ -121,7 +121,7 @@ export default function FlyersPage() {
               {filteredFlyers.map((flyer, index) => (
                 <a
                   key={index}
-                  href={`https://documents.pct.com/assets/downloads/flyers/${flyer.file}`}
+                  href={documentsFlyerHref(flyer.file)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group bg-white border border-gray-100 rounded-xl p-4 hover:border-primary/30 hover:shadow-md transition-all"
