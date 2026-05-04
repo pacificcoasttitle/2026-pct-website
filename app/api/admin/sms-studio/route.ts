@@ -82,6 +82,13 @@ export async function POST(req: NextRequest) {
       preview_mode,
       test_phone,
     })
+    // Surface a clearer message when Render returns success:false but no error
+    if (!data.success && !data.error) {
+      const failed   = (data as { failed?: number }).failed
+      const total    = (data as { total?: number }).total
+      const summary  = `SMS service rejected the batch (${failed ?? '?'} of ${total ?? '?'} failed). Check Render logs and that R2 image URLs are publicly fetchable.`
+      return NextResponse.json({ ...data, error: summary }, { status: 502 })
+    }
     return NextResponse.json(data, { status: data.success ? 200 : 502 })
   } catch (err) {
     console.error('SMS Studio API error:', err)

@@ -88,6 +88,14 @@ interface UploadedImage {
   repSlug: string   // which rep this image is assigned to
 }
 
+interface RecipientResult {
+  name?:     string
+  phone?:    string
+  sms_code?: string
+  status?:   string
+  error?:    string
+}
+
 interface SendResult {
   success?: boolean
   total?: number
@@ -95,6 +103,7 @@ interface SendResult {
   failed?: number
   error?: string
   target?: { name?: string; phone?: string; sms_code?: string | null }
+  recipients?: RecipientResult[]
   [key: string]: unknown
 }
 
@@ -201,10 +210,47 @@ export function SmsStudioSender({ repCount, reps }: Props) {
     }
   }
 
+  // Try to guess which rep an image belongs to from its filename.
+  //   - "C-9_anything.jpg" / "C9.jpg" / "c-9.png" → match by sms_code
+  //   - "David Gomez post.jpg" / "david-gomez.jpg" → match by first name, then full name
+  function guessRepFromFilename(filename: string): string | null {
+    const stem = filename.replace(/\.[^/.]+$/, '').toLowerCase()
+    if (!stem) return null
+
+    // 1. SMS code pattern (preferred — explicit)
+    const codeMatch = stem.match(/(?:^|[^a-z0-9])c-?(\d+)(?:[^a-z0-9]|$)/)
+    if (codeMatch) {
+      const want = `c-${codeMatch[1]}`
+      const hit = reps.find((r) => r.sms_code.toLowerCase().replace('-', '-') === want
+        || r.sms_code.toLowerCase().replace('-', '') === `c${codeMatch[1]}`)
+      if (hit) return hit.slug
+    }
+
+    // 2. Token-based name match
+    const tokens = stem.split(/[^a-z0-9]+/).filter(Boolean)
+    for (const r of reps) {
+      const first = r.first_name.toLowerCase()
+      const last  = r.name.toLowerCase().split(' ').pop() || ''
+      if (tokens.includes(first) && (!last || tokens.includes(last))) return r.slug
+    }
+    for (const r of reps) {
+      const first = r.first_name.toLowerCase()
+      if (tokens.includes(first)) return r.slug
+    }
+    return null
+  }
+
+  function pickTargetSlug(file: File): string {
+    if (sendMode === 'single') return singleRepSlug
+    if (sendMode === 'all')    return reps[0]?.slug || ''
+    // per-image: try filename auto-detect first, fall back to first rep
+    const guessed = guessRepFromFilename(file.name)
+    return guessed || reps[0]?.slug || ''
+  }
+
   function handleFiles(files: FileList | null) {
     if (!files) return
-    const targetSlug = sendMode === 'single' ? singleRepSlug : reps[0]?.slug || ''
-    Array.from(files).forEach((f) => uploadFile(f, targetSlug))
+    Array.from(files).forEach((f) => uploadFile(f, pickTargetSlug(f)))
   }
 
   const onDragOver  = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(true) }, [])
@@ -637,23 +683,46 @@ export function SmsStudioSender({ repCount, reps }: Props) {
         </div>
 
         {/* ── Bottom bar ─────────────────────────────────────── */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-white flex items-center gap-4">
+        <div className="px-6 py-4 border-t border-gray-100 bg-white flex items-start gap-4">
           {error && (
-            <div className="flex items-center gap-2 p-2.5 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 flex-1">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">{error}</span>
-              <button type="button" onClick={() => setError('')} className="ml-auto"><X className="w-3.5 h-3.5" /></button>
+            <div className="p-2.5 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 flex-1">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{error}</span>
+                <button type="button" onClick={() => setError('')} className="ml-auto"><X className="w-3.5 h-3.5" /></button>
+              </div>
             </div>
           )}
           {result && (
-            <div className="flex items-center gap-2 p-2.5 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-700 flex-1">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-              <span>
-                {result.target?.name
-                  ? `Sent to ${result.target.name} (${result.target.phone})`
-                  : `${result.successful ?? 0} sent · ${result.failed ?? 0} failed`}
-              </span>
-              <button type="button" onClick={() => setResult(null)} className="ml-auto"><X className="w-3.5 h-3.5" /></button>
+            <div className={`p-2.5 rounded-xl text-sm flex-1 border ${
+              result.success
+                ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
+                : 'bg-amber-50 border-amber-100 text-amber-800'
+            }`}>
+              <div className="flex items-center gap-2">
+                {result.success
+                  ? <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                  : <AlertCircle  className="w-4 h-4 flex-shrink-0" />}
+                <span>
+                  {result.target?.name
+                    ? `${result.success ? 'Sent' : 'Send attempted'} to ${result.target.name} (${result.target.phone})`
+                    : `${result.successful ?? 0} sent · ${result.failed ?? 0} failed`}
+                </span>
+                <button type="button" onClick={() => setResult(null)} className="ml-auto"><X className="w-3.5 h-3.5" /></button>
+              </div>
+              {result.error && (
+                <p className="mt-1 ml-6 text-xs opacity-90">{result.error}</p>
+              )}
+              {Array.isArray(result.recipients) && result.recipients.some((r) => r.status && r.status !== 'sent') && (
+                <ul className="mt-2 ml-6 space-y-0.5 text-xs">
+                  {result.recipients.filter((r) => r.status && r.status !== 'sent').slice(0, 5).map((r, i) => (
+                    <li key={i}>
+                      <strong>{r.name || r.sms_code || 'unknown'}</strong>
+                      {r.phone ? ` (${r.phone})` : ''} — {r.status}{r.error ? `: ${r.error}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
           {!error && !result && <div className="flex-1" />}
