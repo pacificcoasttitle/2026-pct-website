@@ -63,6 +63,59 @@ const CONTENT_TYPES: ContentType[] = [
 
 const STORAGE_KEY = 'pct.sms-studio.content-type'
 
+/** Max long-edge for re-encoded MMS images. Twilio recommends <1MB attachments. */
+const MAX_DIMENSION   = 1600
+const JPEG_QUALITY    = 0.85
+/** Skip recompression for files already comfortably small. */
+const SKIP_BYTES      = 800 * 1024
+
+/**
+ * Downscale + recompress an image in the browser before upload.
+ * Uses canvas → toBlob (JPEG). Falls back to the original file on any
+ * failure; the caller catches and the upload still attempts.
+ */
+async function compressImage(file: File): Promise<File> {
+  if (!file.type.startsWith('image/')) return file
+  if (file.type === 'image/gif') return file // preserve animation
+  if (file.size <= SKIP_BYTES)    return file
+
+  const dataUrl: string = await new Promise((resolve, reject) => {
+    const r = new FileReader()
+    r.onload  = () => resolve(String(r.result))
+    r.onerror = () => reject(r.error)
+    r.readAsDataURL(file)
+  })
+
+  const img: HTMLImageElement = await new Promise((resolve, reject) => {
+    const i = new Image()
+    i.onload  = () => resolve(i)
+    i.onerror = () => reject(new Error('Could not decode image'))
+    i.src = dataUrl
+  })
+
+  const longest = Math.max(img.width, img.height)
+  const scale   = longest > MAX_DIMENSION ? MAX_DIMENSION / longest : 1
+  const w = Math.round(img.width  * scale)
+  const h = Math.round(img.height * scale)
+
+  const canvas = document.createElement('canvas')
+  canvas.width  = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return file
+  ctx.drawImage(img, 0, 0, w, h)
+
+  const blob: Blob | null = await new Promise((resolve) => {
+    canvas.toBlob((b) => resolve(b), 'image/jpeg', JPEG_QUALITY)
+  })
+  if (!blob) return file
+  // If recompression actually made it bigger (rare), keep original.
+  if (blob.size >= file.size) return file
+
+  const newName = file.name.replace(/\.(png|webp|heic|heif|tiff?|bmp|jpg|jpeg)$/i, '') + '.jpg'
+  return new File([blob], newName, { type: 'image/jpeg', lastModified: Date.now() })
+}
+
 type Mode = 'mms' | 'text'
 type SendMode = 'single' | 'per-image' | 'all'
 
@@ -177,15 +230,38 @@ export function SmsStudioSender({ repCount, reps, onSendComplete }: Props) {
     const previewUrl = URL.createObjectURL(file)
     setImages((prev) => [...prev, { url: '', name: file.name, previewUrl, uploading: true, repSlug }])
     try {
+      // Downscale + recompress before upload. Vercel's serverless body
+      // limit is 4.5MB and Twilio recommends <1MB MMS attachments;
+      // the original file shape ("Unexpected token R" → Vercel 413
+      // "Request Entity Too Large" HTML page) is what was breaking
+      // sends for large camera photos. Result is JPEG ~0.85 quality,
+      // max 1600px on the long edge.
+      const compressed = await compressImage(file).catch(() => file)
+
       const form = new FormData()
-      form.append('file', file)
+      form.append('file', compressed)
       const code = repBySlug[repSlug]?.sms_code
       if (code) form.append('prefix', code)
       const res = await fetch('/api/admin/upload', { method: 'POST', body: form })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Upload failed')
+
+      // Defensive: if the platform returns an HTML error page (e.g. 413,
+      // gateway timeout) res.json() throws "Unexpected token …". Read
+      // the body once as text and try to parse so we surface a useful
+      // message instead of a cryptic JSON error.
+      const raw = await res.text()
+      let data: { url?: string; error?: string } = {}
+      try { data = raw ? JSON.parse(raw) : {} }
+      catch {
+        const friendly = res.status === 413
+          ? `Image is too large for upload (Vercel limit ~4.5MB). Try a smaller photo.`
+          : `Upload failed (HTTP ${res.status}). ${raw.slice(0, 80)}`
+        throw new Error(friendly)
+      }
+      if (!res.ok) throw new Error(data.error || `Upload failed (HTTP ${res.status})`)
+      if (!data.url) throw new Error('Upload succeeded but no URL was returned.')
+
       setImages((p) => p.map((img) => img.previewUrl === previewUrl
-        ? { ...img, url: data.url, uploading: false }
+        ? { ...img, url: data.url!, uploading: false }
         : img,
       ))
     } catch (err) {
@@ -324,6 +400,16 @@ export function SmsStudioSender({ repCount, reps, onSendComplete }: Props) {
       }
       setResult(data)
       if (data.log_id && onSendComplete) onSendComplete(data.log_id)
+
+      // Clear the staged images after a real (non-preview) send that
+      // succeeded for at least one recipient. This prevents the operator
+      // from accidentally re-sending the same MMS by clicking Send again.
+      // Preview sends and full failures keep the images so the user can
+      // iterate / retry without re-uploading.
+      const sentSomething = (data.successful ?? (data.success ? 1 : 0)) > 0
+      if (mode === 'mms' && !previewOnly && sentSomething) {
+        setImages([])
+      }
     } catch {
       setError('Network error.')
     } finally {

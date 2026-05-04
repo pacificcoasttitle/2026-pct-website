@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useImperativeHandle, useState, forwardRef } from 'react'
+import { Fragment, useCallback, useEffect, useImperativeHandle, useState, forwardRef } from 'react'
 import {
   History,
   RefreshCw,
@@ -11,7 +11,6 @@ import {
   Eye,
   Loader2,
   AlertCircle,
-  ImageIcon,
   MessageSquare,
 } from 'lucide-react'
 
@@ -179,134 +178,152 @@ export const SmsLogsPanel = forwardRef<SmsLogsPanelHandle, object>(function SmsL
         </div>
       )}
 
-      <ul className="divide-y divide-gray-50">
-        {logs.map((log) => {
-          const isOpen      = expanded.has(log.id)
-          const isHighlight = highlightId === log.id
-          const recipients  = details[log.id] || []
-          const loadingDet  = detailsLoading[log.id]
+      {logs.length > 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-gray-50/70 text-gray-500 border-b border-gray-100">
+              <tr>
+                <th className="w-6 py-2 px-3"></th>
+                <th className="w-6 py-2 px-1"></th>
+                <th className="text-left font-semibold py-2 px-2 whitespace-nowrap">When</th>
+                <th className="text-left font-semibold py-2 px-2 whitespace-nowrap">Type</th>
+                <th className="text-left font-semibold py-2 px-2">Message</th>
+                <th className="text-left font-semibold py-2 px-2 whitespace-nowrap">Imgs</th>
+                <th className="text-right font-semibold py-2 px-2 whitespace-nowrap">Sent</th>
+                <th className="text-right font-semibold py-2 px-2 whitespace-nowrap">Failed</th>
+                <th className="text-left font-semibold py-2 px-2 whitespace-nowrap">By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((log) => {
+                const isOpen      = expanded.has(log.id)
+                const isHighlight = highlightId === log.id
+                const recipients  = details[log.id] || []
+                const loadingDet  = detailsLoading[log.id]
+                const total       = log.total || log.recipient_count
 
-          return (
-            <li
-              key={log.id}
-              className={`transition-colors ${isHighlight ? 'bg-amber-50' : 'hover:bg-gray-50/60'}`}
-            >
-              <button
-                type="button"
-                onClick={() => toggleExpand(log.id)}
-                className="w-full flex items-start gap-3 px-5 py-3.5 text-left"
-              >
-                <div className="mt-0.5 text-gray-300">
-                  {isOpen
-                    ? <ChevronDown className="w-4 h-4" />
-                    : <ChevronRight className="w-4 h-4" />}
-                </div>
-
-                {/* Big status icon */}
-                <div className="mt-0.5 flex-shrink-0">
-                  {log.success
-                    ? <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    : <XCircle className="w-5 h-5 text-red-500" />}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-semibold text-[#03374f]">
-                      {fmtMode(log.mode, log.send_mode)}
-                    </span>
-                    {log.preview_mode && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded">
-                        <Eye className="w-2.5 h-2.5" /> Preview
-                      </span>
+                return (
+                  <Fragment key={log.id}>
+                    <tr
+                      onClick={() => toggleExpand(log.id)}
+                      className={`cursor-pointer border-b border-gray-50 transition-colors ${
+                        isHighlight ? 'bg-amber-50' : 'hover:bg-gray-50/60'
+                      }`}
+                    >
+                      <td className="py-2 px-3 text-gray-300 align-top">
+                        {isOpen
+                          ? <ChevronDown className="w-3.5 h-3.5" />
+                          : <ChevronRight className="w-3.5 h-3.5" />}
+                      </td>
+                      <td className="py-2 px-1 align-top">
+                        {log.success
+                          ? <CheckCircle2 className="w-4 h-4 text-green-500" />
+                          : <XCircle className="w-4 h-4 text-red-500" />}
+                      </td>
+                      <td className="py-2 px-2 text-gray-500 whitespace-nowrap align-top">
+                        {fmtTime(log.created_at)}
+                      </td>
+                      <td className="py-2 px-2 align-top">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-[#03374f] whitespace-nowrap">{fmtMode(log.mode, log.send_mode)}</span>
+                          {log.preview_mode && (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-100 px-1 py-px rounded">
+                              <Eye className="w-2.5 h-2.5" /> Preview
+                            </span>
+                          )}
+                          {log.test_phone && (
+                            <span className="text-[10px] text-gray-500 whitespace-nowrap">→···{log.test_phone.replace(/\D/g, '').slice(-4)}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-2 px-2 text-gray-600 max-w-[420px] align-top">
+                        <div className="truncate">{log.message}</div>
+                        {log.error && (
+                          <div className="text-[11px] text-red-600 truncate mt-0.5">{log.error}</div>
+                        )}
+                      </td>
+                      <td className="py-2 px-2 align-top">
+                        {log.image_urls && log.image_urls.length > 0 ? (
+                          <div className="flex items-center gap-1">
+                            {log.image_urls.slice(0, 2).map((url, i) => (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <a
+                                key={i}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="block w-6 h-6 rounded overflow-hidden border border-gray-200 bg-white flex-shrink-0"
+                              >
+                                <img src={url} alt="" className="w-full h-full object-cover" />
+                              </a>
+                            ))}
+                            {log.image_urls.length > 2 && (
+                              <span className="text-[10px] text-gray-400 ml-0.5">+{log.image_urls.length - 2}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-2 text-right font-semibold align-top">
+                        <span className="text-green-600">{log.successful}</span>
+                        <span className="text-gray-300">/{total}</span>
+                      </td>
+                      <td className="py-2 px-2 text-right font-semibold align-top">
+                        {log.failed > 0
+                          ? <span className="text-red-600">{log.failed}</span>
+                          : <span className="text-gray-300">0</span>}
+                      </td>
+                      <td className="py-2 px-2 text-gray-500 whitespace-nowrap align-top">
+                        {log.actor || '—'}
+                      </td>
+                    </tr>
+                    {isOpen && (
+                      <tr className="bg-gray-50/40">
+                        <td colSpan={9} className="px-5 py-3">
+                          {loadingDet ? (
+                            <div className="flex items-center gap-2 text-xs text-gray-500 py-2">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading recipients…
+                            </div>
+                          ) : recipients.length === 0 ? (
+                            <div className="text-xs text-gray-500 italic py-1">
+                              No per-recipient detail recorded for this send.
+                            </div>
+                          ) : (
+                            <table className="w-full text-xs">
+                              <thead>
+                                <tr className="text-gray-500">
+                                  <th className="text-left font-semibold py-1">Rep</th>
+                                  <th className="text-left font-semibold py-1">SMS Code</th>
+                                  <th className="text-left font-semibold py-1">Phone</th>
+                                  <th className="text-left font-semibold py-1">Status</th>
+                                  <th className="text-left font-semibold py-1">Notes</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {recipients.map((r, i) => (
+                                  <tr key={r.id ?? i} className="border-t border-gray-100">
+                                    <td className="py-1 font-medium text-[#03374f]">{r.rep_name || '—'}</td>
+                                    <td className="py-1 font-mono text-gray-600">{r.sms_code || '—'}</td>
+                                    <td className="py-1 text-gray-600">{r.phone_last4 ? `···${r.phone_last4}` : '—'}</td>
+                                    <td className="py-1"><StatusBadge status={r.status} /></td>
+                                    <td className="py-1 text-gray-500">{r.error || ''}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+                        </td>
+                      </tr>
                     )}
-                    {log.image_urls && log.image_urls.length > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-gray-500 bg-gray-50 border border-gray-200 px-1.5 py-0.5 rounded">
-                        <ImageIcon className="w-2.5 h-2.5" /> {log.image_urls.length}
-                      </span>
-                    )}
-                    {log.test_phone && (
-                      <span className="text-[10px] text-gray-500 bg-gray-50 border border-gray-200 px-1.5 py-0.5 rounded">
-                        Test → ···{log.test_phone.replace(/\D/g, '').slice(-4)}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500 truncate mt-0.5">{log.message}</p>
-                  <div className="text-[11px] text-gray-400 mt-1 flex items-center gap-2 flex-wrap">
-                    <span>{fmtTime(log.created_at)}</span>
-                    {log.actor && <span>· {log.actor}</span>}
-                    {log.error && <span className="text-red-600 truncate">· {log.error}</span>}
-                  </div>
-                </div>
-
-                <div className="flex-shrink-0 text-right">
-                  <div className="text-sm font-bold text-[#03374f]">
-                    <span className="text-green-600">{log.successful}</span>
-                    <span className="text-gray-300 mx-0.5">/</span>
-                    <span>{log.total || log.recipient_count}</span>
-                  </div>
-                  {log.failed > 0 && (
-                    <div className="text-[11px] text-red-600 font-semibold">{log.failed} failed</div>
-                  )}
-                </div>
-              </button>
-
-              {isOpen && (
-                <div className="bg-gray-50/70 border-t border-gray-100 px-5 py-3">
-                  {loadingDet ? (
-                    <div className="flex items-center gap-2 text-xs text-gray-500 py-3">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading recipients…
-                    </div>
-                  ) : recipients.length === 0 ? (
-                    <div className="text-xs text-gray-500 italic py-3">
-                      No per-recipient detail recorded for this send.
-                    </div>
-                  ) : (
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="text-gray-500">
-                          <th className="text-left font-semibold py-1.5">Rep</th>
-                          <th className="text-left font-semibold py-1.5">SMS Code</th>
-                          <th className="text-left font-semibold py-1.5">Phone</th>
-                          <th className="text-left font-semibold py-1.5">Status</th>
-                          <th className="text-left font-semibold py-1.5">Notes</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {recipients.map((r, i) => (
-                          <tr key={r.id ?? i} className="border-t border-gray-100">
-                            <td className="py-1.5 font-medium text-[#03374f]">{r.rep_name || '—'}</td>
-                            <td className="py-1.5 font-mono text-gray-600">{r.sms_code || '—'}</td>
-                            <td className="py-1.5 text-gray-600">{r.phone_last4 ? `···${r.phone_last4}` : '—'}</td>
-                            <td className="py-1.5"><StatusBadge status={r.status} /></td>
-                            <td className="py-1.5 text-gray-500">{r.error || ''}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-
-                  {/* Image thumbnails for MMS */}
-                  {log.image_urls && log.image_urls.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                        Attached images ({log.image_urls.length})
-                      </p>
-                      <div className="flex gap-2 flex-wrap">
-                        {log.image_urls.map((url, i) => (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block w-14 h-14 rounded-lg overflow-hidden border border-gray-200 bg-white">
-                            <img src={url} alt={`Attachment ${i+1}`} className="w-full h-full object-cover" />
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </li>
-          )
-        })}
-      </ul>
+                  </Fragment>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   )
 })
