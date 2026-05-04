@@ -550,8 +550,217 @@ async function ensureExtraTables() {
   `)
   await db.query(`CREATE INDEX IF NOT EXISTS idx_vcard_assessments_rep_id ON vcard_assessments(rep_id)`)
   await db.query(`CREATE INDEX IF NOT EXISTS idx_vcard_assessments_submitted ON vcard_assessments(submitted_at DESC)`)
+
+  // SMS Studio send history
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS vcard_sms_send_logs (
+      id              SERIAL PRIMARY KEY,
+      mode            TEXT NOT NULL,           -- 'mms' | 'text' | 'single-text'
+      send_mode       TEXT,                    -- 'single' | 'per-image' | 'all'
+      preview_mode    BOOLEAN NOT NULL DEFAULT FALSE,
+      test_phone      TEXT,
+      message         TEXT NOT NULL,
+      image_urls      JSONB,
+      total           INT NOT NULL DEFAULT 0,
+      successful      INT NOT NULL DEFAULT 0,
+      failed          INT NOT NULL DEFAULT 0,
+      success         BOOLEAN NOT NULL DEFAULT FALSE,
+      error           TEXT,
+      raw_response    JSONB,
+      actor           TEXT,
+      created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `)
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_sms_logs_created ON vcard_sms_send_logs(created_at DESC)`)
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS vcard_sms_send_log_recipients (
+      id          SERIAL PRIMARY KEY,
+      log_id      INT NOT NULL REFERENCES vcard_sms_send_logs(id) ON DELETE CASCADE,
+      rep_slug    TEXT,
+      rep_name    TEXT,
+      sms_code    TEXT,
+      phone_last4 TEXT,
+      status      TEXT,                  -- 'sent' | 'failed' | 'skipped' | etc.
+      error       TEXT,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `)
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_sms_log_recipients_log ON vcard_sms_send_log_recipients(log_id)`)
+
   _extraTablesReady = true
 }
+
+// ── SMS Send Log helpers ──────────────────────────────────────
+
+export interface SmsSendLogRecipient {
+  id?:          number
+  rep_slug?:    string | null
+  rep_name?:    string | null
+  sms_code?:    string | null
+  phone_last4?: string | null
+  status?:      string | null
+  error?:       string | null
+}
+
+export interface SmsSendLogInput {
+  mode:          string
+  send_mode?:    string | null
+  preview_mode:  boolean
+  test_phone?:   string | null
+  message:       string
+  image_urls?:   string[] | null
+  total:         number
+  successful:    number
+  failed:        number
+  success:       boolean
+  error?:        string | null
+  raw_response?: unknown
+  actor?:        string | null
+  recipients:    SmsSendLogRecipient[]
+}
+
+export interface SmsSendLogRow {
+  id:           number
+  mode:         string
+  send_mode:    string | null
+  preview_mode: boolean
+  test_phone:   string | null
+  message:      string
+  image_urls:   string[] | null
+  total:        number
+  successful:   number
+  failed:       number
+  success:      boolean
+  error:        string | null
+  actor:        string | null
+  created_at:   string
+  recipient_count: number
+}
+
+function last4(phone: string | null | undefined): string | null {
+  if (!phone) return null
+  const digits = phone.replace(/\D/g, '')
+  return digits.length >= 4 ? digits.slice(-4) : digits || null
+}
+
+export async function recordSmsSendLog(input: SmsSendLogInput): Promise<number> {
+  await ensureExtraTables()
+  const db = getPool()
+  const res = await db.query(
+    `INSERT INTO vcard_sms_send_logs
+       (mode, send_mode, preview_mode, test_phone, message, image_urls,
+        total, successful, failed, success, error, raw_response, actor)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+     RETURNING id`,
+    [
+      input.mode,
+      input.send_mode ?? null,
+      input.preview_mode,
+      input.test_phone ?? null,
+      input.message,
+      input.image_urls && input.image_urls.length ? JSON.stringify(input.image_urls) : null,
+      input.total,
+      input.successful,
+      input.failed,
+      input.success,
+      input.error ?? null,
+      input.raw_response ? JSON.stringify(input.raw_response) : null,
+      input.actor ?? null,
+    ],
+  )
+  const logId = res.rows[0].id as number
+
+  if (input.recipients.length) {
+    // Bulk insert recipients
+    const values: unknown[] = []
+    const placeholders = input.recipients.map((r, i) => {
+      const base = i * 7
+      values.push(
+        logId,
+        r.rep_slug    ?? null,
+        r.rep_name    ?? null,
+        r.sms_code    ?? null,
+        r.phone_last4 ?? null,
+        r.status      ?? null,
+        r.error       ?? null,
+      )
+      return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7})`
+    }).join(',')
+    await db.query(
+      `INSERT INTO vcard_sms_send_log_recipients
+         (log_id, rep_slug, rep_name, sms_code, phone_last4, status, error)
+       VALUES ${placeholders}`,
+      values,
+    )
+  }
+
+  return logId
+}
+
+export async function getSmsSendLogs(limit = 25): Promise<SmsSendLogRow[]> {
+  await ensureExtraTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT l.id, l.mode, l.send_mode, l.preview_mode, l.test_phone, l.message,
+            l.image_urls, l.total, l.successful, l.failed, l.success, l.error,
+            l.actor, l.created_at::text,
+            (SELECT COUNT(*)::int FROM vcard_sms_send_log_recipients r WHERE r.log_id = l.id) AS recipient_count
+       FROM vcard_sms_send_logs l
+       ORDER BY l.created_at DESC
+       LIMIT $1`,
+    [limit],
+  )
+  return res.rows
+}
+
+export async function getSmsSendLog(id: number): Promise<{ log: SmsSendLogRow; recipients: SmsSendLogRecipient[] } | null> {
+  await ensureExtraTables()
+  const db = getPool()
+  const logRes = await db.query(
+    `SELECT l.id, l.mode, l.send_mode, l.preview_mode, l.test_phone, l.message,
+            l.image_urls, l.total, l.successful, l.failed, l.success, l.error,
+            l.actor, l.created_at::text,
+            (SELECT COUNT(*)::int FROM vcard_sms_send_log_recipients r WHERE r.log_id = l.id) AS recipient_count
+       FROM vcard_sms_send_logs l
+       WHERE l.id = $1`,
+    [id],
+  )
+  if (logRes.rowCount === 0) return null
+  const recRes = await db.query(
+    `SELECT id, rep_slug, rep_name, sms_code, phone_last4, status, error
+       FROM vcard_sms_send_log_recipients
+       WHERE log_id = $1
+       ORDER BY (status = 'sent') ASC, rep_name ASC, id ASC`,
+    [id],
+  )
+  return { log: logRes.rows[0], recipients: recRes.rows }
+}
+
+/** Helper for the API route — turn a Render response + targets into recipient rows. */
+export function buildRecipientsFromResponse(
+  raw: unknown,
+  fallbackTargets: SmsSendLogRecipient[] = [],
+): SmsSendLogRecipient[] {
+  // Render returns either { recipients: [...] } per-batch or single { phone, success } shapes.
+  if (raw && typeof raw === 'object') {
+    const r = raw as Record<string, unknown>
+    if (Array.isArray(r.recipients)) {
+      return r.recipients.map((row) => {
+        const x = (row || {}) as Record<string, unknown>
+        return {
+          rep_name:    x.name        ? String(x.name)        : null,
+          sms_code:    x.sms_code    ? String(x.sms_code)    : null,
+          phone_last4: last4(x.phone ? String(x.phone) : null),
+          status:      x.status      ? String(x.status)      : null,
+          error:       x.error       ? String(x.error)       : null,
+        }
+      })
+    }
+  }
+  return fallbackTargets.map((t) => ({ ...t, phone_last4: t.phone_last4 ?? null }))
+}
+
+export { last4 as smsPhoneLast4 }
 
 export interface EmailTemplate {
   id: number

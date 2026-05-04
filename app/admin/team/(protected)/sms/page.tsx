@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { MessageSquare, ExternalLink, CheckCircle, XCircle } from 'lucide-react'
 import { getSmsEmployees } from '@/lib/admin-db'
 import { CopyButton } from '@/components/admin/CopyButton'
-import { SmsStudioSender } from '@/components/admin/SmsStudioSender'
+import { SmsStudioWithLogs } from '@/components/admin/SmsStudioWithLogs'
 import { SmsServiceBadge } from '@/components/admin/SmsServiceBadge'
 
 export const metadata = { title: 'SMS | PCT Team Admin' }
@@ -50,8 +50,8 @@ export default async function SmsPage() {
         ))}
       </div>
 
-      {/* Studio — full width */}
-      <SmsStudioSender
+      {/* Studio + Send History */}
+      <SmsStudioWithLogs
         repCount={employees.length}
         reps={employees.filter((e) => e.active).map((e) => ({
           slug: e.slug,

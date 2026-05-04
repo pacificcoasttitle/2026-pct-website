@@ -77,6 +77,8 @@ export interface RepOption {
 interface Props {
   repCount: number
   reps: RepOption[]
+  /** Called after a send completes (success OR failure) with the new log id. */
+  onSendComplete?: (logId: number) => void
 }
 
 interface UploadedImage {
@@ -104,10 +106,11 @@ interface SendResult {
   error?: string
   target?: { name?: string; phone?: string; sms_code?: string | null }
   recipients?: RecipientResult[]
+  log_id?: number
   [key: string]: unknown
 }
 
-export function SmsStudioSender({ repCount, reps }: Props) {
+export function SmsStudioSender({ repCount, reps, onSendComplete }: Props) {
   const [mode, setMode]           = useState<Mode>('mms')
   const [sendMode, setSendMode]   = useState<SendMode>('single')
   const [singleRepSlug, setSingleRepSlug] = useState(reps[0]?.slug ?? '')
@@ -314,8 +317,13 @@ export function SmsStudioSender({ repCount, reps }: Props) {
         body: JSON.stringify(payload),
       })
       const data = (await res.json()) as SendResult
-      if (!res.ok) { setError(String(data.error || 'Failed to send')); return }
+      if (!res.ok) {
+        setError(String(data.error || 'Failed to send'))
+        if (data.log_id && onSendComplete) onSendComplete(data.log_id)
+        return
+      }
       setResult(data)
+      if (data.log_id && onSendComplete) onSendComplete(data.log_id)
     } catch {
       setError('Network error.')
     } finally {
