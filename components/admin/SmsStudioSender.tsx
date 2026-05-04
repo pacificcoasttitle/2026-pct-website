@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertCircle,
   CheckCircle2,
@@ -8,6 +8,7 @@ import {
   Loader2,
   MessageSquare,
   Phone,
+  RotateCcw,
   Send,
   Trash2,
   Upload,
@@ -16,13 +17,51 @@ import {
   X,
 } from 'lucide-react'
 
-interface Preset { name: string; desc: string; width: number; height: number; icon: string }
+interface ContentType {
+  key:            string
+  name:           string
+  desc:           string
+  width:          number
+  height:         number
+  defaultMessage: string
+}
 
-const PRESETS: Preset[] = [
-  { name: 'Social Post', desc: '1080 × 1080', width: 1080, height: 1080, icon: 'square' },
-  { name: 'Landscape',   desc: '1920 × 1080', width: 1920, height: 1080, icon: 'wide' },
-  { name: 'US Letter',   desc: '8.5″ × 11″',  width: 2550, height: 3300, icon: 'letter' },
+const CONTENT_TYPES: ContentType[] = [
+  {
+    key:            'social',
+    name:           'Social Post',
+    desc:           '1080 × 1080',
+    width:          1080,
+    height:         1080,
+    defaultMessage: "Here's your custom social media post! Share it on your feed to keep clients engaged.",
+  },
+  {
+    key:            'story',
+    name:           'IG Story',
+    desc:           '1080 × 1920',
+    width:          1080,
+    height:         1920,
+    defaultMessage: "Here's your Instagram Story for the week. Tap and post — it's sized and ready.",
+  },
+  {
+    key:            'calendar',
+    name:           'Calendar',
+    desc:           '8.5″ × 11″',
+    width:          2550,
+    height:         3300,
+    defaultMessage: "Here's this month's calendar. Print it for your office or send to your top clients.",
+  },
+  {
+    key:            'flyer',
+    name:           'Marketing Flyer',
+    desc:           '8.5″ × 11″',
+    width:          2550,
+    height:         3300,
+    defaultMessage: "Here's a marketing flyer you can hand out, email, or post.",
+  },
 ]
+
+const STORAGE_KEY = 'pct.sms-studio.content-type'
 
 type Mode = 'mms' | 'text'
 type SendMode = 'single' | 'per-image' | 'all'
@@ -63,8 +102,9 @@ export function SmsStudioSender({ repCount, reps }: Props) {
   const [mode, setMode]           = useState<Mode>('mms')
   const [sendMode, setSendMode]   = useState<SendMode>('single')
   const [singleRepSlug, setSingleRepSlug] = useState(reps[0]?.slug ?? '')
-  const [preset, setPreset]       = useState<Preset>(PRESETS[0])
-  const [message, setMessage]     = useState("Here's your custom social media post!")
+  const [contentType, setContentType] = useState<ContentType>(CONTENT_TYPES[0])
+  const [message, setMessage]     = useState(CONTENT_TYPES[0].defaultMessage)
+  const [messageDirty, setMessageDirty] = useState(false)
   const [previewOnly, setPreviewOnly] = useState(true)
   const [testPhone, setTestPhone] = useState('')
   const [images, setImages]       = useState<UploadedImage[]>([])
@@ -73,6 +113,33 @@ export function SmsStudioSender({ repCount, reps }: Props) {
   const [error, setError]         = useState('')
   const [result, setResult]       = useState<SendResult | null>(null)
   const [confirming, setConfirming] = useState(false)
+
+  // Restore last-used content type from localStorage
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY)
+      if (!saved) return
+      const match = CONTENT_TYPES.find((c) => c.key === saved)
+      if (match) {
+        setContentType(match)
+        // Only auto-fill the message if the user hasn't typed anything custom
+        setMessage((current) => current === CONTENT_TYPES[0].defaultMessage ? match.defaultMessage : current)
+      }
+    } catch { /* ignore SSR / private mode */ }
+  }, [])
+
+  function selectContentType(next: ContentType) {
+    setContentType(next)
+    try { window.localStorage.setItem(STORAGE_KEY, next.key) } catch { /* ignore */ }
+    if (!messageDirty) {
+      setMessage(next.defaultMessage)
+    }
+  }
+
+  function resetMessageToDefault() {
+    setMessage(contentType.defaultMessage)
+    setMessageDirty(false)
+  }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const readyImages  = images.filter((i) => i.url && !i.error)
@@ -247,6 +314,40 @@ export function SmsStudioSender({ repCount, reps }: Props) {
           <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
             <div className="p-6 space-y-5 flex-1">
 
+              {/* ── Content Type selector (MMS only) ─────────── */}
+              {mode === 'mms' && (
+                <div>
+                  <label className="text-sm font-bold text-[#03374f] block mb-2">What are you sending?</label>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                    {CONTENT_TYPES.map((c) => {
+                      const active = contentType.key === c.key
+                      return (
+                        <button
+                          key={c.key}
+                          type="button"
+                          onClick={() => selectContentType(c)}
+                          className={`flex flex-col items-start gap-1 px-3 py-2.5 rounded-xl border text-left transition-all ${
+                            active
+                              ? 'bg-[#03374f] border-[#03374f] text-white'
+                              : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+                          }`}
+                        >
+                          <span className={`text-xs font-bold ${active ? 'text-white' : 'text-[#03374f]'}`}>
+                            {c.name}
+                          </span>
+                          <span className={`text-[10px] ${active ? 'text-white/70' : 'text-gray-400'}`}>
+                            {c.desc}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <p className="mt-1.5 text-[11px] text-gray-500">
+                    Picking a type sets the preview frame size and pre-fills the message below.
+                  </p>
+                </div>
+              )}
+
               {/* ── Send Mode selector ── */}
               <div>
                 <label className="text-sm font-bold text-[#03374f] block mb-2">Who receives this?</label>
@@ -298,14 +399,22 @@ export function SmsStudioSender({ repCount, reps }: Props) {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-bold text-[#03374f]">Your message</label>
-                  <span className={`text-xs font-medium ${isMultiPart ? 'text-amber-600' : 'text-gray-400'}`}>
-                    {charCount}/160{isMultiPart ? ' (multi-part)' : ''}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {messageDirty && mode === 'mms' && (
+                      <button type="button" onClick={resetMessageToDefault}
+                        className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-[#f26b2b]">
+                        <RotateCcw className="w-3 h-3" /> Reset to {contentType.name} default
+                      </button>
+                    )}
+                    <span className={`text-xs font-medium ${isMultiPart ? 'text-amber-600' : 'text-gray-400'}`}>
+                      {charCount}/160{isMultiPart ? ' (multi-part)' : ''}
+                    </span>
+                  </div>
                 </div>
                 <textarea
                   rows={mode === 'text' ? 8 : 4}
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  onChange={(e) => { setMessage(e.target.value); setMessageDirty(true) }}
                   className="w-full px-4 py-3 bg-[#f8f6f3] border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 resize-none leading-relaxed"
                   placeholder="Type your message…"
                 />
@@ -326,22 +435,10 @@ export function SmsStudioSender({ repCount, reps }: Props) {
                         </span>
                       )}
                     </label>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        {PRESETS.map((p) => (
-                          <button key={p.name} type="button" onClick={() => setPreset(p)}
-                            className={`px-2 py-1 rounded-md text-[10px] font-semibold transition-all ${
-                              preset.name === p.name ? 'bg-[#03374f] text-white' : 'bg-[#f0ede9] text-gray-600 hover:bg-gray-200'
-                            }`}>
-                            {p.name}
-                          </button>
-                        ))}
-                      </div>
-                      {images.length > 0 && (
-                        <button type="button" onClick={() => fileInputRef.current?.click()}
-                          className="text-xs text-[#f26b2b] hover:underline font-semibold">+ Add more</button>
-                      )}
-                    </div>
+                    {images.length > 0 && (
+                      <button type="button" onClick={() => fileInputRef.current?.click()}
+                        className="text-xs text-[#f26b2b] hover:underline font-semibold">+ Add more</button>
+                    )}
                   </div>
 
                   {/* Drop zone */}
@@ -363,7 +460,7 @@ export function SmsStudioSender({ repCount, reps }: Props) {
                         </div>
                         <div className="text-center">
                           <p className="text-sm font-semibold text-gray-600">Drop images here</p>
-                          <p className="text-xs text-gray-400 mt-1">{preset.desc} · JPG, PNG, GIF</p>
+                          <p className="text-xs text-gray-400 mt-1">{contentType.name} · {contentType.desc} · JPG, PNG, GIF</p>
                         </div>
                       </div>
                     ) : (
@@ -373,7 +470,7 @@ export function SmsStudioSender({ repCount, reps }: Props) {
                             <div key={img.previewUrl}
                               className="rounded-lg bg-white border border-gray-200 overflow-hidden flex flex-col">
                               <div className="relative bg-gray-100"
-                                style={{ aspectRatio: `${preset.width}/${preset.height}` }}>
+                                style={{ aspectRatio: `${contentType.width}/${contentType.height}` }}>
                                 <img src={img.previewUrl} alt={img.name}
                                   className={`w-full h-full object-cover transition-opacity ${img.uploading ? 'opacity-40' : 'opacity-100'}`} />
                                 {img.uploading && (
@@ -499,7 +596,7 @@ export function SmsStudioSender({ repCount, reps }: Props) {
                         className="rounded-2xl object-cover"
                         style={{
                           maxHeight: '180px',
-                          aspectRatio: `${preset.width}/${preset.height}`,
+                          aspectRatio: `${contentType.width}/${contentType.height}`,
                         }} />
                     </div>
                   )}
