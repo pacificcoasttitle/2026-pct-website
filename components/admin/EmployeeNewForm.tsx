@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -9,6 +10,9 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle,
+  Upload,
+  X,
+  RotateCcw,
 } from 'lucide-react'
 
 interface Office { id: number; name: string; city: string | null }
@@ -19,13 +23,26 @@ interface Props {
   depts:   Dept[]
 }
 
-const INPUT = "w-full h-10 px-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 transition-all"
+const INPUT    = "w-full h-10 px-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 transition-all"
+const TEXTAREA = "w-full px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 transition-all resize-none"
+
+/** Mirror of lib/admin-db.ts → renderDefaultBio(). Kept client-side so the
+ *  textarea can preview/refresh without a roundtrip. */
+const DEFAULT_BIO_TEMPLATE =
+  "{first_name} is dedicated to helping real estate agents and lending partners across Southern California grow their business with Pacific Coast Title. With a hands-on approach and deep knowledge of the title and escrow process, {first_name} makes sure your clients feel supported from contract to close — every time."
+
+function renderDefaultBio(firstName: string): string {
+  const name = (firstName || '').trim() || 'Your rep'
+  return DEFAULT_BIO_TEMPLATE.replace(/\{first_name\}/g, name)
+}
 
 export default function EmployeeNewForm({ offices, depts }: Props) {
   const router = useRouter()
-  const [saving, setSaving] = useState(false)
-  const [error,  setError]  = useState<string | null>(null)
-  const [ok,     setOk]     = useState<string | null>(null)
+  const [saving,    setSaving]    = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [error,     setError]     = useState<string | null>(null)
+  const [ok,        setOk]        = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [form, setForm] = useState({
     first_name:     '',
@@ -39,12 +56,52 @@ export default function EmployeeNewForm({ offices, depts }: Props) {
     sms_code:       '',
     active:         true,
     website_active: false,
+    photo_url:      '',
+    bio:            '',
+    bioDirty:       false,
   })
+
+  /** Auto-update bio with the rep's first name until the user edits it. */
+  const previewBio = useMemo(
+    () => (form.bioDirty ? form.bio : renderDefaultBio(form.first_name)),
+    [form.bio, form.bioDirty, form.first_name],
+  )
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }))
     setError(null)
     setOk(null)
+  }
+
+  function resetBio() {
+    setForm((f) => ({ ...f, bio: '', bioDirty: false }))
+  }
+
+  async function handlePhotoUpload(file: File) {
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file (JPG, PNG, WebP).')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Photo is too large (max 10 MB).')
+      return
+    }
+    setUploading(true)
+    setError(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Upload failed')
+      setForm((f) => ({ ...f, photo_url: data.url }))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
   }
 
   async function submit(e: React.FormEvent) {
@@ -61,10 +118,22 @@ export default function EmployeeNewForm({ offices, depts }: Props) {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...form,
-          office_id:     form.office_id     ? Number(form.office_id)     : null,
-          department_id: form.department_id ? Number(form.department_id) : null,
-          sms_code:      form.sms_code.trim() || undefined,
+          first_name:     form.first_name,
+          last_name:      form.last_name,
+          title:          form.title,
+          email:          form.email,
+          mobile:         form.mobile,
+          phone:          form.phone,
+          office_id:      form.office_id     ? Number(form.office_id)     : null,
+          department_id:  form.department_id ? Number(form.department_id) : null,
+          sms_code:       form.sms_code.trim() || undefined,
+          active:         form.active,
+          website_active: form.website_active,
+          photo_url:      form.photo_url || undefined,
+          // Send the user-typed bio if they edited it; otherwise let the
+          // server fill in the default template.
+          bio:            form.bioDirty && form.bio.trim() ? form.bio : undefined,
+          website_bio:    form.bioDirty && form.bio.trim() ? form.bio : undefined,
         }),
       })
       const data = await res.json()
@@ -103,6 +172,73 @@ export default function EmployeeNewForm({ offices, depts }: Props) {
       </div>
 
       <form onSubmit={submit} className="space-y-6">
+        {/* Photo uploader */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+            Profile photo
+          </p>
+          <div className="flex items-center gap-5">
+            <div className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-200">
+              {form.photo_url ? (
+                <Image
+                  src={form.photo_url}
+                  alt="Preview"
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover object-top"
+                  unoptimized
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">
+                  No photo
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="h-9 px-4 inline-flex items-center gap-2 rounded-xl bg-[#03374f] text-white text-xs font-semibold hover:bg-[#02263a] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                  {uploading ? 'Uploading…' : form.photo_url ? 'Replace photo' : 'Upload photo'}
+                </button>
+                {form.photo_url && (
+                  <button
+                    type="button"
+                    onClick={() => update('photo_url', '')}
+                    className="h-9 px-3 inline-flex items-center gap-1 rounded-xl border border-gray-200 text-xs text-gray-500 hover:bg-gray-50"
+                  >
+                    <X className="w-3 h-3" /> Remove
+                  </button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    if (f) handlePhotoUpload(f)
+                  }}
+                />
+              </div>
+              <input
+                type="url"
+                value={form.photo_url}
+                onChange={(e) => update('photo_url', e.target.value)}
+                placeholder="…or paste a photo URL"
+                className={INPUT}
+              />
+              <p className="text-[11px] text-gray-400">
+                JPG, PNG, or WebP up to 10 MB. Square headshot works best.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="First name *">
@@ -216,6 +352,38 @@ export default function EmployeeNewForm({ offices, depts }: Props) {
               Show on public website
             </label>
           </div>
+        </div>
+
+        {/* Bio (auto-defaults until user edits) */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Bio
+            </p>
+            {form.bioDirty && (
+              <button
+                type="button"
+                onClick={resetBio}
+                className="inline-flex items-center gap-1 text-[11px] text-[#f26b2b] hover:underline"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Reset to default
+              </button>
+            )}
+          </div>
+          <textarea
+            value={previewBio}
+            onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value, bioDirty: true }))}
+            rows={4}
+            className={TEXTAREA}
+            placeholder="Short professional bio…"
+          />
+          <p className="text-[11px] text-gray-400 mt-2">
+            We&apos;ve pre-filled a generic Pacific Coast Title bio so you have something to launch with.
+            {' '}{form.bioDirty
+              ? 'Your edits will be saved as both the internal bio and the public website bio.'
+              : 'It updates automatically as you type the first name. You can refine it anytime from the edit screen.'}
+          </p>
         </div>
 
         {/* Status / actions */}

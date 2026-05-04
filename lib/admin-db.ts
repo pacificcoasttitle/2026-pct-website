@@ -251,6 +251,19 @@ async function ensureUniqueSlug(base: string): Promise<string> {
   return `${base}-${Date.now()}`
 }
 
+/**
+ * Default bio template used during initial setup of a new employee.
+ * Uses {first_name} placeholder so the marketing team can fine-tune
+ * the wording later from the edit screen.
+ */
+export const DEFAULT_EMPLOYEE_BIO =
+  "{first_name} is dedicated to helping real estate agents and lending partners across Southern California grow their business with Pacific Coast Title. With a hands-on approach and deep knowledge of the title and escrow process, {first_name} makes sure your clients feel supported from contract to close — every time."
+
+export function renderDefaultBio(firstName: string): string {
+  const name = (firstName || '').trim() || 'Your rep'
+  return DEFAULT_EMPLOYEE_BIO.replace(/\{first_name\}/g, name)
+}
+
 export interface CreateEmployeeInput {
   first_name:     string
   last_name:      string
@@ -263,6 +276,9 @@ export interface CreateEmployeeInput {
   sms_code?:      string
   active?:        boolean
   website_active?: boolean
+  bio?:           string
+  website_bio?:   string
+  photo_url?:     string
 }
 
 export async function createEmployee(input: CreateEmployeeInput): Promise<AdminEmployee> {
@@ -299,6 +315,13 @@ export async function createEmployee(input: CreateEmployeeInput): Promise<AdminE
   add('office_id',      input.office_id ?? undefined)
   add('department_id',  input.department_id ?? undefined)
   add('sms_code',       input.sms_code?.trim().toUpperCase())
+  add('photo_url',      input.photo_url?.trim())
+
+  // Default the bio (and its public-website mirror) so new reps don't
+  // have a blank profile while marketing finishes the polished copy.
+  const bio = (input.bio && input.bio.trim()) || renderDefaultBio(first)
+  add('bio', bio)
+  add('website_bio', (input.website_bio && input.website_bio.trim()) || bio)
   cols.push('active')
   vals.push(input.active === false ? false : true)
   cols.push('website_active')

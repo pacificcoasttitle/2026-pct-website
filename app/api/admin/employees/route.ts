@@ -36,6 +36,9 @@ export async function POST(req: Request) {
       sms_code:        body.sms_code       ? String(body.sms_code)       : undefined,
       active:          body.active         === false ? false : true,
       website_active:  body.website_active === true,
+      bio:             body.bio            ? String(body.bio)             : undefined,
+      website_bio:     body.website_bio    ? String(body.website_bio)     : undefined,
+      photo_url:       body.photo_url      ? String(body.photo_url)       : undefined,
     })
 
     revalidatePath('/admin/team/employees')
