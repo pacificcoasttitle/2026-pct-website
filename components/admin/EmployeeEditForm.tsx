@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -19,6 +19,8 @@ import {
   Briefcase,
   FileText,
   Settings,
+  Upload,
+  X,
 } from 'lucide-react'
 import type { AdminEmployee } from '@/lib/admin-db'
 
@@ -77,8 +79,39 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
   const [emp, setEmp] = useState(initial)
   const [mcUrl, setMcUrl] = useState(storedMcUrl)
   const [mcParsed, setMcParsed] = useState<{ server?: string; u?: string; audienceId?: string; formId?: string } | null>(null)
-  const [saving,  setSaving]  = useState(false)
+  const [saving,    setSaving]    = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadErr, setUploadErr] = useState<string | null>(null)
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  async function handlePhotoUpload(file: File) {
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setUploadErr('Please choose an image file (JPG, PNG, WebP).')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadErr('Photo is too large (max 10 MB).')
+      return
+    }
+    setUploading(true)
+    setUploadErr(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Upload failed')
+      setEmp((prev) => ({ ...prev, photo_url: data.url }))
+      setSaveMsg(null)
+    } catch (err) {
+      setUploadErr(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   /** Auto-parse Mailchimp form action URL or full embed code */
   function handleMcUrlChange(value: string) {
@@ -221,20 +254,79 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
       )}
 
       {/* ── Profile Photo ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-5">
-        <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-gray-100">
-          <Image
-            src={emp.photo_url || '/placeholder.png'}
-            alt={emp.name}
-            width={64}
-            height={64}
-            className="w-full h-full object-cover object-top"
-          />
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <div className="flex items-center gap-5">
+          <div className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-200">
+            {emp.photo_url ? (
+              <Image
+                src={emp.photo_url}
+                alt={emp.name}
+                width={80}
+                height={80}
+                className="w-full h-full object-cover object-top"
+                unoptimized
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">
+                No photo
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0 space-y-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Profile photo
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="h-9 px-4 inline-flex items-center gap-2 rounded-xl bg-[#03374f] text-white text-xs font-semibold hover:bg-[#02263a] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              >
+                {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                {uploading ? 'Uploading…' : emp.photo_url ? 'Replace photo' : 'Upload photo'}
+              </button>
+              {emp.photo_url && (
+                <button
+                  type="button"
+                  onClick={() => update('photo_url', '')}
+                  className="h-9 px-3 inline-flex items-center gap-1 rounded-xl border border-gray-200 text-xs text-gray-500 hover:bg-gray-50"
+                >
+                  <X className="w-3 h-3" /> Remove
+                </button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) handlePhotoUpload(f)
+                }}
+              />
+            </div>
+            <p className="text-[11px] text-gray-400">
+              JPG, PNG, or WebP up to 10 MB. Square headshot works best. Click <strong>Save</strong> below to keep the change.
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-gray-400 flex-shrink-0 self-start">
+            <Eye className="w-3.5 h-3.5" />
+            {emp.view_count} views
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-            Photo URL (R2 or absolute)
-          </p>
+
+        {uploadErr && (
+          <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+            <span>{uploadErr}</span>
+          </div>
+        )}
+
+        <div>
+          <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+            Or paste a photo URL
+          </label>
           <input
             type="url"
             value={emp.photo_url ?? ''}
@@ -242,10 +334,6 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
             placeholder="https://pub-xxx.r2.dev/sales-rep-photos/WebThumb/Name.png"
             className={INPUT}
           />
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-gray-400 flex-shrink-0">
-          <Eye className="w-3.5 h-3.5" />
-          {emp.view_count} views
         </div>
       </div>
 
