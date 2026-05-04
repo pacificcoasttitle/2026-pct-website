@@ -10,6 +10,7 @@ import {
   Pencil,
   ChevronRight,
   Users,
+  UserPlus,
 } from 'lucide-react'
 
 interface EmployeeRow {
@@ -56,11 +57,19 @@ export default function EmployeeListClient({ employees }: { employees: EmployeeR
     <div className="max-w-5xl mx-auto space-y-6 pt-2 lg:pt-0">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#03374f]">Employees</h1>
           <p className="text-gray-500 text-sm mt-1">{filtered.length} of {employees.length} shown</p>
         </div>
+        <Link
+          href="/admin/team/employees/new"
+          className="h-10 px-4 inline-flex items-center gap-2 rounded-xl bg-[#f26b2b] text-white text-sm font-semibold hover:bg-[#d85c1f] transition-colors flex-shrink-0"
+        >
+          <UserPlus className="w-4 h-4" />
+          <span className="hidden sm:inline">Add Employee</span>
+          <span className="sm:hidden">Add</span>
+        </Link>
       </div>
 
       {/* Filters */}

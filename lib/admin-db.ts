@@ -224,6 +224,97 @@ export async function updateEmployee(slug: string, data: EmployeeUpdatePayload):
   return getEmployeeAdminBySlug(slug)
 }
 
+// ── Create a new employee ─────────────────────────────────────
+
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')   // strip diacritics
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 60) || 'employee'
+}
+
+async function ensureUniqueSlug(base: string): Promise<string> {
+  const db = getPool()
+  let slug = base
+  let n    = 1
+  // Loop until we find a free slug. Bounded to avoid pathological cases.
+  while (n < 100) {
+    const res = await db.query(`SELECT 1 FROM vcard_employees WHERE slug = $1 LIMIT 1`, [slug])
+    if (res.rowCount === 0) return slug
+    n += 1
+    slug = `${base}-${n}`
+  }
+  // Fallback: append a timestamp suffix
+  return `${base}-${Date.now()}`
+}
+
+export interface CreateEmployeeInput {
+  first_name:     string
+  last_name:      string
+  title?:         string
+  email?:         string
+  mobile?:        string
+  phone?:         string
+  office_id?:     number | null
+  department_id?: number | null
+  sms_code?:      string
+  active?:        boolean
+  website_active?: boolean
+}
+
+export async function createEmployee(input: CreateEmployeeInput): Promise<AdminEmployee> {
+  const db = getPool()
+  const first = input.first_name.trim()
+  const last  = input.last_name.trim()
+  if (!first || !last) throw new Error('first_name and last_name are required')
+
+  const slug = await ensureUniqueSlug(slugify(`${first}-${last}`))
+
+  // Optional sms_code uniqueness check (not enforced at DB level historically).
+  if (input.sms_code && input.sms_code.trim()) {
+    const code = input.sms_code.trim().toUpperCase()
+    const dup  = await db.query(
+      `SELECT slug FROM vcard_employees WHERE UPPER(sms_code) = $1 LIMIT 1`,
+      [code],
+    )
+    if (dup.rowCount && dup.rowCount > 0) {
+      throw new Error(`SMS code ${code} is already used by ${dup.rows[0].slug}`)
+    }
+  }
+
+  const cols: string[] = ['slug', 'first_name', 'last_name']
+  const vals: unknown[] = [slug, first, last]
+  function add(col: string, value: unknown) {
+    if (value === undefined || value === null || value === '') return
+    cols.push(col)
+    vals.push(value)
+  }
+  add('title',          input.title?.trim())
+  add('email',          input.email?.trim())
+  add('mobile',         input.mobile?.trim())
+  add('phone',          input.phone?.trim())
+  add('office_id',      input.office_id ?? undefined)
+  add('department_id',  input.department_id ?? undefined)
+  add('sms_code',       input.sms_code?.trim().toUpperCase())
+  cols.push('active')
+  vals.push(input.active === false ? false : true)
+  cols.push('website_active')
+  vals.push(input.website_active === true)
+
+  const placeholders = vals.map((_, i) => `$${i + 1}`).join(', ')
+  await db.query(
+    `INSERT INTO vcard_employees (${cols.join(', ')}) VALUES (${placeholders})`,
+    vals,
+  )
+
+  const created = await getEmployeeAdminBySlug(slug)
+  if (!created) throw new Error('Insert succeeded but row not found')
+  return created
+}
+
 // ── Farm Requests ─────────────────────────────────────────────
 
 export interface FarmRequest {
