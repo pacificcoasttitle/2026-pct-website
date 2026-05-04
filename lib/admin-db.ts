@@ -736,26 +736,79 @@ export async function getSmsSendLog(id: number): Promise<{ log: SmsSendLogRow; r
   return { log: logRes.rows[0], recipients: recRes.rows }
 }
 
+/** Common keys the Render service may use to wrap the per-recipient list. */
+const RECIPIENT_KEYS = [
+  'recipients', 'results', 'sent_to', 'sent', 'targets',
+  'deliveries', 'messages', 'message_results', 'details',
+]
+
+/**
+ * Look for a per-recipient array anywhere in the response (top level,
+ * common nested wrappers like `data`, `result`, `body`, or under any of
+ * the canonical keys). Returns the first array found whose entries
+ * look like recipient records (have name / phone / sms_code / status).
+ */
+function findRecipientArray(raw: unknown): unknown[] | null {
+  if (!raw || typeof raw !== 'object') return null
+  const obj = raw as Record<string, unknown>
+
+  for (const key of RECIPIENT_KEYS) {
+    const v = obj[key]
+    if (Array.isArray(v) && v.length > 0) return v
+  }
+  for (const wrapper of ['data', 'result', 'body', 'response']) {
+    const inner = obj[wrapper]
+    if (inner && typeof inner === 'object') {
+      const found = findRecipientArray(inner)
+      if (found) return found
+    }
+  }
+  // Fall back: any array on the object whose first item looks like a recipient.
+  for (const v of Object.values(obj)) {
+    if (Array.isArray(v) && v.length > 0 && typeof v[0] === 'object' && v[0]) {
+      const sample = v[0] as Record<string, unknown>
+      if ('phone' in sample || 'sms_code' in sample || 'name' in sample || 'status' in sample) {
+        return v
+      }
+    }
+  }
+  return null
+}
+
+function pick<T = unknown>(obj: Record<string, unknown>, ...keys: string[]): T | undefined {
+  for (const k of keys) {
+    if (obj[k] !== undefined && obj[k] !== null && obj[k] !== '') return obj[k] as T
+  }
+  return undefined
+}
+
 /** Helper for the API route — turn a Render response + targets into recipient rows. */
 export function buildRecipientsFromResponse(
   raw: unknown,
   fallbackTargets: SmsSendLogRecipient[] = [],
 ): SmsSendLogRecipient[] {
-  // Render returns either { recipients: [...] } per-batch or single { phone, success } shapes.
-  if (raw && typeof raw === 'object') {
-    const r = raw as Record<string, unknown>
-    if (Array.isArray(r.recipients)) {
-      return r.recipients.map((row) => {
-        const x = (row || {}) as Record<string, unknown>
-        return {
-          rep_name:    x.name        ? String(x.name)        : null,
-          sms_code:    x.sms_code    ? String(x.sms_code)    : null,
-          phone_last4: last4(x.phone ? String(x.phone) : null),
-          status:      x.status      ? String(x.status)      : null,
-          error:       x.error       ? String(x.error)       : null,
-        }
-      })
-    }
+  const arr = findRecipientArray(raw)
+  if (arr && arr.length > 0) {
+    return arr.map((row) => {
+      const x = (row || {}) as Record<string, unknown>
+      const status = pick<string>(x, 'status', 'state', 'result', 'outcome')
+      const phone  = pick<string>(x, 'phone', 'to', 'phone_number', 'mobile')
+      const error  = pick<string>(x, 'error', 'error_message', 'reason', 'failure_reason', 'message')
+
+      // If the row only carries a boolean `success`, derive a status string.
+      let normalisedStatus = status ? String(status) : null
+      if (!normalisedStatus && typeof x.success === 'boolean') {
+        normalisedStatus = x.success ? 'sent' : 'failed'
+      }
+
+      return {
+        rep_name:    pick<string>(x, 'name', 'rep_name', 'first_name')           ? String(pick(x, 'name', 'rep_name', 'first_name')) : null,
+        sms_code:    pick<string>(x, 'sms_code', 'code', 'rep_code')             ? String(pick(x, 'sms_code', 'code', 'rep_code'))   : null,
+        phone_last4: last4(phone ? String(phone) : null),
+        status:      normalisedStatus,
+        error:       error && normalisedStatus !== 'sent' ? String(error) : null,
+      }
+    })
   }
   return fallbackTargets.map((t) => ({ ...t, phone_last4: t.phone_last4 ?? null }))
 }

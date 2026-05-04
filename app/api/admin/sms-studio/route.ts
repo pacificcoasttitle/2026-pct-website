@@ -120,6 +120,16 @@ export async function POST(req: NextRequest) {
       const recipients = buildRecipientsFromResponse(data, fallback)
       const ok = Boolean(data.success)
 
+      const r = data as Record<string, unknown>
+      const sentFromList   = recipients.filter((x) => (x.status || '').toLowerCase() === 'sent').length
+      const failedFromList = recipients.filter((x) => {
+        const s = (x.status || '').toLowerCase()
+        return s === 'failed' || s === 'error'
+      }).length
+      const totalCount      = Number(r.total      ?? r.recipient_count ?? recipients.length)
+      const successfulCount = Number(r.successful ?? r.success_count   ?? (recipients.length ? sentFromList   : (ok ? totalCount : 0)))
+      const failedCount     = Number(r.failed     ?? r.fail_count      ?? (recipients.length ? failedFromList : (ok ? 0 : totalCount)))
+
       const log_id = await recordSmsSendLog({
         mode: 'text',
         send_mode: sendModeRaw ?? 'all',
@@ -127,9 +137,9 @@ export async function POST(req: NextRequest) {
         test_phone: test_phone ?? null,
         message,
         image_urls: null,
-        total:       Number((data as { total?: number }).total      ?? recipients.length),
-        successful:  Number((data as { successful?: number }).successful ?? (ok ? recipients.length : 0)),
-        failed:      Number((data as { failed?: number }).failed     ?? (ok ? 0 : recipients.length)),
+        total:       totalCount,
+        successful:  successfulCount,
+        failed:      failedCount,
         success:     ok,
         error:       ok ? null : (data.error ? String(data.error) : null),
         raw_response: data,
@@ -165,9 +175,26 @@ export async function POST(req: NextRequest) {
       ;(data as { error?: string }).error = summary
     }
 
-    // Recipient log for MMS — Render usually returns a `recipients` array per send.
+    // Recipient log for MMS — Render usually returns a `recipients` array
+    // somewhere in the payload. buildRecipientsFromResponse digs through
+    // common wrappers and key aliases so we don't lose the per-rep detail.
     const recipients = buildRecipientsFromResponse(data, [])
     const ok = Boolean(data.success)
+
+    // Totals: Render uses success_count / fail_count / recipient_count
+    // (per docs/SYSTEMS-TECHNICAL-INTERNALS.md), but other batch shapes
+    // use successful / failed / total. Derive from the recipient list as
+    // a final fallback so the log always reflects reality.
+    const r = data as Record<string, unknown>
+    const sentFromList   = recipients.filter((x) => (x.status || '').toLowerCase() === 'sent').length
+    const failedFromList = recipients.filter((x) => {
+      const s = (x.status || '').toLowerCase()
+      return s === 'failed' || s === 'error'
+    }).length
+    const totalCount      = Number(r.total      ?? r.recipient_count ?? recipients.length)
+    const successfulCount = Number(r.successful ?? r.success_count   ?? (recipients.length ? sentFromList   : (ok ? totalCount : 0)))
+    const failedCount     = Number(r.failed     ?? r.fail_count      ?? (recipients.length ? failedFromList : (ok ? 0 : totalCount || 1)))
+
     const log_id = await recordSmsSendLog({
       mode: 'mms',
       send_mode: sendModeRaw,
@@ -175,9 +202,9 @@ export async function POST(req: NextRequest) {
       test_phone: test_phone ?? null,
       message,
       image_urls: imageUrls,
-      total:       Number((data as { total?: number }).total      ?? recipients.length),
-      successful:  Number((data as { successful?: number }).successful ?? (ok ? recipients.length : 0)),
-      failed:      Number((data as { failed?: number }).failed     ?? (ok ? 0 : Math.max(recipients.length, 1))),
+      total:       totalCount,
+      successful:  successfulCount,
+      failed:      failedCount,
       success:     ok,
       error:       ok ? null : (data.error ? String(data.error) : null),
       raw_response: data,
