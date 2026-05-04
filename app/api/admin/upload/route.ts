@@ -143,8 +143,16 @@ export async function POST(req: NextRequest) {
     }
 
     const ext       = (file.name.split('.').pop() || 'jpg').toLowerCase()
-    const safeName  = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
-    const key       = `marketing/${safeName}`          // pct-files/marketing/<file>
+
+    // Optional prefix lets the SMS Studio embed the rep's `sms_code`
+    // (e.g. "C-9") in the filename so the Render service's
+    // `extract_sms_code_from_filename` routes the MMS to the right rep.
+    const rawPrefix = String(form.get('prefix') || '').trim()
+    const safePrefix = rawPrefix.replace(/[^A-Za-z0-9-]/g, '').slice(0, 20)
+    const folder    = safePrefix ? 'sms' : 'marketing'
+    const stem      = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    const safeName  = safePrefix ? `${safePrefix}_${stem}.${ext}` : `${stem}.${ext}`
+    const key       = `${folder}/${safeName}`
 
     const buffer    = Buffer.from(await file.arrayBuffer())
     const publicUrl = await uploadToR2(buffer, key, file.type)

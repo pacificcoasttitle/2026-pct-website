@@ -311,8 +311,10 @@ export interface SmsEmployee {
   id:            number
   slug:          string
   name:          string
+  first_name:    string
   sms_code:      string
   email:         string | null
+  mobile:        string | null
   active:        boolean
   sms_opt_ins:   number
   last_sms_at:   string | null
@@ -323,15 +325,16 @@ export async function getSmsEmployees(): Promise<SmsEmployee[]> {
   const res = await db.query(`
     SELECT
       e.id, e.slug,
+      e.first_name,
       e.first_name || ' ' || e.last_name AS name,
-      e.sms_code, e.email, e.active,
+      e.sms_code, e.email, e.mobile, e.active,
       COUNT(a.id)::int AS sms_opt_ins,
       MAX(a.created_at)::text AS last_sms_at
     FROM vcard_employees e
     LEFT JOIN vcard_employee_activity a
       ON a.employee_id = e.id AND a.activity_type = 'sms_optin'
     WHERE e.sms_code IS NOT NULL AND e.sms_code <> ''
-    GROUP BY e.id, e.slug, e.first_name, e.last_name, e.sms_code, e.email, e.active
+    GROUP BY e.id, e.slug, e.first_name, e.last_name, e.sms_code, e.email, e.mobile, e.active
     ORDER BY e.last_name ASC
   `)
   return res.rows

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/admin-auth'
-import { sendBatchMms, sendTextBatch } from '@/lib/render-sms'
+import { sendBatchMms, sendSingleSms, sendTextBatch } from '@/lib/render-sms'
+import { getEmployeeAdminBySlug } from '@/lib/admin-db'
 
 export const runtime = 'nodejs'
 
@@ -41,6 +42,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 })
     }
 
+    const single_rep_slug = String(body.single_rep_slug || '').trim() || undefined
+
+    // ── Single-rep TEXT — call Render /api/send-single directly ──
+    if (mode === 'text' && single_rep_slug) {
+      const rep = await getEmployeeAdminBySlug(single_rep_slug)
+      if (!rep) return NextResponse.json({ error: 'Rep not found' }, { status: 404 })
+      const phone = test_phone || rep.mobile
+      if (!phone) return NextResponse.json({ error: `${rep.name} has no mobile on file. Add a Test Phone.` }, { status: 400 })
+      const data = await sendSingleSms({ phone, message, preview_mode })
+      const ok = Boolean(data.success)
+      return NextResponse.json(
+        { ...data, mode: 'single-text', target: { slug: rep.slug, name: rep.name, phone, sms_code: rep.sms_code } },
+        { status: ok ? 200 : 502 },
+      )
+    }
+
     if (mode === 'text') {
       const data = await sendTextBatch({ message, preview_mode, test_phone })
       return NextResponse.json(data, { status: data.success ? 200 : 502 })
@@ -53,6 +70,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'At least one image URL is required for MMS' }, { status: 400 })
     }
 
+    // Single-rep MMS: rely on the rep's `sms_code` being baked into the
+    // image filename by the upload route. Render's `extract_sms_code_from_filename`
+    // does the routing. We just send `send_to_all: false` and pass through.
     const send_to_all = Boolean(body.send_to_all)
     const images = imageUrls.map((url: string) => ({ url }))
     const data = await sendBatchMms({

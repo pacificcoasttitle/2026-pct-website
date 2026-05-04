@@ -51,7 +51,16 @@ export default async function SmsPage() {
       </div>
 
       {/* Studio — full width */}
-      <SmsStudioSender repCount={employees.length} />
+      <SmsStudioSender
+        repCount={employees.length}
+        reps={employees.filter((e) => e.active).map((e) => ({
+          slug: e.slug,
+          name: e.name,
+          first_name: e.first_name,
+          sms_code: e.sms_code,
+          mobile: e.mobile,
+        }))}
+      />
 
       {/* Webhook setup — collapsible info */}
       <details className="bg-[#03374f] rounded-2xl overflow-hidden">
