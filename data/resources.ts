@@ -11,6 +11,7 @@ import {
   Video,
   Receipt,
   Building2,
+  Smartphone,
   type LucideIcon,
 } from "lucide-react"
 
@@ -53,6 +54,13 @@ export const pinnedTools: Resource[] = [
     href: "/resources/forms",
     isExternal: false,
     icon: FileText,
+  },
+  {
+    title: "PCT Property Pro",
+    description: "Your title toolkit, in your pocket",
+    href: "/resources/mobile-app",
+    isExternal: false,
+    icon: Smartphone,
   },
   {
     title: "PCT Title Toolbox",
@@ -166,6 +174,12 @@ export const resourceCategories: ResourceCategory[] = [
     description: "Online tools to streamline your workflow",
     icon: Wrench,
     items: [
+      {
+        title: "PCT Property Pro Mobile App",
+        description: "Property data, order tracking, and rep contact — all from your phone",
+        href: "/resources/mobile-app",
+        isExternal: false,
+      },
       {
         title: "PCT Title Toolbox",
         description: "Comprehensive agent toolkit",
