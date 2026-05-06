@@ -96,12 +96,9 @@ const STEPS = [
       </>
     ),
   },
-  { title: "Allow location and notification permissions", body: "Lets the app surface nearby parcels and push Farm Alerts as records change." },
   { title: "Enter your referral code", body: "Your PCT representative will give you a referral code unique to you." },
-  { title: "Accept Terms and Conditions", body: "Quick read of the standard data and privacy terms." },
   { title: "Complete registration", body: "Your name, email, license info, and any additional contact details." },
   { title: "Log in with your PCT247 credentials", body: "Same username and password you already use for TitlePro 247." },
-  { title: "Open the PCT Property Pro tile", body: "Tap the PCT Property Pro icon on the SmartDirect® dashboard to launch it." },
 ]
 
 export default function MobileAppPage() {
@@ -284,7 +281,7 @@ export default function MobileAppPage() {
                 <Download className="w-3.5 h-3.5" />
                 Get started in minutes
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#03374f] mb-3">Setup in 7 simple steps</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#03374f] mb-3">Setup in 4 simple steps</h2>
               <p className="text-gray-600">Have your referral code from your PCT rep handy — that&apos;s all you need to begin.</p>
             </div>
 
