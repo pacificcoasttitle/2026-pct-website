@@ -110,8 +110,15 @@ export default function MobileAppPage() {
       <Navigation variant="transparent" />
 
       {/* ── Hero ──────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#03374f] via-[#03374f] to-[#062a3b] text-white pt-24 md:pt-28">
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
+      <section className="relative overflow-hidden bg-[#03374f] text-white pt-24 md:pt-28">
+        {/* Topographic / geo map background */}
+        <GeoMapBackground />
+
+        {/* Navy gradient overlay so the text stays readable on top */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#03374f]/85 via-[#03374f]/75 to-[#062a3b]/90 pointer-events-none" />
+
+        {/* Soft brand glow accents */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-[#f26b2b] rounded-full blur-3xl" />
         </div>
@@ -394,6 +401,95 @@ export default function MobileAppPage() {
 
       <Footer />
     </main>
+  )
+}
+
+/**
+ * Topographic / contour-line map background for the hero.
+ * Pure SVG, no external assets. Sized to cover and pinned behind the
+ * gradient overlay. Scales cleanly on every breakpoint.
+ */
+function GeoMapBackground() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <svg
+        className="absolute inset-0 w-full h-full"
+        viewBox="0 0 1600 900"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden="true"
+      >
+        <defs>
+          {/* Faint dot grid (latitude/longitude feel) */}
+          <pattern id="geo-dots" width="36" height="36" patternUnits="userSpaceOnUse">
+            <circle cx="1.5" cy="1.5" r="1" fill="rgba(255,255,255,0.10)" />
+          </pattern>
+
+          {/* Soft radial fade so contours lighten toward the edges */}
+          <radialGradient id="geo-fade" cx="55%" cy="40%" r="80%">
+            <stop offset="0%"   stopColor="rgba(255,255,255,0.35)" />
+            <stop offset="60%"  stopColor="rgba(255,255,255,0.15)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
+          </radialGradient>
+        </defs>
+
+        {/* Lat/long dot grid */}
+        <rect width="1600" height="900" fill="url(#geo-dots)" />
+
+        {/* Concentric topographic-style contour rings */}
+        <g
+          fill="none"
+          stroke="url(#geo-fade)"
+          strokeWidth="1"
+          strokeLinecap="round"
+        >
+          {/* "Hill 1" — upper right */}
+          <ellipse cx="1180" cy="280" rx="260" ry="170" />
+          <ellipse cx="1180" cy="280" rx="200" ry="130" />
+          <ellipse cx="1180" cy="280" rx="140" ry="92"  />
+          <ellipse cx="1180" cy="280" rx="80"  ry="55"  />
+
+          {/* "Hill 2" — lower left */}
+          <ellipse cx="320"  cy="640" rx="320" ry="200" />
+          <ellipse cx="320"  cy="640" rx="240" ry="150" />
+          <ellipse cx="320"  cy="640" rx="160" ry="100" />
+          <ellipse cx="320"  cy="640" rx="80"  ry="55"  />
+
+          {/* Wandering "ridge" line across the middle */}
+          <path d="M -50 480 C 200 380, 420 580, 680 460 S 1100 360, 1320 520 S 1700 460, 1800 500" />
+          <path d="M -50 520 C 220 420, 440 620, 700 500 S 1120 400, 1340 560 S 1700 500, 1800 540" />
+          <path d="M -50 560 C 240 460, 460 660, 720 540 S 1140 440, 1360 600 S 1700 540, 1800 580" />
+        </g>
+
+        {/* A few road / boundary lines */}
+        <g
+          fill="none"
+          stroke="rgba(255,255,255,0.10)"
+          strokeWidth="1.5"
+          strokeDasharray="4 6"
+        >
+          <path d="M 0 300 L 1600 220" />
+          <path d="M 0 720 L 1600 660" />
+          <path d="M 800 0 L 720 900" />
+          <path d="M 1280 0 L 1180 900" />
+        </g>
+
+        {/* Map pins — orange accent dots for personality */}
+        <g>
+          {[
+            { cx: 1180, cy: 280 },
+            { cx: 320,  cy: 640 },
+            { cx: 980,  cy: 540 },
+            { cx: 560,  cy: 220 },
+            { cx: 1420, cy: 720 },
+          ].map((p, i) => (
+            <g key={i}>
+              <circle cx={p.cx} cy={p.cy} r="14" fill="rgba(242,107,43,0.20)" />
+              <circle cx={p.cx} cy={p.cy} r="5"  fill="rgba(242,107,43,0.85)" />
+            </g>
+          ))}
+        </g>
+      </svg>
+    </div>
   )
 }
 
