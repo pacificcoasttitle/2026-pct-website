@@ -57,7 +57,7 @@ export const pinnedTools: Resource[] = [
   },
   {
     title: "PCT Property Pro",
-    description: "Your title toolkit, in your pocket",
+    description: "Walking Farm® & lead gen",
     href: "/resources/mobile-app",
     isExternal: false,
     icon: Smartphone,
@@ -176,7 +176,7 @@ export const resourceCategories: ResourceCategory[] = [
     items: [
       {
         title: "PCT Property Pro Mobile App",
-        description: "Property data, order tracking, and rep contact — all from your phone",
+        description: "Smart prospecting & lead gen — Walking Farm®, Farm Alerts, and property reports across 3,000+ counties",
         href: "/resources/mobile-app",
         isExternal: false,
       },

@@ -4,9 +4,13 @@ import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import {
   Smartphone,
-  MapPin,
-  ClipboardList,
-  Bell,
+  Map,
+  BellRing,
+  FileSearch,
+  Camera,
+  FileImage,
+  Share2,
+  Calculator,
   Phone,
   CheckCircle2,
   Download,
@@ -14,55 +18,77 @@ import {
   PlayCircle,
   ExternalLink,
   ArrowRight,
+  Globe,
+  TrendingUp,
+  Layers,
 } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "PCT Property Pro Mobile App | Pacific Coast Title",
   description:
-    "PCT Property Pro puts property data, order tracking, and your PCT rep in your pocket. Powered by SmartDirect® Mobile. Download for iOS or Android.",
+    "PCT Property Pro is a smart real estate prospecting and lead-generation app with Walking Farm®, Farm Alerts, and on-demand property reports across 3,000+ U.S. counties. Download for iOS, Android, or web.",
 }
 
-const APP_STORE_URL  = "https://apps.apple.com/us/app/smartdirect-mobile/id1054969088"
-const GOOGLE_PLAY_URL = "https://play.google.com/store/apps/details?id=com.smartdirect.smartdirect"
+const APP_STORE_URL    = "https://apps.apple.com/us/app/smartdirect-mobile/id1054969088"
+const GOOGLE_PLAY_URL  = "https://play.google.com/store/apps/details?id=com.smartdirect.smartdirect"
+const WEB_VERSION_URL  = "https://smartdirectre.com/pctpropertypro"
 const SMART_DIRECT_URL = "https://smartdirectre.com/pctpropertypro"
 
-const FEATURES = [
+/** Three flagship pillars from smartdirectre.com/pctpropertypro */
+const PILLARS = [
   {
-    icon: MapPin,
-    title: "Property data on the go",
-    body: "Look up ownership, sales history, and parcel detail from anywhere in California.",
+    icon: FileSearch,
+    title: "Property Reports",
+    tagline: "Know everything you need to know.",
+    body:
+      "Get comprehensive details — homeowner info, sales history, property details, sales comps, foreclosures, plat maps, tax records, and more.",
   },
   {
-    icon: ClipboardList,
-    title: "Track orders in real time",
-    body: "See live status updates on your open title and escrow files without calling in.",
+    icon: Map,
+    title: "Walking Farm®",
+    tagline: "Smart neighborhood prospecting.",
+    body:
+      "Select an area to farm and instantly gauge sales activity, generate and track leads, and power up your sales process.",
   },
   {
-    icon: Phone,
-    title: "Connect with your PCT rep",
-    body: "One-tap call, text, or email to your dedicated representative.",
+    icon: BellRing,
+    title: "Farm Alerts",
+    tagline: "Make your farming dynamic.",
+    body:
+      "Define farm areas and get alerts the moment property records change inside them. Being in-the-know has never been easier.",
   },
-  {
-    icon: Bell,
-    title: "Instant notifications",
-    body: "Get alerts the moment a milestone hits — opened, in review, recorded, closed.",
-  },
+]
+
+/** The "everything else inside the app" grid. */
+const TOOLS = [
+  { icon: Map,        title: "Map-based farming",       body: "Powerful Walking Farm® map tool for any neighborhood." },
+  { icon: FileSearch, title: "Powerful property search", body: "Find properties by owner, address, APN, or location." },
+  { icon: Camera,     title: "Search by Camera View",   body: "Point your phone at a property and pull up its record." },
+  { icon: FileImage,  title: "Document images",         body: "Retrieve NOD, NTS, and REO document images on demand." },
+  { icon: Share2,     title: "Share via email",         body: "Send polished property reports straight to your client." },
+  { icon: Layers,     title: "Sync across devices",     body: "Saved files and reports follow you between phone, tablet, and web." },
+  { icon: Calculator, title: "Payment & price tools",   body: "Built-in payment and price calculators for fast quotes." },
+  { icon: TrendingUp, title: "Sales activity insight",  body: "See what's selling, where, and how fast inside your farm." },
 ]
 
 const STEPS = [
   {
-    title: "Download SmartDirect® Mobile",
+    title: "Download the app",
     body: (
       <>
         Get it from the{" "}
         <a href={APP_STORE_URL} className="text-[#f26b2b] hover:underline" target="_blank" rel="noopener noreferrer">
-          App Store
-        </a>{" "}
-        or{" "}
-        <a href={GOOGLE_PLAY_URL} className="text-[#f26b2b] hover:underline" target="_blank" rel="noopener noreferrer">
-          Google Play
+          iOS App Store
         </a>
-        , or visit{" "}
+        ,{" "}
+        <a href={GOOGLE_PLAY_URL} className="text-[#f26b2b] hover:underline" target="_blank" rel="noopener noreferrer">
+          Google Play Store
+        </a>
+        , or use the{" "}
+        <a href={WEB_VERSION_URL} className="text-[#f26b2b] hover:underline" target="_blank" rel="noopener noreferrer">
+          Web Version
+        </a>
+        . You can also visit{" "}
         <a href={SMART_DIRECT_URL} className="text-[#f26b2b] hover:underline" target="_blank" rel="noopener noreferrer">
           smartdirectre.com/pctpropertypro
         </a>
@@ -70,21 +96,21 @@ const STEPS = [
       </>
     ),
   },
-  { title: "Allow location and notification permissions", body: "Required so the app can pull nearby parcels and push order updates." },
-  { title: "Enter your referral code", body: "Your PCT representative will provide a referral code unique to you." },
-  { title: "Accept Terms and Conditions", body: "Standard data and privacy terms — review and accept to continue." },
-  { title: "Complete registration", body: "Add your name, email, license info, and any additional contact details." },
-  { title: "Log in with your PCT247 credentials", body: "Use the same username and password you already use for TitlePro 247." },
-  { title: "Open the PCT Property Pro app icon", body: "From the SmartDirect® dashboard, tap the PCT Property Pro tile to launch it." },
+  { title: "Allow location and notification permissions", body: "Lets the app surface nearby parcels and push Farm Alerts as records change." },
+  { title: "Enter your referral code", body: "Your PCT representative will give you a referral code unique to you." },
+  { title: "Accept Terms and Conditions", body: "Quick read of the standard data and privacy terms." },
+  { title: "Complete registration", body: "Your name, email, license info, and any additional contact details." },
+  { title: "Log in with your PCT247 credentials", body: "Same username and password you already use for TitlePro 247." },
+  { title: "Open the PCT Property Pro tile", body: "Tap the PCT Property Pro icon on the SmartDirect® dashboard to launch it." },
 ]
 
 export default function MobileAppPage() {
   return (
     <main className="min-h-screen bg-white">
-      <Navigation variant="light" />
+      <Navigation variant="transparent" />
 
       {/* ── Hero ──────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#03374f] via-[#03374f] to-[#062a3b] text-white">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#03374f] via-[#03374f] to-[#062a3b] text-white pt-24 md:pt-28">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-[#f26b2b] rounded-full blur-3xl" />
@@ -95,12 +121,16 @@ export default function MobileAppPage() {
             <div>
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/15 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider mb-5">
                 <Smartphone className="w-3.5 h-3.5" />
-                Mobile App
+                Mobile + Web App
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">PCT Property Pro</h1>
-              <p className="text-lg md:text-xl text-white/80 mb-3">Everything you need, wherever you are.</p>
-              <p className="text-sm text-white/60 mb-8">
-                Powered by <span className="font-semibold text-white/80">SmartDirect® Mobile</span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.05] mb-4">
+                PCT Property Pro
+              </h1>
+              <p className="text-xl md:text-2xl text-white/90 mb-3 leading-snug">
+                Smart real estate prospecting & lead generation.
+              </p>
+              <p className="text-base md:text-lg text-white/70 mb-8 max-w-xl">
+                Get instant access to the data you need to find your next property — from the comfort of your phone, tablet, or browser.
               </p>
 
               {/* App store badges */}
@@ -129,6 +159,18 @@ export default function MobileAppPage() {
                     <span className="block text-base font-semibold">Google Play</span>
                   </span>
                 </a>
+                <a
+                  href={WEB_VERSION_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 transition-colors text-white rounded-xl px-5 py-3 shadow-lg"
+                >
+                  <Globe className="w-7 h-7" />
+                  <span className="text-left leading-tight">
+                    <span className="block text-[10px] uppercase tracking-wider opacity-80">Or use the</span>
+                    <span className="block text-base font-semibold">Web Version</span>
+                  </span>
+                </a>
               </div>
             </div>
 
@@ -140,33 +182,94 @@ export default function MobileAppPage() {
         </div>
       </section>
 
-      {/* ── Features ──────────────────────────────────────────── */}
-      <section className="py-16 md:py-20 bg-white">
+      {/* ── Stat strip ──────────────────────────────────────── */}
+      <section className="bg-[#f26b2b] text-white py-8 md:py-10">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-[#03374f] mb-3">What can you do with it?</h2>
-            <p className="text-gray-600">A full title-and-escrow workflow that fits in your pocket.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 text-center max-w-4xl mx-auto">
+            <div>
+              <div className="text-3xl md:text-4xl font-bold">Millions</div>
+              <p className="text-sm text-white/90 mt-1">of real estate title records at your fingertips</p>
+            </div>
+            <div className="sm:border-x border-white/30">
+              <div className="text-3xl md:text-4xl font-bold">3,000+</div>
+              <p className="text-sm text-white/90 mt-1">U.S. counties covered</p>
+            </div>
+            <div>
+              <div className="text-3xl md:text-4xl font-bold">97%</div>
+              <p className="text-sm text-white/90 mt-1">of the United States</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Three pillars ───────────────────────────────────── */}
+      <section className="py-16 md:py-24 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-2xl mx-auto mb-12 md:mb-16">
+            <p className="text-[#f26b2b] font-semibold text-sm uppercase tracking-wider mb-3">Don&apos;t just search</p>
+            <h2 className="text-3xl md:text-5xl font-bold text-[#03374f] leading-tight">
+              <span className="text-[#f26b2b]">FIND</span> your properties with{" "}
+              <br className="hidden md:block" />
+              Walking Farm® and Farm Alerts.
+            </h2>
+            <p className="text-gray-600 mt-5 text-lg">
+              A powerful and easy-to-use real estate farming toolkit, built for the agents who don&apos;t wait for the deal to come to them.
+            </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto">
-            {FEATURES.map(({ icon: Icon, title, body }) => (
+          <div className="grid md:grid-cols-3 gap-5 max-w-6xl mx-auto">
+            {PILLARS.map(({ icon: Icon, title, tagline, body }) => (
               <div
                 key={title}
-                className="bg-white rounded-2xl border border-gray-100 hover:border-[#f26b2b]/30 hover:shadow-lg transition-all p-6 group"
+                className="bg-white rounded-2xl border border-gray-100 hover:border-[#f26b2b]/40 hover:shadow-xl hover:-translate-y-1 transition-all p-7 group"
               >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#03374f]/10 to-[#f26b2b]/10 flex items-center justify-center mb-4 group-hover:from-[#f26b2b] group-hover:to-[#f26b2b] transition-all">
-                  <Icon className="w-6 h-6 text-[#03374f] group-hover:text-white transition-colors" />
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#03374f] to-[#062a3b] flex items-center justify-center mb-5 group-hover:from-[#f26b2b] group-hover:to-[#d85c1f] transition-all shadow-md">
+                  <Icon className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="font-bold text-[#03374f] mb-1.5">{title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{body}</p>
+                <h3 className="text-xl font-bold text-[#03374f] mb-1">{title}</h3>
+                <p className="text-sm font-semibold text-[#f26b2b] mb-3">{tagline}</p>
+                <p className="text-gray-600 leading-relaxed">{body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Setup steps ──────────────────────────────────────── */}
+      {/* ── Tool grid (everything else) ─────────────────────── */}
       <section className="py-16 md:py-20 bg-gray-50 border-y border-gray-100">
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#03374f] mb-3">Everything you need in one app</h2>
+            <p className="text-gray-600">A complete real estate prospecting toolkit — designed for the field.</p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+            {TOOLS.map(({ icon: Icon, title, body }) => (
+              <div
+                key={title}
+                className="bg-white rounded-2xl border border-gray-100 hover:border-[#f26b2b]/30 hover:shadow-md transition-all p-5"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#f26b2b]/10 flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-5 h-5 text-[#f26b2b]" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-[#03374f] text-sm mb-1">{title}</h3>
+                    <p className="text-xs text-gray-600 leading-relaxed">{body}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-center text-xs text-gray-400 mt-8 max-w-2xl mx-auto">
+            All features may not be available for all users in all areas. Contact your Pacific Coast Title sales representative for details.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Setup steps ──────────────────────────────────────── */}
+      <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-12">
@@ -204,7 +307,7 @@ export default function MobileAppPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-[#03374f] font-semibold text-sm hover:text-[#f26b2b] transition-colors"
               >
-                Download instructions and resources at smartdirectre.com/pctpropertypro
+                More info at smartdirectre.com/pctpropertypro
                 <ExternalLink className="w-4 h-4" />
               </a>
             </div>
@@ -212,13 +315,61 @@ export default function MobileAppPage() {
         </div>
       </section>
 
-      {/* ── CTA: referral code ───────────────────────────────── */}
-      <section className="py-16 md:py-20 bg-gradient-to-br from-[#f26b2b] via-[#f26b2b] to-[#d85c1f] text-white relative overflow-hidden">
+      {/* ── Final download CTA ───────────────────────────────── */}
+      <section className="py-16 md:py-20 bg-[#03374f] text-white">
+        <div className="container mx-auto px-4 text-center max-w-3xl">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Get more leads — now.</h2>
+          <p className="text-lg text-white/80 mb-8">
+            Your next deal is hiding in the data. Download PCT Property Pro and start working smarter today.
+          </p>
+          <div className="flex flex-wrap gap-3 justify-center">
+            <a
+              href={APP_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 bg-black hover:bg-black/80 transition-colors text-white rounded-xl px-5 py-3 shadow-lg"
+            >
+              <Apple className="w-7 h-7" />
+              <span className="text-left leading-tight">
+                <span className="block text-[10px] uppercase tracking-wider opacity-80">Download on the</span>
+                <span className="block text-base font-semibold">App Store</span>
+              </span>
+            </a>
+            <a
+              href={GOOGLE_PLAY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 bg-black hover:bg-black/80 transition-colors text-white rounded-xl px-5 py-3 shadow-lg"
+            >
+              <PlayCircle className="w-7 h-7" />
+              <span className="text-left leading-tight">
+                <span className="block text-[10px] uppercase tracking-wider opacity-80">Get it on</span>
+                <span className="block text-base font-semibold">Google Play</span>
+              </span>
+            </a>
+            <a
+              href={WEB_VERSION_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 transition-colors text-white rounded-xl px-5 py-3 shadow-lg"
+            >
+              <Globe className="w-7 h-7" />
+              <span className="text-left leading-tight">
+                <span className="block text-[10px] uppercase tracking-wider opacity-80">Or use the</span>
+                <span className="block text-base font-semibold">Web Version</span>
+              </span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Referral / contact CTA ───────────────────────────── */}
+      <section className="py-14 md:py-20 bg-gradient-to-br from-[#f26b2b] via-[#f26b2b] to-[#d85c1f] text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute -top-20 -right-20 w-96 h-96 bg-white rounded-full blur-3xl" />
         </div>
         <div className="container mx-auto px-4 relative z-10 text-center max-w-2xl">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Don&apos;t have a referral code?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-3">Don&apos;t have a referral code?</h2>
           <p className="text-lg text-white/90 mb-8">
             Contact your PCT representative or call our office and we&apos;ll get you set up in minutes.
           </p>
@@ -246,53 +397,97 @@ export default function MobileAppPage() {
   )
 }
 
-/** Decorative phone-frame mockup with a stylised PCT Property Pro home screen. */
+/** Stylised phone mockup showing a Walking Farm® map view. */
 function PhoneMockup() {
   return (
-    <div className="relative w-[260px] h-[540px] rounded-[44px] bg-black shadow-2xl ring-4 ring-white/10 overflow-hidden">
+    <div className="relative w-[270px] h-[560px] rounded-[44px] bg-black shadow-2xl ring-4 ring-white/10 overflow-hidden">
       {/* Notch */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-20" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-30" />
+
       {/* Screen */}
-      <div className="absolute inset-2 rounded-[36px] bg-gradient-to-br from-[#03374f] via-[#062a3b] to-[#021620] overflow-hidden">
+      <div className="absolute inset-2 rounded-[36px] bg-white overflow-hidden">
         {/* Status bar */}
-        <div className="h-9 flex items-end justify-between px-6 pb-1.5 text-white/70 text-[10px] font-semibold">
+        <div className="h-9 flex items-end justify-between px-6 pb-1.5 text-gray-600 text-[10px] font-semibold bg-white">
           <span>9:41</span>
           <span>•••</span>
         </div>
 
         {/* Header */}
-        <div className="px-5 pt-2 pb-4">
-          <p className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">Pacific Coast Title</p>
-          <h3 className="text-white font-bold text-lg mt-0.5">Property Pro</h3>
+        <div className="px-5 pt-2 pb-3 bg-white border-b border-gray-100">
+          <p className="text-[10px] uppercase tracking-wider text-[#f26b2b] font-bold">Walking Farm®</p>
+          <h3 className="text-[#03374f] font-bold text-base mt-0.5">Mission Viejo · 92692</h3>
         </div>
 
-        {/* Tile grid */}
-        <div className="px-4 grid grid-cols-2 gap-2.5">
-          {[
-            { icon: MapPin,         label: "Property"  },
-            { icon: ClipboardList,  label: "Orders"    },
-            { icon: Phone,          label: "My Rep"    },
-            { icon: Bell,           label: "Alerts"    },
-          ].map(({ icon: Icon, label }) => (
-            <div
-              key={label}
-              className="aspect-square bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl flex flex-col items-center justify-center gap-2 text-white/90"
-            >
-              <Icon className="w-7 h-7 text-[#f26b2b]" />
-              <span className="text-[11px] font-semibold">{label}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Recent activity strip */}
-        <div className="absolute bottom-3 left-3 right-3 bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl p-3">
-          <div className="flex items-center gap-2 mb-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-[10px] uppercase tracking-wider text-white/60 font-semibold">Live update</span>
+        {/* Faux map */}
+        <div className="relative h-[280px] bg-gradient-to-br from-emerald-50 via-blue-50 to-emerald-100 overflow-hidden">
+          {/* Roads */}
+          <div className="absolute inset-0 opacity-50">
+            <div className="absolute top-1/3 left-0 right-0 h-1 bg-white" />
+            <div className="absolute top-2/3 left-0 right-0 h-1 bg-white" />
+            <div className="absolute top-0 bottom-0 left-1/4 w-1 bg-white" />
+            <div className="absolute top-0 bottom-0 left-2/3 w-1 bg-white" />
+            <div className="absolute top-1/4 left-1/2 right-0 h-px bg-white/70" />
           </div>
-          <p className="text-[11px] text-white leading-tight">Order #20425 — Title commitment ready</p>
+          {/* Pins */}
+          <Pin top="22%" left="18%" color="#f26b2b" />
+          <Pin top="48%" left="40%" color="#03374f" pulse />
+          <Pin top="36%" left="68%" color="#f26b2b" />
+          <Pin top="62%" left="22%" color="#03374f" />
+          <Pin top="72%" left="58%" color="#f26b2b" />
+          <Pin top="30%" left="84%" color="#03374f" />
+
+          {/* Farm overlay */}
+          <div className="absolute top-[30%] left-[10%] w-[55%] h-[45%] border-2 border-[#f26b2b] bg-[#f26b2b]/10 rounded-2xl" />
+          <div className="absolute top-[24%] left-[10%] bg-[#f26b2b] text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+            My Farm
+          </div>
+        </div>
+
+        {/* Stats card */}
+        <div className="px-4 py-3 bg-white border-t border-gray-100">
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <Stat label="Active" value="124" />
+            <Stat label="Sold 30d" value="9" />
+            <Stat label="Alerts" value="3" accent />
+          </div>
+        </div>
+
+        {/* Live alert */}
+        <div className="absolute bottom-3 left-3 right-3 bg-[#03374f] text-white rounded-2xl p-3 shadow-lg">
+          <div className="flex items-center gap-2 mb-1">
+            <BellRing className="w-3.5 h-3.5 text-[#f26b2b]" />
+            <span className="text-[10px] uppercase tracking-wider text-white/70 font-semibold">Farm Alert</span>
+            <span className="ml-auto text-[10px] text-white/60">just now</span>
+          </div>
+          <p className="text-[11px] leading-tight">New listing at 24812 Cresta Way — 4 bd / 3 ba</p>
         </div>
       </div>
+    </div>
+  )
+}
+
+function Pin({ top, left, color, pulse = false }: { top: string; left: string; color: string; pulse?: boolean }) {
+  return (
+    <div className="absolute" style={{ top, left }}>
+      {pulse && (
+        <span
+          className="absolute inset-0 -m-1 rounded-full animate-ping opacity-60"
+          style={{ backgroundColor: color }}
+        />
+      )}
+      <span
+        className="relative block w-3 h-3 rounded-full ring-2 ring-white shadow"
+        style={{ backgroundColor: color }}
+      />
+    </div>
+  )
+}
+
+function Stat({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div>
+      <div className={`text-base font-bold ${accent ? "text-[#f26b2b]" : "text-[#03374f]"}`}>{value}</div>
+      <div className="text-[9px] uppercase tracking-wider text-gray-400">{label}</div>
     </div>
   )
 }
