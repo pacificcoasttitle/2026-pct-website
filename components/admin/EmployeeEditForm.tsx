@@ -216,15 +216,15 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
           <p className="text-gray-400 text-sm mt-0.5">{initial.title ?? 'Team Member'}</p>
         </div>
 
-        {/* View profile link */}
+        {/* Download vCard link (the public /team profile page has been retired) */}
         <a
-          href={`/team/${emp.slug}`}
+          href={`/api/team/${emp.slug}/vcf`}
           target="_blank"
           rel="noopener noreferrer"
           className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#f26b2b] transition-colors"
         >
           <ExternalLink className="w-3.5 h-3.5" />
-          View
+          vCard
         </a>
 
         {/* Save button */}

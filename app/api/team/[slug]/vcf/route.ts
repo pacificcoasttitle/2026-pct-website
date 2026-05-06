@@ -42,7 +42,7 @@ export async function GET(
     street ? `ADR;TYPE=WORK:;;${street};${city};${state};${zip};US` : '',
     photo ? `PHOTO;VALUE=URL:${photo}` : '',
     emp.linkedin ? `URL;TYPE=LinkedIn:${emp.linkedin}` : '',
-    `URL;TYPE=Website:https://www.pct.com/team/${emp.slug}`,
+    `URL;TYPE=Website:https://www.pct.com`,
     `NOTE:Connect with ${emp.first_name} at Pacific Coast Title · (866) 724-1050 · pct.com`,
     'END:VCARD',
   ]

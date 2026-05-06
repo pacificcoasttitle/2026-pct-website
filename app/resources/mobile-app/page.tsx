@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
+import { ContactButton } from "@/components/ContactButton"
 import {
   Smartphone,
   Map,
@@ -12,12 +12,12 @@ import {
   Share2,
   Calculator,
   Phone,
+  Mail,
   CheckCircle2,
   Download,
   Apple,
   PlayCircle,
   ExternalLink,
-  ArrowRight,
   Globe,
   TrendingUp,
   Layers,
@@ -388,13 +388,14 @@ export default function MobileAppPage() {
               <Phone className="w-4 h-4" />
               Call (714) 516-6700
             </a>
-            <Link
-              href="/team"
-              className="inline-flex items-center justify-center gap-2 bg-[#03374f] hover:bg-[#022a3b] transition-colors px-6 py-3 rounded-xl font-semibold shadow-lg"
+            <ContactButton
+              defaultType="general"
+              title="Request a PCT Property Pro referral code"
+              className="inline-flex items-center justify-center gap-2 bg-[#03374f] hover:bg-[#022a3b] transition-colors text-white px-6 py-3 rounded-xl font-semibold shadow-lg"
+              icon={<Mail className="w-4 h-4" />}
             >
-              Find My PCT Rep
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+              Email Us for a Referral Code
+            </ContactButton>
           </div>
         </div>
       </section>

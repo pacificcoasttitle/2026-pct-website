@@ -54,9 +54,8 @@ export async function PATCH(
   const updated = await updateEmployee(slug, data)
   if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  revalidatePath(`/team/${slug}`)
-  revalidatePath(`/${slug}`)
-  revalidatePath('/team')
+  // /team is no longer a public page; just refresh the admin list
+  revalidatePath('/admin/team/employees')
 
   return NextResponse.json(updated)
 }

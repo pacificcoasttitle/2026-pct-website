@@ -54,12 +54,15 @@ export async function POST(req: NextRequest) {
     logSmsActivity(empId, from, JSON.stringify({ from, code: msgBody })).catch(() => {})
   }
 
-  const firstName  = emp.name.split(' ')[0]
-  const profileUrl = `https://www.pct.com/team/${emp.slug}`
+  const firstName = emp.name.split(' ')[0]
+  // Direct link to download the rep's vCard so the recipient (who already
+  // texted in the rep's SMS code) can save the contact instantly. We no
+  // longer expose a public /team/<slug> profile page on pct.com.
+  const vcardUrl = `https://www.pct.com/api/team/${emp.slug}/vcf`
 
   return twiml(
     `Hi! I'm ${emp.name} with Pacific Coast Title. ` +
-    `View my profile & save my contact:\n${profileUrl}\n\n` +
+    `Save my contact:\n${vcardUrl}\n\n` +
     `📞 ${emp.phone ?? '(866) 724-1050'}\n` +
     `✉️ ${emp.email ?? 'info@pct.com'}\n\n` +
     `Reply FARM to request a farm list from ${firstName}.`

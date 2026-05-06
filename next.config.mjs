@@ -87,6 +87,19 @@ const nextConfig = {
         destination: "https://documents.pct.com/industry-documents/:path*",
         permanent: true,
       },
+      // /team has been retired publicly (we don't expose rep contacts to the
+      // open web). Old bookmarks, vCard QR codes, and search-engine cache
+      // entries get sent to /contact instead of 404'ing.
+      {
+        source: "/team",
+        destination: "/contact",
+        permanent: true,
+      },
+      {
+        source: "/team/:slug*",
+        destination: "/contact",
+        permanent: true,
+      },
     ]
   },
 }

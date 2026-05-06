@@ -42,7 +42,6 @@ export async function POST(req: Request) {
     })
 
     revalidatePath('/admin/team/employees')
-    revalidatePath('/team')
 
     return NextResponse.json({ success: true, employee: created }, { status: 201 })
   } catch (err) {
