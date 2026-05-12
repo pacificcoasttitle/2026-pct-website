@@ -181,10 +181,10 @@ export function Footer() {
         <div className="pt-8 border-t border-white/10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-white/60">
             <p>© {new Date().getFullYear()} Pacific Coast Title Company. All rights reserved.</p>
-            <div className="flex gap-6">
-              <Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link>
-              <Link href="#" className="hover:text-primary transition-colors">Terms of Service</Link>
-              <Link href="#" className="hover:text-primary transition-colors">Accessibility</Link>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center">
+              <Link href="/privacy-policy"   className="hover:text-primary transition-colors">Privacy Policy</Link>
+              <Link href="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</Link>
+              <Link href="/accessibility"    className="hover:text-primary transition-colors">Accessibility</Link>
             </div>
           </div>
         </div>
