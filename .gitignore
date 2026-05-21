@@ -25,3 +25,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# backups
+backups/
+
+# local tooling / sensitive legacy
+.claude/
+data/legacy-core-system/
