@@ -24,7 +24,7 @@ const NAV = [
   { href: '/admin/team/employees',   label: 'Employees',  icon: Users },
   { href: '/admin/team/farms',       label: 'Farm Requests', icon: List },
   { href: '/admin/team/sms',         label: 'SMS',        icon: MessageSquare },
-  { href: '/admin/team/marketing',   label: 'Marketing',  icon: Mail },
+  { href: '/admin/team/marketing',   label: 'Email Marketing', icon: Mail },
   { href: '/admin/team/assessments', label: 'Assessments', icon: ClipboardCheck },
 ]
 
