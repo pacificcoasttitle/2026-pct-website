@@ -740,6 +740,12 @@ Always reframe company features as customer benefits.
 - PCT247: pct247.com
 - Equity Protect: equityprotect.com/title/pacificcoast
 
+### Editor
+
+- TinyMCE (paid version) — use for all rich text editing
+- API key: `NEXT_PUBLIC_TINYMCE_API_KEY` in env
+- Do NOT use community edition or other rich text editors
+
 ---
 
 ## 📋 CONTENT STRUCTURE STANDARDS
