@@ -531,6 +531,20 @@ async function ensureExtraTables() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `)
+  // Batch-aware campaign columns (added 2026-05-21).
+  // batch_id groups campaigns created together in a multi-rep batch.
+  // rep_slug remembers which rep this campaign was personalised for.
+  // reply_to_mode records whether reply-to was the global PCT inbox or the rep's own email.
+  await db.query(`
+    ALTER TABLE vcard_email_campaigns
+      ADD COLUMN IF NOT EXISTS batch_id UUID,
+      ADD COLUMN IF NOT EXISTS rep_slug TEXT,
+      ADD COLUMN IF NOT EXISTS reply_to_mode TEXT DEFAULT 'global';
+  `)
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS idx_vcard_email_campaigns_batch_id
+      ON vcard_email_campaigns(batch_id);
+  `)
   await db.query(`
     CREATE TABLE IF NOT EXISTS vcard_assessments (
       id SERIAL PRIMARY KEY,
@@ -1024,26 +1038,35 @@ export interface EmailCampaignLog {
   scheduled_at: string | null
   notes: string | null
   created_at: string
+  batch_id?: string | null
+  rep_slug?: string | null
+  reply_to_mode?: string | null
 }
 
 export async function createEmailCampaignLog(input: {
   name: string
   subject: string
-  audience_id?: string
-  template_id?: number
-  mailchimp_campaign_id?: string
-  mailchimp_web_id?: string
+  audience_id?: string | null
+  template_id?: number | null
+  mailchimp_campaign_id?: string | null
+  mailchimp_web_id?: string | null
   status: string
-  scheduled_at?: string
-  notes?: string
+  scheduled_at?: string | null
+  notes?: string | null
+  batch_id?: string | null
+  rep_slug?: string | null
+  reply_to_mode?: string | null
 }): Promise<EmailCampaignLog> {
   await ensureExtraTables()
   const db = getPool()
   const res = await db.query(`
     INSERT INTO vcard_email_campaigns
-      (name, subject, audience_id, template_id, mailchimp_campaign_id, mailchimp_web_id, status, scheduled_at, notes)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-    RETURNING id, name, subject, audience_id, template_id, mailchimp_campaign_id, mailchimp_web_id, status, scheduled_at::text, notes, created_at::text
+      (name, subject, audience_id, template_id, mailchimp_campaign_id, mailchimp_web_id,
+       status, scheduled_at, notes, batch_id, rep_slug, reply_to_mode)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+    RETURNING id, name, subject, audience_id, template_id, mailchimp_campaign_id, mailchimp_web_id,
+              status, scheduled_at::text, notes, created_at::text,
+              batch_id::text AS batch_id, rep_slug, reply_to_mode
   `, [
     input.name,
     input.subject,
@@ -1054,6 +1077,9 @@ export async function createEmailCampaignLog(input: {
     input.status,
     input.scheduled_at || null,
     input.notes || null,
+    input.batch_id || null,
+    input.rep_slug || null,
+    input.reply_to_mode || null,
   ])
   return res.rows[0]
 }
@@ -1062,12 +1088,146 @@ export async function getEmailCampaignLogs(limit = 50): Promise<EmailCampaignLog
   await ensureExtraTables()
   const db = getPool()
   const res = await db.query(`
-    SELECT id, name, subject, audience_id, template_id, mailchimp_campaign_id, mailchimp_web_id, status, scheduled_at::text, notes, created_at::text
+    SELECT id, name, subject, audience_id, template_id, mailchimp_campaign_id, mailchimp_web_id,
+           status, scheduled_at::text, notes, created_at::text,
+           batch_id::text AS batch_id, rep_slug, reply_to_mode
     FROM vcard_email_campaigns
     ORDER BY created_at DESC
     LIMIT $1
   `, [limit])
   return res.rows
+}
+
+// ── Batch campaign helpers (multi-rep send) ──────────────────────
+
+/** Summary row in the batches history list. */
+export interface EmailCampaignBatchSummary {
+  batch_id:            string | null    // null for "non-batch" tail entries
+  first_campaign_name: string
+  created_at:          string
+  total:               number
+  drafts:              number
+  scheduled:           number
+  sent:                number
+  cancelled:           number
+  next_send_time:      string | null
+}
+
+/**
+ * Fetch batches plus optional non-batch tail (older single-campaign rows).
+ * Returns `hasMore` so the caller can paginate.
+ */
+export async function getEmailCampaignBatches(
+  opts: { limit?: number; offset?: number; includeNonBatch?: boolean } = {},
+): Promise<{ batches: EmailCampaignBatchSummary[]; hasMore: boolean }> {
+  await ensureExtraTables()
+  const db = getPool()
+  const limit  = Math.max(1, Math.min(opts.limit  ?? 50, 200))
+  const offset = Math.max(0, opts.offset ?? 0)
+
+  // Fetch limit+1 to detect whether there are more batches.
+  const batchRes = await db.query(`
+    SELECT
+      batch_id::text                                            AS batch_id,
+      MIN(name)                                                 AS first_campaign_name,
+      MIN(created_at)::text                                     AS created_at,
+      COUNT(*)::int                                             AS total,
+      COUNT(*) FILTER (WHERE status = 'draft')::int             AS drafts,
+      COUNT(*) FILTER (WHERE status = 'scheduled')::int         AS scheduled,
+      COUNT(*) FILTER (WHERE status = 'sent')::int              AS sent,
+      COUNT(*) FILTER (WHERE status = 'cancelled')::int         AS cancelled,
+      MIN(scheduled_at)::text                                   AS next_send_time
+    FROM vcard_email_campaigns
+    WHERE batch_id IS NOT NULL
+    GROUP BY batch_id
+    ORDER BY MIN(created_at) DESC
+    LIMIT $1 OFFSET $2
+  `, [limit + 1, offset])
+
+  const overFetched = batchRes.rows.length > limit
+  const batches: EmailCampaignBatchSummary[] = batchRes.rows.slice(0, limit)
+
+  // Optionally append legacy single-campaign (non-batch) rows for completeness.
+  // We only do this on the first page (offset === 0) so pagination stays sane.
+  if (opts.includeNonBatch && offset === 0) {
+    const legacy = await db.query(`
+      SELECT
+        NULL::text                                              AS batch_id,
+        name                                                    AS first_campaign_name,
+        created_at::text                                        AS created_at,
+        1                                                       AS total,
+        (CASE WHEN status = 'draft'     THEN 1 ELSE 0 END)::int AS drafts,
+        (CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END)::int AS scheduled,
+        (CASE WHEN status = 'sent'      THEN 1 ELSE 0 END)::int AS sent,
+        (CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END)::int AS cancelled,
+        scheduled_at::text                                      AS next_send_time
+      FROM vcard_email_campaigns
+      WHERE batch_id IS NULL
+      ORDER BY created_at DESC
+      LIMIT 25
+    `)
+    batches.push(...legacy.rows)
+  }
+
+  return { batches, hasMore: overFetched }
+}
+
+/** Row shape used by the cancel + detail endpoints. */
+export interface BatchCampaignRow {
+  id:                    number
+  batch_id:              string | null
+  rep_slug:              string | null
+  rep_name:              string | null
+  name:                  string
+  subject:               string
+  audience_id:           string | null
+  template_id:           number | null
+  mailchimp_campaign_id: string | null
+  mailchimp_web_id:      string | null
+  status:                string
+  scheduled_at:          string | null
+  created_at:            string
+  reply_to_mode:         string | null
+}
+
+/** Fetch every campaign in a batch, joined with rep name when possible. */
+export async function getBatchCampaigns(batchId: string): Promise<BatchCampaignRow[]> {
+  await ensureExtraTables()
+  const db = getPool()
+  const res = await db.query(`
+    SELECT
+      c.id,
+      c.batch_id::text                                          AS batch_id,
+      c.rep_slug,
+      (e.first_name || ' ' || e.last_name)                      AS rep_name,
+      c.name,
+      c.subject,
+      c.audience_id,
+      c.template_id,
+      c.mailchimp_campaign_id,
+      c.mailchimp_web_id,
+      c.status,
+      c.scheduled_at::text                                      AS scheduled_at,
+      c.created_at::text                                        AS created_at,
+      c.reply_to_mode
+    FROM vcard_email_campaigns c
+    LEFT JOIN vcard_employees e ON e.slug = c.rep_slug
+    WHERE c.batch_id = $1::uuid
+    ORDER BY c.created_at ASC, c.id ASC
+  `, [batchId])
+  return res.rows
+}
+
+/** Update one campaign's status (e.g. flip 'scheduled' → 'cancelled'). */
+export async function updateCampaignStatus(
+  id: number,
+  status: string,
+): Promise<void> {
+  await ensureExtraTables()
+  await getPool().query(
+    `UPDATE vcard_email_campaigns SET status = $1 WHERE id = $2`,
+    [status, id],
+  )
 }
 
 export interface AssessmentRecord {
