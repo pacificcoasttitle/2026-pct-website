@@ -39,17 +39,14 @@ function replaceMergeTags(
     email: string | null
     phone: string | null
     photo_url: string | null
-    slug: string
   }
 ): string {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pct.com'
   return html
     .replace(/\{\{REP_NAME\}\}/g,  rep.name || '')
     .replace(/\{\{REP_TITLE\}\}/g, rep.title || '')
     .replace(/\{\{REP_EMAIL\}\}/g, rep.email || '')
     .replace(/\{\{REP_PHONE\}\}/g, rep.phone || '')
     .replace(/\{\{REP_PHOTO\}\}/g, rep.photo_url || '')
-    .replace(/\{\{REP_URL\}\}/g,   `${siteUrl}/${rep.slug}`)
 }
 
 /* ─── GET — templates + campaigns ─────────────────────────────── */

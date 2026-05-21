@@ -909,7 +909,9 @@ export async function seedDefaultTemplates(): Promise<void> {
 
   const footer = `<tr><td style="padding:16px 32px;text-align:center;color:#9ca3af;font-size:11px;">
     Pacific Coast Title Company &middot; <a href="https://www.pct.com" style="color:#f26b2b;text-decoration:none;">pct.com</a><br/>
-    <a href="{{REP_URL}}" style="color:#f26b2b;text-decoration:none;font-size:11px;">View My Page</a>
+    <a href="mailto:{{REP_EMAIL}}" style="color:#f26b2b;text-decoration:none;font-size:11px;">Email Me</a>
+    &middot;
+    <a href="tel:{{REP_PHONE}}" style="color:#f26b2b;text-decoration:none;font-size:11px;">Call Me</a>
   </td></tr>`
 
   const wrap = (inner: string) => `<table width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,sans-serif;background:#f0ede9;padding:32px 16px;">

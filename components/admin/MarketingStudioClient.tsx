@@ -60,7 +60,6 @@ const MERGE_TAGS = [
   { tag: '{{REP_PHOTO}}',  label: 'Rep Photo URL' },
   { tag: '{{REP_EMAIL}}',  label: 'Rep Email' },
   { tag: '{{REP_PHONE}}',  label: 'Rep Phone' },
-  { tag: '{{REP_URL}}',    label: 'Rep Page URL' },
 ]
 
 // When a template still has {{HERO_IMAGE}}, replace with a visual placeholder
