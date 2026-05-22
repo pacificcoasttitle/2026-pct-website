@@ -64,34 +64,50 @@ interface Template {
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 /* ── Hero placeholder swap helpers ─────────────────────────────
- * For each {{HERO_IMAGE}} occurrence we substitute an <img> tag with a
- * marker class while the template is loaded into TinyMCE, then collapse
- * any image carrying that marker class back to {{HERO_IMAGE}} at save
- * time. Using a marker class (not a URL regex) means a real uploaded
- * hero image still round-trips correctly. */
+ * For each {{HERO_IMAGE}} occurrence we substitute an <img> tag carrying
+ * BOTH a marker class (pct-hero-image) AND a data-hero="1" attribute.
+ * On save we collapse every image with either marker back to the literal
+ * {{HERO_IMAGE}} merge tag via DOMParser. Identity-based matching means
+ * a real uploaded hero image still round-trips correctly regardless of
+ * what its src happens to be (placeholder, R2 URL, etc.). */
+
+const HERO_TAG_REGEX = /\{\{HERO_IMAGE\}\}/g
+const HERO_IMG_HTML  = `<img src="${HERO_PLACEHOLDER}" data-hero="1" class="${HERO_MARKER_CLASS}" alt="Hero image" style="max-width:100%;height:auto;display:block;margin:16px auto;cursor:pointer;" />`
+
 function prepareForEditor(html: string): string {
-  return html.replace(
-    /\{\{HERO_IMAGE\}\}/g,
-    `<img src="${HERO_PLACEHOLDER}" alt="Hero image placeholder" class="${HERO_MARKER_CLASS}" style="max-width:100%;height:auto;display:block;margin:16px auto;border:2px dashed #d1d5db;border-radius:8px;" />`,
-  )
+  // 1. Normal path: replace every {{HERO_IMAGE}} with a tagged <img>.
+  let result = html.replace(HERO_TAG_REGEX, HERO_IMG_HTML)
+
+  // 2. Legacy heuristic: older templates may have been saved with a
+  //    hardcoded R2 URL where the hero used to be. If nothing in the
+  //    document carries the data-hero marker yet, tag the FIRST <img>
+  //    so the replace pipeline can find and swap it. After the next
+  //    save, prepareForSave() collapses it back to {{HERO_IMAGE}}.
+  if (!/data-hero=["']1["']/i.test(result)) {
+    result = result.replace(
+      /<img(?![^>]*\bdata-hero=)([^>]*?)\/?>/i,
+      `<img$1 data-hero="1" class="${HERO_MARKER_CLASS}" />`,
+    )
+  }
+  return result
 }
 
 function prepareForSave(html: string): string {
   if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
-    // Fallback for SSR — should never run in this component, but cheap.
-    return html.replace(/\{\{HERO_IMAGE\}\}/g, '{{HERO_IMAGE}}')
+    // SSR fallback — never runs in this client component, but cheap.
+    return html
   }
-  // Wrap so we can safely re-serialise without losing siblings.
   const doc = new DOMParser().parseFromString(
     `<!DOCTYPE html><html><body><div id="__pct_root">${html}</div></body></html>`,
     'text/html',
   )
   const root = doc.getElementById('__pct_root')
   if (!root) return html
-  const markedImgs = Array.from(root.querySelectorAll(`img.${HERO_MARKER_CLASS}`))
-  markedImgs.forEach((img) => {
-    const placeholder = doc.createTextNode('{{HERO_IMAGE}}')
-    img.replaceWith(placeholder)
+  const heroImages = Array.from(
+    root.querySelectorAll(`img[data-hero="1"], img.${HERO_MARKER_CLASS}`),
+  )
+  heroImages.forEach((img) => {
+    img.replaceWith(doc.createTextNode('{{HERO_IMAGE}}'))
   })
   return root.innerHTML
 }
@@ -146,6 +162,11 @@ export function TemplateEditor({ templateId }: { templateId: number }) {
   const uploadingRef = useRef(false)
   const [uploading, setUploading] = useState(false)
   const [heroUploading, setHeroUploading] = useState(false)
+
+  /* Ref to the hero-replace function so TinyMCE's setup() callback —
+     which runs exactly once — can call the latest version without
+     capturing a stale closure. */
+  const replaceHeroImageRef = useRef<(file: File) => Promise<void>>(async () => {})
 
   /* ══════════════════════════════════════════════════════════════
      LOAD template — new per-id endpoint, no race window.
@@ -207,25 +228,46 @@ export function TemplateEditor({ templateId }: { templateId: number }) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).tinymce?.init({
       selector: `#${EDITOR_ID}`,
-      height:   '100%',
       menubar:  'file edit view insert format table',
-      plugins:  'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
+      plugins:  'advlist autoresize autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
       toolbar:  'undo redo | blocks fontfamily fontsize | bold italic underline forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | pctImage link | mergetag | table | code preview fullscreen',
+      // Autoresize manages height — grows with content, bounded.
+      min_height: 600,
+      max_height: 1200,
+      autoresize_overflow_padding: 16,
+      autoresize_bottom_margin: 24,
       paste_as_text: true,
       paste_block_drop: false,
       table_default_styles: { 'border-collapse': 'collapse', width: '100%' },
       valid_styles: {
-        '*': 'color,background-color,background,font-family,font-size,font-weight,font-style,text-align,text-decoration,line-height,padding,padding-top,padding-bottom,padding-left,padding-right,margin,margin-top,margin-bottom,margin-left,margin-right,border,border-top,border-bottom,border-left,border-right,border-collapse,border-color,border-width,border-style,border-radius,width,max-width,min-width,height,display,vertical-align,list-style-type,opacity,box-shadow,overflow',
+        '*': 'color,background-color,background,font-family,font-size,font-weight,font-style,text-align,text-decoration,line-height,padding,padding-top,padding-bottom,padding-left,padding-right,margin,margin-top,margin-bottom,margin-left,margin-right,border,border-top,border-bottom,border-left,border-right,border-collapse,border-color,border-width,border-style,border-radius,width,max-width,min-width,height,display,vertical-align,list-style-type,opacity,box-shadow,overflow,outline,outline-offset,outline-color,outline-width,outline-style,cursor,transition',
       },
       // Keep the hero marker class through TinyMCE's class sanitisation.
       valid_classes: { 'img': HERO_MARKER_CLASS },
       invalid_styles: { '*': 'position float clear' },
-      extended_valid_elements: `img[class|src|alt|style|width|height]`,
+      // Allow data-hero (and the rest of the hero img attrs) past TinyMCE's filter.
+      extended_valid_elements: `img[class|src|alt|style|width|height|data-hero]`,
       content_style: `
         body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; padding: 16px; max-width: 600px; margin: 0 auto; color: #333; }
         img  { max-width: 100%; height: auto; }
-        img.${HERO_MARKER_CLASS} { outline: 1px dashed transparent; transition: outline-color 120ms ease, box-shadow 120ms ease; }
-        img.${HERO_MARKER_CLASS}:hover { outline-color: #f26b2b; box-shadow: 0 0 0 3px rgba(242,107,43,0.15); cursor: pointer; }
+        img.${HERO_MARKER_CLASS} {
+          outline: 2px dashed #d1d5db;
+          outline-offset: 2px;
+          transition: outline-color 0.2s, outline-width 0.2s;
+          cursor: pointer;
+        }
+        img.${HERO_MARKER_CLASS}:hover {
+          outline-color: #f26b2b;
+          outline-width: 3px;
+        }
+        /* Once a real (R2-hosted) image is set, drop the dashed affordance. */
+        img.${HERO_MARKER_CLASS}[src*="r2."],
+        img.${HERO_MARKER_CLASS}[src*="r2-"],
+        img.${HERO_MARKER_CLASS}[src*=".r2.dev"],
+        img.${HERO_MARKER_CLASS}[src*="cloudflarestorage.com"] {
+          outline: none;
+          cursor: default;
+        }
         table { border-collapse: collapse; width: 100%; }
         a { color: #f26b2b; }
       `,
@@ -274,18 +316,24 @@ export function TemplateEditor({ templateId }: { templateId: number }) {
           },
         })
 
-        // Tooltip-ish hint: clicking the hero placeholder shows a notification.
+        // Click-to-replace affordance: clicking the hero <img> opens the
+        // file picker and routes the selected file through the latest
+        // replaceHeroImage handler (via ref to avoid stale closures).
         editor.on('click', (e: { target?: HTMLElement }) => {
           const t = e.target
-          if (t && t.tagName === 'IMG' && t.classList?.contains(HERO_MARKER_CLASS)) {
-            try {
-              editor.notificationManager.open({
-                text: 'Use the "Replace Hero Image" button above to swap this placeholder.',
-                type: 'info',
-                timeout: 2500,
-              })
-            } catch { /* ignore */ }
+          if (!t || t.tagName !== 'IMG') return
+          const isHero =
+            t.getAttribute('data-hero') === '1' ||
+            t.classList?.contains(HERO_MARKER_CLASS)
+          if (!isHero) return
+          const input = document.createElement('input')
+          input.type = 'file'
+          input.accept = 'image/*'
+          input.onchange = () => {
+            const file = input.files?.[0]
+            if (file) replaceHeroImageRef.current(file)
           }
+          input.click()
         })
 
         // Editor is ready — the content-sync effect will push template HTML in.
@@ -445,55 +493,94 @@ export function TemplateEditor({ templateId }: { templateId: number }) {
 
   /* ══════════════════════════════════════════════════════════════
      REPLACE HERO IMAGE — DOM-targeted swap inside TinyMCE.
-     Finds the first img.pct-hero-image and swaps its src. If none
-     exists yet (template doesn't have {{HERO_IMAGE}}), inserts a
-     new marker image at the cursor.
+
+     Takes a File (so it can be called both from the toolbar button
+     AND from the click-on-placeholder handler inside TinyMCE setup).
+
+     If a hero <img> already exists (matched by data-hero or marker
+     class), we mutate its src/attrs in place — NEVER insertContent,
+     which would create a sibling. If none exists yet, we insert a
+     new tagged <img> at the cursor as a one-time bootstrap.
      ══════════════════════════════════════════════════════════════ */
-  async function replaceHeroImage() {
+  const replaceHeroImage = useCallback(async (file: File): Promise<void> => {
     const ed = getEditor()
     if (!ed) return
+
+    setHeroUploading(true); setError('')
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || `Upload failed: ${res.status}`)
+      const url: string | undefined = data.url
+      if (!url) throw new Error('No URL returned from upload')
+
+      const body = ed.getBody() as HTMLElement | null
+      const existing = body?.querySelector(
+        `img[data-hero="1"], img.${HERO_MARKER_CLASS}`,
+      ) as HTMLImageElement | null
+
+      if (existing) {
+        // In-place mutation — never insertContent here.
+        existing.src = url
+        existing.setAttribute('data-hero', '1')
+        existing.classList.add(HERO_MARKER_CLASS)
+        existing.setAttribute('alt', 'Hero image')
+        existing.setAttribute(
+          'style',
+          'max-width:100%;height:auto;display:block;margin:16px auto;border-radius:8px;',
+        )
+      } else {
+        // Bootstrap: no hero yet — insert one at the cursor.
+        ed.focus()
+        ed.insertContent(
+          `<img src="${url}" data-hero="1" class="${HERO_MARKER_CLASS}" alt="Hero image" style="max-width:100%;height:auto;display:block;margin:16px auto;border-radius:8px;" />`,
+        )
+      }
+
+      // Notify TinyMCE so dirty / preview / undo all update.
+      ed.undoManager.add()
+      ed.fire('change')
+
+      try {
+        ed.notificationManager.open({
+          type: 'success',
+          text: 'Hero image updated.',
+          timeout: 2000,
+        })
+      } catch { /* ignore */ }
+      setInfo('Hero image updated.')
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Hero upload failed'
+      console.error('Hero replace failed:', e)
+      try {
+        ed.notificationManager.open({
+          type: 'error',
+          text: 'Failed to upload hero image. Please try again.',
+          timeout: 4000,
+        })
+      } catch { /* ignore */ }
+      setError(msg)
+    } finally {
+      setHeroUploading(false)
+    }
+  }, [])
+
+  /* Keep the ref pointed at the latest replaceHeroImage so TinyMCE's
+     setup-captured click handler always calls the current closure. */
+  useEffect(() => {
+    replaceHeroImageRef.current = replaceHeroImage
+  }, [replaceHeroImage])
+
+  /* File-picker wrapper for the toolbar button. */
+  function pickAndReplaceHero() {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'image/*'
-    input.onchange = async () => {
+    input.onchange = () => {
       const file = input.files?.[0]
-      if (!file) return
-      setHeroUploading(true); setError('')
-      try {
-        const fd = new FormData()
-        fd.append('file', file)
-        const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Upload failed')
-
-        const url: string = data.url
-        const body = ed.getBody() as HTMLElement | null
-        const existing = body?.querySelector(`img.${HERO_MARKER_CLASS}`) as HTMLImageElement | null
-
-        if (existing) {
-          existing.setAttribute('src', url)
-          existing.removeAttribute('alt')
-          existing.setAttribute('alt', 'Hero image')
-          // Drop the dashed placeholder border via inline style override.
-          existing.setAttribute(
-            'style',
-            'max-width:100%;height:auto;display:block;margin:16px auto;border-radius:8px;',
-          )
-          // Notify TinyMCE so undo/dirty/preview all update.
-          ed.undoManager.add()
-          ed.fire('change')
-        } else {
-          ed.focus()
-          ed.insertContent(
-            `<img src="${url}" alt="Hero image" class="${HERO_MARKER_CLASS}" style="max-width:100%;height:auto;display:block;margin:16px auto;border-radius:8px;" />`,
-          )
-        }
-        setInfo('Hero image updated.')
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Hero upload failed')
-      } finally {
-        setHeroUploading(false)
-      }
+      if (file) replaceHeroImage(file)
     }
     input.click()
   }
@@ -681,7 +768,7 @@ export function TemplateEditor({ templateId }: { templateId: number }) {
                   : <><ImageIcon className="w-3.5 h-3.5 mr-1" /> Insert Image</>}
               </Button>
               <Button variant="outline" size="sm"
-                      onClick={replaceHeroImage}
+                      onClick={pickAndReplaceHero}
                       disabled={heroUploading || !contentReady}
                       className="border-[#f26b2b]/30 text-[#f26b2b] hover:bg-[#f26b2b]/10 hover:text-[#f26b2b]">
                 {heroUploading
@@ -696,9 +783,8 @@ export function TemplateEditor({ templateId }: { templateId: number }) {
             {/* TinyMCE container — ALWAYS in the DOM. */}
             <div>
               <Label className="text-xs text-gray-500">Email Content</Label>
-              <div className="mt-1 relative rounded-lg border border-gray-200 overflow-hidden bg-white"
-                   style={{ minHeight: 480 }}>
-                <textarea id={EDITOR_ID} defaultValue="" style={{ visibility: 'hidden', height: 480 }} />
+              <div className="mt-1 relative rounded-lg border border-gray-200 bg-white">
+                <textarea id={EDITOR_ID} defaultValue="" style={{ visibility: 'hidden' }} />
 
                 {/* Overlay skeleton until both fetch AND TinyMCE are ready. */}
                 {!contentReady && (
