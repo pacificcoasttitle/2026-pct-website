@@ -141,12 +141,71 @@ function prepareForEditor(html: string): string {
     t.replaceWith(frag)
   }
 
+  // Case C: already-uploaded hero image. Once a user saves a template
+  // with a real hero, the markup contains a plain <img src="https://…">
+  // (no merge tag, no data-hero attribute — those were stripped at save
+  // to keep the email markup clean). On reload we re-tag the first
+  // "hero-shaped" image so click-to-replace keeps working.
+  //
+  // Heuristic — skip known non-hero images: logos, rep photos, anything
+  // narrower than 400px (probably an icon or a profile shot).
+  const hasTaggedHero = root.querySelector('img[data-hero="1"]')
+  if (!hasTaggedHero) {
+    const candidates = Array.from(root.querySelectorAll('img'))
+    for (const img of candidates) {
+      const src = (img.getAttribute('src') || '').toLowerCase()
+      const alt = (img.getAttribute('alt') || '').toLowerCase()
+      const widthAttr = img.getAttribute('width') || ''
+      const widthNum  = parseInt(widthAttr, 10)
+
+      if (!src) continue
+      if (src.includes('logo')) continue
+      if (src.includes('{{rep_photo}}')) continue
+      if (alt.includes('logo')) continue
+      if (alt === '{{rep_name}}') continue
+      if (widthAttr && Number.isFinite(widthNum) && widthNum < 400) continue
+
+      img.setAttribute('data-hero', '1')
+      img.classList.add(HERO_MARKER_CLASS)
+      break // tag only the first matching image
+    }
+  }
+
   return root.innerHTML
 }
 
+/** Strip editor-only inline styles (placeholder dashed border / cursor
+ *  / hover outline) from a style attribute string. Returns the cleaned
+ *  style or an empty string if nothing remains. */
+function stripEditorOnlyStyles(style: string): string {
+  return style
+    .replace(/border\s*:[^;]*;?/gi, '')
+    .replace(/cursor\s*:[^;]*;?/gi, '')
+    .replace(/outline[^:]*:[^;]*;?/gi, '')
+    .replace(/transition\s*:[^;]*;?/gi, '')
+    .replace(/;\s*;/g, ';')
+    .trim()
+}
+
+/**
+ * Convert editor HTML into save-ready HTML.
+ *
+ * Hero handling — we MUST distinguish between two cases:
+ *
+ *   1. Placeholder image still in place (src points at placehold.co) →
+ *      the user never uploaded a hero, so collapse back to a
+ *      `<img src="{{HERO_IMAGE}}">` tag whose other attrs are preserved.
+ *      The merge tag is resolved per-campaign at send time.
+ *
+ *   2. Real uploaded image (src points at R2 / any non-placeholder URL) →
+ *      KEEP the image as-is. We must NOT overwrite the user's uploaded
+ *      hero with the merge tag — that was the previous bug that erased
+ *      heroes on save. We only strip the editor-only markers
+ *      (data-hero, pct-hero-image class, dashed-border styles) so the
+ *      saved HTML is clean email markup.
+ */
 function prepareForSave(html: string): string {
   if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
-    // SSR fallback — never runs in this client component, but cheap.
     return html
   }
   const doc = new DOMParser().parseFromString(
@@ -155,12 +214,59 @@ function prepareForSave(html: string): string {
   )
   const root = doc.getElementById('__pct_root')
   if (!root) return html
+
   const heroImages = Array.from(
     root.querySelectorAll(`img[data-hero="1"], img.${HERO_MARKER_CLASS}`),
   )
+
   heroImages.forEach((img) => {
-    img.replaceWith(doc.createTextNode('{{HERO_IMAGE}}'))
+    const src = img.getAttribute('src') || ''
+    const isPlaceholder = src === HERO_PLACEHOLDER || src.includes('placehold.co')
+
+    if (isPlaceholder) {
+      // Placeholder — collapse to <img src="{{HERO_IMAGE}}"> preserving
+      // useful attributes (alt, width, height, cleaned style) so the
+      // template's wrapping shape survives round-tripping.
+      const newImg = doc.createElement('img')
+      newImg.setAttribute('src', '{{HERO_IMAGE}}')
+
+      const alt    = img.getAttribute('alt')
+      const width  = img.getAttribute('width')
+      const height = img.getAttribute('height')
+      const style  = img.getAttribute('style') || ''
+
+      if (alt && alt !== 'Hero image' && alt !== 'Hero image placeholder') {
+        newImg.setAttribute('alt', alt)
+      }
+      if (width)  newImg.setAttribute('width',  width)
+      if (height) newImg.setAttribute('height', height)
+
+      const cleanStyle = stripEditorOnlyStyles(style)
+      if (cleanStyle) {
+        newImg.setAttribute('style', cleanStyle)
+      } else {
+        newImg.setAttribute('style', 'display:block;width:100%;height:auto;')
+      }
+
+      img.replaceWith(newImg)
+    } else {
+      // Real uploaded image — keep src + most attrs, strip editor markers only.
+      img.removeAttribute('data-hero')
+      img.classList.remove(HERO_MARKER_CLASS)
+
+      const style = img.getAttribute('style') || ''
+      const cleanStyle = stripEditorOnlyStyles(style)
+      if (cleanStyle) {
+        img.setAttribute('style', cleanStyle)
+      } else {
+        img.removeAttribute('style')
+      }
+      if (img.classList.length === 0) {
+        img.removeAttribute('class')
+      }
+    }
   })
+
   return root.innerHTML
 }
 
@@ -201,10 +307,48 @@ export function TemplateEditor({ templateId }: { templateId: number }) {
   const [previewHtml, setPreviewHtml] = useState('')
   const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const previewSrc = useMemo(
-    () => previewHtml.replace(/\{\{HERO_IMAGE\}\}/g, HERO_PLACEHOLDER),
-    [previewHtml],
-  )
+  /* Preview iframe content. We wrap previewHtml in an email-friendly
+     shell so the iframe renders close to what an email client (and the
+     TinyMCE editor itself) shows. Specifically:
+       - Brand colors for headings + links
+       - Off-white page background matching the admin shell
+       - !important resets that hide editor-only decorations
+         (dashed border, hover outline, pointer cursor) on the hero
+         image so the preview never looks different from the email. */
+  const previewSrc = useMemo(() => {
+    const body = previewHtml.replace(/\{\{HERO_IMAGE\}\}/g, HERO_PLACEHOLDER)
+    return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: #f0ede9;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #1f2937;
+    line-height: 1.5;
+  }
+  table { border-collapse: collapse; }
+  img { max-width: 100%; height: auto; display: block; }
+  a { color: #f26b2b; text-decoration: underline; }
+  h1, h2, h3 { color: #03374f; margin-top: 0; }
+  /* Hide editor-only decorations so preview matches the final email. */
+  img.${HERO_MARKER_CLASS},
+  img[data-hero="1"] {
+    outline: none !important;
+    border: none !important;
+    cursor: default !important;
+  }
+</style>
+</head>
+<body>
+${body}
+</body>
+</html>`
+  }, [previewHtml])
 
   /* ── TinyMCE state ───────────────────────────────────────────── */
   const [tinyLoaded, setTinyLoaded] = useState(false)
