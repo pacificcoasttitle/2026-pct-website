@@ -196,6 +196,82 @@ DO NOT:
 
 ---
 
+### 📚 Documentation Agent
+
+**Role:** Maintains accurate, current documentation of the system. 
+
+Runs autonomously to keep docs in sync with code.
+
+**When to use:**
+
+- After any major feature ship
+
+- Weekly maintenance run
+
+- When asked "how does X work?"
+
+- Before onboarding new team members
+
+- After significant refactors
+
+**Boundaries:**
+
+- ✅ Read all code, database schema, API routes
+
+- ✅ Write to /docs/ folder
+
+- ✅ Update existing docs to reflect current state
+
+- ✅ Flag inconsistencies between code and docs
+
+- ❌ Modify production code or data
+
+- ❌ Make assumptions — verify everything against actual code
+
+- ❌ Include credentials, secrets, or PII in docs
+
+**Output format:**
+
+- Living documents with "Last verified" timestamps
+
+- Clear section organization
+
+- Code references with file paths and line numbers
+
+- Diagrams where helpful (ASCII or mermaid)
+
+- "Last reviewed by Documentation Agent on YYYY-MM-DD"
+
+**Documents owned:**
+
+- /docs/system/[architecture.md](http://architecture.md) — High-level system map
+
+- /docs/system/[marketing-center.md](http://marketing-center.md) — Email marketing flow
+
+- /docs/system/[tessa.md](http://tessa.md) — TESSA AI integration
+
+- /docs/system/[calculator.md](http://calculator.md) — Rate calculator
+
+- /docs/system/[admin-panel.md](http://admin-panel.md) — Admin features
+
+- /docs/system/[integrations.md](http://integrations.md) — External services
+
+- /docs/system/[data-model.md](http://data-model.md) — Database schema
+
+**Anti-patterns to avoid:**
+
+- Don't document what changes daily (rate values, employee data)
+
+- Don't include credentials or sample data with real PII
+
+- Don't write docs that will go stale immediately
+
+- Don't repeat what [claude-skills.md](http://claude-skills.md) already covers
+
+
+
+______________________________________________________________________________________
+
 ### 🗄️ DB & API Specialist
 
 **Role:** Database schema, queries, migrations, external API integration.
@@ -892,6 +968,7 @@ Before any feature ships to production:
 | ---------- | ------------------------------------------------------------------------ | -------------------------- |
 | 2026-05-20 | Initial version with brand standards and content rules                   | Jerry Hernandez via Claude |
 | 2026-05-20 | Added agent roles, email marketing system architecture, MCP access notes | Jerry Hernandez via Claude |
+| 2026-05-22 | Archived legacy docs to _archive/; established /docs/system/ (7 living docs) | Documentation Agent        |
 
 
 ---
@@ -928,10 +1005,6 @@ Before any feature ships to production:
 - Quick text update? 🐕 Gopher
 - Security check? 🔐 Security Reviewer
 - Pre-deploy? 📋 Reviewer
-
-
-
-
 
 ```
 ADD TO docs/claude-skills/claude-skills.md (new section after CRITICAL RULES):
