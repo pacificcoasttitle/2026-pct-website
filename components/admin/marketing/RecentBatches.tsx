@@ -44,7 +44,7 @@ export function RecentBatches({ limit = 5 }: { limit?: number }) {
     return (
       <div className="space-y-2">
         {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-xl" />
+          <Skeleton key={i} className="h-16 w-full rounded-xl bg-gray-200" />
         ))}
       </div>
     )

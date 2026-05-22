@@ -90,7 +90,7 @@ export default async function NewCampaignPage() {
         </h1>
       </header>
 
-      <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
+      <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl bg-gray-200" />}>
         <CampaignWizard reps={reps} mailchimpServer={mailchimpServer} regions={regions} />
       </Suspense>
     </div>

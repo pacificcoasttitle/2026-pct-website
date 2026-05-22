@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
-  categoryIcon, formatDate, isDefaultTemplate, InlineAlert,
+  categoryIcon, categoryColor, formatDate, isDefaultTemplate, InlineAlert,
+  previewText,
 } from './shared'
 
 interface Template {
@@ -125,7 +126,7 @@ export function TemplatesManager() {
       {items === null ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-xl" />
+            <Skeleton key={i} className="h-20 w-full rounded-xl bg-gray-200" />
           ))}
         </div>
       ) : (
@@ -163,16 +164,26 @@ function Section({
           <ul className="divide-y divide-gray-50">
             {templates.map((t) => (
               <li key={t.id} className="px-5 py-4 hover:bg-gray-50/50 transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg leading-none">{categoryIcon(t.category)}</span>
-                      <h3 className="font-semibold text-[#03374f] truncate">{t.name}</h3>
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div className="min-w-0 flex items-start gap-3">
+                    {/* Category badge — color-coded so reps are distinguishable at a glance. */}
+                    <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg ${categoryColor(t.category).bg} ${categoryColor(t.category).text}`}>
+                      {categoryIcon(t.category)}
                     </div>
-                    <p className="text-xs text-gray-500 mt-1 truncate">{t.subject}</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">
-                      Last updated: {formatDate(t.updated_at)}
-                    </p>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-[#03374f] truncate">{t.name}</h3>
+                        <span className={`text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded ${categoryColor(t.category).bg} ${categoryColor(t.category).text}`}>
+                          {categoryColor(t.category).label}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1 italic">
+                        “{previewText(t.subject, 60) || '(No subject)'}”
+                      </p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">
+                        Last updated: {formatDate(t.updated_at)}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Link href={`/admin/team/marketing/templates/${t.id}/edit`}>

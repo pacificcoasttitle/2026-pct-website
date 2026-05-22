@@ -115,7 +115,7 @@ export function HistoryList() {
         <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400">Batches</h2>
         {loading ? (
           <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
+            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl bg-gray-200" />)}
           </div>
         ) : batchEntries.length === 0 ? (
           <Card className="py-12 flex flex-col items-center text-gray-400">

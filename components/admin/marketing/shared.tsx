@@ -104,6 +104,25 @@ export function categoryIcon(category: string | null | undefined): string {
   }
 }
 
+/** Category → background + text classes for the icon badge. */
+export function categoryColor(category: string | null | undefined): { bg: string; text: string; label: string } {
+  switch (category) {
+    case 'product':       return { bg: 'bg-blue-50',    text: 'text-blue-700',    label: 'Product' }
+    case 'title_news':    return { bg: 'bg-purple-50',  text: 'text-purple-700',  label: 'Title News' }
+    case 'market_update': return { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'Market Update' }
+    case 'holidays':      return { bg: 'bg-amber-50',   text: 'text-amber-700',   label: 'Holidays' }
+    default:              return { bg: 'bg-gray-100',   text: 'text-gray-600',    label: 'Custom' }
+  }
+}
+
+/** Truncate a string for a one-line preview. */
+export function previewText(s: string | null | undefined, max = 60): string {
+  if (!s) return ''
+  const trimmed = s.trim()
+  if (trimmed.length <= max) return trimmed
+  return trimmed.slice(0, max - 1).trimEnd() + '…'
+}
+
 export const TEMPLATE_CATEGORIES = [
   { key: 'product',       label: 'Product Spotlight' },
   { key: 'title_news',    label: 'Title Industry News' },

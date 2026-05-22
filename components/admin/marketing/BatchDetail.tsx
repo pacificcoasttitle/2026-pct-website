@@ -86,8 +86,8 @@ export function BatchDetail({ batchId }: { batchId: string }) {
   if (loading) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
+        <Skeleton className="h-24 w-full rounded-xl bg-gray-200" />
+        <Skeleton className="h-64 w-full rounded-xl bg-gray-200" />
       </div>
     )
   }
