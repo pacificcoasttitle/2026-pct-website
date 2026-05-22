@@ -72,25 +72,76 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error'
  * a real uploaded hero image still round-trips correctly regardless of
  * what its src happens to be (placeholder, R2 URL, etc.). */
 
-const HERO_TAG_REGEX = /\{\{HERO_IMAGE\}\}/g
-const HERO_IMG_HTML  = `<img src="${HERO_PLACEHOLDER}" data-hero="1" class="${HERO_MARKER_CLASS}" alt="Hero image" style="max-width:100%;height:auto;display:block;margin:16px auto;cursor:pointer;" />`
+/** HTML fragment used to introduce a new hero placeholder where the
+ *  source template stored the merge tag as a text node (Case B). */
+const HERO_IMG_HTML = `<img src="${HERO_PLACEHOLDER}" data-hero="1" class="${HERO_MARKER_CLASS}" alt="Hero image" style="max-width:100%;height:auto;display:block;margin:16px auto;cursor:pointer;" />`
 
+/**
+ * Convert a stored template's HTML into editor-ready HTML.
+ *
+ * The seed templates store the hero in two shapes:
+ *
+ *   Case A — merge tag as an entire src attribute:
+ *     <img src="{{HERO_IMAGE}}" alt="Holiday Greeting" width="600" />
+ *
+ *   Case B — merge tag as a literal text node:
+ *     <td>{{HERO_IMAGE}}</td>
+ *
+ * A naive .replace() of `{{HERO_IMAGE}}` with `<img …>` works for Case B
+ * but produces nested <img> tags for Case A — browsers then unwrap them,
+ * stripping attributes and leaving orphaned text. We use DOM parsing so
+ * each case is handled in place without breaking surrounding markup.
+ */
 function prepareForEditor(html: string): string {
-  // 1. Normal path: replace every {{HERO_IMAGE}} with a tagged <img>.
-  let result = html.replace(HERO_TAG_REGEX, HERO_IMG_HTML)
-
-  // 2. Legacy heuristic: older templates may have been saved with a
-  //    hardcoded R2 URL where the hero used to be. If nothing in the
-  //    document carries the data-hero marker yet, tag the FIRST <img>
-  //    so the replace pipeline can find and swap it. After the next
-  //    save, prepareForSave() collapses it back to {{HERO_IMAGE}}.
-  if (!/data-hero=["']1["']/i.test(result)) {
-    result = result.replace(
-      /<img(?![^>]*\bdata-hero=)([^>]*?)\/?>/i,
-      `<img$1 data-hero="1" class="${HERO_MARKER_CLASS}" />`,
-    )
+  if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
+    return html
   }
-  return result
+
+  const doc = new DOMParser().parseFromString(
+    `<!DOCTYPE html><html><body><div id="__pct_root">${html}</div></body></html>`,
+    'text/html',
+  )
+  const root = doc.getElementById('__pct_root')
+  if (!root) return html
+
+  // Case A: rewrite the existing <img src="{{HERO_IMAGE}}"> in place so
+  // every other attribute on that element (alt, width, height, style…)
+  // is preserved.
+  root.querySelectorAll('img').forEach((img) => {
+    if (img.getAttribute('src') === '{{HERO_IMAGE}}') {
+      img.setAttribute('src', HERO_PLACEHOLDER)
+      img.setAttribute('data-hero', '1')
+      img.classList.add(HERO_MARKER_CLASS)
+    }
+  })
+
+  // Case B: literal {{HERO_IMAGE}} text node sitting outside any <img>.
+  // Walk every text node, splice the placeholder text on the merge tag,
+  // and insert a tagged <img> between the surrounding text fragments.
+  const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT, null)
+  const textNodes: Text[] = []
+  while (walker.nextNode()) {
+    textNodes.push(walker.currentNode as Text)
+  }
+  for (const t of textNodes) {
+    if (!t.textContent || !t.textContent.includes('{{HERO_IMAGE}}')) continue
+    const parts = t.textContent.split('{{HERO_IMAGE}}')
+    const frag  = doc.createDocumentFragment()
+    parts.forEach((part, i) => {
+      if (i > 0) {
+        // Build the tagged hero <img> via a <template> so the HTML string
+        // is parsed into a real element instead of escaped text.
+        const tpl = doc.createElement('template')
+        tpl.innerHTML = HERO_IMG_HTML
+        const heroImg = tpl.content.firstChild
+        if (heroImg) frag.appendChild(heroImg.cloneNode(true))
+      }
+      if (part) frag.appendChild(doc.createTextNode(part))
+    })
+    t.replaceWith(frag)
+  }
+
+  return root.innerHTML
 }
 
 function prepareForSave(html: string): string {
