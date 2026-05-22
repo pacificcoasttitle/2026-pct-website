@@ -6,7 +6,7 @@ import Script from 'next/script'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Save, Loader2, Tag, Image as ImageIcon,
-  Monitor, Smartphone, ExternalLink, AlertCircle, Replace,
+  Monitor, Smartphone, ExternalLink, AlertCircle, Replace, Sparkles,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,8 +24,9 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import {
-  InlineAlert, TEMPLATE_CATEGORIES,
+  InlineAlert, TEMPLATE_CATEGORIES, sanitizeAiHtml,
 } from './shared'
+import { AiGenerateModal } from './AiGenerateModal'
 
 /* ══════════════════════════════════════════════════════════════
    CONSTANTS
@@ -162,6 +163,10 @@ export function TemplateEditor({ templateId }: { templateId: number }) {
   const uploadingRef = useRef(false)
   const [uploading, setUploading] = useState(false)
   const [heroUploading, setHeroUploading] = useState(false)
+
+  /* ── AI modal state ──────────────────────────────────────────── */
+  const [aiModalOpen,  setAiModalOpen]  = useState(false)
+  const [selectionText, setSelectionText] = useState('')
 
   /* Ref to the hero-replace function so TinyMCE's setup() callback —
      which runs exactly once — can call the latest version without
@@ -573,6 +578,41 @@ export function TemplateEditor({ templateId }: { templateId: number }) {
     replaceHeroImageRef.current = replaceHeroImage
   }, [replaceHeroImage])
 
+  /* ══════════════════════════════════════════════════════════════
+     AI MODAL — open/insert helpers.
+     ══════════════════════════════════════════════════════════════ */
+  function openAiModal() {
+    const ed = getEditor()
+    const selected = ed?.selection?.getContent?.({ format: 'text' }) || ''
+    setSelectionText(selected)
+    setAiModalOpen(true)
+  }
+
+  function handleAiInsert(rawHtml: string, mode: 'insert' | 'rewrite') {
+    const ed = getEditor()
+    if (!ed) return
+    const sanitized = sanitizeAiHtml(rawHtml)
+    ed.focus()
+    if (mode === 'rewrite' && selectionText) {
+      ed.selection.setContent(sanitized)
+    } else {
+      ed.insertContent(sanitized)
+    }
+    // Notify TinyMCE so dirty / preview / undo all update.
+    ed.undoManager.add()
+    ed.fire('change')
+    setAiModalOpen(false)
+    setSelectionText('')
+    try {
+      ed.notificationManager.open({
+        type: 'success',
+        text: 'AI content inserted.',
+        timeout: 2000,
+      })
+    } catch { /* ignore */ }
+    setInfo('AI content inserted.')
+  }
+
   /* File-picker wrapper for the toolbar button. */
   function pickAndReplaceHero() {
     const input = document.createElement('input')
@@ -775,6 +815,12 @@ export function TemplateEditor({ templateId }: { templateId: number }) {
                   ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Uploading…</>
                   : <><Replace className="w-3.5 h-3.5 mr-1" /> Replace Hero Image</>}
               </Button>
+              <Button variant="outline" size="sm"
+                      onClick={openAiModal}
+                      disabled={!contentReady}
+                      className="border-[#03374f]/20 text-[#03374f] hover:bg-[#03374f]/5">
+                <Sparkles className="w-3.5 h-3.5 mr-1 text-[#f26b2b]" /> Create with AI
+              </Button>
               <span className="text-[11px] text-gray-400 ml-auto hidden sm:inline">
                 Tip: you can also drag images straight into the editor.
               </span>
@@ -868,6 +914,15 @@ export function TemplateEditor({ templateId }: { templateId: number }) {
         </div>
 
       </div>
+
+      {/* Create-with-AI modal */}
+      <AiGenerateModal
+        open={aiModalOpen}
+        onClose={() => { setAiModalOpen(false); setSelectionText('') }}
+        onInsert={handleAiInsert}
+        hasSelection={selectionText.length > 0}
+        selectedText={selectionText}
+      />
 
       {/* Unsaved-changes nav guard for "Use in Campaign" */}
       <AlertDialog open={campaignNavOpen} onOpenChange={setCampaignNavOpen}>

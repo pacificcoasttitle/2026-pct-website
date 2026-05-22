@@ -115,6 +115,40 @@ export function categoryColor(category: string | null | undefined): { bg: string
   }
 }
 
+/**
+ * Sanitize AI-generated HTML before injecting it into the editor.
+ * Strips dangerous elements (script/style/iframe/object/embed) and
+ * dangerous attributes (on*, javascript: hrefs). Whitelist of safe
+ * inline formatting tags is enforced by TinyMCE's own filter once
+ * the content lands in the editor, so this is intentionally a
+ * narrow safety net — not a full HTML sanitizer.
+ */
+export function sanitizeAiHtml(html: string): string {
+  if (typeof window === 'undefined' || typeof DOMParser === 'undefined') return html
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(`<div id="__pct_ai_root">${html}</div>`, 'text/html')
+  const root = doc.getElementById('__pct_ai_root')
+  if (!root) return ''
+
+  root.querySelectorAll('script, style, iframe, object, embed').forEach((el) => el.remove())
+
+  root.querySelectorAll('*').forEach((el) => {
+    Array.from(el.attributes).forEach((attr) => {
+      const name  = attr.name.toLowerCase()
+      const value = (attr.value || '').trim().toLowerCase()
+      if (name.startsWith('on')) {
+        el.removeAttribute(attr.name)
+        return
+      }
+      if ((name === 'href' || name === 'src') && value.startsWith('javascript:')) {
+        el.removeAttribute(attr.name)
+      }
+    })
+  })
+
+  return root.innerHTML
+}
+
 /** Truncate a string for a one-line preview. */
 export function previewText(s: string | null | undefined, max = 60): string {
   if (!s) return ''
