@@ -5,6 +5,10 @@
 import { Pool } from 'pg'
 import type { Employee } from '@/types/employee'
 import { CORPORATE_STANDARD_HTML } from '@/lib/signature-templates/corporate-standard'
+import {
+  HOLIDAY_GREETING_HTML,
+  HOLIDAY_GREETING_META,
+} from '@/lib/email-templates/holiday-greeting'
 
 let _pool: Pool | null = null
 export function getPool(): Pool {
@@ -999,31 +1003,57 @@ ${footer}
       </td></tr>`)
     },
     holidays: {
-      name: 'Holiday Greeting',
-      subject: 'Warm Wishes from {{REP_NAME}} at PCT',
-      preheader: 'Wishing you and your family a wonderful season.',
-      html: wrap(`
-      <tr><td style="background:linear-gradient(135deg,#03374f,#065a7a);padding:32px;text-align:center;">
-        <img src="https://www.pct.com/logo2.png" alt="PCT" width="120" style="display:inline-block;opacity:.9;margin-bottom:16px;" /><br/>
-        <h1 style="margin:0;color:#fff;font-size:28px;font-weight:300;letter-spacing:0.02em;">Season&rsquo;s Greetings</h1>
-      </td></tr>
-      <tr><td><img src="{{HERO_IMAGE}}" alt="Happy Holidays" width="600" style="display:block;width:100%;height:auto;" /></td></tr>
-      <tr><td style="padding:32px;text-align:center;">
-        <h2 style="margin:0 0 16px;color:#03374f;font-size:22px;">Wishing You a Wonderful Season</h2>
-        <p style="margin:0 0 16px;color:#4b5563;line-height:1.8;max-width:460px;display:inline-block;">Thank you for your trust and partnership this year. I look forward to helping you and your clients with all of their title and escrow needs in the coming year.</p>
-        <p style="margin:0;color:#4b5563;line-height:1.8;font-style:italic;">Warm regards,<br/><strong style="color:#03374f;">{{REP_NAME}}</strong></p>
-      </td></tr>`)
+      name:      HOLIDAY_GREETING_META.name,
+      subject:   HOLIDAY_GREETING_META.subject,
+      preheader: HOLIDAY_GREETING_META.preheader,
+      html:      HOLIDAY_GREETING_HTML,
     },
   }
 
+  // Auto-sync the file → DB per template. The existing `cats` short-circuit
+  // (category presence) is intentionally NOT used here anymore because it
+  // prevented updates: once any row exists in a category, the seeder
+  // skipped that category forever. We now operate per-template by `name`.
+  //
+  // Rules:
+  //   - No row with this name  → INSERT (system-owned)
+  //   - Row exists, updated_by='system'  → UPDATE html_content/subject/
+  //     preheader/category (file is authoritative)
+  //   - Row exists, updated_by anything else  → SKIP (admin customized
+  //     it via the UI editor; respect their changes)
+  //
+  // `cats` is still inspected only to leave the legacy logging behavior
+  // intact for any reader expecting it.
+  void cats
+
   for (const [cat, d] of Object.entries(defaults)) {
-    if (!cats.has(cat)) {
+    const existing = await db.query<{ id: number; updated_by: string | null }>(
+      `SELECT id, updated_by FROM vcard_email_templates WHERE name = $1 LIMIT 1`,
+      [d.name],
+    )
+
+    if (existing.rowCount === 0) {
       await db.query(
         `INSERT INTO vcard_email_templates (name, subject, preheader, html_content, category, created_by, updated_by)
          VALUES ($1, $2, $3, $4, $5, 'system', 'system')`,
-        [d.name, d.subject, d.preheader, d.html, cat]
+        [d.name, d.subject, d.preheader, d.html, cat],
       )
+      continue
     }
+
+    const row = existing.rows[0]
+    if (row.updated_by !== 'system') continue  // admin-owned — leave alone
+
+    await db.query(
+      `UPDATE vcard_email_templates
+          SET html_content = $1,
+              subject      = $2,
+              preheader    = $3,
+              category     = $4,
+              updated_at   = NOW()
+        WHERE id = $5`,
+      [d.html, d.subject, d.preheader, cat, row.id],
+    )
   }
 }
 
