@@ -180,8 +180,12 @@ export function SignatureCenter({ staff, offices }: Props) {
                     </div>
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
-                    <Button size="sm" variant="outline" disabled title="Coming soon">View</Button>
-                    <Button size="sm" variant="outline" disabled title="Coming soon">Edit</Button>
+                    <Link href={`/admin/team/signatures/${s.id}`}>
+                      <Button size="sm" variant="outline">View</Button>
+                    </Link>
+                    <Link href={`/admin/team/signatures/${s.id}/edit`}>
+                      <Button size="sm" variant="outline">Edit</Button>
+                    </Link>
                     <Button size="sm"
                             onClick={() => setModalStaff(s)}
                             className="bg-[#03374f] hover:bg-[#022838] text-white">
