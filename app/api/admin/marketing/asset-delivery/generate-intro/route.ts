@@ -18,7 +18,11 @@ import {
   verifyAdminToken,
   ADMIN_COOKIE,
 } from '@/lib/admin-auth'
-import { PCT_BRAND_VOICE_RULES, stripHtmlTags } from '@/lib/marketing-ai'
+import {
+  ASSET_DELIVERY_INTRO_SYSTEM_PROMPT,
+  buildIntroUserMessage,
+  stripHtmlTags,
+} from '@/lib/marketing-ai'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -44,34 +48,8 @@ const BodySchema = z.object({
   asset_summary:        z.array(AssetSummaryItem).min(1).max(10),
 })
 
-/* ─── System prompt ────────────────────────────────────────────── */
-
-const SYSTEM_PROMPT = `You are writing personalized email intros for Pacific Coast Title's marketing team. The marketing team is delivering personalized marketing pieces to a specific sales rep, who will share these with their clients and contacts.
-
-YOUR OUTPUT:
-A 2-3 sentence paragraph that:
-1. Opens warmly without re-introducing yourself or saying "Hi {name}" (the email has separate greeting and signature)
-2. Briefly describes what the marketing pieces are about (1 sentence)
-3. Suggests when/how they're useful — be specific to title insurance / real estate sales context (1 sentence)
-
-VOICE RULES:
-${PCT_BRAND_VOICE_RULES}
-
-ADDITIONAL CONSTRAINTS:
-- Plain text only (no HTML, no markdown, no bullets)
-- 40-80 words total
-- Confident, helpful tone — like a trusted marketing colleague
-- No emoji
-- Reference the campaign topic naturally — don't restate the campaign name
-- Don't list every attachment by name (the email already shows that)
-- Don't use clichés like "exciting," "thrilled," "your trusted partner"
-- Don't make claims you can't verify ("the most powerful," "industry-leading")
-
-GOOD EXAMPLE (for "Wire Fraud Prevention" campaign):
-"Your personalized Wire Fraud Prevention assets are attached and ready to share. These pieces explain the rising threat of real estate wire fraud in clear, client-friendly language — perfect for sending to active escrow clients or sharing on social. Forward them as-is or use the talking points to make them your own."
-
-BAD EXAMPLE (avoid this style):
-"Hey Jerry! We're so excited to share these innovative new pieces that will help you take your business to the next level! Pacific Coast Title is thrilled to be your trusted partner..."`
+/* System prompt and user-message builder live in @/lib/marketing-ai so
+ * the preview endpoint and the real send endpoint stay in lock-step. */
 
 /* ─── Helpers ──────────────────────────────────────────────────── */
 
@@ -139,6 +117,7 @@ export async function POST(req: NextRequest) {
   }
 
   const {
+    rep_first_name,
     rep_full_name,
     campaign_name,
     campaign_description,
@@ -146,18 +125,13 @@ export async function POST(req: NextRequest) {
   } = body
   const adminEmail = await getActorEmail()
 
-  /* Build user message. */
-  const lines: string[] = []
-  lines.push('Generate an intro for:')
-  lines.push(`- Rep: ${rep_full_name}`)
-  lines.push(`- Campaign: ${campaign_name}`)
-  if (campaign_description && campaign_description.trim()) {
-    lines.push(`- About: ${campaign_description.trim()}`)
-  }
-  lines.push(`- Attachments: ${asset_summary.map((a) => `${a.format} (${a.type})`).join(', ')}`)
-  lines.push('')
-  lines.push('Write the 2-3 sentence intro paragraph now.')
-  const userMessage = lines.join('\n')
+  const userMessage = buildIntroUserMessage({
+    rep_first_name,
+    rep_full_name,
+    campaign_name,
+    campaign_description,
+    asset_summary,
+  })
 
   /* Call OpenAI. */
   let openaiRes: Response
@@ -171,7 +145,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model:       MODEL,
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: ASSET_DELIVERY_INTRO_SYSTEM_PROMPT },
           { role: 'user',   content: userMessage },
         ],
         temperature: TEMPERATURE,

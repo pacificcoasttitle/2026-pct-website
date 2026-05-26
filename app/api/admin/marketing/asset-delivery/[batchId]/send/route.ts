@@ -38,7 +38,11 @@ import {
   type AssetDeliveryFile,
 } from '@/lib/admin-db'
 import { downloadFromR2 } from '@/lib/r2-upload'
-import { PCT_BRAND_VOICE_RULES, stripHtmlTags } from '@/lib/marketing-ai'
+import {
+  ASSET_DELIVERY_INTRO_SYSTEM_PROMPT,
+  buildIntroUserMessage,
+  stripHtmlTags,
+} from '@/lib/marketing-ai'
 import {
   ASSET_DELIVERY_DEFAULTS,
   renderAssetDeliveryHtml,
@@ -123,44 +127,27 @@ async function lookupRepByEmail(email: string): Promise<RepInfo | null> {
   }
 }
 
-/* ─── AI intro (inline call to keep transactions simple) ───────── */
-
-const INTRO_SYSTEM_PROMPT = `You are writing personalized email intros for Pacific Coast Title's marketing team. The marketing team is delivering personalized marketing pieces to a specific sales rep, who will share these with their clients and contacts.
-
-YOUR OUTPUT:
-A 2-3 sentence paragraph that:
-1. Opens warmly without re-introducing yourself or saying "Hi {name}" (the email has separate greeting and signature)
-2. Briefly describes what the marketing pieces are about (1 sentence)
-3. Suggests when/how they're useful — be specific to title insurance / real estate sales context (1 sentence)
-
-VOICE RULES:
-${PCT_BRAND_VOICE_RULES}
-
-ADDITIONAL CONSTRAINTS:
-- Plain text only (no HTML, no markdown, no bullets)
-- 40-80 words total
-- Confident, helpful tone — like a trusted marketing colleague
-- No emoji
-- Reference the campaign topic naturally — don't restate the campaign name
-- Don't list every attachment by name (the email already shows that)
-- Don't use clichés like "exciting," "thrilled," "your trusted partner"
-- Don't make claims you can't verify ("the most powerful," "industry-leading")`
+/* ─── AI intro ─────────────────────────────────────────────────── *
+ * System prompt + user-message builder come from @/lib/marketing-ai so
+ * the preview endpoint and this send path stay byte-identical.       */
 
 async function generateIntroForRep(
-  apiKey:        string,
-  rep:           RepInfo,
-  campaignName:  string,
-  files:         AssetDeliveryFile[],
+  apiKey:              string,
+  rep:                 RepInfo,
+  campaignName:        string,
+  campaignDescription: string | null,
+  files:               AssetDeliveryFile[],
 ): Promise<string> {
-  const summary = files.map((f) => `${f.format} (${f.mime_type || 'file'})`).join(', ')
-  const userMessage = [
-    'Generate an intro for:',
-    `- Rep: ${rep.full_name}`,
-    `- Campaign: ${campaignName}`,
-    `- Attachments: ${summary}`,
-    '',
-    'Write the 2-3 sentence intro paragraph now.',
-  ].join('\n')
+  const userMessage = buildIntroUserMessage({
+    rep_first_name:       rep.first_name,
+    rep_full_name:        rep.full_name,
+    campaign_name:        campaignName,
+    campaign_description: campaignDescription,
+    asset_summary:        files.map((f) => ({
+      format: f.format,
+      type:   f.mime_type || 'file',
+    })),
+  })
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -171,7 +158,7 @@ async function generateIntroForRep(
     body: JSON.stringify({
       model:       'gpt-4o-mini',
       messages: [
-        { role: 'system', content: INTRO_SYSTEM_PROMPT },
+        { role: 'system', content: ASSET_DELIVERY_INTRO_SYSTEM_PROMPT },
         { role: 'user',   content: userMessage },
       ],
       temperature: 0.7,
@@ -233,12 +220,31 @@ interface SendOutcome {
 }
 
 interface SendContext {
-  batchId:       string
-  campaignName:  string
-  emailSubject:  string
-  htmlTemplate:  string
-  openaiKey:     string | null
-  sg:            typeof sgMail
+  batchId:             string
+  campaignName:        string
+  campaignDescription: string | null
+  emailSubject:        string
+  htmlTemplate:        string
+  openaiKey:           string | null
+  sg:                  typeof sgMail
+  isTest:              boolean
+}
+
+/**
+ * Substitute the wizard's supported subject-line merge tags. Run per-rep
+ * (not per-batch) so {{rep_first_name}} / {{rep_full_name}} resolve to
+ * the actual recipient. Email header encoding is handled by SendGrid;
+ * we don't escape here.
+ */
+function personalizeSubject(
+  template:     string,
+  rep:          RepInfo,
+  campaignName: string,
+): string {
+  return template
+    .replace(/\{\{rep_first_name\}\}/g, rep.first_name || '')
+    .replace(/\{\{rep_full_name\}\}/g, rep.full_name  || '')
+    .replace(/\{\{campaign_name\}\}/g, campaignName    || '')
 }
 
 async function sendOneRep(
@@ -249,6 +255,8 @@ async function sendOneRep(
   const totalBytes = files.reduce((acc, f) => acc + (f.file_size_bytes || 0), 0)
 
   // Always create the send row first so even early failures get tracked.
+  // is_test propagates to the audit row so BatchDetail tiles can filter
+  // out preview/test sends.
   const sendRow = await createAssetDeliverySend({
     batch_id:               ctx.batchId,
     rep_id:                 rep.id,
@@ -257,6 +265,7 @@ async function sendOneRep(
     send_status:            'sending',
     attachment_count:       files.length,
     attachment_total_bytes: totalBytes,
+    is_test:                ctx.isTest,
   })
 
   if (totalBytes > MAX_TOTAL_BYTES) {
@@ -274,7 +283,13 @@ async function sendOneRep(
     let intro = ''
     if (ctx.openaiKey) {
       try {
-        intro = await generateIntroForRep(ctx.openaiKey, rep, ctx.campaignName, files)
+        intro = await generateIntroForRep(
+          ctx.openaiKey,
+          rep,
+          ctx.campaignName,
+          ctx.campaignDescription,
+          files,
+        )
       } catch (introErr) {
         // Soft-fall to a plain default so the send still succeeds.
         console.warn(`[asset-delivery-send] intro generation failed for ${rep.email}:`, introErr)
@@ -322,10 +337,16 @@ async function sendOneRep(
       disposition: 'attachment' as const,
     }))
 
+    const personalizedSubject = personalizeSubject(
+      ctx.emailSubject,
+      rep,
+      ctx.campaignName,
+    )
+
     const sgResponse = await ctx.sg.send({
       to:      rep.email,
       from:    { email: 'marketing@pct.com', name: 'PCT Marketing' },
-      subject: ctx.emailSubject,
+      subject: personalizedSubject,
       html,
       attachments,
       customArgs: {
@@ -399,16 +420,63 @@ export async function POST(
   }
   const isTest = !!testRecipient
 
-  /* Batch + status guard. */
-  const batch = await getAssetDeliveryBatchById(batchId)
-  if (!batch) {
-    return NextResponse.json({ error: 'Batch not found' }, { status: 404 })
-  }
-  if (batch.status === 'sent' && !isTest) {
-    return NextResponse.json(
-      { error: 'Batch already sent. Create a new batch or use a resend flow.' },
-      { status: 400 },
+  /* Batch + status guard.
+   *
+   * Real sends use an atomic conditional UPDATE to flip the status to
+   * 'sending'. Two admins clicking Send simultaneously: the UPDATE that
+   * lands first wins, the other gets rowCount === 0 and a 409.
+   *
+   * Test sends never claim the batch — they're side-effect-free with
+   * respect to lifecycle — but they refuse to run while a real send is
+   * in flight, to avoid SMTP noise / double-sending the test recipient. */
+  let batch
+  if (isTest) {
+    batch = await getAssetDeliveryBatchById(batchId)
+    if (!batch) {
+      return NextResponse.json({ error: 'Batch not found' }, { status: 404 })
+    }
+    if (batch.status === 'sending') {
+      return NextResponse.json(
+        { error: 'Cannot run test while batch is sending' },
+        { status: 409 },
+      )
+    }
+  } else {
+    const db = getPool()
+    const claim = await db.query(
+      `UPDATE asset_delivery_batches
+          SET status     = 'sending',
+              updated_at = NOW(),
+              updated_by = $1
+        WHERE batch_id = $2::uuid
+          AND status NOT IN ('sending', 'sent')
+        RETURNING *`,
+      [adminEmail, batchId],
     )
+    if (claim.rowCount === 0) {
+      const existing = await getAssetDeliveryBatchById(batchId)
+      if (!existing) {
+        return NextResponse.json({ error: 'Batch not found' }, { status: 404 })
+      }
+      if (existing.status === 'sent') {
+        return NextResponse.json(
+          { error: 'Batch already sent. Create a new batch or use a resend flow.' },
+          { status: 400 },
+        )
+      }
+      if (existing.status === 'sending') {
+        return NextResponse.json(
+          { error: 'Another send is already in progress for this batch.' },
+          { status: 409 },
+        )
+      }
+      // Shouldn't reach here, but be explicit.
+      return NextResponse.json(
+        { error: 'Could not claim batch for send' },
+        { status: 500 },
+      )
+    }
+    batch = claim.rows[0]
   }
 
   /* Files. */
@@ -482,6 +550,7 @@ export async function POST(
           attachment_total_bytes: (filesByRep.get(email) ?? []).reduce(
             (a, f) => a + (f.file_size_bytes || 0), 0,
           ),
+          is_test:                isTest,
         })
         await updateAssetDeliverySend(row.id, {
           error_message: `No active vcard_employees record matches ${email}`,
@@ -499,24 +568,17 @@ export async function POST(
     resolved.push({ rep, files: filesByRep.get(email)! })
   }
 
-  /* Flip batch to 'sending' (skip for test sends so we don't disturb
-     a draft batch's lifecycle). */
-  if (!isTest) {
-    try {
-      await updateAssetDeliveryBatch(batchId, { status: 'sending' }, adminEmail)
-    } catch (err) {
-      console.warn('[asset-delivery-send] batch status → sending failed (continuing):', err)
-    }
-  }
-
-  /* Fan out at concurrency = 2. */
+  /* Batch is already claimed (real send) or untouched (test send). Fan
+     out at concurrency = 2. */
   const ctx: SendContext = {
     batchId,
-    campaignName: batch.campaign_name,
-    emailSubject: batch.email_subject,
-    htmlTemplate: template.html_template,
-    openaiKey:    process.env.OPENAI_API_KEY || null,
+    campaignName:        batch.campaign_name,
+    campaignDescription: batch.description || null,
+    emailSubject:        batch.email_subject,
+    htmlTemplate:        template.html_template,
+    openaiKey:           process.env.OPENAI_API_KEY || null,
     sg,
+    isTest,
   }
 
   const fanResults = await runWithConcurrency(resolved, CONCURRENCY, (r) =>

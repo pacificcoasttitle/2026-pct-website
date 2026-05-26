@@ -11,9 +11,9 @@
  *        returned batch_id, so this must succeed fast and never partially
  *        write.
  *
- * Note: `description` is accepted but not persisted — the schema doesn't
- * have a description column today. The wizard keeps the description in
- * local state and passes it to the AI intro endpoint at preview time.
+ * `description` is now persisted to asset_delivery_batches.description so
+ * both the AI intro preview and the real send pipeline receive the same
+ * "About this campaign" text (FIX 5 in the pre-launch report).
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
@@ -115,6 +115,7 @@ export async function POST(req: NextRequest) {
         campaign_name: body.campaign_name,
         lane:          body.lane ?? null,
         email_subject: body.email_subject,
+        description:   body.description ?? null,
         status:        'draft',
       },
       adminEmail,

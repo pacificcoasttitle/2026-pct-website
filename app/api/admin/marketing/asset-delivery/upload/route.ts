@@ -176,12 +176,20 @@ export async function POST(req: NextRequest) {
   let rep: { id: number; name: string; email: string; slug: string } | null = null
   try {
     const db  = getPool()
+    // vcard_employees has first_name + last_name (no `name` column).
+    // Match the ADMIN_COLS pattern used throughout admin-db.ts.
     const res = await db.query(
-      `SELECT id, name, email, slug
-         FROM vcard_employees
-        WHERE LOWER(SPLIT_PART(email, '@', 1)) = LOWER($1)
-          AND active = true
-        LIMIT 1`,
+      `SELECT
+         id,
+         first_name,
+         last_name,
+         first_name || ' ' || last_name AS name,
+         email,
+         slug
+       FROM vcard_employees
+       WHERE LOWER(SPLIT_PART(email, '@', 1)) = LOWER($1)
+         AND active = true
+       LIMIT 1`,
       [repPrefix],
     )
     rep = res.rows[0] || null

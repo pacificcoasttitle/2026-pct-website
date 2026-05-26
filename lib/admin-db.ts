@@ -1987,6 +1987,13 @@ async function ensureAssetDeliveryTables(): Promise<void> {
       updated_by       TEXT
     );
   `)
+  // Additive column for the wizard's "About this campaign" field. Persists
+  // the operator's description so AI intro generation (both preview and
+  // real send) gets the same input. See FIX 5 in the pre-launch report.
+  await db.query(`
+    ALTER TABLE asset_delivery_batches
+    ADD COLUMN IF NOT EXISTS description TEXT
+  `)
   await db.query(`CREATE INDEX IF NOT EXISTS idx_asset_delivery_batches_status        ON asset_delivery_batches(status);`)
   await db.query(`CREATE INDEX IF NOT EXISTS idx_asset_delivery_batches_created_at    ON asset_delivery_batches(created_at DESC);`)
   await db.query(`CREATE INDEX IF NOT EXISTS idx_asset_delivery_batches_campaign_slug ON asset_delivery_batches(campaign_slug);`)
@@ -2028,9 +2035,17 @@ async function ensureAssetDeliveryTables(): Promise<void> {
       updated_at             TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `)
+  // Additive column so test-mode sends don't pollute the audit/count
+  // tiles. Default false keeps existing rows correct. Partial index keeps
+  // the common "real sends only" filter cheap. See FIX 4.
+  await db.query(`
+    ALTER TABLE asset_delivery_sends
+    ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT false
+  `)
   await db.query(`CREATE INDEX IF NOT EXISTS idx_asset_delivery_sends_batch_id ON asset_delivery_sends(batch_id);`)
   await db.query(`CREATE INDEX IF NOT EXISTS idx_asset_delivery_sends_status   ON asset_delivery_sends(send_status);`)
   await db.query(`CREATE INDEX IF NOT EXISTS idx_asset_delivery_sends_sent_at  ON asset_delivery_sends(sent_at DESC);`)
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_asset_delivery_sends_real     ON asset_delivery_sends(is_test) WHERE is_test = false;`)
 
   await seedAssetDeliveryTemplate(db)
 
@@ -2081,6 +2096,7 @@ export interface AssetDeliveryBatch {
   campaign_name:    string
   lane:             string | null
   email_subject:    string
+  description:      string | null
   template_id:      number | null
   status:           AssetDeliveryBatchStatus
   total_recipients: number
@@ -2119,6 +2135,7 @@ export interface AssetDeliverySend {
   sendgrid_message_id:    string | null
   sent_at:                Date | null
   error_message:          string | null
+  is_test:                boolean
   created_at:             Date
   updated_at:             Date
 }
@@ -2153,6 +2170,7 @@ export interface AssetDeliveryBatchInput {
   campaign_name:     string
   lane?:             string | null
   email_subject:     string
+  description?:      string | null
   template_id?:      number | null
   status?:           AssetDeliveryBatchStatus
   total_recipients?: number
@@ -2165,6 +2183,7 @@ export interface AssetDeliveryBatchUpdate {
   campaign_name?:    string
   lane?:             string | null
   email_subject?:    string
+  description?:      string | null
   template_id?:      number | null
   status?:           AssetDeliveryBatchStatus
   total_recipients?: number
@@ -2174,8 +2193,9 @@ export interface AssetDeliveryBatchUpdate {
 }
 
 const BATCH_UPDATABLE = new Set<keyof AssetDeliveryBatchUpdate>([
-  'campaign_slug', 'campaign_name', 'lane', 'email_subject', 'template_id',
-  'status', 'total_recipients', 'total_files', 'total_bytes', 'sent_at',
+  'campaign_slug', 'campaign_name', 'lane', 'email_subject', 'description',
+  'template_id', 'status', 'total_recipients', 'total_files', 'total_bytes',
+  'sent_at',
 ])
 
 export async function getAllAssetDeliveryBatches(
@@ -2221,13 +2241,13 @@ export async function createAssetDeliveryBatch(
   const batchId = randomUUID()
   const res = await db.query(
     `INSERT INTO asset_delivery_batches (
-       batch_id, campaign_slug, campaign_name, lane, email_subject, template_id,
+       batch_id, campaign_slug, campaign_name, lane, email_subject, description, template_id,
        status, total_recipients, total_files, total_bytes,
        created_by, updated_by
      ) VALUES (
-       $1::uuid, $2, $3, $4, $5, $6,
-       $7, $8, $9, $10,
-       $11, $11
+       $1::uuid, $2, $3, $4, $5, $6, $7,
+       $8, $9, $10, $11,
+       $12, $12
      )
      RETURNING *`,
     [
@@ -2236,6 +2256,7 @@ export async function createAssetDeliveryBatch(
       input.campaign_name,
       input.lane ?? null,
       input.email_subject,
+      input.description ?? null,
       input.template_id ?? null,
       input.status           ?? 'draft',
       input.total_recipients ?? 0,
@@ -2421,6 +2442,9 @@ export interface AssetDeliverySendInput {
   sendgrid_message_id?:    string | null
   sent_at?:                Date | string | null
   error_message?:          string | null
+  /** True when this send was produced by the "Send Test" path. Defaults
+   * to false so audit counts reflect real production sends only. */
+  is_test?:                boolean
 }
 
 export interface AssetDeliverySendUpdate {
@@ -2445,11 +2469,11 @@ export async function createAssetDeliverySend(input: AssetDeliverySendInput): Pr
     `INSERT INTO asset_delivery_sends (
        batch_id, rep_id, rep_email, rep_name,
        send_status, attachment_count, attachment_total_bytes,
-       ai_generated_intro, sendgrid_message_id, sent_at, error_message
+       ai_generated_intro, sendgrid_message_id, sent_at, error_message, is_test
      ) VALUES (
        $1::uuid, $2, $3, $4,
        $5, $6, $7,
-       $8, $9, $10, $11
+       $8, $9, $10, $11, $12
      )
      RETURNING *`,
     [
@@ -2464,6 +2488,7 @@ export async function createAssetDeliverySend(input: AssetDeliverySendInput): Pr
       input.sendgrid_message_id    ?? null,
       input.sent_at                ?? null,
       input.error_message          ?? null,
+      input.is_test                ?? false,
     ],
   )
   return res.rows[0]
