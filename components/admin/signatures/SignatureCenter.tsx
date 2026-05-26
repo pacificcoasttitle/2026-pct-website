@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
+import { SignaturePreviewModal } from '@/components/admin/signatures/SignaturePreviewModal'
 import type { StaffMember, OfficeLocation } from '@/lib/admin-db'
 
 interface Props {
@@ -28,6 +29,7 @@ interface Props {
 export function SignatureCenter({ staff, offices }: Props) {
   const [search,     setSearch]     = useState('')
   const [officeSlug, setOfficeSlug] = useState<string>('all')
+  const [modalStaff, setModalStaff] = useState<StaffMember | null>(null)
 
   const officeBySlug = useMemo(() => {
     const m = new Map<string, OfficeLocation>()
@@ -181,8 +183,8 @@ export function SignatureCenter({ staff, offices }: Props) {
                     <Button size="sm" variant="outline" disabled title="Coming soon">View</Button>
                     <Button size="sm" variant="outline" disabled title="Coming soon">Edit</Button>
                     <Button size="sm"
-                            className="bg-[#03374f] hover:bg-[#022838] text-white"
-                            disabled title="Coming soon">
+                            onClick={() => setModalStaff(s)}
+                            className="bg-[#03374f] hover:bg-[#022838] text-white">
                       Generate Signature
                     </Button>
                   </div>
@@ -192,6 +194,14 @@ export function SignatureCenter({ staff, offices }: Props) {
           </div>
         </Card>
       )}
+
+      <SignaturePreviewModal
+        open={modalStaff !== null}
+        staffId={modalStaff?.id ?? null}
+        staffName={modalStaff ? `${modalStaff.first_name} ${modalStaff.last_name}` : ''}
+        staffEmail={modalStaff?.email ?? ''}
+        onClose={() => setModalStaff(null)}
+      />
     </div>
   )
 }
