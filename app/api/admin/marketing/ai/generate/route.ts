@@ -13,6 +13,11 @@ import {
   verifyAdminToken,
   ADMIN_COOKIE,
 } from '@/lib/admin-auth'
+import {
+  PCT_BRAND_VOICE_RULES,
+  PCT_BRAND_VOICE_SELF_CHECK,
+  sanitizeAiHtml,
+} from '@/lib/marketing-ai'
 
 export const runtime = 'nodejs'
 
@@ -42,7 +47,13 @@ const LENGTH_GUIDANCE: Record<'short' | 'medium' | 'long', string> = {
 
 const MODEL = 'gpt-4o-mini' as const
 
-// ── System prompt (verbatim per spec) ───────────────────────────
+// ── System prompt ───────────────────────────────────────────────
+//
+// Brand-voice rules and the SELF-CHECK instruction now live in
+// @/lib/marketing-ai so the intro endpoint can reuse them. The
+// concatenation below is intentionally hand-assembled so the final
+// string is byte-identical to the previous inline version (verified
+// against test snapshots in the original task).
 const SYSTEM_PROMPT = `You are an expert email copywriter for Pacific Coast Title Company (PCT), a 
 title insurance and escrow company serving California since 2005.
 
@@ -53,24 +64,7 @@ WRITING STYLE:
 - Professional but approachable
 - Calm and dependable, never loud or salesy
 
-NEVER USE:
-- Superlatives ("best", "leading", "premier", "top-rated", "#1")
-- Hype words ("revolutionary", "game-changing", "cutting-edge")
-- Specific certifications we can't verify ("WCAG compliant", "SOC 2 certified")
-- Vague time promises ("respond within 24 hours", "always available")
-- "Industry-leading" anything
-- Startup language ("disrupt", "transform", "synergy")
-- "innovative" / "innovative option" / "innovative service"
-- "you've come to expect" (soft superlative)
-- "exciting" or "thrilled" (overused, drains meaning)
-- "trusted by thousands" or similar unverifiable claims
-- "your trusted partner" (cliché)
-
-USE INSTEAD:
-- "We work to..." instead of "We always..."
-- "We aim to..." instead of "We promise..."
-- "Where reasonable..." for qualified commitments
-- Specific examples over vague claims
+${PCT_BRAND_VOICE_RULES}
 
 FORMAT REQUIREMENTS:
 - Output clean HTML for email body content ONLY
@@ -83,12 +77,7 @@ FORMAT REQUIREMENTS:
 - Keep paragraphs short (2-3 sentences max)
 - Use bullets when listing 3+ items
 
-SELF-CHECK BEFORE FINISHING:
-Re-read your output. If you used any words from the NEVER USE list, rewrite that sentence using simpler, more direct language. Prefer:
-- "new" instead of "innovative"
-- "available" or "ready" instead of "exciting"
-- Specific descriptions over emotional language
-- Active voice and concrete benefits
+${PCT_BRAND_VOICE_SELF_CHECK}
 
 AUDIENCE:
 The reader is typically a real estate agent, loan officer, or property 
@@ -108,49 +97,7 @@ LENGTH GUIDANCE:
 - medium: 3-4 short paragraphs (~200-350 words)
 - long: 5-7 paragraphs with structure (~400-600 words)`
 
-// ── Allow-list HTML sanitiser ───────────────────────────────────
-//
-// We don't pull in a heavyweight DOM library for one route. The system
-// prompt strongly constrains the model output to a handful of tags, so
-// we run a server-side scrub that strips anything dangerous: script /
-// style / iframe / object / embed blocks, on* event handlers, and
-// javascript:/data: URLs. Anything that survives is plain HTML that
-// the email template wraps in its own CSS.
-function sanitiseHtml(input: string): string {
-  let html = input
-
-  // 1. Trim accidental markdown code fences ("```html ... ```").
-  html = html.replace(/^\s*```(?:html)?\s*/i, '').replace(/\s*```\s*$/i, '').trim()
-
-  // 2. Drop entire dangerous blocks (with their content).
-  html = html.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '')
-  html = html.replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, '')
-  html = html.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe\s*>/gi, '')
-  html = html.replace(/<object\b[^>]*>[\s\S]*?<\/object\s*>/gi, '')
-  html = html.replace(/<embed\b[^>]*>[\s\S]*?<\/embed\s*>/gi, '')
-
-  // 3. Self-closing variants of the same tags.
-  html = html.replace(/<(?:script|style|iframe|object|embed)\b[^>]*\/?>/gi, '')
-
-  // 4. Strip on*="..." / on*='...' / on*=value event handlers
-  //    inside any tag attribute list. Whitespace before "on" is required
-  //    to avoid eating inner-text words like "common".
-  html = html.replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '')
-  html = html.replace(/\son[a-z]+\s*=\s*'[^']*'/gi, '')
-  html = html.replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, '')
-
-  // 5. Neutralise javascript: and data: URLs in href / src.
-  html = html.replace(/(href|src)\s*=\s*"\s*(?:javascript|data)\s*:[^"]*"/gi, '$1="#"')
-  html = html.replace(/(href|src)\s*=\s*'\s*(?:javascript|data)\s*:[^']*'/gi, "$1='#'")
-
-  // 6. Strip <img> tags entirely (spec: hero image is handled separately).
-  html = html.replace(/<img\b[^>]*\/?>/gi, '')
-
-  // 7. Strip <html>, <head>, <body> wrappers if the model included them.
-  html = html.replace(/<\/?(?:html|head|body|!doctype)[^>]*>/gi, '')
-
-  return html.trim()
-}
+// HTML sanitiser moved to @/lib/marketing-ai (sanitizeAiHtml).
 
 // ── Actor email (for log line) ──────────────────────────────────
 async function getActorEmail(): Promise<string> {
@@ -274,7 +221,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const content    = sanitiseHtml(rawContent)
+  const content    = sanitizeAiHtml(rawContent)
   const tokensUsed = typeof data.usage?.total_tokens === 'number' ? data.usage.total_tokens : 0
 
   // Single-line log: shows up in Vercel logs without leaking the prompt body.
