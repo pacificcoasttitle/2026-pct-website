@@ -340,3 +340,51 @@ export function iconTypeForMime(mime: string | null | undefined): AssetIconType 
 // Re-export the escaper for the send pipeline so user-supplied text
 // (AI intro, filenames) gets the same treatment.
 export { escapeHtml as escapeAssetDeliveryText }
+
+/**
+ * Minimal Mustache subset for rendering ASSET_DELIVERY_HTML. Handles:
+ *   - {{var}}       — HTML-escaped value
+ *   - {{{var}}}     — raw value (used for pre-rendered HTML like cards)
+ *   - {{#sec}}…{{/sec}}  — section, kept when value is truthy, dropped otherwise
+ *
+ * Intentionally tiny — we don't want a Mustache runtime dep for one
+ * template, and the placeholders we use are fully enumerated above.
+ */
+export type AssetDeliveryContext = Record<string, string | number | boolean | null | undefined>
+
+export function renderAssetDeliveryHtml(
+  template: string,
+  ctx:      AssetDeliveryContext,
+): string {
+  // 1. Resolve sections first (until stable, in case a section's body
+  //    contained another section). Sections render when the value is
+  //    truthy and non-empty-string.
+  const sectionRe = /\{\{#([a-z_]+)\}\}([\s\S]*?)\{\{\/\1\}\}/g
+  let prev = ''
+  let out  = template
+  while (out !== prev) {
+    prev = out
+    out = out.replace(sectionRe, (_m, key: string, body: string) => {
+      const v = ctx[key]
+      const truthy =
+        v !== null && v !== undefined && v !== false &&
+        !(typeof v === 'string' && v.trim() === '')
+      return truthy ? body : ''
+    })
+  }
+
+  // 2. Triple-stache {{{var}}} → raw substitution (no escaping).
+  out = out.replace(/\{\{\{([a-z_]+)\}\}\}/g, (_m, key: string) => {
+    const v = ctx[key]
+    return v === null || v === undefined ? '' : String(v)
+  })
+
+  // 3. Double-stache {{var}} → escaped substitution.
+  out = out.replace(/\{\{([a-z_]+)\}\}/g, (_m, key: string) => {
+    const v = ctx[key]
+    if (v === null || v === undefined) return ''
+    return escapeHtml(String(v))
+  })
+
+  return out
+}

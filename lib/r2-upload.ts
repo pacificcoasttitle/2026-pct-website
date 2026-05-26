@@ -159,6 +159,78 @@ export async function uploadToR2(options: R2UploadOptions): Promise<R2UploadResu
   }
 }
 
+/* ─── GET (download) ───────────────────────────────────────────── */
+
+/**
+ * Download an object's bytes by key. Used by the asset-delivery send
+ * pipeline to fetch files for SendGrid MIME attachments.
+ *
+ * Uses a presigned-style SigV4 GET so we don't depend on the bucket
+ * being public. Throws on any non-200 response.
+ */
+export async function downloadFromR2(key: string): Promise<Buffer> {
+  const { accountId, bucket, accessKey, secret } = readR2Env()
+
+  const host       = `${accountId}.r2.cloudflarestorage.com`
+  const region     = 'auto'
+  const service    = 's3'
+  const endpoint   = `https://${host}`
+  const objectPath = `/${bucket}/${key}`
+
+  const now      = new Date()
+  const amzDate  = now.toISOString().replace(/[:\-]|\.\d{3}/g, '').slice(0, 15) + 'Z'
+  const dateOnly = amzDate.slice(0, 8)
+
+  // Empty body for GET → empty-payload hash.
+  const payloadHash = sha256hex('')
+
+  const canonicalHeaders =
+    `host:${host}\n` +
+    `x-amz-content-sha256:${payloadHash}\n` +
+    `x-amz-date:${amzDate}\n`
+  const signedHeaders = 'host;x-amz-content-sha256;x-amz-date'
+
+  const canonicalRequest = [
+    'GET',
+    objectPath,
+    '',
+    canonicalHeaders,
+    signedHeaders,
+    payloadHash,
+  ].join('\n')
+
+  const credentialScope = `${dateOnly}/${region}/${service}/aws4_request`
+  const stringToSign = [
+    'AWS4-HMAC-SHA256',
+    amzDate,
+    credentialScope,
+    sha256hex(canonicalRequest),
+  ].join('\n')
+
+  const signingKey = getSigningKey(secret, dateOnly, region, service)
+  const signature  = createHmac('sha256', signingKey).update(stringToSign).digest('hex')
+  const authorization =
+    `AWS4-HMAC-SHA256 Credential=${accessKey}/${credentialScope}, ` +
+    `SignedHeaders=${signedHeaders}, Signature=${signature}`
+
+  const res = await fetch(`${endpoint}${objectPath}`, {
+    method: 'GET',
+    headers: {
+      Authorization:          authorization,
+      'x-amz-content-sha256': payloadHash,
+      'x-amz-date':           amzDate,
+    },
+  })
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`R2 download failed (${res.status}) for ${key}: ${text.slice(0, 300)}`)
+  }
+
+  const arrayBuffer = await res.arrayBuffer()
+  return Buffer.from(arrayBuffer)
+}
+
 /* ─── DELETE ───────────────────────────────────────────────────── */
 
 export async function deleteFromR2(key: string): Promise<void> {
