@@ -13,6 +13,10 @@ import {
   PRODUCT_SPOTLIGHT_HTML,
   PRODUCT_SPOTLIGHT_META,
 } from '@/lib/email-templates/product-spotlight'
+import {
+  TITLE_INDUSTRY_NEWS_HTML,
+  TITLE_INDUSTRY_NEWS_META,
+} from '@/lib/email-templates/title-industry-news'
 
 let _pool: Pool | null = null
 export function getPool(): Pool {
@@ -954,21 +958,10 @@ ${footer}
       html:      PRODUCT_SPOTLIGHT_HTML,
     },
     title_news: {
-      name: 'Title Industry News',
-      subject: 'Title Industry Update — {{REP_NAME}}',
-      preheader: 'Important regulatory and industry changes you should know.',
-      html: wrap(`
-      <tr><td style="background:#03374f;padding:24px 32px;">
-        <p style="margin:0;color:rgba(255,255,255,0.5);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">Industry Update</p>
-        <h1 style="margin:6px 0 0;color:#fff;font-size:24px;">Title News Briefing</h1>
-      </td></tr>
-      <tr><td><img src="{{HERO_IMAGE}}" alt="News" width="600" style="display:block;width:100%;height:auto;" /></td></tr>
-      <tr><td style="padding:32px;">
-        <h2 style="margin:0 0 12px;color:#03374f;font-size:20px;">Headline Goes Here</h2>
-        <p style="margin:0 0 16px;color:#4b5563;line-height:1.7;">Write about a regulatory change, new compliance requirement, or industry trend. Keep it concise and actionable — agents want to know what it means for their deals.</p>
-        <p style="margin:0 0 16px;color:#4b5563;line-height:1.7;"><strong style="color:#03374f;">What This Means for You:</strong> Add practical takeaways here.</p>
-        <a href="https://www.pct.com" style="display:inline-block;padding:12px 28px;border-radius:8px;background:#f26b2b;color:#fff;text-decoration:none;font-weight:600;font-size:14px;">Read Full Article</a>
-      </td></tr>`)
+      name:      TITLE_INDUSTRY_NEWS_META.name,
+      subject:   TITLE_INDUSTRY_NEWS_META.subject,
+      preheader: TITLE_INDUSTRY_NEWS_META.preheader,
+      html:      TITLE_INDUSTRY_NEWS_HTML,
     },
     market_update: {
       name: 'Market Update',
