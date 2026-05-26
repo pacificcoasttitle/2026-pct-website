@@ -3,7 +3,9 @@
 // ============================================================
 
 import { Pool } from 'pg'
+import { randomUUID } from 'node:crypto'
 import type { Employee } from '@/types/employee'
+import { ASSET_DELIVERY_HTML } from '@/lib/email-templates/asset-delivery'
 import { CORPORATE_STANDARD_HTML } from '@/lib/signature-templates/corporate-standard'
 import {
   HOLIDAY_GREETING_HTML,
@@ -1928,4 +1930,541 @@ export async function bulkCreateStaffMembers(
   }
 
   return { created, errors }
+}
+
+// ============================================================
+// Asset Delivery — batches / files / sends / templates
+// ============================================================
+// New feature: marketing uploads personalised files, sends to all active
+// sales reps as email attachments. Schema is independent of every other
+// table here. All DDL is idempotent (IF NOT EXISTS) and the template seed
+// uses ON CONFLICT … DO UPDATE so re-running this module updates the
+// canonical HTML if the source file changes.
+
+let _assetDeliveryTablesReady = false
+async function ensureAssetDeliveryTables(): Promise<void> {
+  if (_assetDeliveryTablesReady) return
+  const db = getPool()
+
+  // 1. asset_delivery_templates
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS asset_delivery_templates (
+      id            SERIAL PRIMARY KEY,
+      slug          TEXT NOT NULL UNIQUE,
+      name          TEXT NOT NULL,
+      description   TEXT,
+      html_template TEXT NOT NULL,
+      is_default    BOOLEAN     NOT NULL DEFAULT false,
+      active        BOOLEAN     NOT NULL DEFAULT true,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `)
+  // At most one row may carry is_default = true.
+  await db.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_asset_delivery_templates_one_default
+      ON asset_delivery_templates(is_default) WHERE is_default = true;
+  `)
+
+  // 2. asset_delivery_batches
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS asset_delivery_batches (
+      id               SERIAL PRIMARY KEY,
+      batch_id         UUID NOT NULL UNIQUE,
+      campaign_slug    TEXT NOT NULL,
+      campaign_name    TEXT NOT NULL,
+      lane             TEXT,
+      email_subject    TEXT NOT NULL,
+      template_id      INTEGER REFERENCES asset_delivery_templates(id) ON DELETE SET NULL,
+      status           TEXT     NOT NULL DEFAULT 'draft',
+      total_recipients INTEGER  NOT NULL DEFAULT 0,
+      total_files      INTEGER  NOT NULL DEFAULT 0,
+      total_bytes      BIGINT   NOT NULL DEFAULT 0,
+      sent_at          TIMESTAMPTZ,
+      created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_by       TEXT,
+      updated_by       TEXT
+    );
+  `)
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_asset_delivery_batches_status        ON asset_delivery_batches(status);`)
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_asset_delivery_batches_created_at    ON asset_delivery_batches(created_at DESC);`)
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_asset_delivery_batches_campaign_slug ON asset_delivery_batches(campaign_slug);`)
+
+  // 3. asset_delivery_files (one row per uploaded file)
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS asset_delivery_files (
+      id                SERIAL PRIMARY KEY,
+      batch_id          UUID NOT NULL REFERENCES asset_delivery_batches(batch_id) ON DELETE CASCADE,
+      rep_email         TEXT NOT NULL,
+      format            TEXT NOT NULL,
+      original_filename TEXT NOT NULL,
+      r2_key            TEXT NOT NULL,
+      r2_url            TEXT NOT NULL,
+      file_size_bytes   INTEGER NOT NULL,
+      mime_type         TEXT,
+      uploaded_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `)
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_asset_delivery_files_batch_id  ON asset_delivery_files(batch_id);`)
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_asset_delivery_files_rep_email ON asset_delivery_files(rep_email);`)
+
+  // 4. asset_delivery_sends (one row per rep per batch)
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS asset_delivery_sends (
+      id                     SERIAL PRIMARY KEY,
+      batch_id               UUID NOT NULL REFERENCES asset_delivery_batches(batch_id) ON DELETE CASCADE,
+      rep_id                 INTEGER,
+      rep_email              TEXT NOT NULL,
+      rep_name               TEXT NOT NULL,
+      send_status            TEXT    NOT NULL DEFAULT 'pending',
+      attachment_count       INTEGER NOT NULL DEFAULT 0,
+      attachment_total_bytes INTEGER NOT NULL DEFAULT 0,
+      ai_generated_intro     TEXT,
+      sendgrid_message_id    TEXT,
+      sent_at                TIMESTAMPTZ,
+      error_message          TEXT,
+      created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at             TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `)
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_asset_delivery_sends_batch_id ON asset_delivery_sends(batch_id);`)
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_asset_delivery_sends_status   ON asset_delivery_sends(send_status);`)
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_asset_delivery_sends_sent_at  ON asset_delivery_sends(sent_at DESC);`)
+
+  await seedAssetDeliveryTemplate(db)
+
+  _assetDeliveryTablesReady = true
+}
+
+async function seedAssetDeliveryTemplate(db: Pool): Promise<void> {
+  await db.query(
+    `INSERT INTO asset_delivery_templates (slug, name, description, html_template, is_default)
+     VALUES ($1, $2, $3, $4, true)
+     ON CONFLICT (slug) DO UPDATE SET
+       html_template = EXCLUDED.html_template,
+       description   = EXCLUDED.description,
+       updated_at    = NOW()`,
+    [
+      'asset-delivery-default',
+      'Personalized Asset Delivery',
+      'Default template for delivering personalized marketing pieces to reps',
+      ASSET_DELIVERY_HTML,
+    ],
+  )
+}
+
+// ── Types ────────────────────────────────────────────────────────
+
+export type AssetDeliveryBatchStatus =
+  | 'draft' | 'ready' | 'sending' | 'sent' | 'failed' | 'archived'
+
+export type AssetDeliverySendStatus =
+  | 'pending' | 'sending' | 'sent' | 'failed' | 'skipped'
+
+export interface AssetDeliveryTemplate {
+  id:            number
+  slug:          string
+  name:          string
+  description:   string | null
+  html_template: string
+  is_default:    boolean
+  active:        boolean
+  created_at:    Date
+  updated_at:    Date
+}
+
+export interface AssetDeliveryBatch {
+  id:               number
+  batch_id:         string
+  campaign_slug:    string
+  campaign_name:    string
+  lane:             string | null
+  email_subject:    string
+  template_id:      number | null
+  status:           AssetDeliveryBatchStatus
+  total_recipients: number
+  total_files:      number
+  total_bytes:      number
+  sent_at:          Date | null
+  created_at:       Date
+  updated_at:       Date
+  created_by:       string | null
+  updated_by:       string | null
+}
+
+export interface AssetDeliveryFile {
+  id:                number
+  batch_id:          string
+  rep_email:         string
+  format:            string
+  original_filename: string
+  r2_key:            string
+  r2_url:            string
+  file_size_bytes:   number
+  mime_type:         string | null
+  uploaded_at:       Date
+}
+
+export interface AssetDeliverySend {
+  id:                     number
+  batch_id:               string
+  rep_id:                 number | null
+  rep_email:              string
+  rep_name:               string
+  send_status:            AssetDeliverySendStatus
+  attachment_count:       number
+  attachment_total_bytes: number
+  ai_generated_intro:     string | null
+  sendgrid_message_id:    string | null
+  sent_at:                Date | null
+  error_message:          string | null
+  created_at:             Date
+  updated_at:             Date
+}
+
+// ── Template helpers ─────────────────────────────────────────────
+
+export async function getDefaultAssetDeliveryTemplate(): Promise<AssetDeliveryTemplate | null> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+  const res = await db.query(`
+    SELECT * FROM asset_delivery_templates
+    WHERE is_default = true AND active = true
+    LIMIT 1
+  `)
+  return res.rows[0] || null
+}
+
+export async function getAssetDeliveryTemplateBySlug(slug: string): Promise<AssetDeliveryTemplate | null> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT * FROM asset_delivery_templates WHERE slug = $1 LIMIT 1`,
+    [slug],
+  )
+  return res.rows[0] || null
+}
+
+// ── Batch helpers ────────────────────────────────────────────────
+
+export interface AssetDeliveryBatchInput {
+  campaign_slug:     string
+  campaign_name:     string
+  lane?:             string | null
+  email_subject:     string
+  template_id?:      number | null
+  status?:           AssetDeliveryBatchStatus
+  total_recipients?: number
+  total_files?:      number
+  total_bytes?:      number
+}
+
+export interface AssetDeliveryBatchUpdate {
+  campaign_slug?:    string
+  campaign_name?:    string
+  lane?:             string | null
+  email_subject?:    string
+  template_id?:      number | null
+  status?:           AssetDeliveryBatchStatus
+  total_recipients?: number
+  total_files?:      number
+  total_bytes?:      number
+  sent_at?:          Date | string | null
+}
+
+const BATCH_UPDATABLE = new Set<keyof AssetDeliveryBatchUpdate>([
+  'campaign_slug', 'campaign_name', 'lane', 'email_subject', 'template_id',
+  'status', 'total_recipients', 'total_files', 'total_bytes', 'sent_at',
+])
+
+export async function getAllAssetDeliveryBatches(
+  options?: { status?: AssetDeliveryBatchStatus; limit?: number },
+): Promise<AssetDeliveryBatch[]> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+  const limit  = Math.max(1, Math.min(options?.limit ?? 50, 200))
+  const where: string[]   = []
+  const values: unknown[] = []
+  if (options?.status) {
+    where.push(`status = $${values.length + 1}`)
+    values.push(options.status)
+  }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
+  values.push(limit)
+  const res = await db.query(
+    `SELECT * FROM asset_delivery_batches
+       ${whereSql}
+       ORDER BY created_at DESC
+       LIMIT $${values.length}`,
+    values,
+  )
+  return res.rows
+}
+
+export async function getAssetDeliveryBatchById(batchId: string): Promise<AssetDeliveryBatch | null> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT * FROM asset_delivery_batches WHERE batch_id = $1::uuid LIMIT 1`,
+    [batchId],
+  )
+  return res.rows[0] || null
+}
+
+export async function createAssetDeliveryBatch(
+  input:     AssetDeliveryBatchInput,
+  createdBy: string,
+): Promise<AssetDeliveryBatch> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+  const batchId = randomUUID()
+  const res = await db.query(
+    `INSERT INTO asset_delivery_batches (
+       batch_id, campaign_slug, campaign_name, lane, email_subject, template_id,
+       status, total_recipients, total_files, total_bytes,
+       created_by, updated_by
+     ) VALUES (
+       $1::uuid, $2, $3, $4, $5, $6,
+       $7, $8, $9, $10,
+       $11, $11
+     )
+     RETURNING *`,
+    [
+      batchId,
+      input.campaign_slug,
+      input.campaign_name,
+      input.lane ?? null,
+      input.email_subject,
+      input.template_id ?? null,
+      input.status           ?? 'draft',
+      input.total_recipients ?? 0,
+      input.total_files      ?? 0,
+      input.total_bytes      ?? 0,
+      createdBy,
+    ],
+  )
+  return res.rows[0]
+}
+
+export async function updateAssetDeliveryBatch(
+  batchId:   string,
+  updates:   AssetDeliveryBatchUpdate,
+  updatedBy: string,
+): Promise<AssetDeliveryBatch | null> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+
+  const fields: string[]    = []
+  const values: unknown[]   = []
+  let   idx                 = 1
+  for (const [key, value] of Object.entries(updates)) {
+    if (value === undefined) continue
+    if (!BATCH_UPDATABLE.has(key as keyof AssetDeliveryBatchUpdate)) continue
+    fields.push(`${key} = $${idx}`)
+    values.push(value)
+    idx++
+  }
+  if (fields.length === 0) return getAssetDeliveryBatchById(batchId)
+
+  fields.push(`updated_at = NOW()`)
+  fields.push(`updated_by = $${idx}`)
+  values.push(updatedBy)
+  idx++
+  values.push(batchId)
+
+  const res = await db.query(
+    `UPDATE asset_delivery_batches
+        SET ${fields.join(', ')}
+      WHERE batch_id = $${idx}::uuid
+      RETURNING *`,
+    values,
+  )
+  return res.rows[0] || null
+}
+
+export async function deleteAssetDeliveryBatch(batchId: string): Promise<boolean> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+  const res = await db.query(
+    `DELETE FROM asset_delivery_batches WHERE batch_id = $1::uuid`,
+    [batchId],
+  )
+  // CASCADE removes asset_delivery_files / asset_delivery_sends.
+  return (res.rowCount ?? 0) > 0
+}
+
+// ── File helpers ─────────────────────────────────────────────────
+
+export interface AssetDeliveryFileInput {
+  batch_id:          string
+  rep_email:         string
+  format:            string
+  original_filename: string
+  r2_key:            string
+  r2_url:            string
+  file_size_bytes:   number
+  mime_type?:        string | null
+}
+
+export async function addAssetDeliveryFile(input: AssetDeliveryFileInput): Promise<AssetDeliveryFile> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+  const res = await db.query(
+    `INSERT INTO asset_delivery_files (
+       batch_id, rep_email, format, original_filename,
+       r2_key, r2_url, file_size_bytes, mime_type
+     ) VALUES (
+       $1::uuid, $2, $3, $4,
+       $5, $6, $7, $8
+     )
+     RETURNING *`,
+    [
+      input.batch_id,
+      input.rep_email,
+      input.format,
+      input.original_filename,
+      input.r2_key,
+      input.r2_url,
+      input.file_size_bytes,
+      input.mime_type ?? null,
+    ],
+  )
+  return res.rows[0]
+}
+
+export async function getFilesByBatchId(batchId: string): Promise<AssetDeliveryFile[]> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT * FROM asset_delivery_files
+       WHERE batch_id = $1::uuid
+       ORDER BY rep_email ASC, uploaded_at ASC, id ASC`,
+    [batchId],
+  )
+  return res.rows
+}
+
+export async function getFilesByRepEmail(
+  batchId:  string,
+  repEmail: string,
+): Promise<AssetDeliveryFile[]> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT * FROM asset_delivery_files
+       WHERE batch_id = $1::uuid AND LOWER(rep_email) = LOWER($2)
+       ORDER BY uploaded_at ASC, id ASC`,
+    [batchId, repEmail],
+  )
+  return res.rows
+}
+
+// ── Send helpers ─────────────────────────────────────────────────
+
+export interface AssetDeliverySendInput {
+  batch_id:                string
+  rep_id?:                 number | null
+  rep_email:               string
+  rep_name:                string
+  send_status?:            AssetDeliverySendStatus
+  attachment_count?:       number
+  attachment_total_bytes?: number
+  ai_generated_intro?:     string | null
+  sendgrid_message_id?:    string | null
+  sent_at?:                Date | string | null
+  error_message?:          string | null
+}
+
+export interface AssetDeliverySendUpdate {
+  send_status?:            AssetDeliverySendStatus
+  attachment_count?:       number
+  attachment_total_bytes?: number
+  ai_generated_intro?:     string | null
+  sendgrid_message_id?:    string | null
+  sent_at?:                Date | string | null
+  error_message?:          string | null
+}
+
+const SEND_UPDATABLE = new Set<keyof AssetDeliverySendUpdate>([
+  'send_status', 'attachment_count', 'attachment_total_bytes',
+  'ai_generated_intro', 'sendgrid_message_id', 'sent_at', 'error_message',
+])
+
+export async function createAssetDeliverySend(input: AssetDeliverySendInput): Promise<AssetDeliverySend> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+  const res = await db.query(
+    `INSERT INTO asset_delivery_sends (
+       batch_id, rep_id, rep_email, rep_name,
+       send_status, attachment_count, attachment_total_bytes,
+       ai_generated_intro, sendgrid_message_id, sent_at, error_message
+     ) VALUES (
+       $1::uuid, $2, $3, $4,
+       $5, $6, $7,
+       $8, $9, $10, $11
+     )
+     RETURNING *`,
+    [
+      input.batch_id,
+      input.rep_id ?? null,
+      input.rep_email,
+      input.rep_name,
+      input.send_status            ?? 'pending',
+      input.attachment_count       ?? 0,
+      input.attachment_total_bytes ?? 0,
+      input.ai_generated_intro     ?? null,
+      input.sendgrid_message_id    ?? null,
+      input.sent_at                ?? null,
+      input.error_message          ?? null,
+    ],
+  )
+  return res.rows[0]
+}
+
+export async function updateAssetDeliverySend(
+  sendId:  number,
+  updates: AssetDeliverySendUpdate,
+): Promise<AssetDeliverySend | null> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+
+  const fields: string[]    = []
+  const values: unknown[]   = []
+  let   idx                 = 1
+  for (const [key, value] of Object.entries(updates)) {
+    if (value === undefined) continue
+    if (!SEND_UPDATABLE.has(key as keyof AssetDeliverySendUpdate)) continue
+    fields.push(`${key} = $${idx}`)
+    values.push(value)
+    idx++
+  }
+  if (fields.length === 0) {
+    const cur = await db.query(`SELECT * FROM asset_delivery_sends WHERE id = $1 LIMIT 1`, [sendId])
+    return cur.rows[0] || null
+  }
+
+  fields.push(`updated_at = NOW()`)
+  values.push(sendId)
+
+  const res = await db.query(
+    `UPDATE asset_delivery_sends
+        SET ${fields.join(', ')}
+      WHERE id = $${idx}
+      RETURNING *`,
+    values,
+  )
+  return res.rows[0] || null
+}
+
+export async function getSendsByBatchId(batchId: string): Promise<AssetDeliverySend[]> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT * FROM asset_delivery_sends
+       WHERE batch_id = $1::uuid
+       ORDER BY rep_name ASC, id ASC`,
+    [batchId],
+  )
+  return res.rows
 }
