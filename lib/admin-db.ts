@@ -17,6 +17,10 @@ import {
   TITLE_INDUSTRY_NEWS_HTML,
   TITLE_INDUSTRY_NEWS_META,
 } from '@/lib/email-templates/title-industry-news'
+import {
+  MARKET_UPDATE_HTML,
+  MARKET_UPDATE_META,
+} from '@/lib/email-templates/market-update'
 
 let _pool: Pool | null = null
 export function getPool(): Pool {
@@ -964,33 +968,10 @@ ${footer}
       html:      TITLE_INDUSTRY_NEWS_HTML,
     },
     market_update: {
-      name: 'Market Update',
-      subject: 'Market Snapshot — {{REP_NAME}}',
-      preheader: 'Your local real estate market at a glance.',
-      html: wrap(`
-      <tr><td style="background:#03374f;padding:24px 32px;">
-        <p style="margin:0;color:rgba(255,255,255,0.5);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">Monthly Report</p>
-        <h1 style="margin:6px 0 0;color:#fff;font-size:24px;">Market Snapshot</h1>
-      </td></tr>
-      <tr><td><img src="{{HERO_IMAGE}}" alt="Market" width="600" style="display:block;width:100%;height:auto;" /></td></tr>
-      <tr><td style="padding:32px;">
-        <table width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td width="48%" style="background:#f0ede9;border-radius:12px;padding:20px;text-align:center;">
-            <p style="margin:0 0 4px;color:#9ca3af;font-size:11px;">Active Inventory</p>
-            <p style="margin:0;color:#03374f;font-size:28px;font-weight:700;">+12%</p>
-            <p style="margin:4px 0 0;color:#6b7280;font-size:11px;">vs last month</p>
-          </td>
-          <td width="4%"></td>
-          <td width="48%" style="background:#f0ede9;border-radius:12px;padding:20px;text-align:center;">
-            <p style="margin:0 0 4px;color:#9ca3af;font-size:11px;">Avg Days on Market</p>
-            <p style="margin:0;color:#f26b2b;font-size:28px;font-weight:700;">18</p>
-            <p style="margin:4px 0 0;color:#6b7280;font-size:11px;">days</p>
-          </td>
-        </tr></table>
-        <h3 style="margin:24px 0 8px;color:#03374f;font-size:16px;">Key Takeaway</h3>
-        <p style="margin:0 0 16px;color:#4b5563;line-height:1.7;">Replace with your local market commentary. What are you seeing on the ground? What should agents prepare for?</p>
-        <a href="https://www.pct.com" style="display:inline-block;padding:12px 28px;border-radius:8px;background:#f26b2b;color:#fff;text-decoration:none;font-weight:600;font-size:14px;">View Full Report</a>
-      </td></tr>`)
+      name:      MARKET_UPDATE_META.name,
+      subject:   MARKET_UPDATE_META.subject,
+      preheader: MARKET_UPDATE_META.preheader,
+      html:      MARKET_UPDATE_HTML,
     },
     holidays: {
       name:      HOLIDAY_GREETING_META.name,
