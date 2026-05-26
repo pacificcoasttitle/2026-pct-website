@@ -9,6 +9,10 @@ import {
   HOLIDAY_GREETING_HTML,
   HOLIDAY_GREETING_META,
 } from '@/lib/email-templates/holiday-greeting'
+import {
+  PRODUCT_SPOTLIGHT_HTML,
+  PRODUCT_SPOTLIGHT_META,
+} from '@/lib/email-templates/product-spotlight'
 
 let _pool: Pool | null = null
 export function getPool(): Pool {
@@ -944,17 +948,10 @@ ${footer}
 
   const defaults: Record<string, { name: string; subject: string; preheader: string; html: string }> = {
     product: {
-      name: 'Product Spotlight',
-      subject: 'New from Pacific Coast Title — {{REP_NAME}}',
-      preheader: 'A new service designed to streamline your next transaction.',
-      html: wrap(`
-      <tr><td style="background:#03374f;padding:24px 32px;"><img src="https://www.pct.com/logo2.png" alt="Pacific Coast Title" width="140" style="display:block;opacity:.95;" /></td></tr>
-      <tr><td><img src="{{HERO_IMAGE}}" alt="Product" width="600" style="display:block;width:100%;height:auto;" /></td></tr>
-      <tr><td style="padding:32px;">
-        <h2 style="margin:0 0 12px;color:#03374f;font-size:22px;">Introducing Our Latest Service</h2>
-        <p style="margin:0 0 16px;color:#4b5563;line-height:1.7;">Share details about a new product, service, or capability your clients should know about. Highlight the value proposition and how it makes their next transaction easier.</p>
-        <a href="https://www.pct.com" style="display:inline-block;padding:12px 28px;border-radius:8px;background:#f26b2b;color:#fff;text-decoration:none;font-weight:600;font-size:14px;">Learn More</a>
-      </td></tr>`)
+      name:      PRODUCT_SPOTLIGHT_META.name,
+      subject:   PRODUCT_SPOTLIGHT_META.subject,
+      preheader: PRODUCT_SPOTLIGHT_META.preheader,
+      html:      PRODUCT_SPOTLIGHT_HTML,
     },
     title_news: {
       name: 'Title Industry News',
