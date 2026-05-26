@@ -1,5 +1,5 @@
 /**
- * /admin/team/marketing/signatures/import — CSV upload flow.
+ * /admin/team/signatures/import — CSV upload flow.
  *
  * Server component shell; all parsing/validation happens client-side
  * in CsvImporter. Office slugs are fetched here so the upload-step
@@ -20,7 +20,7 @@ export default async function SignatureImportPage() {
   return (
     <div className="space-y-6 pt-2 lg:pt-0 max-w-5xl">
       <header className="space-y-2">
-        <Link href="/admin/team/marketing/signatures"
+        <Link href="/admin/team/signatures"
               className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-[#f26b2b]">
           <ArrowLeft className="w-3 h-3" /> Back to Signature Center
         </Link>

@@ -16,6 +16,7 @@ import {
   List,
   MessageSquare,
   Mail,
+  PenLine,
   ClipboardCheck,
 } from 'lucide-react'
 
@@ -25,6 +26,7 @@ const NAV = [
   { href: '/admin/team/farms',       label: 'Farm Requests', icon: List },
   { href: '/admin/team/sms',         label: 'SMS',        icon: MessageSquare },
   { href: '/admin/team/marketing',   label: 'Email Marketing', icon: Mail },
+  { href: '/admin/team/signatures',  label: 'Signature Center', icon: PenLine },
   { href: '/admin/team/assessments', label: 'Assessments', icon: ClipboardCheck },
 ]
 

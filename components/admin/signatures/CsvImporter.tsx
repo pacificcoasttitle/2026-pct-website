@@ -809,7 +809,7 @@ function DoneStep(props: {
       )}
 
       <div className="flex justify-between pt-2 flex-wrap gap-2">
-        <Link href="/admin/team/marketing/signatures">
+        <Link href="/admin/team/signatures">
           <Button className="bg-[#03374f] hover:bg-[#022838] text-white">
             View Staff List
           </Button>

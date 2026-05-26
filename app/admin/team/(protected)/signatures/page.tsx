@@ -1,5 +1,5 @@
 /**
- * /admin/team/marketing/signatures — Signature Center landing.
+ * /admin/team/signatures — Signature Center landing.
  *
  * Server component. Loads staff + offices and hands them to the
  * client list. Auth is enforced by the (protected) route-group layout.

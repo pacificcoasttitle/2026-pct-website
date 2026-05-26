@@ -9,7 +9,7 @@
 import Link from 'next/link'
 import {
   Mail, FileText, Send, History, AlertCircle, ChevronRight,
-  ExternalLink, ChevronDown, Users, PenLine,
+  ExternalLink, ChevronDown, Users,
 } from 'lucide-react'
 import { getAllEmployeesAdmin } from '@/lib/admin-db'
 import {
@@ -77,7 +77,7 @@ export default async function MarketingHubPage() {
       </header>
 
       {/* ── Primary CTA cards ──────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <NavCard
           href="/admin/team/marketing/templates"
           icon={<FileText className="w-6 h-6" />}
@@ -96,12 +96,6 @@ export default async function MarketingHubPage() {
           icon={<History className="w-6 h-6" />}
           title="Campaign History"
           desc="Review past batches and per-rep status."
-        />
-        <NavCard
-          href="/admin/team/marketing/signatures"
-          icon={<PenLine className="w-6 h-6" />}
-          title="Signature Center"
-          desc="Generate and distribute branded email signatures."
         />
       </div>
 

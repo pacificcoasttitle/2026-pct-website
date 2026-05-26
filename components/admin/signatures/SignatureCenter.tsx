@@ -62,7 +62,7 @@ export function SignatureCenter({ staff, offices }: Props) {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
-          <Link href="/admin/team/marketing/signatures/import">
+          <Link href="/admin/team/signatures/import">
             <Button className="bg-[#f26b2b] hover:bg-[#d85a20] text-white">
               <Upload className="w-4 h-4 mr-2" />
               Upload Staff CSV
@@ -93,7 +93,7 @@ export function SignatureCenter({ staff, offices }: Props) {
             </span>
           </div>
           <div className="flex gap-2">
-            <Link href="/admin/team/marketing/signatures/import">
+            <Link href="/admin/team/signatures/import">
               <Button className="bg-[#f26b2b] hover:bg-[#d85a20] text-white">
                 <Upload className="w-4 h-4 mr-2" />
                 Upload Staff CSV
