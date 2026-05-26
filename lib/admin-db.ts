@@ -4,6 +4,7 @@
 
 import { Pool } from 'pg'
 import type { Employee } from '@/types/employee'
+import { CORPORATE_STANDARD_HTML } from '@/lib/signature-templates/corporate-standard'
 
 let _pool: Pool | null = null
 export function getPool(): Pool {
@@ -1519,23 +1520,22 @@ async function seedOfficeLocations(db: Pool): Promise<void> {
 }
 
 async function seedSignatureTemplates(db: Pool): Promise<void> {
-  // Placeholder HTML — full template will be designed in a separate ticket.
-  const placeholderHtml = `<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;">
-  <tr><td style="font-size:14px;color:#03374f;font-weight:bold;">{{first_name}} {{last_name}}</td></tr>
-  <tr><td style="font-size:12px;color:#03374f;">{{title}}</td></tr>
-  <tr><td style="font-size:12px;color:#666;">Pacific Coast Title Company</td></tr>
-  <tr><td style="font-size:12px;color:#666;">{{email}}</td></tr>
-</table>
-<!-- PLACEHOLDER: Full template will be designed in Ticket 4 -->`
-
+  // The file (lib/signature-templates/corporate-standard.ts) is the source
+  // of truth. On every cold start we UPSERT so the DB row always matches
+  // the deployed code — no manual migration needed when the template HTML
+  // changes. Only html_template, description, and updated_at are touched;
+  // is_default and active are preserved on subsequent runs.
   await db.query(
     `INSERT INTO signature_templates (name, description, html_template, is_default)
      VALUES ($1, $2, $3, true)
-     ON CONFLICT (name) DO NOTHING`,
+     ON CONFLICT (name) DO UPDATE SET
+       html_template = EXCLUDED.html_template,
+       description   = EXCLUDED.description,
+       updated_at    = NOW()`,
     [
       'Corporate Standard',
       'Default signature for all PCT employees',
-      placeholderHtml,
+      CORPORATE_STANDARD_HTML,
     ],
   )
 }

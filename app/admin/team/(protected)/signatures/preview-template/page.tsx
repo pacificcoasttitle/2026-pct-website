@@ -23,6 +23,7 @@ import {
   renderSignature,
   type SignatureContext,
 } from '@/lib/signature-templates/corporate-standard'
+import { buildPhotoUrl } from '@/lib/signature-renderer'
 
 export const metadata = { title: 'Preview Signature Template | PCT Team Admin' }
 export const dynamic  = 'force-dynamic'
@@ -93,14 +94,12 @@ export default async function PreviewSignaturePage() {
     department:           staff.department,
     email:                staff.email,
     phone,
-    office_direct:        staff.office_direct,
-    photo_url:            staff.photo_url,
+    photo_url:            buildPhotoUrl(staff),
     office_address_line1: office?.address_line1 ?? null,
     office_city:          office?.city          ?? null,
     office_state:         office?.state         ?? null,
     office_zip:           office?.zip           ?? null,
     office_main_phone:    office?.main_phone    ?? null,
-    license_number:       staff.license_number,
   }
 
   const renderedHtml = renderSignature(CORPORATE_STANDARD_HTML, ctx)

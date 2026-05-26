@@ -1,113 +1,148 @@
 /**
  * Corporate Standard — PCT email signature template.
  *
- * Outlook-safe, table-based, inline CSS only. Mustache placeholders are
- * substituted by the signature generator. Conditional sections use the
- * standard {{#field}}…{{/field}} block syntax so optional fields can be
- * omitted at render time without leaving empty rows.
+ * Outlook-safe, table-based, inline CSS only. Mustache-templated so the
+ * same HTML serves all PCT employees. Conditional sections use the
+ * {{#field}}…{{/field}} block syntax so optional fields drop cleanly
+ * without leaving empty rows or orphaned punctuation.
  *
  * Hard rules enforced here:
- *   - Tables for all layout (no div for layout)
+ *   - Tables for all layout (no <div> for layout)
  *   - Inline CSS only (no <style>, no classes)
  *   - Web-safe fonts only (Arial, Helvetica, sans-serif)
  *   - Absolute https:// URLs for every image
- *   - bgcolor attributes on color blocks (Outlook ignores some CSS bg)
  *   - cellpadding="0" cellspacing="0" border="0" on every table
+ *   - role="presentation" + mso-table-lspace/rspace:0pt for Outlook
  *   - Explicit width/height/alt on every <img>
  *   - No background-image, no @media, no flex/grid, no rgba
  *
- * Placeholders consumed:
- *   {{first_name}} {{last_name}} {{title}} {{department}} {{email}}
- *   {{phone}} {{office_direct}} {{photo_url}}
- *   {{office_address_line1}} {{office_city}} {{office_state}} {{office_zip}}
- *   {{office_main_phone}} {{license_number}}
- *   {{linkedin_url}} {{instagram_url}}
+ * PLACEHOLDERS:
+ *   {{first_name}} {{last_name}}        — always
+ *   {{title}}                           — always
+ *   {{department}}                      — conditional (eyebrow row)
+ *   {{phone}}                           — conditional (cell first, fallback office_direct)
+ *   {{office_main_phone}}               — conditional, shown as "Office: …" under phone
+ *   {{email}}                           — always (mailto)
+ *   {{photo_url}}                       — always (uploaded photo or ui-avatars initials)
+ *   {{office_address_line1}}            — conditional, wraps the whole address row
+ *   {{office_city}} {{office_state}} {{office_zip}}
  *
- * Conditional sections (rendered only when truthy):
- *   {{#department}}…{{/department}}
- *   {{#phone}}…{{/phone}}
- *   {{#office_direct}}…{{/office_direct}}
- *   {{#office_main_phone}}…{{/office_main_phone}}
- *   {{#license_number}}…{{/license_number}}
+ * REMOVED (Phase 2 — V0 hardened design):
+ *   {{office_direct}}    — folded into {{phone}} fallback in the renderer
+ *   {{license_number}}   — not used in V0 design
+ *   {{linkedin_url}} {{instagram_url}}  — social removed in Phase 1
  *
- * Phase 1: social icons are intentionally omitted from the template until
- * linkedin.png / instagram.png are hosted. Photo column always renders;
- * the caller is responsible for substituting the PCT logo URL when a
- * staff member has no headshot (see DEFAULT_PHOTO_URL below).
+ * Photo column always renders. The renderer is responsible for supplying
+ * a non-empty {{photo_url}} (either uploaded headshot or a generated
+ * ui-avatars.com initials avatar).
  */
 
-export const DEFAULT_PHOTO_URL = 'https://www.pct.com/logo2.png'
-
-export const CORPORATE_STANDARD_HTML = `<table cellpadding="0" cellspacing="0" border="0" width="500" style="border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;color:#1f2937;font-size:13px;line-height:1.4;">
+export const CORPORATE_STANDARD_HTML = `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;font-family:Arial,Helvetica,sans-serif;width:540px;max-width:540px;background-color:#ffffff;">
   <tr>
-    <td width="92" valign="top" align="left" style="padding:0 12px 0 0;">
-      <img src="{{photo_url}}" alt="{{first_name}} {{last_name}}" width="80" height="80" style="display:block;width:80px;height:80px;border-radius:40px;border:0;outline:none;text-decoration:none;">
-    </td>
-    <td width="8" bgcolor="#f26b2b" valign="top" style="width:4px;background-color:#f26b2b;font-size:0;line-height:0;">&nbsp;</td>
-    <td valign="top" style="padding:0 0 0 12px;">
-      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+    <td width="6" style="width:6px;background-color:#f26b2b;font-size:0;line-height:0;">&nbsp;</td>
+    <td style="padding:18px 18px 16px 18px;vertical-align:top;">
+      <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;width:516px;">
         <tr>
-          <td style="font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#03374f;padding:0 0 2px 0;line-height:1.2;">
-            {{first_name}} {{last_name}}
+          <td width="190" style="width:190px;padding:0 18px 0 0;border-right:1px solid #e5e7eb;vertical-align:top;">
+            <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+              <tr>
+                <td style="vertical-align:middle;">
+                  <img src="{{photo_url}}" width="80" height="80" alt="{{first_name}} {{last_name}}" style="display:block;width:80px;height:80px;border-radius:40px;border:0;outline:none;text-decoration:none;">
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-top:12px;color:#03374f;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;line-height:22px;">
+                  {{first_name}} {{last_name}}
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-top:4px;color:#f26b2b;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;line-height:17px;">
+                  {{title}}
+                </td>
+              </tr>
+              {{#department}}
+              <tr>
+                <td style="padding-top:3px;color:#6b7280;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:14px;text-transform:uppercase;letter-spacing:.5px;">
+                  {{department}}
+                </td>
+              </tr>
+              {{/department}}
+              <tr>
+                <td style="padding-top:14px;">
+                  <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+                    <tr>
+                      <td style="border-top:1px solid #e5e7eb;padding-top:12px;">
+                        <img src="https://www.pct.com/logo2.png" width="150" alt="Pacific Coast Title Company" style="display:block;border:0;outline:none;text-decoration:none;width:150px;height:auto;">
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
           </td>
-        </tr>
-        <tr>
-          <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#4b5563;padding:0 0 2px 0;line-height:1.3;">
-            {{title}}{{#department}} &middot; {{department}}{{/department}}
-          </td>
-        </tr>
-        <tr>
-          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6b7280;padding:0 0 8px 0;line-height:1.3;">
-            Pacific Coast Title Company
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:0 0 6px 0;">
-            <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+          <td width="326" style="width:326px;padding:0 0 0 18px;vertical-align:top;">
+            <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;">
               {{#phone}}
               <tr>
-                <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#03374f;padding:0 8px 2px 0;width:48px;font-weight:bold;">Phone</td>
-                <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#1f2937;padding:0 0 2px 0;">
-                  <a href="tel:{{phone}}" style="color:#1f2937;text-decoration:none;">{{phone}}</a>
+                <td style="padding-bottom:9px;vertical-align:top;">
+                  <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+                    <tr>
+                      <td width="26" height="26" style="width:26px;height:26px;background-color:#f3f4f6;text-align:center;vertical-align:middle;color:#03374f;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;line-height:26px;">P</td>
+                      <td style="padding-left:10px;vertical-align:middle;font-family:Arial,Helvetica,sans-serif;">
+                        <a href="tel:{{phone}}" style="color:#03374f;font-size:13px;font-weight:bold;line-height:16px;text-decoration:none;">{{phone}}</a>{{#office_main_phone}}<br><span style="color:#6b7280;font-size:11px;line-height:14px;">Office: <a href="tel:{{office_main_phone}}" style="color:#6b7280;text-decoration:none;">{{office_main_phone}}</a></span>{{/office_main_phone}}
+                      </td>
+                    </tr>
+                  </table>
                 </td>
               </tr>
               {{/phone}}
-              {{#office_direct}}
               <tr>
-                <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#03374f;padding:0 8px 2px 0;width:48px;font-weight:bold;">Office</td>
-                <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#1f2937;padding:0 0 2px 0;">
-                  <a href="tel:{{office_direct}}" style="color:#1f2937;text-decoration:none;">{{office_direct}}</a>
+                <td style="padding-bottom:9px;vertical-align:top;">
+                  <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+                    <tr>
+                      <td width="26" height="26" style="width:26px;height:26px;background-color:#f3f4f6;text-align:center;vertical-align:middle;color:#03374f;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;line-height:26px;">E</td>
+                      <td style="padding-left:10px;vertical-align:middle;font-family:Arial,Helvetica,sans-serif;">
+                        <a href="mailto:{{email}}" style="color:#f26b2b;font-size:13px;font-weight:bold;line-height:16px;text-decoration:none;">{{email}}</a>
+                      </td>
+                    </tr>
+                  </table>
                 </td>
               </tr>
-              {{/office_direct}}
+              {{#office_address_line1}}
               <tr>
-                <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#03374f;padding:0 8px 2px 0;width:48px;font-weight:bold;">Email</td>
-                <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;padding:0 0 2px 0;">
-                  <a href="mailto:{{email}}" style="color:#f26b2b;text-decoration:none;">{{email}}</a>
+                <td style="padding-bottom:9px;vertical-align:top;">
+                  <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+                    <tr>
+                      <td width="26" height="26" style="width:26px;height:26px;background-color:#f3f4f6;text-align:center;vertical-align:middle;color:#03374f;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;line-height:26px;">A</td>
+                      <td style="padding-left:10px;vertical-align:middle;font-family:Arial,Helvetica,sans-serif;color:#6b7280;font-size:11px;line-height:15px;">
+                        {{office_address_line1}}<br>{{office_city}}, {{office_state}} {{office_zip}}
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              {{/office_address_line1}}
+              <tr>
+                <td style="padding-bottom:9px;vertical-align:top;">
+                  <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+                    <tr>
+                      <td width="26" height="26" style="width:26px;height:26px;background-color:#f3f4f6;text-align:center;vertical-align:middle;color:#03374f;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;line-height:26px;">W</td>
+                      <td style="padding-left:10px;vertical-align:middle;font-family:Arial,Helvetica,sans-serif;">
+                        <a href="https://www.pct.com" style="color:#03374f;font-size:13px;font-weight:bold;line-height:16px;text-decoration:none;">www.pct.com</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-top:6px;border-top:1px solid #e5e7eb;color:#9ca3af;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:13px;text-transform:uppercase;letter-spacing:.5px;">
+                  California Title Insurance &amp; Escrow Since 2006
                 </td>
               </tr>
             </table>
           </td>
         </tr>
-        <tr>
-          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#4b5563;padding:0 0 2px 0;line-height:1.5;">
-            {{office_address_line1}}<br>
-            {{office_city}}, {{office_state}} {{office_zip}}{{#office_main_phone}} &middot; <a href="tel:{{office_main_phone}}" style="color:#4b5563;text-decoration:none;">{{office_main_phone}}</a>{{/office_main_phone}}
-          </td>
-        </tr>
-        {{#license_number}}
-        <tr>
-          <td style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6b7280;padding:2px 0 0 0;">
-            DRE #{{license_number}}
-          </td>
-        </tr>
-        {{/license_number}}
       </table>
-    </td>
-    <td width="100" valign="top" align="right" style="padding:0 0 0 12px;">
-      <a href="https://www.pct.com" style="text-decoration:none;">
-        <img src="https://www.pct.com/logo2.png" alt="Pacific Coast Title Company" width="96" height="36" style="display:block;width:96px;height:auto;border:0;outline:none;text-decoration:none;">
-      </a>
     </td>
   </tr>
 </table>`
@@ -116,11 +151,11 @@ export const CORPORATE_STANDARD_HTML = `<table cellpadding="0" cellspacing="0" b
  * Lightweight Mustache renderer covering exactly the features this
  * template uses: simple {{var}} substitution and {{#section}}…{{/section}}
  * conditionals. Sections render when the value is truthy and non-empty.
- * Variables are HTML-escaped by default; href/src values inherit the same
- * escaping which is sufficient for our trusted, server-side data.
+ * Variables are HTML-escaped; href/src values inherit the same escaping
+ * which is sufficient for trusted, server-side data.
  *
- * This intentionally does NOT implement Mustache's full spec (no
- * iteration, no lambdas, no partials). Keep it small and predictable.
+ * Intentionally does NOT implement full Mustache (no iteration, no
+ * lambdas, no partials). Keep it small and predictable.
  */
 export interface SignatureContext {
   first_name?:           string | null
@@ -128,16 +163,15 @@ export interface SignatureContext {
   title?:                string | null
   department?:           string | null
   email?:                string | null
+  /** Cell preferred, office_direct as fallback. Renderer computes this. */
   phone?:                string | null
-  office_direct?:        string | null
-  /** When blank, the renderer substitutes DEFAULT_PHOTO_URL (PCT logo). */
+  /** Always supplied by the renderer (uploaded photo or initials avatar). */
   photo_url?:            string | null
   office_address_line1?: string | null
   office_city?:          string | null
   office_state?:         string | null
   office_zip?:           string | null
   office_main_phone?:    string | null
-  license_number?:       string | null
 }
 
 function escapeHtml(v: unknown): string {
@@ -160,13 +194,10 @@ export function renderSignature(
   template: string,
   ctx: SignatureContext,
 ): string {
-  // Photo always renders; fall back to the PCT logo for staff without a
-  // headshot so the photo column shape stays consistent across signatures.
-  const photo_url = isTruthy(ctx.photo_url) ? ctx.photo_url : DEFAULT_PHOTO_URL
-  const data: Record<string, unknown> = { ...ctx, photo_url }
+  const data: Record<string, unknown> = { ...ctx }
 
   // 1. Strip/keep conditional sections.
-  //    Repeat until stable so nested-ish sections (none here today) work.
+  //    Repeat until stable so nested-ish sections (none today) work.
   const sectionRe = /\{\{#([a-z_]+)\}\}([\s\S]*?)\{\{\/\1\}\}/g
   let prev = ''
   let out  = template
