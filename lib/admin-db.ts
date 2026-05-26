@@ -1295,3 +1295,615 @@ export async function getAssessments(limit = 200): Promise<AssessmentRecord[]> {
   `, [limit])
   return res.rows
 }
+
+// ============================================================
+// Signature Center — staff_members / signature_templates / office_locations
+// ============================================================
+// Independent from vcard_employees. Sales reps may exist in both tables;
+// that's acceptable for MVP. All DDL uses IF NOT EXISTS and all seeds use
+// ON CONFLICT DO NOTHING so this is safe to run on every cold start.
+
+let _signatureTablesReady = false
+async function ensureSignatureTables(): Promise<void> {
+  if (_signatureTablesReady) return
+  const db = getPool()
+
+  // 1. office_locations
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS office_locations (
+      id            SERIAL PRIMARY KEY,
+      slug          TEXT NOT NULL UNIQUE,
+      display_name  TEXT NOT NULL,
+      address_line1 TEXT NOT NULL,
+      address_line2 TEXT,
+      city          TEXT NOT NULL,
+      state         TEXT NOT NULL,
+      zip           TEXT NOT NULL,
+      main_phone    TEXT,
+      toll_free     TEXT,
+      fax           TEXT,
+      active        BOOLEAN     NOT NULL DEFAULT true,
+      display_order INTEGER     NOT NULL DEFAULT 0,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `)
+
+  // 2. signature_templates
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS signature_templates (
+      id            SERIAL PRIMARY KEY,
+      name          TEXT NOT NULL UNIQUE,
+      description   TEXT,
+      html_template TEXT NOT NULL,
+      active        BOOLEAN     NOT NULL DEFAULT true,
+      is_default    BOOLEAN     NOT NULL DEFAULT false,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `)
+  // Partial unique index: at most one row may have is_default = true.
+  await db.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_signature_templates_one_default
+      ON signature_templates(is_default) WHERE is_default = true;
+  `)
+
+  // 3. staff_members
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS staff_members (
+      id                    SERIAL PRIMARY KEY,
+
+      -- Identity
+      first_name            TEXT NOT NULL,
+      last_name             TEXT NOT NULL,
+      full_legal_name       TEXT,
+
+      -- Role
+      title                 TEXT NOT NULL,
+      department            TEXT,
+
+      -- Contact
+      email                 TEXT NOT NULL UNIQUE,
+      office_direct         TEXT,
+      cell_phone            TEXT,
+      fax                   TEXT,
+
+      -- Office (references office_locations.slug, denormalised for read performance)
+      office_location       TEXT,
+
+      -- Branding
+      photo_url             TEXT,
+
+      -- Compliance
+      license_number        TEXT,
+
+      -- Social
+      linkedin_url          TEXT,
+      instagram_url         TEXT,
+
+      -- Marketing
+      group_email           TEXT,
+      signature_template_id INTEGER REFERENCES signature_templates(id) ON DELETE SET NULL,
+
+      -- Flags
+      active                BOOLEAN     NOT NULL DEFAULT true,
+      part_time             BOOLEAN     NOT NULL DEFAULT false,
+
+      -- Audit
+      created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_by            TEXT,
+      updated_by            TEXT
+    );
+  `)
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS idx_staff_members_email
+      ON staff_members(LOWER(email));
+  `)
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS idx_staff_members_office
+      ON staff_members(office_location);
+  `)
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS idx_staff_members_active
+      ON staff_members(active) WHERE active = true;
+  `)
+
+  await seedOfficeLocations(db)
+  await seedSignatureTemplates(db)
+
+  _signatureTablesReady = true
+}
+
+// ── Seeders ──────────────────────────────────────────────────────
+
+async function seedOfficeLocations(db: Pool): Promise<void> {
+  const offices: Array<{
+    slug:           string
+    display_name:   string
+    address_line1:  string
+    city:           string
+    state:          string
+    zip:            string
+    main_phone?:    string
+    toll_free?:     string
+    fax?:           string
+    display_order:  number
+  }> = [
+    {
+      slug:          'orange-hq',
+      display_name:  'Orange HQ',
+      address_line1: '1111 E. Katella Ave., Ste. 120',
+      city:          'Orange',
+      state:         'CA',
+      zip:           '92867',
+      main_phone:    '714.516.6700',
+      toll_free:     '877.338.1108',
+      fax:           '714.516.6681',
+      display_order: 1,
+    },
+    {
+      slug:          'glendale',
+      display_name:  'Glendale',
+      address_line1: '516 Burchett St.',
+      city:          'Glendale',
+      state:         'CA',
+      zip:           '91203',
+      main_phone:    '818.662.6700',
+      toll_free:     '866.724.1050',
+      fax:           '818.662.6780',
+      display_order: 2,
+    },
+    {
+      slug:          'ontario',
+      display_name:  'Ontario',
+      address_line1: '3200 Inland Empire Blvd., Ste. 235',
+      city:          'Ontario',
+      state:         'CA',
+      zip:           '91764',
+      main_phone:    '951.528.5915',
+      display_order: 3,
+    },
+    {
+      slug:          'porterville',
+      display_name:  'Porterville',
+      address_line1: '1150 W. Morton Ave., Ste. A',
+      city:          'Porterville',
+      state:         'CA',
+      zip:           '93257',
+      main_phone:    '559.833.2740',
+      display_order: 4,
+    },
+    {
+      slug:          'livermore-tsg',
+      display_name:  'Livermore (TSG NorCal)',
+      address_line1: '6111 Southfront Road, Suite F',
+      city:          'Livermore',
+      state:         'CA',
+      zip:           '94551',
+      main_phone:    '925.942.4040',
+      display_order: 5,
+    },
+    {
+      slug:          'las-vegas-tsg',
+      display_name:  'Las Vegas (TSG NV)',
+      address_line1: '930 S. 4th Street, Suite 210',
+      city:          'Las Vegas',
+      state:         'NV',
+      zip:           '89101',
+      display_order: 6,
+    },
+  ]
+
+  for (const o of offices) {
+    await db.query(
+      `INSERT INTO office_locations
+         (slug, display_name, address_line1, city, state, zip,
+          main_phone, toll_free, fax, display_order)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       ON CONFLICT (slug) DO NOTHING`,
+      [
+        o.slug,
+        o.display_name,
+        o.address_line1,
+        o.city,
+        o.state,
+        o.zip,
+        o.main_phone || null,
+        o.toll_free  || null,
+        o.fax        || null,
+        o.display_order,
+      ],
+    )
+  }
+}
+
+async function seedSignatureTemplates(db: Pool): Promise<void> {
+  // Placeholder HTML — full template will be designed in a separate ticket.
+  const placeholderHtml = `<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;">
+  <tr><td style="font-size:14px;color:#03374f;font-weight:bold;">{{first_name}} {{last_name}}</td></tr>
+  <tr><td style="font-size:12px;color:#03374f;">{{title}}</td></tr>
+  <tr><td style="font-size:12px;color:#666;">Pacific Coast Title Company</td></tr>
+  <tr><td style="font-size:12px;color:#666;">{{email}}</td></tr>
+</table>
+<!-- PLACEHOLDER: Full template will be designed in Ticket 4 -->`
+
+  await db.query(
+    `INSERT INTO signature_templates (name, description, html_template, is_default)
+     VALUES ($1, $2, $3, true)
+     ON CONFLICT (name) DO NOTHING`,
+    [
+      'Corporate Standard',
+      'Default signature for all PCT employees',
+      placeholderHtml,
+    ],
+  )
+}
+
+// ── Office Locations ─────────────────────────────────────────────
+
+export interface OfficeLocation {
+  id:            number
+  slug:          string
+  display_name:  string
+  address_line1: string
+  address_line2: string | null
+  city:          string
+  state:         string
+  zip:           string
+  main_phone:    string | null
+  toll_free:     string | null
+  fax:           string | null
+  active:        boolean
+  display_order: number
+}
+
+export async function getAllOfficeLocations(): Promise<OfficeLocation[]> {
+  await ensureSignatureTables()
+  const db = getPool()
+  const res = await db.query(`
+    SELECT * FROM office_locations
+    WHERE active = true
+    ORDER BY display_order, display_name
+  `)
+  return res.rows
+}
+
+export async function getOfficeLocationBySlug(slug: string): Promise<OfficeLocation | null> {
+  await ensureSignatureTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT * FROM office_locations WHERE slug = $1 LIMIT 1`,
+    [slug],
+  )
+  return res.rows[0] || null
+}
+
+// ── Signature Templates ──────────────────────────────────────────
+
+export interface SignatureTemplate {
+  id:            number
+  name:          string
+  description:   string | null
+  html_template: string
+  active:        boolean
+  is_default:    boolean
+  created_at:    Date
+  updated_at:    Date
+}
+
+export async function getAllSignatureTemplates(): Promise<SignatureTemplate[]> {
+  await ensureSignatureTables()
+  const db = getPool()
+  const res = await db.query(`
+    SELECT * FROM signature_templates
+    WHERE active = true
+    ORDER BY is_default DESC, name
+  `)
+  return res.rows
+}
+
+export async function getDefaultSignatureTemplate(): Promise<SignatureTemplate | null> {
+  await ensureSignatureTables()
+  const db = getPool()
+  const res = await db.query(`
+    SELECT * FROM signature_templates
+    WHERE is_default = true AND active = true
+    LIMIT 1
+  `)
+  return res.rows[0] || null
+}
+
+export async function getSignatureTemplateById(id: number): Promise<SignatureTemplate | null> {
+  await ensureSignatureTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT * FROM signature_templates WHERE id = $1 LIMIT 1`,
+    [id],
+  )
+  return res.rows[0] || null
+}
+
+// ── Staff Members ────────────────────────────────────────────────
+
+export interface StaffMember {
+  id:                    number
+  first_name:            string
+  last_name:             string
+  full_legal_name:       string | null
+  title:                 string
+  department:            string | null
+  email:                 string
+  office_direct:         string | null
+  cell_phone:            string | null
+  fax:                   string | null
+  office_location:       string | null
+  photo_url:             string | null
+  license_number:        string | null
+  linkedin_url:          string | null
+  instagram_url:         string | null
+  group_email:           string | null
+  signature_template_id: number | null
+  active:                boolean
+  part_time:             boolean
+  created_at:            Date
+  updated_at:            Date
+  created_by:            string | null
+  updated_by:            string | null
+}
+
+export interface StaffMemberInput {
+  first_name:             string
+  last_name:              string
+  full_legal_name?:       string | null
+  title:                  string
+  department?:            string | null
+  email:                  string
+  office_direct?:         string | null
+  cell_phone?:            string | null
+  fax?:                   string | null
+  office_location?:       string | null
+  photo_url?:             string | null
+  license_number?:        string | null
+  linkedin_url?:          string | null
+  instagram_url?:         string | null
+  group_email?:           string | null
+  signature_template_id?: number | null
+  active?:                boolean
+  part_time?:             boolean
+}
+
+// Whitelist of columns the caller is allowed to set via updateStaffMember.
+// Prevents accidental updates to id / created_at / created_by via spread payloads.
+const STAFF_UPDATABLE_COLUMNS = new Set<keyof StaffMemberInput>([
+  'first_name', 'last_name', 'full_legal_name', 'title', 'department',
+  'email', 'office_direct', 'cell_phone', 'fax',
+  'office_location', 'photo_url', 'license_number',
+  'linkedin_url', 'instagram_url', 'group_email',
+  'signature_template_id', 'active', 'part_time',
+])
+
+export async function getAllStaffMembers(
+  options?: { activeOnly?: boolean },
+): Promise<StaffMember[]> {
+  await ensureSignatureTables()
+  const db = getPool()
+  const where = options?.activeOnly ? 'WHERE active = true' : ''
+  const res = await db.query(`
+    SELECT * FROM staff_members
+    ${where}
+    ORDER BY last_name, first_name
+  `)
+  return res.rows
+}
+
+export async function getStaffMemberById(id: number): Promise<StaffMember | null> {
+  await ensureSignatureTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT * FROM staff_members WHERE id = $1 LIMIT 1`,
+    [id],
+  )
+  return res.rows[0] || null
+}
+
+export async function getStaffMemberByEmail(email: string): Promise<StaffMember | null> {
+  await ensureSignatureTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT * FROM staff_members WHERE LOWER(email) = LOWER($1) LIMIT 1`,
+    [email],
+  )
+  return res.rows[0] || null
+}
+
+export async function createStaffMember(
+  input: StaffMemberInput,
+  createdBy: string,
+): Promise<StaffMember> {
+  await ensureSignatureTables()
+  const db = getPool()
+  const res = await db.query(
+    `INSERT INTO staff_members (
+       first_name, last_name, full_legal_name, title, department,
+       email, office_direct, cell_phone, fax,
+       office_location, photo_url, license_number,
+       linkedin_url, instagram_url, group_email,
+       signature_template_id, active, part_time,
+       created_by, updated_by
+     ) VALUES (
+       $1, $2, $3, $4, $5,
+       $6, $7, $8, $9,
+       $10, $11, $12,
+       $13, $14, $15,
+       $16, $17, $18,
+       $19, $19
+     )
+     RETURNING *`,
+    [
+      input.first_name,
+      input.last_name,
+      input.full_legal_name || null,
+      input.title,
+      input.department || null,
+      input.email,
+      input.office_direct || null,
+      input.cell_phone || null,
+      input.fax || null,
+      input.office_location || null,
+      input.photo_url || null,
+      input.license_number || null,
+      input.linkedin_url || null,
+      input.instagram_url || null,
+      input.group_email || null,
+      input.signature_template_id ?? null,
+      input.active ?? true,
+      input.part_time ?? false,
+      createdBy,
+    ],
+  )
+  return res.rows[0]
+}
+
+export async function updateStaffMember(
+  id:        number,
+  input:     Partial<StaffMemberInput>,
+  updatedBy: string,
+): Promise<StaffMember | null> {
+  await ensureSignatureTables()
+  const db = getPool()
+
+  // Build dynamic UPDATE using only whitelisted columns.
+  const fields: string[]    = []
+  const values: unknown[]   = []
+  let   idx                 = 1
+
+  for (const [key, value] of Object.entries(input)) {
+    if (value === undefined) continue
+    if (!STAFF_UPDATABLE_COLUMNS.has(key as keyof StaffMemberInput)) continue
+    fields.push(`${key} = $${idx}`)
+    values.push(value)
+    idx++
+  }
+
+  if (fields.length === 0) return getStaffMemberById(id)
+
+  fields.push(`updated_at = NOW()`)
+  fields.push(`updated_by = $${idx}`)
+  values.push(updatedBy)
+  idx++
+  values.push(id)
+
+  const res = await db.query(
+    `UPDATE staff_members
+        SET ${fields.join(', ')}
+      WHERE id = $${idx}
+      RETURNING *`,
+    values,
+  )
+  return res.rows[0] || null
+}
+
+export async function deleteStaffMember(id: number): Promise<boolean> {
+  await ensureSignatureTables()
+  const db = getPool()
+  const res = await db.query(
+    `DELETE FROM staff_members WHERE id = $1`,
+    [id],
+  )
+  return (res.rowCount ?? 0) > 0
+}
+
+/**
+ * Bulk insert/upsert for CSV imports. Wrapped in a single transaction;
+ * per-row failures are collected and the surviving rows are committed.
+ * Conflict on email triggers an UPDATE of mutable fields (created_by /
+ * created_at are preserved on re-import).
+ */
+export async function bulkCreateStaffMembers(
+  inputs:    StaffMemberInput[],
+  createdBy: string,
+): Promise<{ created: number; errors: Array<{ row: number; error: string }> }> {
+  await ensureSignatureTables()
+  const db = getPool()
+  const client = await db.connect()
+
+  let created = 0
+  const errors: Array<{ row: number; error: string }> = []
+
+  try {
+    await client.query('BEGIN')
+
+    for (let i = 0; i < inputs.length; i++) {
+      try {
+        await client.query(
+          `INSERT INTO staff_members (
+             first_name, last_name, full_legal_name, title, department,
+             email, office_direct, cell_phone, fax,
+             office_location, photo_url, license_number,
+             linkedin_url, instagram_url, group_email,
+             signature_template_id, active, part_time,
+             created_by, updated_by
+           ) VALUES (
+             $1, $2, $3, $4, $5,
+             $6, $7, $8, $9,
+             $10, $11, $12,
+             $13, $14, $15,
+             $16, $17, $18,
+             $19, $19
+           )
+           ON CONFLICT (email) DO UPDATE SET
+             first_name      = EXCLUDED.first_name,
+             last_name       = EXCLUDED.last_name,
+             full_legal_name = EXCLUDED.full_legal_name,
+             title           = EXCLUDED.title,
+             department      = EXCLUDED.department,
+             office_direct   = EXCLUDED.office_direct,
+             cell_phone      = EXCLUDED.cell_phone,
+             fax             = EXCLUDED.fax,
+             office_location = EXCLUDED.office_location,
+             license_number  = EXCLUDED.license_number,
+             group_email     = EXCLUDED.group_email,
+             updated_at      = NOW(),
+             updated_by      = $19`,
+          [
+            inputs[i].first_name,
+            inputs[i].last_name,
+            inputs[i].full_legal_name || null,
+            inputs[i].title,
+            inputs[i].department || null,
+            inputs[i].email,
+            inputs[i].office_direct || null,
+            inputs[i].cell_phone || null,
+            inputs[i].fax || null,
+            inputs[i].office_location || null,
+            inputs[i].photo_url || null,
+            inputs[i].license_number || null,
+            inputs[i].linkedin_url || null,
+            inputs[i].instagram_url || null,
+            inputs[i].group_email || null,
+            inputs[i].signature_template_id ?? null,
+            inputs[i].active ?? true,
+            inputs[i].part_time ?? false,
+            createdBy,
+          ],
+        )
+        created++
+      } catch (err) {
+        errors.push({
+          row: i + 1,
+          error: err instanceof Error ? err.message : String(err),
+        })
+      }
+    }
+
+    await client.query('COMMIT')
+  } catch (err) {
+    await client.query('ROLLBACK')
+    throw err
+  } finally {
+    client.release()
+  }
+
+  return { created, errors }
+}
