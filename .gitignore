@@ -32,3 +32,6 @@ backups/
 # local tooling / sensitive legacy
 .claude/
 data/legacy-core-system/
+
+# v0 design reference (not for deploy)
+/v0/
