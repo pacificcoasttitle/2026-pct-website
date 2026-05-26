@@ -1835,7 +1835,14 @@ export async function bulkCreateStaffMembers(
     await client.query('BEGIN')
 
     for (let i = 0; i < inputs.length; i++) {
+      // Per-row SAVEPOINT keeps the outer transaction healthy when a single
+      // row violates a constraint. Without this, the first failing row would
+      // poison every subsequent INSERT inside the same transaction.
+      const savepointName = `sp_row_${i}`
+
       try {
+        await client.query(`SAVEPOINT ${savepointName}`)
+
         await client.query(
           `INSERT INTO staff_members (
              first_name, last_name, full_legal_name, title, department,
@@ -1888,8 +1895,22 @@ export async function bulkCreateStaffMembers(
             createdBy,
           ],
         )
+
+        await client.query(`RELEASE SAVEPOINT ${savepointName}`)
         created++
       } catch (err) {
+        // Roll back ONLY this row's savepoint so the transaction stays
+        // alive for the remaining rows.
+        try {
+          await client.query(`ROLLBACK TO SAVEPOINT ${savepointName}`)
+          await client.query(`RELEASE SAVEPOINT ${savepointName}`)
+        } catch (cleanupErr) {
+          console.warn(
+            `[bulkCreateStaffMembers] savepoint cleanup failed for row ${i + 1}:`,
+            cleanupErr instanceof Error ? cleanupErr.message : cleanupErr,
+          )
+        }
+
         errors.push({
           row: i + 1,
           error: err instanceof Error ? err.message : String(err),

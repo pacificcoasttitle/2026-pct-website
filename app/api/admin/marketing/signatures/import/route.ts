@@ -8,6 +8,7 @@ import {
   bulkCreateStaffMembers,
   type StaffMemberInput,
 } from '@/lib/admin-db'
+import { normalizePhone } from '@/lib/phone-utils'
 
 export const runtime = 'nodejs'
 
@@ -60,19 +61,12 @@ function normalizeEmail(raw: string): string {
   return raw.trim().toLowerCase()
 }
 
-function normalizePhone(raw: string | undefined | null): string | null {
-  if (!raw) return null
-  const digits = raw.replace(/\D/g, '')
-  if (!digits) return null
-  if (digits.length === 10) {
-    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
-  }
-  if (digits.length === 11 && digits.startsWith('1')) {
-    const d = digits.slice(1)
-    return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`
-  }
-  // Leave non-standard formats alone (e.g. international, extensions).
-  return raw.trim()
+// normalizePhone now lives in @/lib/phone-utils (shared with PATCH route).
+// Wrapper that preserves the "empty → null" contract this route's
+// StaffMemberInput expects, since the shared helper returns "" for empty.
+function normalizePhoneOrNull(raw: string | undefined | null): string | null {
+  const out = normalizePhone(raw)
+  return out === '' ? null : out
 }
 
 function emptyToNull(v: string | undefined): string | null {
@@ -179,9 +173,9 @@ export async function POST(req: NextRequest) {
         title:           r.title.trim(),
         department:      emptyToNull(r.department),
         email,
-        office_direct:   normalizePhone(emptyToNull(r.office_direct)),
-        cell_phone:      normalizePhone(emptyToNull(r.cell_phone)),
-        fax:             normalizePhone(emptyToNull(r.fax)),
+        office_direct:   normalizePhoneOrNull(r.office_direct),
+        cell_phone:      normalizePhoneOrNull(r.cell_phone),
+        fax:             normalizePhoneOrNull(r.fax),
         office_location: officeSlug,
         license_number:  emptyToNull(r.license_number),
         linkedin_url:    emptyToNull(r.linkedin_url),

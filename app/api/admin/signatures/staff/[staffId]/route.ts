@@ -20,6 +20,7 @@ import {
   deleteStaffMember,
   type StaffMemberInput,
 } from '@/lib/admin-db'
+import { normalizePhone } from '@/lib/phone-utils'
 
 export const runtime = 'nodejs'
 
@@ -154,6 +155,19 @@ export async function PATCH(
         ;(dbInput as any)[k] = emptyToNull(v)
       }
     }
+  }
+
+  // Normalize phone fields when present, matching the CSV import pipeline.
+  // Runs AFTER emptyToNull above, so we only touch non-null values and
+  // preserve the "user cleared the field → null" contract.
+  if (dbInput.office_direct !== undefined && dbInput.office_direct !== null) {
+    dbInput.office_direct = normalizePhone(dbInput.office_direct)
+  }
+  if (dbInput.cell_phone !== undefined && dbInput.cell_phone !== null) {
+    dbInput.cell_phone = normalizePhone(dbInput.cell_phone)
+  }
+  if (dbInput.fax !== undefined && dbInput.fax !== null) {
+    dbInput.fax = normalizePhone(dbInput.fax)
   }
 
   const adminEmail = (await getActorEmail()) || 'unknown'
