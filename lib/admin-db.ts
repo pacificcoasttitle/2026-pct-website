@@ -2360,6 +2360,53 @@ export async function getFilesByRepEmail(
   return res.rows
 }
 
+export async function getAssetDeliveryFileById(fileId: number): Promise<AssetDeliveryFile | null> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT * FROM asset_delivery_files WHERE id = $1 LIMIT 1`,
+    [fileId],
+  )
+  return res.rows[0] || null
+}
+
+export async function deleteAssetDeliveryFile(fileId: number): Promise<boolean> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+  const res = await db.query(
+    `DELETE FROM asset_delivery_files WHERE id = $1`,
+    [fileId],
+  )
+  return (res.rowCount ?? 0) > 0
+}
+
+/**
+ * Atomically adjust a batch's running totals. Used when uploading or
+ * removing individual files so the batch row reflects current state without
+ * a full recount. Positive deltas add, negative deltas subtract (clamped at
+ * zero so a buggy caller can't drive totals negative).
+ */
+export async function incrementBatchCounts(
+  batchId:    string,
+  fileDelta:  number,
+  bytesDelta: number,
+  updatedBy:  string,
+): Promise<AssetDeliveryBatch | null> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+  const res = await db.query(
+    `UPDATE asset_delivery_batches
+        SET total_files = GREATEST(0, total_files + $1),
+            total_bytes = GREATEST(0, total_bytes + $2),
+            updated_at  = NOW(),
+            updated_by  = $3
+      WHERE batch_id = $4::uuid
+      RETURNING *`,
+    [fileDelta, bytesDelta, updatedBy, batchId],
+  )
+  return res.rows[0] || null
+}
+
 // ── Send helpers ─────────────────────────────────────────────────
 
 export interface AssetDeliverySendInput {
