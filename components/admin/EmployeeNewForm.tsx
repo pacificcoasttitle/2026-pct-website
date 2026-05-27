@@ -56,6 +56,7 @@ export default function EmployeeNewForm({ offices, depts }: Props) {
     sms_code:       '',
     active:         true,
     website_active: false,
+    sales_manager:  false,
     photo_url:      '',
     bio:            '',
     bioDirty:       false,
@@ -129,6 +130,7 @@ export default function EmployeeNewForm({ offices, depts }: Props) {
           sms_code:       form.sms_code.trim() || undefined,
           active:         form.active,
           website_active: form.website_active,
+          sales_manager:  form.sales_manager,
           photo_url:      form.photo_url || undefined,
           // Send the user-typed bio if they edited it; otherwise let the
           // server fill in the default template.
@@ -350,6 +352,16 @@ export default function EmployeeNewForm({ offices, depts }: Props) {
                 className="w-4 h-4 rounded border-gray-300 text-[#f26b2b] focus:ring-[#f26b2b]"
               />
               Show on public website
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={form.sales_manager}
+                onChange={(e) => update('sales_manager', e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-[#f26b2b] focus:ring-[#f26b2b]"
+              />
+              Sales Manager
+              <span className="text-[11px] text-gray-400 ml-1">Receives manager recaps</span>
             </label>
           </div>
         </div>

@@ -339,11 +339,12 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
 
       {/* ── Settings toggles ── */}
       <Section title="Status & Visibility" icon={Settings}>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {([
             { field: 'active',         label: 'Active',           desc: 'Shows in directory' },
             { field: 'website_active', label: 'Website Page Live', desc: 'pct.com/team/slug' },
             { field: 'featured',       label: 'Featured',          desc: 'Shown at top' },
+            { field: 'sales_manager',  label: 'Sales Manager',     desc: 'Receives manager recaps' },
           ] as const).map(({ field, label, desc }) => (
             <label
               key={field}
