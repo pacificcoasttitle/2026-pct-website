@@ -2599,3 +2599,742 @@ export async function getSendsByBatchId(batchId: string): Promise<AssetDeliveryS
   )
   return res.rows
 }
+
+// ============================================================
+// Marketing Recap — recipients / upcoming / drafts / sends
+// ============================================================
+// Phase A foundation for the Weekly Marketing Recap email feature.
+// All DDL is idempotent (IF NOT EXISTS) and seeds use ON CONFLICT DO NOTHING.
+// Counts are INTEGER (no >2GB recipient counts; avoids the pg-string-coercion
+// gotcha we hit on Asset Delivery's BIGINT total_bytes). UUIDs are TEXT,
+// generated via crypto.randomUUID() in app code rather than the DB.
+// No FK constraints — draft_id is joined conceptually as TEXT.
+
+let _marketingRecapTablesReady = false
+export async function ensureMarketingRecapTables(): Promise<void> {
+  if (_marketingRecapTablesReady) return
+  const db = getPool()
+
+  // ── 1. marketing_recap_recipients ───────────────────────────────
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS marketing_recap_recipients (
+      id         SERIAL PRIMARY KEY,
+      email      TEXT NOT NULL,
+      name       TEXT NOT NULL,
+      role       TEXT NOT NULL,
+      notes      TEXT,
+      active     BOOLEAN     NOT NULL DEFAULT true,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_by TEXT,
+      updated_by TEXT
+    );
+  `)
+  // Partial unique on lower(email) WHERE active — keeps the soft-delete
+  // pattern compatible with re-adding a previously-deactivated email.
+  await db.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_recap_recipients_email
+      ON marketing_recap_recipients (LOWER(email))
+      WHERE active = true;
+  `)
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS idx_recap_recipients_active
+      ON marketing_recap_recipients (active);
+  `)
+  await db.query(`
+    INSERT INTO marketing_recap_recipients (email, name, role, created_by, updated_by)
+    VALUES
+      ('rudy@pct.com',      'Rudy Cortez',      'Super Admin', 'system', 'system'),
+      ('bheethuis@pct.com', 'Brandon Heethuis', 'Super Admin', 'system', 'system')
+    ON CONFLICT DO NOTHING;
+  `)
+
+  // ── 2. marketing_upcoming ───────────────────────────────────────
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS marketing_upcoming (
+      id                  SERIAL PRIMARY KEY,
+      scheduled_date      DATE NOT NULL,
+      title               TEXT NOT NULL,
+      lane                TEXT NOT NULL DEFAULT 'other',
+      description         TEXT,
+      asset_count_planned INTEGER,
+      notes               TEXT,
+      active              BOOLEAN     NOT NULL DEFAULT true,
+      created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_by          TEXT,
+      updated_by          TEXT
+    );
+  `)
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS idx_upcoming_date
+      ON marketing_upcoming (scheduled_date);
+  `)
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS idx_upcoming_active_date
+      ON marketing_upcoming (active, scheduled_date)
+      WHERE active = true;
+  `)
+
+  // ── 3. marketing_recap_drafts ───────────────────────────────────
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS marketing_recap_drafts (
+      id               SERIAL PRIMARY KEY,
+      draft_id         TEXT NOT NULL,
+      week_start_date  DATE NOT NULL,
+      week_end_date    DATE NOT NULL,
+      status           TEXT NOT NULL DEFAULT 'draft',
+      subject          TEXT NOT NULL,
+      html_content     TEXT NOT NULL,
+      context_json     JSONB,
+      recipient_count  INTEGER     NOT NULL DEFAULT 0,
+      successful_sends INTEGER     NOT NULL DEFAULT 0,
+      failed_sends     INTEGER     NOT NULL DEFAULT 0,
+      sent_at          TIMESTAMPTZ,
+      error_summary    TEXT,
+      is_test          BOOLEAN     NOT NULL DEFAULT false,
+      created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_by       TEXT,
+      updated_by       TEXT
+    );
+  `)
+  await db.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_recap_drafts_draft_id
+      ON marketing_recap_drafts (draft_id);
+  `)
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS idx_recap_drafts_week_start
+      ON marketing_recap_drafts (week_start_date DESC);
+  `)
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS idx_recap_drafts_status
+      ON marketing_recap_drafts (status);
+  `)
+
+  // ── 4. marketing_recap_sends ────────────────────────────────────
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS marketing_recap_sends (
+      id                  SERIAL PRIMARY KEY,
+      draft_id            TEXT NOT NULL,
+      recipient_email     TEXT NOT NULL,
+      recipient_name      TEXT NOT NULL,
+      recipient_role      TEXT,
+      recipient_source    TEXT NOT NULL,
+      is_cc               BOOLEAN     NOT NULL DEFAULT false,
+      send_status         TEXT        NOT NULL DEFAULT 'pending',
+      sendgrid_message_id TEXT,
+      sent_at             TIMESTAMPTZ,
+      error_message       TEXT,
+      is_test             BOOLEAN     NOT NULL DEFAULT false,
+      created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `)
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS idx_recap_sends_draft_id
+      ON marketing_recap_sends (draft_id);
+  `)
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS idx_recap_sends_status
+      ON marketing_recap_sends (draft_id, send_status);
+  `)
+
+  _marketingRecapTablesReady = true
+}
+
+// ── Types ────────────────────────────────────────────────────────
+
+export type RecapDraftStatus = 'draft' | 'sending' | 'sent' | 'failed'
+export type RecapSendStatus  = 'pending' | 'sent' | 'failed'
+export type RecapRecipientSource = 'recipients_table' | 'sales_manager_flag'
+
+export interface RecapRecipient {
+  id:         number
+  email:      string
+  name:       string
+  role:       string
+  notes:      string | null
+  active:     boolean
+  created_at: string
+  updated_at: string
+  created_by: string | null
+  updated_by: string | null
+}
+
+export interface UpcomingItem {
+  id:                  number
+  scheduled_date:      string
+  title:               string
+  lane:                string
+  description:         string | null
+  asset_count_planned: number | null
+  notes:               string | null
+  active:              boolean
+  created_at:          string
+  updated_at:          string
+  created_by:          string | null
+  updated_by:          string | null
+}
+
+export interface RecapDraft {
+  id:               number
+  draft_id:         string
+  week_start_date:  string
+  week_end_date:    string
+  status:           RecapDraftStatus
+  subject:          string
+  html_content:     string
+  context_json:     unknown
+  recipient_count:  number
+  successful_sends: number
+  failed_sends:     number
+  sent_at:          string | null
+  error_summary:    string | null
+  is_test:          boolean
+  created_at:       string
+  updated_at:       string
+  created_by:       string | null
+  updated_by:       string | null
+}
+
+export interface RecapSend {
+  id:                  number
+  draft_id:            string
+  recipient_email:     string
+  recipient_name:      string
+  recipient_role:      string | null
+  recipient_source:    RecapRecipientSource
+  is_cc:               boolean
+  send_status:         RecapSendStatus
+  sendgrid_message_id: string | null
+  sent_at:             string | null
+  error_message:       string | null
+  is_test:             boolean
+  created_at:          string
+  updated_at:          string
+}
+
+// ── Recipients CRUD ──────────────────────────────────────────────
+
+export async function getRecapRecipients(activeOnly = true): Promise<RecapRecipient[]> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+  const where = activeOnly ? 'WHERE active = true' : ''
+  const res = await db.query(
+    `SELECT id, email, name, role, notes, active,
+            created_at::text, updated_at::text, created_by, updated_by
+       FROM marketing_recap_recipients
+       ${where}
+       ORDER BY name ASC`,
+  )
+  return res.rows
+}
+
+export async function getRecapRecipientById(id: number): Promise<RecapRecipient | null> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT id, email, name, role, notes, active,
+            created_at::text, updated_at::text, created_by, updated_by
+       FROM marketing_recap_recipients
+       WHERE id = $1
+       LIMIT 1`,
+    [id],
+  )
+  return res.rows[0] || null
+}
+
+export interface RecapRecipientCreateInput {
+  email:       string
+  name:        string
+  role:        string
+  notes?:      string | null
+  created_by:  string
+}
+
+export async function createRecapRecipient(input: RecapRecipientCreateInput): Promise<RecapRecipient> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+  const res = await db.query(
+    `INSERT INTO marketing_recap_recipients
+       (email, name, role, notes, created_by, updated_by)
+     VALUES ($1, $2, $3, $4, $5, $5)
+     RETURNING id, email, name, role, notes, active,
+               created_at::text, updated_at::text, created_by, updated_by`,
+    [input.email, input.name, input.role, input.notes ?? null, input.created_by],
+  )
+  return res.rows[0]
+}
+
+export interface RecapRecipientUpdate {
+  email?:      string
+  name?:       string
+  role?:       string
+  notes?:      string | null
+  active?:     boolean
+  updated_by:  string
+}
+
+const RECIPIENT_UPDATABLE = new Set<keyof RecapRecipientUpdate>([
+  'email', 'name', 'role', 'notes', 'active',
+])
+
+export async function updateRecapRecipient(
+  id:      number,
+  updates: RecapRecipientUpdate,
+): Promise<RecapRecipient> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+
+  const fields: string[]  = []
+  const values: unknown[] = []
+  let   idx               = 1
+  for (const [key, value] of Object.entries(updates)) {
+    if (value === undefined) continue
+    if (key === 'updated_by') continue
+    if (!RECIPIENT_UPDATABLE.has(key as keyof RecapRecipientUpdate)) continue
+    fields.push(`${key} = $${idx}`)
+    values.push(value)
+    idx++
+  }
+  fields.push(`updated_at = NOW()`)
+  fields.push(`updated_by = $${idx}`)
+  values.push(updates.updated_by)
+  idx++
+  values.push(id)
+
+  const res = await db.query(
+    `UPDATE marketing_recap_recipients
+        SET ${fields.join(', ')}
+      WHERE id = $${idx}
+      RETURNING id, email, name, role, notes, active,
+                created_at::text, updated_at::text, created_by, updated_by`,
+    values,
+  )
+  return res.rows[0]
+}
+
+/** Soft-delete: flip active=false. Caller supplies updated_by. */
+export async function deleteRecapRecipient(id: number, updatedBy = 'system'): Promise<void> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+  await db.query(
+    `UPDATE marketing_recap_recipients
+        SET active = false, updated_at = NOW(), updated_by = $2
+      WHERE id = $1`,
+    [id, updatedBy],
+  )
+}
+
+// ── Upcoming items CRUD ──────────────────────────────────────────
+
+export interface UpcomingItemQueryOpts {
+  fromDate?:   string
+  toDate?:     string
+  activeOnly?: boolean
+}
+
+export async function getUpcomingItems(opts: UpcomingItemQueryOpts = {}): Promise<UpcomingItem[]> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+  const where: string[]  = []
+  const values: unknown[] = []
+  if (opts.fromDate) {
+    where.push(`scheduled_date >= $${values.length + 1}::date`)
+    values.push(opts.fromDate)
+  }
+  if (opts.toDate) {
+    where.push(`scheduled_date <= $${values.length + 1}::date`)
+    values.push(opts.toDate)
+  }
+  if (opts.activeOnly ?? true) where.push(`active = true`)
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
+  const res = await db.query(
+    `SELECT id, scheduled_date::text, title, lane, description,
+            asset_count_planned, notes, active,
+            created_at::text, updated_at::text, created_by, updated_by
+       FROM marketing_upcoming
+       ${whereSql}
+       ORDER BY scheduled_date ASC, id ASC`,
+    values,
+  )
+  return res.rows
+}
+
+export async function getUpcomingItemById(id: number): Promise<UpcomingItem | null> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT id, scheduled_date::text, title, lane, description,
+            asset_count_planned, notes, active,
+            created_at::text, updated_at::text, created_by, updated_by
+       FROM marketing_upcoming
+       WHERE id = $1
+       LIMIT 1`,
+    [id],
+  )
+  return res.rows[0] || null
+}
+
+export interface UpcomingItemCreateInput {
+  scheduled_date:       string
+  title:                string
+  lane?:                string
+  description?:         string | null
+  asset_count_planned?: number | null
+  notes?:               string | null
+  created_by:           string
+}
+
+export async function createUpcomingItem(input: UpcomingItemCreateInput): Promise<UpcomingItem> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+  const res = await db.query(
+    `INSERT INTO marketing_upcoming
+       (scheduled_date, title, lane, description, asset_count_planned, notes, created_by, updated_by)
+     VALUES ($1::date, $2, $3, $4, $5, $6, $7, $7)
+     RETURNING id, scheduled_date::text, title, lane, description,
+               asset_count_planned, notes, active,
+               created_at::text, updated_at::text, created_by, updated_by`,
+    [
+      input.scheduled_date,
+      input.title,
+      input.lane ?? 'other',
+      input.description ?? null,
+      input.asset_count_planned ?? null,
+      input.notes ?? null,
+      input.created_by,
+    ],
+  )
+  return res.rows[0]
+}
+
+export interface UpcomingItemUpdate {
+  scheduled_date?:      string
+  title?:               string
+  lane?:                string
+  description?:         string | null
+  asset_count_planned?: number | null
+  notes?:               string | null
+  active?:              boolean
+  updated_by:           string
+}
+
+const UPCOMING_UPDATABLE = new Set<keyof UpcomingItemUpdate>([
+  'scheduled_date', 'title', 'lane', 'description',
+  'asset_count_planned', 'notes', 'active',
+])
+
+export async function updateUpcomingItem(
+  id:      number,
+  updates: UpcomingItemUpdate,
+): Promise<UpcomingItem> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+
+  const fields: string[]  = []
+  const values: unknown[] = []
+  let   idx               = 1
+  for (const [key, value] of Object.entries(updates)) {
+    if (value === undefined) continue
+    if (key === 'updated_by') continue
+    if (!UPCOMING_UPDATABLE.has(key as keyof UpcomingItemUpdate)) continue
+    // scheduled_date is DATE — cast string input so we don't accept TIMESTAMPTZ accidentally
+    if (key === 'scheduled_date') {
+      fields.push(`${key} = $${idx}::date`)
+    } else {
+      fields.push(`${key} = $${idx}`)
+    }
+    values.push(value)
+    idx++
+  }
+  fields.push(`updated_at = NOW()`)
+  fields.push(`updated_by = $${idx}`)
+  values.push(updates.updated_by)
+  idx++
+  values.push(id)
+
+  const res = await db.query(
+    `UPDATE marketing_upcoming
+        SET ${fields.join(', ')}
+      WHERE id = $${idx}
+      RETURNING id, scheduled_date::text, title, lane, description,
+                asset_count_planned, notes, active,
+                created_at::text, updated_at::text, created_by, updated_by`,
+    values,
+  )
+  return res.rows[0]
+}
+
+/** Soft-delete: flip active=false. */
+export async function deleteUpcomingItem(id: number, updatedBy = 'system'): Promise<void> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+  await db.query(
+    `UPDATE marketing_upcoming
+        SET active = false, updated_at = NOW(), updated_by = $2
+      WHERE id = $1`,
+    [id, updatedBy],
+  )
+}
+
+// ── Drafts ───────────────────────────────────────────────────────
+
+export interface RecapDraftQueryOpts {
+  status?: RecapDraftStatus
+  limit?:  number
+}
+
+export async function getRecapDrafts(opts: RecapDraftQueryOpts = {}): Promise<RecapDraft[]> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+  const limit  = Math.max(1, Math.min(opts.limit ?? 50, 200))
+  const where: string[]  = []
+  const values: unknown[] = []
+  if (opts.status) {
+    where.push(`status = $${values.length + 1}`)
+    values.push(opts.status)
+  }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
+  values.push(limit)
+  const res = await db.query(
+    `SELECT id, draft_id, week_start_date::text, week_end_date::text,
+            status, subject, html_content, context_json,
+            recipient_count, successful_sends, failed_sends,
+            sent_at::text, error_summary, is_test,
+            created_at::text, updated_at::text, created_by, updated_by
+       FROM marketing_recap_drafts
+       ${whereSql}
+       ORDER BY week_start_date DESC, id DESC
+       LIMIT $${values.length}`,
+    values,
+  )
+  return res.rows
+}
+
+export async function getRecapDraftByDraftId(draftId: string): Promise<RecapDraft | null> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT id, draft_id, week_start_date::text, week_end_date::text,
+            status, subject, html_content, context_json,
+            recipient_count, successful_sends, failed_sends,
+            sent_at::text, error_summary, is_test,
+            created_at::text, updated_at::text, created_by, updated_by
+       FROM marketing_recap_drafts
+       WHERE draft_id = $1
+       LIMIT 1`,
+    [draftId],
+  )
+  return res.rows[0] || null
+}
+
+export interface RecapDraftCreateInput {
+  draft_id:        string
+  week_start_date: string
+  week_end_date:   string
+  subject:         string
+  html_content:    string
+  context_json:    unknown
+  is_test?:        boolean
+  created_by:      string
+}
+
+export async function createRecapDraft(input: RecapDraftCreateInput): Promise<RecapDraft> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+  const res = await db.query(
+    `INSERT INTO marketing_recap_drafts
+       (draft_id, week_start_date, week_end_date, status, subject,
+        html_content, context_json, is_test, created_by, updated_by)
+     VALUES ($1, $2::date, $3::date, 'draft', $4,
+             $5, $6, $7, $8, $8)
+     RETURNING id, draft_id, week_start_date::text, week_end_date::text,
+               status, subject, html_content, context_json,
+               recipient_count, successful_sends, failed_sends,
+               sent_at::text, error_summary, is_test,
+               created_at::text, updated_at::text, created_by, updated_by`,
+    [
+      input.draft_id,
+      input.week_start_date,
+      input.week_end_date,
+      input.subject,
+      input.html_content,
+      input.context_json !== undefined ? JSON.stringify(input.context_json) : null,
+      input.is_test ?? false,
+      input.created_by,
+    ],
+  )
+  return res.rows[0]
+}
+
+export interface RecapDraftStatusUpdate {
+  successful_sends?: number
+  failed_sends?:     number
+  recipient_count?:  number
+  sent_at?:          string
+  error_summary?:    string
+  updated_by:        string
+}
+
+export async function updateRecapDraftStatus(
+  draftId: string,
+  status:  'sending' | 'sent' | 'failed',
+  updates: RecapDraftStatusUpdate,
+): Promise<RecapDraft | null> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+
+  const sets: string[]   = ['status = $1']
+  const values: unknown[] = [status]
+  let   idx               = 2
+  const push = (col: string, value: unknown, cast = '') => {
+    sets.push(`${col} = $${idx}${cast}`)
+    values.push(value)
+    idx++
+  }
+  if (updates.successful_sends !== undefined) push('successful_sends', updates.successful_sends)
+  if (updates.failed_sends     !== undefined) push('failed_sends',     updates.failed_sends)
+  if (updates.recipient_count  !== undefined) push('recipient_count',  updates.recipient_count)
+  if (updates.sent_at          !== undefined) push('sent_at',          updates.sent_at, '::timestamptz')
+  if (updates.error_summary    !== undefined) push('error_summary',    updates.error_summary)
+
+  sets.push('updated_at = NOW()')
+  sets.push(`updated_by = $${idx}`)
+  values.push(updates.updated_by)
+  idx++
+  values.push(draftId)
+
+  const res = await db.query(
+    `UPDATE marketing_recap_drafts
+        SET ${sets.join(', ')}
+      WHERE draft_id = $${idx}
+      RETURNING id, draft_id, week_start_date::text, week_end_date::text,
+                status, subject, html_content, context_json,
+                recipient_count, successful_sends, failed_sends,
+                sent_at::text, error_summary, is_test,
+                created_at::text, updated_at::text, created_by, updated_by`,
+    values,
+  )
+  return res.rows[0] || null
+}
+
+// ── Sends ────────────────────────────────────────────────────────
+
+export interface RecapSendCreateInput {
+  draft_id:         string
+  recipient_email:  string
+  recipient_name:   string
+  recipient_role?:  string
+  recipient_source: RecapRecipientSource
+  is_cc?:           boolean
+  is_test?:         boolean
+}
+
+export async function createRecapSend(input: RecapSendCreateInput): Promise<RecapSend> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+  const res = await db.query(
+    `INSERT INTO marketing_recap_sends
+       (draft_id, recipient_email, recipient_name, recipient_role,
+        recipient_source, is_cc, send_status, is_test)
+     VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
+     RETURNING id, draft_id, recipient_email, recipient_name, recipient_role,
+               recipient_source, is_cc, send_status, sendgrid_message_id,
+               sent_at::text, error_message, is_test,
+               created_at::text, updated_at::text`,
+    [
+      input.draft_id,
+      input.recipient_email,
+      input.recipient_name,
+      input.recipient_role ?? null,
+      input.recipient_source,
+      input.is_cc   ?? false,
+      input.is_test ?? false,
+    ],
+  )
+  return res.rows[0]
+}
+
+export interface RecapSendStatusUpdate {
+  sendgrid_message_id?: string
+  sent_at?:             string
+  error_message?:       string
+}
+
+export async function updateRecapSendStatus(
+  id:      number,
+  status:  'sent' | 'failed',
+  updates: RecapSendStatusUpdate = {},
+): Promise<RecapSend> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+
+  const sets: string[]   = ['send_status = $1']
+  const values: unknown[] = [status]
+  let   idx               = 2
+  if (updates.sendgrid_message_id !== undefined) {
+    sets.push(`sendgrid_message_id = $${idx}`); values.push(updates.sendgrid_message_id); idx++
+  }
+  if (updates.sent_at !== undefined) {
+    sets.push(`sent_at = $${idx}::timestamptz`); values.push(updates.sent_at); idx++
+  }
+  if (updates.error_message !== undefined) {
+    sets.push(`error_message = $${idx}`); values.push(updates.error_message); idx++
+  }
+  sets.push('updated_at = NOW()')
+  values.push(id)
+
+  const res = await db.query(
+    `UPDATE marketing_recap_sends
+        SET ${sets.join(', ')}
+      WHERE id = $${idx}
+      RETURNING id, draft_id, recipient_email, recipient_name, recipient_role,
+                recipient_source, is_cc, send_status, sendgrid_message_id,
+                sent_at::text, error_message, is_test,
+                created_at::text, updated_at::text`,
+    values,
+  )
+  return res.rows[0]
+}
+
+export async function getRecapSendsByDraftId(draftId: string): Promise<RecapSend[]> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT id, draft_id, recipient_email, recipient_name, recipient_role,
+            recipient_source, is_cc, send_status, sendgrid_message_id,
+            sent_at::text, error_message, is_test,
+            created_at::text, updated_at::text
+       FROM marketing_recap_sends
+       WHERE draft_id = $1
+       ORDER BY is_cc ASC, recipient_name ASC, id ASC`,
+    [draftId],
+  )
+  return res.rows
+}
+
+// ── Sales managers (for recipient resolution) ────────────────────
+
+export interface ActiveSalesManager {
+  email:      string
+  first_name: string
+  last_name:  string
+  sms_code:   string | null
+}
+
+export async function getActiveSalesManagers(): Promise<ActiveSalesManager[]> {
+  // No ensureMarketingRecapTables() needed — this reads from vcard_employees,
+  // which is unrelated. Kept here because the recap resolver is the only
+  // caller and co-locating with the rest of the recap helpers improves
+  // discoverability.
+  const db = getPool()
+  const res = await db.query(`
+    SELECT email, first_name, last_name, sms_code
+      FROM vcard_employees
+     WHERE active = true AND sales_manager = true
+     ORDER BY first_name ASC
+  `)
+  return res.rows
+}
