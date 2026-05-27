@@ -53,6 +53,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { InlineAlert } from '@/components/admin/marketing/shared'
+import { formatBytes } from '@/lib/format-utils'
 
 /* ─── Types ──────────────────────────────────────────────────── */
 
@@ -150,17 +151,7 @@ function slugify(s: string): string {
     .slice(0, 80)
 }
 
-function formatBytes(n: number): string {
-  if (!n) return '0 B'
-  const units = ['B', 'KB', 'MB', 'GB']
-  let i = 0
-  let v = n
-  while (v >= 1024 && i < units.length - 1) {
-    v /= 1024
-    i++
-  }
-  return `${v.toFixed(v >= 100 || i === 0 ? 0 : 1)} ${units[i]}`
-}
+// formatBytes lives in @/lib/format-utils — see import above.
 
 /**
  * Parse a filename and classify it against the campaign slug + rep roster.

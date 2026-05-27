@@ -2165,6 +2165,22 @@ export async function getAssetDeliveryTemplateBySlug(slug: string): Promise<Asse
 
 // ── Batch helpers ────────────────────────────────────────────────
 
+/**
+ * The pg driver returns BIGINT columns as JavaScript strings to preserve
+ * precision beyond 2^53. asset_delivery_batches.total_bytes is the only
+ * BIGINT in this domain — every other count is INTEGER and comes through
+ * as a number. Coerce here so TypeScript's `total_bytes: number` type
+ * matches runtime reality and downstream arithmetic / .toFixed() calls
+ * don't silently break.
+ */
+function coerceBatchRow(row: AssetDeliveryBatch): AssetDeliveryBatch {
+  if (!row) return row
+  const raw = (row as unknown as { total_bytes: number | string | null }).total_bytes
+  const coerced =
+    typeof raw === 'string' ? Number(raw) : (raw ?? 0)
+  return { ...row, total_bytes: Number.isFinite(coerced) ? coerced : 0 }
+}
+
 export interface AssetDeliveryBatchInput {
   campaign_slug:     string
   campaign_name:     string
@@ -2219,7 +2235,7 @@ export async function getAllAssetDeliveryBatches(
        LIMIT $${values.length}`,
     values,
   )
-  return res.rows
+  return res.rows.map(coerceBatchRow)
 }
 
 export async function getAssetDeliveryBatchById(batchId: string): Promise<AssetDeliveryBatch | null> {
@@ -2229,7 +2245,7 @@ export async function getAssetDeliveryBatchById(batchId: string): Promise<AssetD
     `SELECT * FROM asset_delivery_batches WHERE batch_id = $1::uuid LIMIT 1`,
     [batchId],
   )
-  return res.rows[0] || null
+  return res.rows[0] ? coerceBatchRow(res.rows[0]) : null
 }
 
 export async function createAssetDeliveryBatch(
@@ -2265,7 +2281,7 @@ export async function createAssetDeliveryBatch(
       createdBy,
     ],
   )
-  return res.rows[0]
+  return coerceBatchRow(res.rows[0])
 }
 
 export async function updateAssetDeliveryBatch(
@@ -2301,7 +2317,7 @@ export async function updateAssetDeliveryBatch(
       RETURNING *`,
     values,
   )
-  return res.rows[0] || null
+  return res.rows[0] ? coerceBatchRow(res.rows[0]) : null
 }
 
 export async function deleteAssetDeliveryBatch(batchId: string): Promise<boolean> {
@@ -2425,7 +2441,7 @@ export async function incrementBatchCounts(
       RETURNING *`,
     [fileDelta, bytesDelta, updatedBy, batchId],
   )
-  return res.rows[0] || null
+  return res.rows[0] ? coerceBatchRow(res.rows[0]) : null
 }
 
 // ── Send helpers ─────────────────────────────────────────────────

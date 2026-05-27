@@ -28,6 +28,7 @@ import {
   StatusPill, formatDate, formatTime, InlineAlert,
 } from '@/components/admin/marketing/shared'
 import type { AssetDeliveryBatchStatus, AssetDeliverySendStatus } from '@/lib/admin-db'
+import { formatBytes } from '@/lib/format-utils'
 
 interface BatchData {
   id:               number
@@ -81,17 +82,7 @@ interface Props {
   initialSends: BatchSend[]
 }
 
-function formatBytes(n: number): string {
-  if (!n) return '0 B'
-  const units = ['B', 'KB', 'MB', 'GB']
-  let i = 0
-  let v = n
-  while (v >= 1024 && i < units.length - 1) {
-    v /= 1024
-    i++
-  }
-  return `${v.toFixed(v >= 100 || i === 0 ? 0 : 1)} ${units[i]}`
-}
+// formatBytes lives in @/lib/format-utils — see import above.
 
 function pillStatus(s: AssetDeliveryBatchStatus): 'draft' | 'scheduled' | 'sent' | 'failed' | 'cancelled' | 'skipped' {
   switch (s) {
