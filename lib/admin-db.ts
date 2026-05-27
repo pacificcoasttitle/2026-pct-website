@@ -149,6 +149,13 @@ export interface AdminEmployee {
   email:                   string | null
   phone:                   string | null
   mobile:                  string | null
+  // sms_code: TEXT, nullable. Format: C-<n> (e.g., 'C-4', 'C-28').
+  // IMPORTANT: NOT unique. Multiple reps may share a code when they
+  // form a "team account" (e.g., Lopez team: Hugo, Jesse, Izzy all
+  // share C-4). Lookups by sms_code resolve to the lowest-id active
+  // holder, who is treated as the senior team rep. Email delivery
+  // uses that senior rep's email. See Asset Delivery + SMS Studio
+  // for the team-code lookup pattern.
   sms_code:                string | null
   bio:                     string | null
   photo_url:               string | null
