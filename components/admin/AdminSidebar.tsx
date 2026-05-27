@@ -18,6 +18,7 @@ import {
   Mail,
   PenLine,
   Paperclip,
+  Newspaper,
   ClipboardCheck,
 } from 'lucide-react'
 
@@ -29,6 +30,7 @@ const NAV = [
   { href: '/admin/team/marketing',      label: 'Email Marketing',  icon: Mail },
   { href: '/admin/team/signatures',     label: 'Signature Center', icon: PenLine },
   { href: '/admin/team/asset-delivery', label: 'Asset Delivery',   icon: Paperclip },
+  { href: '/admin/team/marketing-recap', label: 'Marketing Recap', icon: Newspaper },
   { href: '/admin/team/assessments',    label: 'Assessments',      icon: ClipboardCheck },
 ]
 
