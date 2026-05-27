@@ -8,6 +8,141 @@ This file governs how AI agents (Claude, Cursor, etc.) operate on the PCT websit
 
 ---
 
+## 🚨 NON-NEGOTIABLE PROCESS RULES
+
+These rules are not aspirational — they're earned by actual failures
+in real sessions. Every agent reads this section first, every time.
+
+### 1. Branch Hygiene — Mandatory
+
+Every ticket starts on a feature branch. No exceptions.
+
+**Step 0 of every agent prompt:**
+
+```bash
+git status                            # confirm clean
+git checkout -b <type>/<short-name>   # create branch
+git branch                            # confirm
+```
+
+**Branch naming:**
+
+- `feat/<name>` — new functionality
+- `fix/<name>` — bug fixes
+- `refactor/<scope>` — refactors with no behavior change
+- `docs/<scope>` — documentation only
+- `chore/<task>` — tooling, deps, infrastructure
+
+**Why:** Multiple unrelated changes in one working tree creates
+entanglement. Splitting commits requires surgical `git add -p` which
+is error-prone and slow.
+
+**Real failure (2026-05-27):** Backend Guy + DB Specialist worked on
+`main` without branches. Their changes intermingled in `lib/admin-db.ts`.
+Required 30 minutes of recovery via `git add -p` to split into clean
+commits.
+
+### 2. Hash-Match Push Verification — Non-Negotiable
+
+Every `git push` ends with hash-match verification:
+
+```bash
+git push origin main
+git log origin/main -1 --oneline
+```
+
+The output MUST contain the commit hash from the push. If it doesn't,
+the push silently failed.
+
+**Why pushes fail silently:**
+
+- Network drops mid-push
+- Authentication expires
+- Branch protection rejects
+- Out-of-sync remote refs
+
+**Real failure (2026-05-27):** A previous agent reported the Mustache
+renderer fix "shipped." It had never been committed at all. Production
+ran the buggy renderer for hours before an Investigator found the
+working tree state.
+
+The check costs 1 second. Skipping it cost hours.
+
+### 3. Role Separation — Only Gopher Commits And Pushes
+
+| Agent | Edits Files | Commits | Pushes | Verifies Push |
+|-------|-------------|---------|--------|---------------|
+| 🔍 Investigator | No (read-only) | No | No | No |
+| 🎨 UI Guy | Yes | No | No | No |
+| ⚙️ Backend Guy | Yes | No | No | No |
+| 🗄️ DB Specialist | Yes | No | No | No |
+| 📋 Reviewer | No (reads diffs) | No | No | No |
+| 🐕 Gopher | Stages only | YES | YES | YES (mandatory) |
+
+Implementing agents (UI Guy, Backend Guy, DB Specialist) edit files
+and report what they changed. They do NOT claim "shipped" or "pushed."
+
+Reviewer reads the feature branch diff and signs off (or blocks with
+specific issues).
+
+Gopher merges to main + pushes + verifies hash match.
+
+**Why:** Concentrating commit/push authority in one role makes the
+verification gate explicit and unmissable. An agent saying "shipped"
+without the Gopher role boundary creates an unverified-state risk.
+
+### 4. Parallel Work — Lessons Learned (Currently Avoided)
+
+We attempted parallel ticket execution and hit shared-working-directory
+incidents (twice in one phase). Until isolation via `git worktree` or
+similar mechanism is operationally established, **all tickets run
+sequentially.**
+
+If parallel execution is revisited, these conditions must ALL hold:
+
+1. Each agent operates in a separate physical directory
+2. Zero shared files between tickets
+3. Zero shared DB tables
+4. Zero shared types or API contracts
+5. Independent acceptance criteria
+
+If two tickets share a type or API contract, write the contract first
+as a sequential commit. Both tickets fire against the frozen contract.
+
+**Real failures (2026-05-27):** B1 agent's files were written while
+the working tree was checked out on B2's branch. B2's commit landed
+on B1's branch by accident. Both recovered via cherry-pick + reset,
+but recovery time exceeded any parallelism savings.
+
+**Current operating mode: sequential.** One ticket at a time. The
+slowdown is real but the bug-free cadence is worth it.
+
+### 5. Investigation Scripts Are Gitignored
+
+Investigator agents create `scripts/investigate-*.ts` for read-only
+diagnostics. These are gitignored (pattern landed in commit `73e5f86`):
+
+- Read-only (SELECT queries only, no mutations)
+- Disposable (each investigation gets its own purpose-built script)
+- Never committed
+
+If an investigation script needs to mutate data, it is no longer an
+investigation script. Use a migration script in `scripts/migrations/`
+(those ARE tracked).
+
+### 6. Standard Forbidden Paths In Every Commit
+
+Before every commit, verify these paths are NOT in `git status`:
+
+- `.env.local`
+- `backups/`
+- `/v0/`
+- `docs/recovery-codes-vercel.txt`
+
+Any of these in `git status` → STOP, do not commit, report.
+
+---
+
 ## 🤖 AGENT ROLES
 
 Every task should be assigned to the right agent role. Each role has clear responsibilities, boundaries, and a prompt pattern. **Director (Claude) selects the right agent for the job.**
