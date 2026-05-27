@@ -824,6 +824,65 @@ Always reframe company features as customer benefits.
 
 ---
 
+## 🐛 COMMON GOTCHAS
+
+### Postgres BIGINT returns as JavaScript string
+
+The `pg` driver returns `BIGINT` (8-byte integer) as a JavaScript **string**
+by default to prevent precision loss for values > 2^53.
+
+If you declare a column as `BIGINT` in Postgres:
+
+```sql
+CREATE TABLE foo (total_bytes BIGINT NOT NULL DEFAULT 0)
+```
+
+And type it as `number` in TypeScript:
+
+```ts
+interface Foo { total_bytes: number }
+```
+
+The TypeScript type is a **lie**. Runtime returns string `"0"`, not number `0`.
+
+**Symptoms:**
+- `.toFixed()` / `.toString()` / arithmetic on the value throws or produces
+  wrong results (e.g. `"0" + 1 === "01"`)
+- Looks fine in dev with empty state, breaks in production with real data
+- Next.js error boundary catches the `TypeError` — page appears broken with
+  no obvious cause in component code
+
+**Solutions** (pick one or combine):
+
+1. **Coerce at the data layer** (preferred — type matches runtime):
+   ```ts
+   return rows.map(row => ({ ...row, total_bytes: Number(row.total_bytes) }))
+   ```
+
+2. **Defensive formatters** (belt-and-suspenders for shared utils):
+   ```ts
+   export function formatBytes(input: number | string | null | undefined) {
+     const n = typeof input === 'string' ? Number(input) : (input ?? 0)
+     // …
+   }
+   ```
+
+3. **Avoid BIGINT entirely** if you're certain the value won't exceed ~2 GB.
+   `INTEGER` caps at 2,147,483,647 and `pg` returns it as a JS `number`
+   correctly.
+
+**Reference fix:** commit `94d5217` — Asset Delivery hub crash where
+`asset_delivery_batches.total_bytes` (BIGINT) was being formatted as a number
+but pg returned it as a string. See `lib/format-utils.ts` for the shared
+defensive formatter and `lib/admin-db.ts` for the data-layer coercion
+pattern.
+
+**Other BIGINT columns to watch:** any column declared `BIGINT` in
+`lib/admin-db.ts` schema needs the same coercion treatment. Audit before
+typing as `number`.
+
+---
+
 ## 📋 CONTENT STRUCTURE STANDARDS
 
 ### Page Requirements
