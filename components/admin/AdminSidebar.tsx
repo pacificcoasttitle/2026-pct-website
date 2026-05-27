@@ -17,17 +17,19 @@ import {
   MessageSquare,
   Mail,
   PenLine,
+  Paperclip,
   ClipboardCheck,
 } from 'lucide-react'
 
 const NAV = [
-  { href: '/admin/team',             label: 'Dashboard',  icon: LayoutDashboard },
-  { href: '/admin/team/employees',   label: 'Employees',  icon: Users },
-  { href: '/admin/team/farms',       label: 'Farm Requests', icon: List },
-  { href: '/admin/team/sms',         label: 'SMS',        icon: MessageSquare },
-  { href: '/admin/team/marketing',   label: 'Email Marketing', icon: Mail },
-  { href: '/admin/team/signatures',  label: 'Signature Center', icon: PenLine },
-  { href: '/admin/team/assessments', label: 'Assessments', icon: ClipboardCheck },
+  { href: '/admin/team',                label: 'Dashboard',        icon: LayoutDashboard },
+  { href: '/admin/team/employees',      label: 'Employees',        icon: Users },
+  { href: '/admin/team/farms',          label: 'Farm Requests',    icon: List },
+  { href: '/admin/team/sms',            label: 'SMS',              icon: MessageSquare },
+  { href: '/admin/team/marketing',      label: 'Email Marketing',  icon: Mail },
+  { href: '/admin/team/signatures',     label: 'Signature Center', icon: PenLine },
+  { href: '/admin/team/asset-delivery', label: 'Asset Delivery',   icon: Paperclip },
+  { href: '/admin/team/assessments',    label: 'Assessments',      icon: ClipboardCheck },
 ]
 
 function roleLabel(role: string) {

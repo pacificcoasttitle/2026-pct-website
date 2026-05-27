@@ -149,7 +149,7 @@ export function BatchDetail({ initialBatch, initialFiles, initialSends }: Props)
       )
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Delete failed')
-      router.push('/admin/team/marketing/asset-delivery')
+      router.push('/admin/team/asset-delivery')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Delete failed')
       setDeleting(false)
@@ -194,7 +194,7 @@ export function BatchDetail({ initialBatch, initialFiles, initialSends }: Props)
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {isDraft && (
-              <Link href={`/admin/team/marketing/asset-delivery/new?batchId=${batch.batch_id}`}>
+              <Link href={`/admin/team/asset-delivery/new?batchId=${batch.batch_id}`}>
                 <Button className="bg-[#f26b2b] hover:bg-[#d8551b] text-white">
                   Continue editing
                 </Button>

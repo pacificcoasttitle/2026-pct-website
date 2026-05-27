@@ -9,7 +9,7 @@
 import Link from 'next/link'
 import {
   Mail, FileText, Send, History, AlertCircle, ChevronRight,
-  ExternalLink, ChevronDown, Users, Paperclip,
+  ExternalLink, ChevronDown, Users,
 } from 'lucide-react'
 import { getAllEmployeesAdmin } from '@/lib/admin-db'
 import {
@@ -77,7 +77,7 @@ export default async function MarketingHubPage() {
       </header>
 
       {/* ── Primary CTA cards ──────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <NavCard
           href="/admin/team/marketing/templates"
           icon={<FileText className="w-6 h-6" />}
@@ -90,12 +90,6 @@ export default async function MarketingHubPage() {
           title="Create Campaign"
           desc="Send a template to one or many reps at once."
           accent
-        />
-        <NavCard
-          href="/admin/team/marketing/asset-delivery"
-          icon={<Paperclip className="w-6 h-6" />}
-          title="Asset Delivery"
-          desc="Upload personalized files and send to each rep as attachments."
         />
         <NavCard
           href="/admin/team/marketing/history"

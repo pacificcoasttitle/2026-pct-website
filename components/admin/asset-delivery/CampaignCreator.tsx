@@ -308,7 +308,7 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
       setBatchId(newBatchId)
       setBatchData(data.batch)
       // Park the batch in the URL so refreshes resume cleanly.
-      router.replace(`/admin/team/marketing/asset-delivery/new?batchId=${newBatchId}`)
+      router.replace(`/admin/team/asset-delivery/new?batchId=${newBatchId}`)
       setStep(2)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to create batch')
@@ -563,7 +563,7 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
       )
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Send failed')
-      router.push(`/admin/team/marketing/asset-delivery/${batchId}`)
+      router.push(`/admin/team/asset-delivery/${batchId}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Send failed')
       setSending(false)
@@ -820,7 +820,7 @@ function Step1(props: {
       </div>
 
       <div className="flex items-center justify-between pt-2">
-        <Link href="/admin/team/marketing/asset-delivery">
+        <Link href="/admin/team/asset-delivery">
           <Button variant="outline">Cancel</Button>
         </Link>
         <Button

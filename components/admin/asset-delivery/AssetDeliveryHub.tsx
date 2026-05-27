@@ -79,7 +79,7 @@ export function AssetDeliveryHub({ initialBatches }: Props) {
     <div className="space-y-6">
       {/* ── Primary CTA ─────────────────────────────────────────── */}
       <div>
-        <Link href="/admin/team/marketing/asset-delivery/new">
+        <Link href="/admin/team/asset-delivery/new">
           <Button className="bg-[#f26b2b] hover:bg-[#d8551b] text-white">
             <Plus className="w-4 h-4 mr-1.5" /> New Campaign
           </Button>
@@ -109,7 +109,7 @@ export function AssetDeliveryHub({ initialBatches }: Props) {
             <p className="text-xs text-gray-500 mb-5 max-w-xs">
               Click <span className="font-semibold">+ New Campaign</span> above to upload personalized files and send them to your sales team.
             </p>
-            <Link href="/admin/team/marketing/asset-delivery/new">
+            <Link href="/admin/team/asset-delivery/new">
               <Button size="sm" className="bg-[#f26b2b] hover:bg-[#d8551b] text-white">
                 <Plus className="w-3.5 h-3.5 mr-1" /> New Campaign
               </Button>
@@ -123,8 +123,8 @@ export function AssetDeliveryHub({ initialBatches }: Props) {
                 ? `Sent ${formatDate(b.sent_at)} at ${formatTime(b.sent_at)}`
                 : `Created ${formatDate(b.created_at)}`
               const detailHref = isDraft
-                ? `/admin/team/marketing/asset-delivery/new?batchId=${b.batch_id}`
-                : `/admin/team/marketing/asset-delivery/${b.batch_id}`
+                ? `/admin/team/asset-delivery/new?batchId=${b.batch_id}`
+                : `/admin/team/asset-delivery/${b.batch_id}`
               const linkLabel = isDraft ? 'Continue editing' : 'View detail'
               return (
                 <li key={b.batch_id} className="px-5 py-4 hover:bg-gray-50/60 transition-colors">

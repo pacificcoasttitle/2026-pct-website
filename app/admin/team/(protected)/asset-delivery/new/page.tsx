@@ -1,5 +1,5 @@
 /**
- * /admin/team/marketing/asset-delivery/new — Asset Delivery campaign wizard.
+ * /admin/team/asset-delivery/new — Asset Delivery campaign wizard.
  *
  * Server component. Loads the active rep roster (used for filename → rep
  * matching and the upload grid) and hands off to the client wizard.
@@ -59,7 +59,7 @@ export default async function NewAssetDeliveryCampaignPage() {
     <div className="space-y-5 pt-2 lg:pt-0">
       <header className="space-y-2">
         <Link
-          href="/admin/team/marketing/asset-delivery"
+          href="/admin/team/asset-delivery"
           className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-[#f26b2b]"
         >
           <ArrowLeft className="w-3 h-3" /> Back to Asset Delivery

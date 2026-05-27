@@ -1,5 +1,5 @@
 /**
- * /admin/team/marketing/asset-delivery — Asset Delivery hub landing.
+ * /admin/team/asset-delivery — Asset Delivery hub landing.
  *
  * Server component. Fetches the 20 most recent batches and hands off to
  * the client hub. The (protected) segment already enforces auth; we don't

@@ -1,5 +1,5 @@
 /**
- * /admin/team/marketing/asset-delivery/[batchId] — Batch detail.
+ * /admin/team/asset-delivery/[batchId] — Batch detail.
  *
  * Server component. Loads the batch + files + sends and hands off to the
  * client detail view. (protected) segment handles auth. We don't refetch
@@ -60,7 +60,7 @@ export default async function AssetDeliveryBatchPage({
     <div className="space-y-5 pt-2 lg:pt-0 max-w-5xl">
       <header className="space-y-2">
         <Link
-          href="/admin/team/marketing/asset-delivery"
+          href="/admin/team/asset-delivery"
           className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-[#f26b2b]"
         >
           <ArrowLeft className="w-3 h-3" /> Back to Asset Delivery
