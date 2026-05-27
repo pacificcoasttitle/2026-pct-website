@@ -33,5 +33,8 @@ backups/
 .claude/
 data/legacy-core-system/
 
+# Investigation scripts (read-only diagnostics, not committed)
+scripts/investigate-*.ts
+
 # v0 design reference (not for deploy)
 /v0/
