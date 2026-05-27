@@ -13,6 +13,7 @@ import {
   getAssetDeliveryBatchById,
   getFilesByBatchId,
   getSendsByBatchId,
+  getPool,
 } from '@/lib/admin-db'
 import { BatchDetail } from '@/components/admin/asset-delivery/BatchDetail'
 
@@ -56,6 +57,39 @@ export default async function AssetDeliveryBatchPage({
     updated_at: new Date(s.updated_at).toISOString(),
   }))
 
+  // Build an email → sms_code map for display. JOIN against the live
+  // vcard_employees table rather than denormalizing sms_code onto
+  // asset_delivery_files: rep_email stays the canonical storage
+  // column, and codes can shift over time without rewriting history.
+  let repCodeByEmail: Record<string, string> = {}
+  const distinctEmails = Array.from(
+    new Set(
+      [
+        ...files.map((f) => f.rep_email),
+        ...sends.map((s) => s.rep_email),
+      ]
+        .filter((e): e is string => typeof e === 'string' && e.length > 0)
+        .map((e) => e.toLowerCase()),
+    ),
+  )
+  if (distinctEmails.length > 0) {
+    try {
+      const res = await getPool().query<{ email: string; sms_code: string | null }>(
+        `SELECT LOWER(email) AS email, sms_code
+         FROM vcard_employees
+         WHERE LOWER(email) = ANY($1::text[])`,
+        [distinctEmails],
+      )
+      for (const row of res.rows) {
+        if (row.sms_code) {
+          repCodeByEmail[row.email] = row.sms_code.toUpperCase()
+        }
+      }
+    } catch (err) {
+      console.warn('[asset-delivery-detail] rep code lookup failed (continuing):', err)
+    }
+  }
+
   return (
     <div className="space-y-5 pt-2 lg:pt-0 max-w-5xl">
       <header className="space-y-2">
@@ -71,6 +105,7 @@ export default async function AssetDeliveryBatchPage({
         initialBatch={initialBatch}
         initialFiles={initialFiles}
         initialSends={initialSends}
+        repCodeByEmail={repCodeByEmail}
       />
     </div>
   )

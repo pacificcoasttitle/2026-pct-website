@@ -480,11 +480,42 @@ export async function getSmsEmployees(): Promise<SmsEmployee[]> {
   return res.rows
 }
 
-export async function getEmployeeBySmsCode(code: string): Promise<{ slug: string; name: string; email: string | null; phone: string | null } | null> {
+/**
+ * Look up an active rep by SMS code (case-insensitive).
+ *
+ * Implements the "team code" rule: multiple active reps may share a
+ * code (e.g., Hugo, Izzy, Jesse all hold C-4). When that happens we
+ * return the lowest-id active holder, which the team treats as the
+ * senior rep — email delivery, SMS replies, and Asset Delivery all
+ * route through that senior rep's email/phone.
+ *
+ * Used by:
+ *   - app/api/sms/route.ts                                (SMS opt-in reply)
+ *   - app/api/assessment/route.ts                         (assessment attribution)
+ *   - app/api/admin/marketing/asset-delivery/upload/route.ts (filename → rep)
+ */
+export interface EmployeeBySmsCode {
+  id:         number
+  slug:       string
+  name:       string
+  first_name: string
+  last_name:  string
+  email:      string | null
+  phone:      string | null
+  sms_code:   string
+}
+
+export async function getEmployeeBySmsCode(code: string): Promise<EmployeeBySmsCode | null> {
   const db  = getPool()
   const res = await db.query(
-    `SELECT slug, first_name || ' ' || last_name AS name, email, phone
-     FROM vcard_employees WHERE UPPER(sms_code) = UPPER($1) AND active = true LIMIT 1`,
+    `SELECT id, slug,
+            first_name, last_name,
+            first_name || ' ' || last_name AS name,
+            email, phone, sms_code
+     FROM vcard_employees
+     WHERE UPPER(sms_code) = UPPER($1) AND active = true
+     ORDER BY id ASC
+     LIMIT 1`,
     [code]
   )
   return res.rows[0] ?? null

@@ -80,6 +80,13 @@ interface Props {
   initialBatch: BatchData
   initialFiles: BatchFile[]
   initialSends: BatchSend[]
+  /**
+   * Optional email → SMS code map (uppercase, e.g. 'C-28'). Built
+   * server-side by JOINing rep_email against vcard_employees so we
+   * don't have to denormalize sms_code onto asset_delivery_files.
+   * Missing entries fall back to email-only display.
+   */
+  repCodeByEmail?: Record<string, string>
 }
 
 // formatBytes lives in @/lib/format-utils — see import above.
@@ -107,7 +114,7 @@ function sendPillStatus(s: AssetDeliverySendStatus): 'draft' | 'scheduled' | 'se
   }
 }
 
-export function BatchDetail({ initialBatch, initialFiles, initialSends }: Props) {
+export function BatchDetail({ initialBatch, initialFiles, initialSends, repCodeByEmail }: Props) {
   const router = useRouter()
   const batch  = initialBatch
   const files  = initialFiles
@@ -265,6 +272,7 @@ export function BatchDetail({ initialBatch, initialFiles, initialSends }: Props)
                       key={s.id}
                       send={s}
                       files={repFiles}
+                      smsCode={repCodeByEmail?.[s.rep_email.toLowerCase()]}
                       expanded={expanded}
                       onToggle={() => setExpandedRow(expanded ? null : s.id)}
                     />
@@ -318,10 +326,11 @@ function SummaryTile({
 }
 
 function FragmentRows({
-  send, files, expanded, onToggle,
+  send, files, smsCode, expanded, onToggle,
 }: {
   send: BatchSend
   files: BatchFile[]
+  smsCode?: string
   expanded: boolean
   onToggle: () => void
 }) {
@@ -337,7 +346,10 @@ function FragmentRows({
           ) : null}
         </td>
         <td className="px-5 py-2.5">
-          <div className="font-medium text-[#03374f]">{send.rep_name}</div>
+          <div className="font-medium text-[#03374f]">
+            {smsCode ? <span className="font-mono text-[#03374f] mr-1.5">{smsCode}</span> : null}
+            {send.rep_name}
+          </div>
           <div className="text-[11px] text-gray-400 font-mono">{send.rep_email}</div>
         </td>
         <td className="px-3 py-2.5">

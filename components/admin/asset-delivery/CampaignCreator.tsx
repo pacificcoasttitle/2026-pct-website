@@ -64,7 +64,10 @@ export interface RepRoster {
   first_name:   string
   last_name:    string
   email:        string
+  /** Kept for backwards compat / display; no longer used for matching. */
   email_prefix: string
+  /** Active SMS code (uppercase, e.g. 'C-28'). Null when rep has no code. */
+  sms_code:     string | null
   title:        string | null
 }
 
@@ -173,9 +176,9 @@ function classifyFile(
   const parts = base.split('__')
 
   if (parts.length !== 3 || parts.some((p) => !p.trim())) {
-    return { ok: false, error: 'Filename must be slug__rep__format.ext' }
+    return { ok: false, error: 'Filename must be slug__C-<n>[-<name>]__format.ext' }
   }
-  const [slug, repPrefix, format] = parts
+  const [slug, codeSegment, format] = parts
 
   if (slug !== campaignSlug) {
     return { ok: false, error: `Slug "${slug}" ≠ campaign "${campaignSlug}"` }
@@ -183,9 +186,18 @@ function classifyFile(
   if (!(FORMATS as readonly string[]).includes(format)) {
     return { ok: false, error: `Unknown format "${format}"` }
   }
-  const rep = reps.find((r) => r.email_prefix === repPrefix.toLowerCase())
+  // Same regex the server uses (lib/upload/route.ts SMS_CODE_RE).
+  const codeMatch = codeSegment.match(/^c-?(\d+)(?:-([a-z0-9-]+))?$/i)
+  if (!codeMatch) {
+    return {
+      ok: false,
+      error: `Rep segment "${codeSegment}" is not a valid SMS code (expected C-<n>[-<name>])`,
+    }
+  }
+  const normalizedCode = `C-${codeMatch[1]}`
+  const rep = reps.find((r) => (r.sms_code || '').toUpperCase() === normalizedCode)
   if (!rep) {
-    return { ok: false, error: `No active rep matches "${repPrefix}"` }
+    return { ok: false, error: `No active rep matches "${normalizedCode}"` }
   }
   return { ok: true, slug, rep, format: format as FormatKey }
 }
@@ -763,7 +775,10 @@ function Step1(props: {
           maxLength={120}
         />
         <p className="text-[11px] text-gray-500 font-mono">
-          Filenames must start with this slug: <span className="text-[#03374f]">{props.campaignSlug || '<slug>'}__{'{rep}'}__{'{format}'}.{'{ext}'}</span>
+          Filenames must start with this slug: <span className="text-[#03374f]">{props.campaignSlug || '<slug>'}__C-&lt;n&gt;[-&lt;name&gt;]__{'{format}'}.{'{ext}'}</span>
+        </p>
+        <p className="text-[11px] text-gray-500">
+          Example: <span className="font-mono text-[#03374f]">{(props.campaignSlug || 'prelim-toolkit')}__C-28-jerry__flyer.pdf</span>. The rep is matched by SMS code (e.g.&nbsp;C-28), with an optional first-name suffix that&apos;s validated but not required. Team codes (e.g.&nbsp;C-4 for Lopez team) route to the team&apos;s shared email automatically.
         </p>
       </div>
 
@@ -875,7 +890,10 @@ function Step2(props: {
           <Upload className={`w-10 h-10 mx-auto mb-3 ${props.dragOver ? 'text-[#f26b2b]' : 'text-gray-400'}`} />
           <p className="font-semibold text-[#03374f] mb-1">Drop files here</p>
           <p className="text-xs text-gray-500 mb-1">
-            Filename format: <span className="font-mono text-[#03374f]">{props.campaignSlug}__{'{rep-prefix}'}__{'{format}'}.{'{ext}'}</span>
+            Filename format: <span className="font-mono text-[#03374f]">{props.campaignSlug}__C-&lt;n&gt;[-&lt;name&gt;]__{'{format}'}.{'{ext}'}</span>
+          </p>
+          <p className="text-xs text-gray-500 mb-1">
+            Example: <span className="font-mono text-[#03374f]">{props.campaignSlug}__C-28-jerry__flyer.pdf</span> · Team codes (e.g.&nbsp;C-4) route to the team&apos;s shared email automatically.
           </p>
           <p className="text-xs text-gray-500 mb-4">
             Formats: flyer/print (.pdf), social/social-story/email-insert (.png .jpg)
@@ -933,16 +951,22 @@ function Step2(props: {
                     <tr key={rep.email} className="border-t border-gray-50">
                       <td className="px-5 py-2.5">
                         <div className="font-medium text-[#03374f]">{rep.name}</div>
-                        <div className="text-[11px] text-gray-400 font-mono">{rep.email_prefix}</div>
+                        <div className="text-[11px] text-gray-400 font-mono">{rep.sms_code || rep.email_prefix}</div>
                       </td>
                       {FORMATS.map((fmt) => {
                         const existing = inner?.get(fmt)
-                        // Search uploads keyed by the expected filename pattern
-                        // (any extension) for in-flight rows.
-                        const expectedPrefix = `${props.campaignSlug}__${rep.email_prefix}__${fmt}.`
-                        const pending = Object.values(props.uploads).find(
-                          (u) => u.filename.toLowerCase().startsWith(expectedPrefix),
-                        )
+                        // Match in-flight uploads by `slug__C-<n>` prefix —
+                        // tolerant of optional name suffix and extension.
+                        const codeForMatch = (rep.sms_code || '').toLowerCase()
+                        const expectedPrefix = codeForMatch
+                          ? `${props.campaignSlug}__${codeForMatch}`
+                          : null
+                        const pending = expectedPrefix
+                          ? Object.values(props.uploads).find((u) => {
+                              const lower = u.filename.toLowerCase()
+                              return lower.startsWith(expectedPrefix) && lower.includes(`__${fmt}.`)
+                            })
+                          : undefined
                         return (
                           <td key={fmt} className="px-3 py-2.5 text-center">
                             {existing ? (

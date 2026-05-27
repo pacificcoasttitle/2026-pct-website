@@ -42,14 +42,15 @@ export default async function NewAssetDeliveryCampaignPage() {
   const reps: RepRoster[] = employees
     .filter((e) => e.active && e.email)
     .map((e) => ({
-      id:          e.id,
-      slug:        e.slug,
-      name:        e.name,
-      first_name:  e.first_name,
-      last_name:   e.last_name,
-      email:       String(e.email),
+      id:           e.id,
+      slug:         e.slug,
+      name:         e.name,
+      first_name:   e.first_name,
+      last_name:    e.last_name,
+      email:        String(e.email),
       email_prefix: String(e.email).split('@')[0].toLowerCase(),
-      title:       e.title,
+      sms_code:     e.sms_code ? e.sms_code.toUpperCase() : null,
+      title:        e.title,
     }))
     .sort((a, b) => a.name.localeCompare(b.name))
 
