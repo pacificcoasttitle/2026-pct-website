@@ -126,7 +126,7 @@ const ADMIN_COLS = `
   e.email, e.phone, e.mobile, e.sms_code,
   e.bio, e.photo_url, e.languages, e.specialties,
   e.linkedin, e.theme_color,
-  e.active, e.featured, e.website_active,
+  e.active, e.featured, e.sales_manager, e.website_active,
   e.website_bio, e.website_specialties,
   e.mailchimp_form_code, e.mailchimp_audience_id,
   e.website_hero_image, e.website_custom_title, e.website_meta_description,
@@ -165,6 +165,7 @@ export interface AdminEmployee {
   theme_color:             string | null
   active:                  boolean
   featured:                boolean
+  sales_manager:           boolean
   website_active:          boolean
   website_bio:             string | null
   website_specialties:     string | null
@@ -226,6 +227,7 @@ export interface EmployeeUpdatePayload {
   department_id?:           number | null
   active?:                  boolean
   featured?:                boolean
+  sales_manager?:           boolean
   website_active?:          boolean
   website_bio?:             string
   website_specialties?:     string
@@ -301,6 +303,7 @@ export interface CreateEmployeeInput {
   department_id?: number | null
   sms_code?:      string
   active?:        boolean
+  sales_manager?: boolean
   website_active?: boolean
   bio?:           string
   website_bio?:   string
@@ -350,6 +353,8 @@ export async function createEmployee(input: CreateEmployeeInput): Promise<AdminE
   add('website_bio', (input.website_bio && input.website_bio.trim()) || bio)
   cols.push('active')
   vals.push(input.active === false ? false : true)
+  cols.push('sales_manager')
+  vals.push(input.sales_manager === true)
   cols.push('website_active')
   vals.push(input.website_active === true)
 

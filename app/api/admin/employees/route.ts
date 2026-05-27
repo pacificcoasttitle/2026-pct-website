@@ -35,6 +35,7 @@ export async function POST(req: Request) {
       department_id:   body.department_id  != null ? Number(body.department_id)  : null,
       sms_code:        body.sms_code       ? String(body.sms_code)       : undefined,
       active:          body.active         === false ? false : true,
+      sales_manager:   body.sales_manager  === true,
       website_active:  body.website_active === true,
       bio:             body.bio            ? String(body.bio)             : undefined,
       website_bio:     body.website_bio    ? String(body.website_bio)     : undefined,

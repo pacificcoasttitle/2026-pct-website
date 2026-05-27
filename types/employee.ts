@@ -48,6 +48,7 @@ export interface Employee {
   theme_color:   string | null
   active:        boolean
   featured:      boolean
+  sales_manager: boolean
   view_count:    number
   save_count:    number
   // Website-page fields
