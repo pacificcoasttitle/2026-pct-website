@@ -37,6 +37,30 @@
  * ui-avatars.com initials avatar).
  */
 
+/**
+ * CANONICAL SOURCE — DO NOT BUILD UI EDITORS WITHOUT GUARD
+ *
+ * This file is the canonical source for the Corporate Standard signature
+ * template. The DB row in signature_templates is auto-synced from this
+ * file on every deploy via ON CONFLICT (name) DO UPDATE SET html_template.
+ *
+ * IMPORTANT: The UPSERT is unconditional — every cold start overwrites
+ * the DB row from this file. This is BY DESIGN — V0 design lives here,
+ * code-reviewed, version-controlled.
+ *
+ * If you ever build a UI editor that lets admins customize signatures:
+ *   1. Add updated_by column to signature_templates
+ *   2. Add WHERE updated_by='system' guard to the seed UPSERT
+ *      (See lib/admin-db.ts seedDefaultTemplates email template pattern)
+ *   3. Document the file-authoritative vs DB-authoritative boundary
+ *
+ * Until then: edit this file → deploy → DB syncs automatically.
+ *
+ * RENDERER: Uses mustache npm package (canonical). All {{var}} fields
+ * are HTML-escaped by default. Use {{{var}}} only for pre-sanitized
+ * HTML strings (currently none in this template).
+ */
+
 export const CORPORATE_STANDARD_HTML = `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;font-family:Arial,Helvetica,sans-serif;width:540px;max-width:540px;background-color:#ffffff;">
   <tr>
     <td width="6" style="width:6px;background-color:#f26b2b;font-size:0;line-height:0;">&nbsp;</td>
@@ -72,7 +96,7 @@ export const CORPORATE_STANDARD_HTML = `<table cellpadding="0" cellspacing="0" b
                   <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
                     <tr>
                       <td style="border-top:1px solid #e5e7eb;padding-top:12px;">
-                        <img src="https://www.pct.com/logo2.png" width="150" alt="Pacific Coast Title Company" style="display:block;border:0;outline:none;text-decoration:none;width:150px;height:auto;">
+                        <img src="https://www.pct.com/logo2-dark.png" width="150" alt="Pacific Coast Title Company" style="display:block;border:0;outline:none;text-decoration:none;width:150px;height:auto;">
                       </td>
                     </tr>
                   </table>
@@ -147,15 +171,20 @@ export const CORPORATE_STANDARD_HTML = `<table cellpadding="0" cellspacing="0" b
   </tr>
 </table>`
 
+import Mustache from 'mustache'
+
 /**
- * Lightweight Mustache renderer covering exactly the features this
- * template uses: simple {{var}} substitution and {{#section}}…{{/section}}
- * conditionals. Sections render when the value is truthy and non-empty.
- * Variables are HTML-escaped; href/src values inherit the same escaping
- * which is sufficient for trusted, server-side data.
+ * Renders the corporate-standard signature template via the canonical
+ * Mustache implementation. All fields are rendered HTML-escaped
+ * ({{var}}, not {{{var}}}) — none of the signature fields are trusted
+ * HTML. Mustache {{#section}}…{{/section}} blocks omit the entire
+ * block when the field is falsy/empty, which is the behavior the
+ * template relies on for optional rows like office_address_line1.
  *
- * Intentionally does NOT implement full Mustache (no iteration, no
- * lambdas, no partials). Keep it small and predictable.
+ * Mustache treats empty strings as falsy for sections, which matches
+ * the previous custom-renderer semantics. We normalize null/undefined
+ * to '' before rendering so missing fields don't show up as the
+ * literal string "null"/"undefined" in escaped output.
  */
 export interface SignatureContext {
   first_name?:           string | null
@@ -174,44 +203,13 @@ export interface SignatureContext {
   office_main_phone?:    string | null
 }
 
-function escapeHtml(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
-
-function isTruthy(v: unknown): boolean {
-  if (v === null || v === undefined) return false
-  if (typeof v === 'string') return v.trim() !== ''
-  if (typeof v === 'boolean') return v
-  return Boolean(v)
-}
-
 export function renderSignature(
   template: string,
   ctx: SignatureContext,
 ): string {
-  const data: Record<string, unknown> = { ...ctx }
-
-  // 1. Strip/keep conditional sections.
-  //    Repeat until stable so nested-ish sections (none today) work.
-  const sectionRe = /\{\{#([a-z_]+)\}\}([\s\S]*?)\{\{\/\1\}\}/g
-  let prev = ''
-  let out  = template
-  while (out !== prev) {
-    prev = out
-    out = out.replace(sectionRe, (_m, key: string, body: string) =>
-      isTruthy(data[key]) ? body : '',
-    )
+  const data: Record<string, string> = {}
+  for (const [k, v] of Object.entries(ctx)) {
+    data[k] = v === null || v === undefined ? '' : String(v)
   }
-
-  // 2. Substitute simple variables.
-  out = out.replace(/\{\{([a-z_]+)\}\}/g, (_m, key: string) =>
-    escapeHtml(data[key]),
-  )
-
-  return out
+  return Mustache.render(template, data)
 }

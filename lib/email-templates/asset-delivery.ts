@@ -1,3 +1,5 @@
+import Mustache from 'mustache'
+
 // ============================================================
 // Personalized Asset Delivery — email template (Outlook-safe HTML)
 // ============================================================
@@ -39,6 +41,31 @@
 //   3. SendGrid the result as the HTML body with the actual files as
 //      attachments (the preview cards are visual aids — the real files
 //      go in the MIME attachment list)
+
+/**
+ * CANONICAL SOURCE — DO NOT BUILD UI EDITORS WITHOUT GUARD
+ *
+ * This file is the canonical source for the Asset Delivery email template.
+ * The DB row in asset_delivery_templates is auto-synced from this file
+ * on every deploy via ON CONFLICT (slug) DO UPDATE SET html_template.
+ *
+ * IMPORTANT: The UPSERT is unconditional — every cold start overwrites
+ * the DB row from this file. This is BY DESIGN — V0 design lives here,
+ * code-reviewed, version-controlled.
+ *
+ * If you ever build a UI editor that lets admins customize asset delivery
+ * email templates:
+ *   1. Add updated_by column to asset_delivery_templates
+ *   2. Add WHERE updated_by='system' guard to seedAssetDeliveryTemplate
+ *   3. Document the file-authoritative vs DB-authoritative boundary
+ *
+ * Until then: edit this file → deploy → DB syncs automatically.
+ *
+ * RENDERER: Uses mustache npm package (canonical). All {{var}} fields
+ * are HTML-escaped by default. {{{asset_preview_cards}}} uses triple-
+ * stash to inject server-rendered card HTML — the renderAssetPreviewCard
+ * helper must ensure its output is safe HTML.
+ */
 
 // ── Brand constants (mirror PCT_BRAND from v0/email-components.tsx) ─
 const NAVY          = '#03374f'
@@ -342,13 +369,16 @@ export function iconTypeForMime(mime: string | null | undefined): AssetIconType 
 export { escapeHtml as escapeAssetDeliveryText }
 
 /**
- * Minimal Mustache subset for rendering ASSET_DELIVERY_HTML. Handles:
- *   - {{var}}       — HTML-escaped value
- *   - {{{var}}}     — raw value (used for pre-rendered HTML like cards)
- *   - {{#sec}}…{{/sec}}  — section, kept when value is truthy, dropped otherwise
+ * Renders ASSET_DELIVERY_HTML via the canonical Mustache implementation
+ * (mustache npm package). Supports:
+ *   - {{var}}            — HTML-escaped
+ *   - {{{var}}}          — raw HTML (used for {{{asset_preview_cards}}})
+ *   - {{#sec}}…{{/sec}}  — section, kept when value is truthy/non-empty
  *
- * Intentionally tiny — we don't want a Mustache runtime dep for one
- * template, and the placeholders we use are fully enumerated above.
+ * Mustache treats empty strings, null, undefined, false, and empty
+ * arrays as falsy for sections — matches the previous custom-renderer
+ * semantics. null/undefined fields are normalized to '' so missing
+ * values render as empty rather than the literal string "null".
  */
 export type AssetDeliveryContext = Record<string, string | number | boolean | null | undefined>
 
@@ -356,35 +386,9 @@ export function renderAssetDeliveryHtml(
   template: string,
   ctx:      AssetDeliveryContext,
 ): string {
-  // 1. Resolve sections first (until stable, in case a section's body
-  //    contained another section). Sections render when the value is
-  //    truthy and non-empty-string.
-  const sectionRe = /\{\{#([a-z_]+)\}\}([\s\S]*?)\{\{\/\1\}\}/g
-  let prev = ''
-  let out  = template
-  while (out !== prev) {
-    prev = out
-    out = out.replace(sectionRe, (_m, key: string, body: string) => {
-      const v = ctx[key]
-      const truthy =
-        v !== null && v !== undefined && v !== false &&
-        !(typeof v === 'string' && v.trim() === '')
-      return truthy ? body : ''
-    })
+  const data: Record<string, string | number | boolean> = {}
+  for (const [k, v] of Object.entries(ctx)) {
+    data[k] = v === null || v === undefined ? '' : v
   }
-
-  // 2. Triple-stache {{{var}}} → raw substitution (no escaping).
-  out = out.replace(/\{\{\{([a-z_]+)\}\}\}/g, (_m, key: string) => {
-    const v = ctx[key]
-    return v === null || v === undefined ? '' : String(v)
-  })
-
-  // 3. Double-stache {{var}} → escaped substitution.
-  out = out.replace(/\{\{([a-z_]+)\}\}/g, (_m, key: string) => {
-    const v = ctx[key]
-    if (v === null || v === undefined) return ''
-    return escapeHtml(String(v))
-  })
-
-  return out
+  return Mustache.render(template, data)
 }
