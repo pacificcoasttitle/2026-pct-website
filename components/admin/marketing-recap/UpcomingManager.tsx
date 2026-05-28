@@ -149,8 +149,12 @@ function emptyForm(): FormState {
 }
 
 function formFromItem(item: UpcomingItem): FormState {
+  const isRecurring = coerceRecurrence(item.recurrence_pattern) !== 'none'
   return {
-    scheduled_date: item.scheduled_date,
+    // H4 follow-up: recurring items source their anchor from anchor_date
+    // (falls back to scheduled_date defensively) so a non-anchor
+    // occurrence can't overwrite the stored anchor on save.
+    scheduled_date: isRecurring ? (item.anchor_date ?? item.scheduled_date) : item.scheduled_date,
     title: item.title,
     lane: (LANE_OPTIONS.some((lane) => lane.value === item.lane)
       ? item.lane

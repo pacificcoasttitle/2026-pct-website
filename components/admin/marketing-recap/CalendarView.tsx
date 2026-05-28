@@ -254,8 +254,14 @@ function emptyItemForm(scheduledISO: string): ItemForm {
 
 function itemToForm(item: UpcomingItem): ItemForm {
   const lane: Lane = (item.lane in LANE_STYLES ? item.lane : 'other') as Lane
+  const isRecurring = coerceRecurrence(item.recurrence_pattern) !== 'none'
   return {
-    scheduled_date:      item.scheduled_date,
+    // H4 follow-up: for recurring items the form's anchor must come from
+    // anchor_date, never the (possibly occurrence) scheduled_date — else
+    // editing a non-anchor occurrence would PATCH the anchor forward.
+    scheduled_date:      isRecurring
+                           ? (item.anchor_date ?? item.scheduled_date)
+                           : item.scheduled_date,
     title:               item.title,
     lane,
     status:              coerceStatus(item.status),

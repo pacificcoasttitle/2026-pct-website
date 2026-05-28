@@ -2744,6 +2744,15 @@ export async function ensureMarketingRecapTables(): Promise<void> {
     ALTER TABLE marketing_upcoming
     ADD COLUMN IF NOT EXISTS recurrence_until DATE
   `)
+  // Defensive backfill — matches the standalone migration script so the
+  // self-heal path can't leave NULL/invalid patterns before the CHECK is
+  // (re)attached below (Reviewer's F note).
+  await db.query(`
+    UPDATE marketing_upcoming
+       SET recurrence_pattern = 'none'
+     WHERE recurrence_pattern IS NULL
+        OR recurrence_pattern NOT IN ('none','weekly','biweekly','monthly_day','monthly_weekday')
+  `)
   await db.query(`
     ALTER TABLE marketing_upcoming
     DROP CONSTRAINT IF EXISTS marketing_upcoming_recurrence_pattern_check
@@ -2906,6 +2915,16 @@ export interface UpcomingItem {
   asset_delivery_batch_label: string | null
   recurrence_pattern:  RecurrencePattern
   recurrence_until:    string | null
+  /**
+   * H4 follow-up: the rule's TRUE anchor date, computed (not stored).
+   * - non-recurring rows  → null (n/a)
+   * - recurring rows      → the DB row's scheduled_date (the anchor),
+   *                         even after expansion rewrites scheduled_date
+   *                         to an occurrence date.
+   * The edit form sources the anchor from here so editing a non-anchor
+   * occurrence can never PATCH the stored anchor to the occurrence date.
+   */
+  anchor_date:         string | null
   created_at:          string
   updated_at:          string
   created_by:          string | null
@@ -3099,6 +3118,18 @@ const UPCOMING_SELECT_COLS = `
   u.created_at::text, u.updated_at::text, u.created_by, u.updated_by
 `
 
+/**
+ * Populate the computed anchor_date on a raw DB row. anchor_date is NOT
+ * a column — for recurring rows it mirrors the stored scheduled_date
+ * (the rule anchor); for non-recurring rows it's null (n/a). Called on
+ * the unexpanded path; the expansion path sets anchor_date explicitly
+ * because it rewrites scheduled_date to the occurrence date.
+ */
+function withAnchorDate(row: UpcomingItem): UpcomingItem {
+  const isRecurring = row.recurrence_pattern != null && row.recurrence_pattern !== 'none'
+  return { ...row, anchor_date: isRecurring ? row.scheduled_date : null }
+}
+
 export async function getUpcomingItems(opts: UpcomingItemQueryOpts = {}): Promise<UpcomingItem[]> {
   await ensureMarketingRecapTables()
   const db = getPool()
@@ -3129,7 +3160,9 @@ export async function getUpcomingItems(opts: UpcomingItemQueryOpts = {}): Promis
          ORDER BY u.scheduled_date ASC, u.id ASC`,
       values,
     )
-    return res.rows
+    // Recurring rows here are unexpanded (table view) → anchor_date =
+    // scheduled_date; non-recurring → null.
+    return (res.rows as UpcomingItem[]).map(withAnchorDate)
   }
 
   // ── Expanding path (calendar / recap with a window) ──────────────
@@ -3170,11 +3203,17 @@ export async function getUpcomingItems(opts: UpcomingItemQueryOpts = {}): Promis
       toISO,
     })
     for (const occ of occurrences) {
-      expanded.push({ ...row, scheduled_date: occ })
+      // scheduled_date = occurrence (for placement); anchor_date = the
+      // DB row's original scheduled_date (the true rule anchor).
+      expanded.push({ ...row, scheduled_date: occ, anchor_date: row.scheduled_date })
     }
   }
 
-  const union = [...(nonRecurring.rows as UpcomingItem[]), ...expanded]
+  // Non-recurring rows in the window carry anchor_date = null.
+  const union = [
+    ...(nonRecurring.rows as UpcomingItem[]).map(withAnchorDate),
+    ...expanded,
+  ]
   union.sort((a, b) =>
     a.scheduled_date.localeCompare(b.scheduled_date) || a.id - b.id,
   )
@@ -3192,7 +3231,7 @@ export async function getUpcomingItemById(id: number): Promise<UpcomingItem | nu
        LIMIT 1`,
     [id],
   )
-  return res.rows[0] || null
+  return res.rows[0] ? withAnchorDate(res.rows[0] as UpcomingItem) : null
 }
 
 export interface UpcomingItemCreateInput {
