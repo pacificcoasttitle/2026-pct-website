@@ -1,16 +1,36 @@
 'use client'
 
 /**
- * CalendarView — read-only 6-week month grid of marketing_upcoming.
+ * CalendarView — 6-week month grid of marketing_upcoming.
  *
- * READ-ONLY by design. No create/edit/delete/drag anywhere. The
- * Phase B2 table view (UpcomingManager) is the editing surface; this
- * component only DISPLAYS the same data visually. The day-detail
- * Dialog opened by clicking a cell is also read-only and links out to
- * the table view for any mutation.
+ * Full CRUD surface for upcoming items (except drag-to-reschedule,
+ * which is Stage G+3). The Phase B2 table view (UpcomingManager)
+ * remains a second editing surface over the same data; both views
+ * call the same API endpoints with identical request shapes.
  *
- * Data: re-uses GET /api/admin/marketing/recap/upcoming for month
- * navigation. No new API route was created.
+ *   Stage G    — read-only display + click-to-view day detail
+ *   Stage G+1  — click empty cell background to CREATE
+ *   Stage G+2  — Edit + soft-Delete each item from the day-detail
+ *                Dialog (THIS stage)
+ *
+ * Click intents on a day cell:
+ *   - Cell background / date number / +Add hint  → CREATE Dialog
+ *   - Item chip                                  → day-detail Dialog
+ *                                                  (which now offers
+ *                                                  per-item Edit /
+ *                                                  Delete)
+ *   - "+N more"                                  → day-detail Dialog
+ *
+ * Data: reuses GET / POST / PATCH / DELETE /api/admin/marketing/recap/
+ * upcoming(/[id]) — no new API routes were created at any stage.
+ *
+ * Mutation pattern (create/edit/delete):
+ *   1. Apply OPTIMISTIC update to local items state (with snapshot).
+ *   2. Fire mutation; on failure, roll back + InlineAlert.
+ *   3. On mutation success, close the form/dialog.
+ *   4. Run a reconciliation fetchMonth() in a SEPARATE try/catch so a
+ *      refresh failure cannot masquerade as a mutation failure. (Bug
+ *      from G+1 fixed across all three mutation paths in G+2.)
  *
  * PT date handling:
  *   - "Today" and the initial current month are PT-anchored (computed
@@ -32,7 +52,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  ChevronLeft, ChevronRight, Loader2, CalendarDays, Table as TableIcon, Info, Plus,
+  ChevronLeft, ChevronRight, Loader2, CalendarDays, Table as TableIcon,
+  Info, Plus, Pencil, Trash2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
@@ -40,6 +61,10 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -136,11 +161,17 @@ const MONTH_NAMES = [
 ]
 const WEEKDAY_HEADERS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-/* ─── Create form (mirrors B2's UpcomingManager FormState) ───── */
+/* ─── Item form (shared by create + edit) ────────────────────── */
 // Bounds and field names match B2 + the server Zod schema in
 // app/api/admin/marketing/recap/upcoming/route.ts. Do not invent
 // new fields or different bounds here — the server validates again.
-interface CreateForm {
+//
+// `scheduled_date` is in the form state because EDIT lets users
+// reschedule the item to a different day via the form (drag is G+3).
+// In the CREATE flow the cell click fixes the date and the form's
+// date field is shown read-only.
+interface ItemForm {
+  scheduled_date:      string  // YYYY-MM-DD
   title:               string
   lane:                Lane
   description:         string
@@ -148,8 +179,9 @@ interface CreateForm {
   notes:               string
 }
 
-function emptyCreateForm(): CreateForm {
+function emptyItemForm(scheduledISO: string): ItemForm {
   return {
+    scheduled_date:      scheduledISO,
     title:               '',
     lane:                'other',
     description:         '',
@@ -158,8 +190,84 @@ function emptyCreateForm(): CreateForm {
   }
 }
 
-/** Long-form date for the create-Dialog header. Built from parts, not
- *  from new Date('YYYY-MM-DD'), so no UTC shift. */
+function itemToForm(item: UpcomingItem): ItemForm {
+  const lane: Lane = (item.lane in LANE_STYLES ? item.lane : 'other') as Lane
+  return {
+    scheduled_date:      item.scheduled_date,
+    title:               item.title,
+    lane,
+    description:         item.description ?? '',
+    asset_count_planned: item.asset_count_planned == null
+      ? ''
+      : String(item.asset_count_planned),
+    notes:               item.notes ?? '',
+  }
+}
+
+/**
+ * Validate an ItemForm against the same Zod bounds the server enforces.
+ * Returns an error message or null. Pure function, no side effects.
+ */
+function validateItemForm(form: ItemForm, opts: { requireDate?: boolean } = {}): string | null {
+  if (opts.requireDate !== false) {
+    if (!form.scheduled_date || !/^\d{4}-\d{2}-\d{2}$/.test(form.scheduled_date)) {
+      return 'Scheduled date must be YYYY-MM-DD.'
+    }
+  }
+  const title = form.title.trim()
+  if (!title)             return 'Title is required.'
+  if (title.length > 200) return 'Title must be 200 characters or fewer.'
+  if (form.description.length > 1000) return 'Description must be 1000 characters or fewer.'
+  if (form.notes.length > 2000)       return 'Notes must be 2000 characters or fewer.'
+  if (form.asset_count_planned.trim() !== '') {
+    const n = Number(form.asset_count_planned)
+    if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0 || n > 9999) {
+      return 'Assets planned must be a whole number from 0 to 9999.'
+    }
+  }
+  return null
+}
+
+/**
+ * Build the API payload from an ItemForm. Used for both POST and PATCH
+ * (PATCH ignores fields it doesn't recognise, but the server's Zod
+ * .optional() makes the full-shape submit safe — this matches B2,
+ * whose buildPayload() sends the same set on both create and edit).
+ */
+function buildItemPayload(form: ItemForm): Record<string, unknown> {
+  const assets = form.asset_count_planned.trim() === ''
+    ? null
+    : Number(form.asset_count_planned)
+  return {
+    scheduled_date:      form.scheduled_date,
+    title:               form.title.trim(),
+    lane:                form.lane,
+    description:         form.description.trim() || null,
+    asset_count_planned: assets,
+    notes:               form.notes.trim() || null,
+  }
+}
+
+/**
+ * Unpack a server error response into a single user-facing string.
+ * Mirrors G+1's inline unpacking; promoted to a helper so create, edit,
+ * and delete share consistent error wording.
+ */
+function unpackApiError(data: unknown, status: number, fallback: string): string {
+  if (data && typeof data === 'object') {
+    const d = data as { error?: unknown; details?: unknown }
+    const err = typeof d.error === 'string' ? d.error : null
+    const details = Array.isArray(d.details)
+      ? d.details.filter((x) => typeof x === 'string') as string[]
+      : null
+    if (err && details && details.length > 0) return `${err}: ${details.join('; ')}`
+    if (err) return err
+  }
+  return `${fallback} (${status})`
+}
+
+/** Long-form date for Dialog headers. Built from parts, not from
+ *  new Date('YYYY-MM-DD'), so no UTC shift. */
 function longDateLabel(iso: string): string {
   const [y, mo, d] = iso.split('-').map(Number)
   return new Date(y, mo - 1, d).toLocaleDateString('en-US', {
@@ -190,13 +298,27 @@ export function CalendarView({
   const [openDayISO, setOpenDayISO] = useState<string | null>(null)
 
   /* ── Create-form state (G+1 click-to-create) ──────────────── */
-  // Field set mirrors B2's UpcomingManager exactly so the same Zod
-  // bounds apply on the server. `scheduled_date` is NOT in this form
-  // state because it's fixed by the cell click and shown read-only.
+  // `scheduled_date` lives in createForm but is shown read-only in the
+  // create Dialog — the cell click chose it. (Edit reuses the same
+  // ItemForm shape with an editable date field.)
   const [createDateISO, setCreateDateISO] = useState<string | null>(null)
-  const [createForm,    setCreateForm]    = useState<CreateForm>(emptyCreateForm())
+  const [createForm,    setCreateForm]    = useState<ItemForm>(emptyItemForm(''))
   const [creating,      setCreating]      = useState(false)
   const [createError,   setCreateError]   = useState('')
+
+  /* ── Edit-form state (G+2) ─────────────────────────────────── */
+  const [editingItem,  setEditingItem]  = useState<UpcomingItem | null>(null)
+  const [editForm,     setEditForm]     = useState<ItemForm>(emptyItemForm(''))
+  const [editSaving,   setEditSaving]   = useState(false)
+  const [editError,    setEditError]    = useState('')
+
+  /* ── Delete confirmation state (G+2) ──────────────────────── */
+  const [confirmDelete, setConfirmDelete] = useState<UpcomingItem | null>(null)
+  const [deleting,      setDeleting]      = useState(false)
+  // Day-detail level "operation error" surface — for errors that occur
+  // after the per-item form/dialog has closed (e.g. a delete from the
+  // confirm dialog). Renders inside the day-detail Dialog header.
+  const [dayOpError,    setDayOpError]    = useState('')
 
   // PT today recomputed on every render — cheap, and keeps the "Today"
   // highlight correct if the page sits open across midnight PT.
@@ -267,10 +389,32 @@ export function CalendarView({
 
   const isCurrentPTMonth = year === today.year && month === today.month
 
-  /* ── Create-form open/submit (G+1) ─────────────────────── */
+  /**
+   * Run fetchMonth() as POST-MUTATION RECONCILIATION.
+   *
+   * Wrapped in its own try/catch and a `console.warn` on failure so a
+   * refresh hiccup does NOT bubble up to the mutation handler and read
+   * as a mutation failure. With optimistic updates already applied,
+   * the user's view is correct even if reconciliation later fails —
+   * the next month-nav or page reload will pick up authoritative state.
+   *
+   * Fixes the G+1 masquerade bug; reused by create / edit / delete.
+   */
+  async function reconcileAfterMutation() {
+    try {
+      await fetchMonth(year, month)
+    } catch (err) {
+      console.warn(
+        '[calendar] post-mutation refresh failed; view may be stale until next nav',
+        err,
+      )
+    }
+  }
+
+  /* ── Create-form open/submit (G+1, refactored in G+2) ────── */
 
   function openCreate(iso: string) {
-    setCreateForm(emptyCreateForm())
+    setCreateForm(emptyItemForm(iso))
     setCreateError('')
     setCreateDateISO(iso)
   }
@@ -278,63 +422,160 @@ export function CalendarView({
   function closeCreate() {
     if (creating) return
     setCreateDateISO(null)
-    setCreateForm(emptyCreateForm())
+    setCreateForm(emptyItemForm(''))
     setCreateError('')
   }
 
   async function submitCreate() {
     if (!createDateISO) return
-    // Client-side mirror of the server Zod bounds. The server is the
-    // authoritative validator; this is just for immediate feedback.
-    const title = createForm.title.trim()
-    if (!title)              { setCreateError('Title is required.'); return }
-    if (title.length > 200)  { setCreateError('Title must be 200 characters or fewer.'); return }
-    if (createForm.description.length > 1000) {
-      setCreateError('Description must be 1000 characters or fewer.'); return
-    }
-    if (createForm.notes.length > 2000) {
-      setCreateError('Notes must be 2000 characters or fewer.'); return
-    }
-    let assetCount: number | null = null
-    if (createForm.asset_count_planned.trim() !== '') {
-      const n = Number(createForm.asset_count_planned)
-      if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0 || n > 9999) {
-        setCreateError('Assets planned must be a whole number from 0 to 9999.'); return
-      }
-      assetCount = n
-    }
+    const validationErr = validateItemForm(createForm)
+    if (validationErr) { setCreateError(validationErr); return }
 
     setCreating(true)
     setCreateError('')
+
+    // ── 1. Mutation ──────────────────────────────────────────
+    let createdItem: UpcomingItem | null = null
     try {
       const res = await fetch('/api/admin/marketing/recap/upcoming', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          scheduled_date:      createDateISO,
-          title,
-          lane:                createForm.lane,
-          description:         createForm.description.trim() || null,
-          asset_count_planned: assetCount,
-          notes:               createForm.notes.trim() || null,
-        }),
+        body:    JSON.stringify(buildItemPayload(createForm)),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        const detailMsg = Array.isArray(data?.details) && data.details.length > 0
-          ? `${data.error || 'Invalid request'}: ${data.details.join('; ')}`
-          : (data?.error || `Create failed (${res.status})`)
-        throw new Error(detailMsg)
-      }
-      setCreateDateISO(null)
-      setCreateForm(emptyCreateForm())
-      // Refresh current month so the new chip appears immediately.
-      await fetchMonth(year, month)
+      if (!res.ok) throw new Error(unpackApiError(data, res.status, 'Create failed'))
+      createdItem = (data && typeof data === 'object' && 'item' in data)
+        ? (data as { item: UpcomingItem }).item
+        : null
     } catch (e) {
       setCreateError(e instanceof Error ? e.message : 'Create failed')
-    } finally {
       setCreating(false)
+      return
     }
+
+    // ── 2. Mutation confirmed — apply optimistically, close form ─
+    if (createdItem) setItems((prev) => [...prev, createdItem as UpcomingItem])
+    setCreateDateISO(null)
+    setCreateForm(emptyItemForm(''))
+    setCreating(false)
+
+    // ── 3. Reconcile (failure here is NOT a mutation failure) ──
+    await reconcileAfterMutation()
+  }
+
+  /* ── Edit-form open/submit (G+2) ─────────────────────────── */
+
+  function openEdit(item: UpcomingItem) {
+    setEditForm(itemToForm(item))
+    setEditError('')
+    setEditingItem(item)
+  }
+
+  function closeEdit() {
+    if (editSaving) return
+    setEditingItem(null)
+    setEditForm(emptyItemForm(''))
+    setEditError('')
+  }
+
+  async function submitEdit() {
+    if (!editingItem) return
+    const validationErr = validateItemForm(editForm)
+    if (validationErr) { setEditError(validationErr); return }
+
+    const target = editingItem
+    const payload = buildItemPayload(editForm)
+
+    setEditSaving(true)
+    setEditError('')
+
+    // Optimistic update + snapshot for rollback.
+    const snapshot = items
+    const optimistic: UpcomingItem = {
+      ...target,
+      scheduled_date:      editForm.scheduled_date,
+      title:               editForm.title.trim(),
+      lane:                editForm.lane,
+      description:         editForm.description.trim() || null,
+      asset_count_planned: editForm.asset_count_planned.trim() === ''
+        ? null
+        : Number(editForm.asset_count_planned),
+      notes:               editForm.notes.trim() || null,
+    }
+    setItems((prev) => prev.map((x) => (x.id === target.id ? optimistic : x)))
+
+    // ── 1. Mutation ──────────────────────────────────────────
+    let serverItem: UpcomingItem | null = null
+    try {
+      const res = await fetch(`/api/admin/marketing/recap/upcoming/${target.id}`, {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(unpackApiError(data, res.status, 'Save failed'))
+      serverItem = (data && typeof data === 'object' && 'item' in data)
+        ? (data as { item: UpcomingItem }).item
+        : null
+    } catch (e) {
+      // Roll back optimistic update.
+      setItems(snapshot)
+      setEditError(e instanceof Error ? e.message : 'Save failed')
+      setEditSaving(false)
+      return
+    }
+
+    // ── 2. Mutation confirmed — reconcile with server truth, close ─
+    if (serverItem) {
+      setItems((prev) => prev.map((x) => (x.id === target.id ? serverItem as UpcomingItem : x)))
+    }
+    setEditingItem(null)
+    setEditForm(emptyItemForm(''))
+    setEditSaving(false)
+
+    // ── 3. Reconcile (failure here is NOT a mutation failure) ──
+    await reconcileAfterMutation()
+  }
+
+  /* ── Soft-delete (G+2) ───────────────────────────────────── */
+
+  async function confirmSoftDelete() {
+    if (!confirmDelete) return
+    const target = confirmDelete
+
+    setDeleting(true)
+    setDayOpError('')
+
+    // Optimistic removal + snapshot for rollback.
+    const snapshot = items
+    setItems((prev) => prev.filter((x) => x.id !== target.id))
+
+    // ── 1. Mutation ──────────────────────────────────────────
+    try {
+      const res = await fetch(`/api/admin/marketing/recap/upcoming/${target.id}`, {
+        method: 'DELETE',
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(unpackApiError(data, res.status, 'Delete failed'))
+    } catch (e) {
+      // Roll back optimistic removal.
+      setItems(snapshot)
+      setDayOpError(e instanceof Error ? e.message : 'Delete failed')
+      setDeleting(false)
+      // Keep the confirm dialog open so the user sees their item is
+      // still there and can retry or cancel.
+      return
+    }
+
+    // ── 2. Mutation confirmed — close confirm dialog ────────
+    setConfirmDelete(null)
+    setDeleting(false)
+
+    // ── 3. Reconcile (failure here is NOT a mutation failure) ──
+    // Calendar fetches activeOnly=true, so the soft-deleted item is
+    // already gone from the optimistic state and will stay gone after
+    // reconciliation. Belt-and-suspenders.
+    await reconcileAfterMutation()
   }
 
   /* ── Open day dialog ────────────────────────────────────── */
@@ -538,8 +779,20 @@ export function CalendarView({
         ))}
       </div>
 
-      {/* Day-detail dialog (read-only) */}
-      <Dialog open={openDayISO !== null} onOpenChange={(open) => { if (!open) setOpenDayISO(null) }}>
+      {/* Day-detail dialog.
+          Display list of the day's items with per-item Edit and
+          Delete affordances (G+2). The detail Dialog itself remains
+          a "display" surface — edits open a separate edit Dialog, and
+          deletes open a confirmation AlertDialog. */}
+      <Dialog
+        open={openDayISO !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setOpenDayISO(null)
+            setDayOpError('')
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-[#03374f]">
@@ -553,9 +806,31 @@ export function CalendarView({
             </DialogDescription>
           </DialogHeader>
 
+          {dayOpError && (
+            <InlineAlert
+              kind="error"
+              message={dayOpError}
+              onClose={() => setDayOpError('')}
+            />
+          )}
+
           {dayItems.length === 0 ? (
             <div className="py-4 text-center">
               <p className="text-sm text-gray-500 mb-3">Nothing scheduled for this day.</p>
+              <Button
+                type="button"
+                onClick={() => {
+                  if (openDayISO) {
+                    const iso = openDayISO
+                    setOpenDayISO(null)
+                    openCreate(iso)
+                  }
+                }}
+                className="bg-[#f26b2b] hover:bg-[#d8551b] text-white"
+              >
+                <Plus className="w-4 h-4 mr-1.5" />
+                Add an item
+              </Button>
             </div>
           ) : (
             <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
@@ -570,9 +845,35 @@ export function CalendarView({
                       <div className="font-semibold text-[#03374f] text-sm flex-1 min-w-0 break-words">
                         {it.title}
                       </div>
-                      <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${style.badge}`}>
-                        {style.label}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${style.badge}`}>
+                          {style.label}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDayOpError('')
+                            openEdit(it)
+                          }}
+                          className="p-1.5 rounded-md text-gray-400 hover:text-[#03374f] hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-[#f26b2b]/40"
+                          title="Edit"
+                          aria-label={`Edit ${it.title}`}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDayOpError('')
+                            setConfirmDelete(it)
+                          }}
+                          className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-red-500/40"
+                          title="Deactivate (soft delete)"
+                          aria-label={`Deactivate ${it.title}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                     {it.description && (
                       <p className="text-[12px] text-gray-600 mt-1.5 leading-relaxed whitespace-pre-wrap">
@@ -590,23 +891,202 @@ export function CalendarView({
             </div>
           )}
 
-          <div className="mt-2 pt-3 border-t border-gray-100 flex items-start gap-2 text-[11px] text-gray-500">
-            <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-gray-400" />
-            <span>
-              To edit or delete items, use the{' '}
-              <Link
-                href="/admin/team/marketing-recap/upcoming"
-                className="inline-flex items-center gap-1 font-semibold text-[#03374f] hover:text-[#f26b2b]"
-                onClick={() => setOpenDayISO(null)}
-              >
-                <TableIcon className="w-3 h-3" />
-                Table view
-              </Link>
-              .
+          <div className="mt-2 pt-3 border-t border-gray-100 flex items-center justify-between gap-2 flex-wrap">
+            <span className="inline-flex items-start gap-2 text-[11px] text-gray-500">
+              <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-gray-400" />
+              <span>
+                The full spreadsheet is available in the{' '}
+                <Link
+                  href="/admin/team/marketing-recap/upcoming"
+                  className="inline-flex items-center gap-1 font-semibold text-[#03374f] hover:text-[#f26b2b]"
+                  onClick={() => setOpenDayISO(null)}
+                >
+                  <TableIcon className="w-3 h-3" />
+                  Table view
+                </Link>
+                .
+              </span>
             </span>
+            {dayItems.length > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  if (openDayISO) {
+                    const iso = openDayISO
+                    setOpenDayISO(null)
+                    openCreate(iso)
+                  }
+                }}
+                className="border-gray-200 text-[#03374f]"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                Add another
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit-item dialog (G+2).
+          Same field set as the create form, but `scheduled_date` is
+          EDITABLE here — the user can reschedule the item to a
+          different day via the form (drag-to-reschedule is G+3).
+          Optimistic update with rollback on PATCH failure. */}
+      <Dialog
+        open={editingItem !== null}
+        onOpenChange={(open) => { if (!open) closeEdit() }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-[#03374f]">
+              <Pencil className="w-5 h-5 text-[#f26b2b]" />
+              Edit upcoming item
+            </DialogTitle>
+            <DialogDescription>
+              {editingItem ? `Editing "${editingItem.title}".` : ''}
+            </DialogDescription>
+          </DialogHeader>
+
+          {editError && (
+            <InlineAlert kind="error" message={editError} onClose={() => setEditError('')} />
+          )}
+
+          <div className="space-y-3 py-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="cal-edit-date">
+                Scheduled date <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="cal-edit-date"
+                type="date"
+                value={editForm.scheduled_date}
+                onChange={(e) => setEditForm({ ...editForm, scheduled_date: e.target.value })}
+                required
+              />
+              <p className="text-[11px] text-gray-400">
+                Changing the date moves this item to a different day on the calendar.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="cal-edit-title">
+                Title <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="cal-edit-title"
+                value={editForm.title}
+                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                placeholder="e.g. May farming campaign"
+                maxLength={200}
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="cal-edit-lane">Lane</Label>
+              <select
+                id="cal-edit-lane"
+                value={editForm.lane}
+                onChange={(e) => setEditForm({ ...editForm, lane: e.target.value as Lane })}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus:border-[#f26b2b] focus:ring-2 focus:ring-[#f26b2b]/15"
+              >
+                {(Object.keys(LANE_STYLES) as Lane[]).map((lane) => (
+                  <option key={lane} value={lane}>{LANE_STYLES[lane].label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="cal-edit-description">Description</Label>
+              <Textarea
+                id="cal-edit-description"
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                placeholder="Short recap-facing description"
+                rows={3}
+                maxLength={1000}
+              />
+              <p className="text-[11px] text-gray-400">
+                {editForm.description.length}/1000
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="cal-edit-assets">Assets planned</Label>
+              <Input
+                id="cal-edit-assets"
+                type="number"
+                min={0}
+                max={9999}
+                step={1}
+                value={editForm.asset_count_planned}
+                onChange={(e) => setEditForm({ ...editForm, asset_count_planned: e.target.value })}
+                placeholder="0"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="cal-edit-notes">Internal notes</Label>
+              <Textarea
+                id="cal-edit-notes"
+                value={editForm.notes}
+                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                placeholder="Internal-only production notes"
+                rows={3}
+                maxLength={2000}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={closeEdit} disabled={editSaving}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={submitEdit}
+              disabled={editSaving || !editForm.title.trim() || !editForm.scheduled_date}
+              className="bg-[#f26b2b] hover:bg-[#d8551b] text-white"
+            >
+              {editSaving && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Soft-delete confirmation (G+2).
+          DELETE /upcoming/[id] is a soft delete: it sets active=false.
+          The item is hidden from the Weekly Recap but the record is
+          preserved and can be reactivated from the Table view. */}
+      <AlertDialog
+        open={confirmDelete !== null}
+        onOpenChange={(open) => { if (!open && !deleting) setConfirmDelete(null) }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Remove &quot;{confirmDelete?.title}&quot;{confirmDelete ? ` from ${longDateLabel(confirmDelete.scheduled_date)}` : ''}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This deactivates the item (soft delete) — it will be hidden from the Weekly Marketing Recap and the calendar, but the record is preserved and can be reactivated from the Table view.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmSoftDelete() }}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deleting && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
+              Deactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Create-item dialog (G+1 click-to-create).
           Separate from the day-detail Dialog above; both can be opened
