@@ -133,6 +133,17 @@ export interface RecapUpcomingItem {
   /** True if asset_count_planned > 0. Lets template conditionally show
    *  "63 assets planned" line via {{#has_asset_count}}...{{/}} */
   has_asset_count: boolean
+
+  /** Item status (J1). NARROWED to 'planned' | 'shipped': the data
+   *  shaper filters status='cancelled' rows OUT before mapping, so a
+   *  cancelled item never reaches the email. The narrower type makes
+   *  that invariant visible at the type level. */
+  status: 'planned' | 'shipped'
+
+  /** True when status === 'shipped' (J1). Drives the template's inline
+   *  "[Shipped]" indicator via {{#is_shipped}}...{{/}}. Derived boolean
+   *  so the Mustache template needs no status-string comparison. */
+  is_shipped: boolean
 }
 
 /**

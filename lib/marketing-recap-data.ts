@@ -235,9 +235,20 @@ export async function buildMarketingRecapContext(
     expandRecurring: true,
   })
 
-  const upcoming_items: RecapUpcomingItem[] = upcomingRows.map((row) => {
+  // J1: drop cancelled items from the email. getUpcomingItems'
+  // activeOnly filter is the active/inactive flag, NOT the status field
+  // — a cancelled item is still "active" (it exists, just won't ship).
+  // Filtering here (before the map) means the template never sees a
+  // cancelled item, so it needs no cancelled-handling branch. Planned
+  // and shipped pass through; the row→item map narrows status to those.
+  // BACKWARD-COMPAT: with zero items (current production), this filter
+  // is a no-op and upcoming_items stays the same empty array as pre-J1.
+  const visibleRows = upcomingRows.filter((row) => row.status !== 'cancelled')
+
+  const upcoming_items: RecapUpcomingItem[] = visibleRows.map((row) => {
     const assetCount = Number(row.asset_count_planned) || 0
     const scheduled  = String(row.scheduled_date).slice(0, 10)
+    const isShipped  = row.status === 'shipped'
 
     return {
       scheduled_date:       scheduled,
@@ -247,6 +258,9 @@ export async function buildMarketingRecapContext(
       description:          String(row.description ?? ''),
       asset_count_planned:  assetCount,
       has_asset_count:      assetCount > 0,
+      // Narrowed to 'planned' | 'shipped' (cancelled already filtered).
+      status:               isShipped ? 'shipped' : 'planned',
+      is_shipped:           isShipped,
     }
   })
 

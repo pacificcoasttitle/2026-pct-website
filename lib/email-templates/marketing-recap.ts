@@ -44,6 +44,10 @@ const PCT_BRAND = {
   textDark:    '#1f2937',
   textMuted:   '#6b7280',
   border:      '#e5e7eb',
+  // J1: shipped indicator. Material green 800 — a deep, high-contrast
+  // green that renders consistently as a plain hex foreground color in
+  // Outlook/Gmail/Apple Mail (no gradient, no theme dependency).
+  shipped:     '#2e7d32',
 } as const
 
 // ───── HTML template ─────
@@ -212,7 +216,7 @@ export const MARKETING_RECAP_TEMPLATE = `
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                       <tr>
                         <td style="color: ${PCT_BRAND.textDark}; font-size: 14px; font-weight: 600;">
-                          {{title}}
+                          {{title}}{{#is_shipped}}<span style="color: ${PCT_BRAND.shipped}; font-weight: 600; font-size: 11px; margin-left: 6px;">[Shipped]</span>{{/is_shipped}}
                         </td>
                         <td align="right" style="white-space: nowrap;">
                           <span style="display: inline-block; background-color: ${PCT_BRAND.white}; color: ${PCT_BRAND.navy}; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; border: 1px solid ${PCT_BRAND.border};">
