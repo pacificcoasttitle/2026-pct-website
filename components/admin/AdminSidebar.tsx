@@ -19,19 +19,59 @@ import {
   PenLine,
   Paperclip,
   Newspaper,
+  CalendarDays,
   ClipboardCheck,
+  type LucideIcon,
 } from 'lucide-react'
 
-const NAV = [
-  { href: '/admin/team',                label: 'Dashboard',        icon: LayoutDashboard },
-  { href: '/admin/team/employees',      label: 'Employees',        icon: Users },
-  { href: '/admin/team/farms',          label: 'Farm Requests',    icon: List },
-  { href: '/admin/team/sms',            label: 'SMS',              icon: MessageSquare },
-  { href: '/admin/team/marketing',      label: 'Email Marketing',  icon: Mail },
-  { href: '/admin/team/signatures',     label: 'Signature Center', icon: PenLine },
-  { href: '/admin/team/asset-delivery', label: 'Asset Delivery',   icon: Paperclip },
-  { href: '/admin/team/marketing-recap', label: 'Marketing Recap', icon: Newspaper },
-  { href: '/admin/team/assessments',    label: 'Assessments',      icon: ClipboardCheck },
+/**
+ * Sidebar information architecture.
+ *
+ * Grouped, non-collapsible sections. The first group is intentionally
+ * headerless (Overview reads cleaner without a label above a single
+ * Dashboard entry). All items remain visible to every admin — there is
+ * NO role-gating here; the `role` prop is used only for the display
+ * label in the user-card chrome below.
+ *
+ * Calendar (/admin/team/marketing-recap/calendar) is promoted from
+ * cross-link-only to a top-level Marketing entry. Recipients and
+ * Upcoming remain cross-linked from the Recap hub — they're
+ * configuration surfaces, not daily destinations.
+ */
+type NavItem = { href: string; label: string; icon: LucideIcon }
+type NavGroup = { label: string | null; items: NavItem[] }
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: null,
+    items: [
+      { href: '/admin/team',                          label: 'Dashboard',        icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: 'People',
+    items: [
+      { href: '/admin/team/employees',                label: 'Employees',        icon: Users },
+    ],
+  },
+  {
+    label: 'Marketing',
+    items: [
+      { href: '/admin/team/marketing',                label: 'Email Marketing',  icon: Mail },
+      { href: '/admin/team/sms',                      label: 'SMS',              icon: MessageSquare },
+      { href: '/admin/team/farms',                    label: 'Farm Requests',    icon: List },
+      { href: '/admin/team/signatures',               label: 'Signature Center', icon: PenLine },
+      { href: '/admin/team/asset-delivery',           label: 'Asset Delivery',   icon: Paperclip },
+      { href: '/admin/team/marketing-recap',          label: 'Marketing Recap',  icon: Newspaper },
+      { href: '/admin/team/marketing-recap/calendar', label: 'Calendar',         icon: CalendarDays },
+    ],
+  },
+  {
+    label: 'Client Tools',
+    items: [
+      { href: '/admin/team/assessments',              label: 'Assessments',      icon: ClipboardCheck },
+    ],
+  },
 ]
 
 function roleLabel(role: string) {
@@ -56,30 +96,63 @@ export default function AdminSidebar({
     router.replace('/admin/login')
   }
 
-  const navItems = (
-    <nav className="flex flex-col gap-1 px-3 mt-2">
-      {NAV.map(({ href, label, icon: Icon }) => {
-        const active = href === '/admin/team'
-          ? pathname === '/admin/team'
-          : pathname.startsWith(href)
+  /**
+   * Active-state matcher.
+   *
+   * Trailing-slash-safe prefix check fixes the previous
+   * `pathname.startsWith(href)` collision where `/marketing-recap`
+   * matched BOTH `/marketing` and `/marketing-recap` simultaneously.
+   *
+   * Dashboard keeps its exact-match special case because EVERY admin
+   * route starts with `/admin/team/`, so a prefix rule would light it
+   * up everywhere.
+   *
+   * Nested routes light up BOTH the parent and the specific child
+   * entry — e.g. `/marketing-recap/calendar` highlights Marketing
+   * Recap AND Calendar. This mirrors the existing inheritance for
+   * routes like `/employees/[slug]` and is intentional: it signals
+   * "you are inside the Recap area, specifically on Calendar".
+   */
+  function isActive(href: string): boolean {
+    if (href === '/admin/team') return pathname === '/admin/team'
+    return pathname === href || pathname.startsWith(href + '/')
+  }
 
-        return (
-          <Link
-            key={href}
-            href={href}
-            onClick={() => setOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-              active
-                ? 'bg-[#f26b2b] text-white shadow-sm'
-                : 'text-white/60 hover:text-white hover:bg-white/8'
-            }`}
-          >
-            <Icon className="w-4 h-4 flex-shrink-0" />
-            {label}
-            {active && <ChevronRight className="w-3.5 h-3.5 ml-auto" />}
-          </Link>
-        )
-      })}
+  const navItems = (
+    <nav className="flex flex-col px-3 mt-2">
+      {NAV_GROUPS.map((group, gi) => (
+        <div
+          key={group.label ?? `__group_${gi}`}
+          className={gi === 0 ? 'pt-1' : 'pt-5'}
+        >
+          {group.label && (
+            <div className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/35">
+              {group.label}
+            </div>
+          )}
+          <div className="flex flex-col gap-1">
+            {group.items.map(({ href, label, icon: Icon }) => {
+              const active = isActive(href)
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    active
+                      ? 'bg-[#f26b2b] text-white shadow-sm'
+                      : 'text-white/60 hover:text-white hover:bg-white/8'
+                  }`}
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  {label}
+                  {active && <ChevronRight className="w-3.5 h-3.5 ml-auto" />}
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      ))}
     </nav>
   )
 
