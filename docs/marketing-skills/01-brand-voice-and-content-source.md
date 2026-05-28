@@ -154,7 +154,7 @@ PCT speaks to at least five distinct audiences on the public site. The vocabular
 ### 3.4 Consumers / homeowners / homebuyers
 - **Preferred term:** "homebuyers," "homeowners," and direct second-person "you."
 - **Tone:** Reassuring and explanatory. Jargon is introduced, then translated.
-- **Sample consumer-directed phrasing:** "Get answers to your title and escrow questions right now—not tomorrow" [^homepage variant — see §11 note]; "Plain-English explanations at signing" [^services-escrow]; "Education at your fingertips" [^booklets].
+- **Sample consumer-directed phrasing:** The homepage promises instant answers to title and escrow questions (paraphrased — see §11 note on homepage quote allocation) [^homepage]; "Plain-English explanations at signing" [^services-escrow]; "Education at your fingertips" [^booklets].
 - **Benefits PCT emphasizes for consumers:** Protection, clarity, single dedicated officer, lifetime coverage.
 
 ### 3.5 PCT's own sales reps
