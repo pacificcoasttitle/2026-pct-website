@@ -5,6 +5,11 @@
 import { Pool } from 'pg'
 import { randomUUID } from 'node:crypto'
 import type { Employee } from '@/types/employee'
+import {
+  expandRecurrenceInWindow,
+  RECURRENCE_PATTERNS,
+  type RecurrencePattern,
+} from '@/lib/marketing-recurrence'
 import { ASSET_DELIVERY_HTML } from '@/lib/email-templates/asset-delivery'
 import { CORPORATE_STANDARD_HTML } from '@/lib/signature-templates/corporate-standard'
 import {
@@ -2726,6 +2731,33 @@ export async function ensureMarketingRecapTables(): Promise<void> {
       ON marketing_upcoming(asset_delivery_batch_id)
       WHERE asset_delivery_batch_id IS NOT NULL;
   `)
+  // Additive: recurrence columns for Stage H4. recurrence_pattern is a
+  // five-value TEXT enum (same TEXT-with-CHECK idiom as H1's status);
+  // recurrence_until is an optional end date. Default 'none' keeps every
+  // existing row non-recurring → fully backward-compatible. Partial index
+  // on recurring rows feeds the expander's "all active recurring" query.
+  await db.query(`
+    ALTER TABLE marketing_upcoming
+    ADD COLUMN IF NOT EXISTS recurrence_pattern TEXT NOT NULL DEFAULT 'none'
+  `)
+  await db.query(`
+    ALTER TABLE marketing_upcoming
+    ADD COLUMN IF NOT EXISTS recurrence_until DATE
+  `)
+  await db.query(`
+    ALTER TABLE marketing_upcoming
+    DROP CONSTRAINT IF EXISTS marketing_upcoming_recurrence_pattern_check
+  `)
+  await db.query(`
+    ALTER TABLE marketing_upcoming
+    ADD CONSTRAINT marketing_upcoming_recurrence_pattern_check
+    CHECK (recurrence_pattern IN ('none','weekly','biweekly','monthly_day','monthly_weekday'))
+  `)
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS marketing_upcoming_recurrence_idx
+      ON marketing_upcoming(recurrence_pattern)
+      WHERE recurrence_pattern <> 'none';
+  `)
   await db.query(`
     CREATE INDEX IF NOT EXISTS idx_upcoming_date
       ON marketing_upcoming (scheduled_date);
@@ -2843,6 +2875,11 @@ export const UPCOMING_STATUSES: readonly UpcomingStatus[] = [
  */
 export const OWNER_MAX = 100
 
+// Recurrence types (H4) are defined in the pure lib/marketing-recurrence
+// module (no DB deps); re-exported here so callers can import from either.
+export { RECURRENCE_PATTERNS }
+export type { RecurrencePattern }
+
 /**
  * Normalize a free-text owner value: trim whitespace, collapse empty
  * string → null. NULL and empty string are equivalent "no owner set"
@@ -2867,6 +2904,8 @@ export interface UpcomingItem {
   owner:               string | null
   asset_delivery_batch_id:    number | null
   asset_delivery_batch_label: string | null
+  recurrence_pattern:  RecurrencePattern
+  recurrence_until:    string | null
   created_at:          string
   updated_at:          string
   created_by:          string | null
@@ -3029,6 +3068,15 @@ export interface UpcomingItemQueryOpts {
   fromDate?:   string
   toDate?:     string
   activeOnly?: boolean
+  /**
+   * H4: when true AND a [fromDate, toDate] range is given, recurring
+   * items are expanded into one row per occurrence in the window (the
+   * calendar + recap want occurrences). When false (default), recurring
+   * items appear once at their anchor date — the table is a view of
+   * rules, not occurrences, so it must NOT expand. Backward-compatible:
+   * existing callers that omit this get the non-expanded behavior.
+   */
+  expandRecurring?: boolean
 }
 
 /**
@@ -3047,33 +3095,90 @@ const UPCOMING_SELECT_COLS = `
     WHEN b.id IS NULL THEN NULL
     ELSE 'Batch #' || b.id || ' — ' || b.campaign_name
   END AS asset_delivery_batch_label,
+  u.recurrence_pattern, u.recurrence_until::text,
   u.created_at::text, u.updated_at::text, u.created_by, u.updated_by
 `
 
 export async function getUpcomingItems(opts: UpcomingItemQueryOpts = {}): Promise<UpcomingItem[]> {
   await ensureMarketingRecapTables()
   const db = getPool()
-  const where: string[]  = []
-  const values: unknown[] = []
-  if (opts.fromDate) {
-    where.push(`u.scheduled_date >= $${values.length + 1}::date`)
-    values.push(opts.fromDate)
+  const activeOnly = opts.activeOnly ?? true
+  const hasRange = Boolean(opts.fromDate && opts.toDate)
+
+  // ── Non-expanding path (default; table view / no range) ──────────
+  // Single query, exactly as before H4 — recurring rows appear once at
+  // their anchor date. Backward-compatible for every existing caller.
+  if (!opts.expandRecurring || !hasRange) {
+    const where: string[]  = []
+    const values: unknown[] = []
+    if (opts.fromDate) {
+      where.push(`u.scheduled_date >= $${values.length + 1}::date`)
+      values.push(opts.fromDate)
+    }
+    if (opts.toDate) {
+      where.push(`u.scheduled_date <= $${values.length + 1}::date`)
+      values.push(opts.toDate)
+    }
+    if (activeOnly) where.push(`u.active = true`)
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
+    const res = await db.query(
+      `SELECT ${UPCOMING_SELECT_COLS}
+         FROM marketing_upcoming u
+         LEFT JOIN asset_delivery_batches b ON b.id = u.asset_delivery_batch_id
+         ${whereSql}
+         ORDER BY u.scheduled_date ASC, u.id ASC`,
+      values,
+    )
+    return res.rows
   }
-  if (opts.toDate) {
-    where.push(`u.scheduled_date <= $${values.length + 1}::date`)
-    values.push(opts.toDate)
-  }
-  if (opts.activeOnly ?? true) where.push(`u.active = true`)
-  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
-  const res = await db.query(
+
+  // ── Expanding path (calendar / recap with a window) ──────────────
+  // Two queries unioned (locked decision #3):
+  //   A) non-recurring items in [from, to] — same as today
+  //   B) ALL active recurring items (no date filter), expanded to their
+  //      occurrences in the window via the shared pure expander.
+  const fromISO = opts.fromDate as string
+  const toISO   = opts.toDate as string
+  const activeClause = activeOnly ? 'AND u.active = true' : ''
+
+  const nonRecurring = await db.query(
     `SELECT ${UPCOMING_SELECT_COLS}
        FROM marketing_upcoming u
        LEFT JOIN asset_delivery_batches b ON b.id = u.asset_delivery_batch_id
-       ${whereSql}
-       ORDER BY u.scheduled_date ASC, u.id ASC`,
-    values,
+      WHERE u.recurrence_pattern = 'none'
+        AND u.scheduled_date >= $1::date
+        AND u.scheduled_date <= $2::date
+        ${activeClause}`,
+    [fromISO, toISO],
   )
-  return res.rows
+
+  const recurring = await db.query(
+    `SELECT ${UPCOMING_SELECT_COLS}
+       FROM marketing_upcoming u
+       LEFT JOIN asset_delivery_batches b ON b.id = u.asset_delivery_batch_id
+      WHERE u.recurrence_pattern <> 'none'
+        ${activeClause}`,
+  )
+
+  const expanded: UpcomingItem[] = []
+  for (const row of recurring.rows as UpcomingItem[]) {
+    const occurrences = expandRecurrenceInWindow({
+      anchorISO: row.scheduled_date,
+      pattern:   row.recurrence_pattern,
+      untilISO:  row.recurrence_until,
+      fromISO,
+      toISO,
+    })
+    for (const occ of occurrences) {
+      expanded.push({ ...row, scheduled_date: occ })
+    }
+  }
+
+  const union = [...(nonRecurring.rows as UpcomingItem[]), ...expanded]
+  union.sort((a, b) =>
+    a.scheduled_date.localeCompare(b.scheduled_date) || a.id - b.id,
+  )
+  return union
 }
 
 export async function getUpcomingItemById(id: number): Promise<UpcomingItem | null> {
@@ -3103,6 +3208,10 @@ export interface UpcomingItemCreateInput {
   owner?:               string | null
   /** FK to asset_delivery_batches (H3). Setting it auto-flips status. */
   asset_delivery_batch_id?: number | null
+  /** Recurrence rule (H4). Defaults to 'none' (non-recurring). */
+  recurrence_pattern?:  RecurrencePattern
+  /** Optional recurrence end date (H4), YYYY-MM-DD or null. */
+  recurrence_until?:    string | null
   created_by:           string
 }
 
@@ -3121,8 +3230,8 @@ export async function createUpcomingItem(input: UpcomingItemCreateInput): Promis
 
   const res = await db.query(
     `INSERT INTO marketing_upcoming
-       (scheduled_date, title, lane, description, asset_count_planned, notes, status, owner, asset_delivery_batch_id, created_by, updated_by)
-     VALUES ($1::date, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10)
+       (scheduled_date, title, lane, description, asset_count_planned, notes, status, owner, asset_delivery_batch_id, recurrence_pattern, recurrence_until, created_by, updated_by)
+     VALUES ($1::date, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::date, $12, $12)
      RETURNING id`,
     [
       input.scheduled_date,
@@ -3134,6 +3243,8 @@ export async function createUpcomingItem(input: UpcomingItemCreateInput): Promis
       status,
       normalizeOwner(input.owner),
       input.asset_delivery_batch_id ?? null,
+      input.recurrence_pattern ?? 'none',
+      input.recurrence_until ?? null,
       input.created_by,
     ],
   )
@@ -3154,13 +3265,15 @@ export interface UpcomingItemUpdate {
   status?:              UpcomingStatus
   owner?:               string | null
   asset_delivery_batch_id?: number | null
+  recurrence_pattern?:  RecurrencePattern
+  recurrence_until?:    string | null
   updated_by:           string
 }
 
 const UPCOMING_UPDATABLE = new Set<keyof UpcomingItemUpdate>([
   'scheduled_date', 'title', 'lane', 'description',
   'asset_count_planned', 'notes', 'active', 'status', 'owner',
-  'asset_delivery_batch_id',
+  'asset_delivery_batch_id', 'recurrence_pattern', 'recurrence_until',
 ])
 
 export async function updateUpcomingItem(
@@ -3177,8 +3290,9 @@ export async function updateUpcomingItem(
     if (value === undefined) continue
     if (key === 'updated_by') continue
     if (!UPCOMING_UPDATABLE.has(key as keyof UpcomingItemUpdate)) continue
-    // scheduled_date is DATE — cast string input so we don't accept TIMESTAMPTZ accidentally
-    if (key === 'scheduled_date') {
+    // DATE columns — cast string input so we don't accept TIMESTAMPTZ
+    // accidentally. recurrence_until may be null (clears the end date).
+    if (key === 'scheduled_date' || key === 'recurrence_until') {
       fields.push(`${key} = $${idx}::date`)
     } else {
       fields.push(`${key} = $${idx}`)

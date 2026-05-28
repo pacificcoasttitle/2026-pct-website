@@ -18,7 +18,7 @@
  * as parameters to SQL.
  */
 
-import { getPool } from '@/lib/admin-db'
+import { getPool, getUpcomingItems } from '@/lib/admin-db'
 import type {
   MarketingRecapContext,
   RecapBatchSummary,
@@ -215,27 +215,27 @@ export async function buildMarketingRecapContext(
   })
 
   // ───── Query 2: Upcoming items scheduled next week ─────
-  // marketing_upcoming WHERE active=true AND scheduled_date in next week.
+  // H4: delegated to getUpcomingItems({ expandRecurring: true }) — the
+  // single source of truth shared with the calendar/table. It returns
+  // non-recurring items in the window PLUS recurring items expanded to
+  // one row per occurrence in [next.start, next.end] (active only).
+  //
+  // Path chosen (vs. inline SQL): calling the helper means the recurrence
+  // expander has exactly one caller-facing entry point, and the helper's
+  // ensureMarketingRecapTables() guarantees the recurrence columns exist
+  // on the cron path. BACKWARD-COMPAT INVARIANT: with no recurring items
+  // (production state on the first Monday post-deploy), the helper's
+  // recurring query returns nothing and its non-recurring query returns
+  // the same rows in the same (scheduled_date, id) order as the prior
+  // inline SQL — so this maps to a byte-identical upcoming_items array.
+  const upcomingRows = await getUpcomingItems({
+    fromDate:        next.start,
+    toDate:          next.end,
+    activeOnly:      true,
+    expandRecurring: true,
+  })
 
-  const upcomingResult = await db.query(
-    `
-    SELECT
-      id,
-      scheduled_date,
-      title,
-      lane,
-      description,
-      asset_count_planned
-    FROM marketing_upcoming
-    WHERE active = true
-      AND scheduled_date >= $1::date
-      AND scheduled_date <= $2::date
-    ORDER BY scheduled_date ASC, id ASC
-    `,
-    [next.start, next.end],
-  )
-
-  const upcoming_items: RecapUpcomingItem[] = upcomingResult.rows.map((row) => {
+  const upcoming_items: RecapUpcomingItem[] = upcomingRows.map((row) => {
     const assetCount = Number(row.asset_count_planned) || 0
     const scheduled  = String(row.scheduled_date).slice(0, 10)
 

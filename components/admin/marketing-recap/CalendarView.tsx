@@ -65,7 +65,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ChevronLeft, ChevronRight, Loader2, CalendarDays, Table as TableIcon,
-  Info, Plus, Pencil, Trash2, Clock, Check, Ban, User, Package,
+  Info, Plus, Pencil, Trash2, Clock, Check, Ban, User, Package, RotateCw,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
@@ -82,7 +82,30 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { InlineAlert } from '@/components/admin/marketing/shared'
 import { BatchPicker } from '@/components/admin/marketing-recap/BatchPicker'
+import {
+  describeRecurrence,
+  RECURRENCE_PATTERNS,
+  type RecurrencePattern,
+} from '@/lib/marketing-recurrence'
 import type { UpcomingItem, UpcomingStatus } from '@/lib/admin-db'
+
+/* ─── Recurrence options (H4) ─────────────────────────────────── */
+
+const RECURRENCE_OPTIONS: Array<{ value: RecurrencePattern; label: string }> = [
+  { value: 'none',            label: 'Does not repeat' },
+  { value: 'weekly',          label: 'Weekly' },
+  { value: 'biweekly',        label: 'Bi-weekly' },
+  { value: 'monthly_day',     label: 'Monthly (day of month)' },
+  { value: 'monthly_weekday', label: 'Monthly (Nth weekday)' },
+]
+
+function isRecurrencePattern(v: string): v is RecurrencePattern {
+  return (RECURRENCE_PATTERNS as readonly string[]).includes(v)
+}
+
+function coerceRecurrence(v: string | null | undefined): RecurrencePattern {
+  return v && isRecurrencePattern(v) ? v : 'none'
+}
 
 /* ─── Lane palette (mirrors B2's LANE_OPTIONS) ───────────────── */
 
@@ -206,6 +229,8 @@ interface ItemForm {
   status:              UpcomingStatus
   owner:               string  // free-text; empty string → null at submit
   asset_delivery_batch_id: number | null  // H3 link; null = unlinked
+  recurrence_pattern:  RecurrencePattern   // H4
+  recurrence_until:    string              // YYYY-MM-DD or '' (no end)
   description:         string
   asset_count_planned: string  // string in the input; coerced to number/null at submit
   notes:               string
@@ -219,6 +244,8 @@ function emptyItemForm(scheduledISO: string): ItemForm {
     status:              'planned',
     owner:               '',
     asset_delivery_batch_id: null,
+    recurrence_pattern:  'none',
+    recurrence_until:    '',
     description:         '',
     asset_count_planned: '',
     notes:               '',
@@ -234,6 +261,8 @@ function itemToForm(item: UpcomingItem): ItemForm {
     status:              coerceStatus(item.status),
     owner:               item.owner ?? '',
     asset_delivery_batch_id: item.asset_delivery_batch_id ?? null,
+    recurrence_pattern:  coerceRecurrence(item.recurrence_pattern),
+    recurrence_until:    item.recurrence_until ?? '',
     description:         item.description ?? '',
     asset_count_planned: item.asset_count_planned == null
       ? ''
@@ -255,6 +284,9 @@ function validateItemForm(form: ItemForm, opts: { requireDate?: boolean } = {}):
   const title = form.title.trim()
   if (!title)             return 'Title is required.'
   if (title.length > 200) return 'Title must be 200 characters or fewer.'
+  if (form.recurrence_until !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(form.recurrence_until)) {
+    return 'Recur-until date must be YYYY-MM-DD.'
+  }
   if (form.owner.trim().length > 100) return 'Owner must be 100 characters or fewer.'
   if (form.description.length > 1000) return 'Description must be 1000 characters or fewer.'
   if (form.notes.length > 2000)       return 'Notes must be 2000 characters or fewer.'
@@ -406,7 +438,7 @@ export function CalendarView({
     try {
       const { fromISO, toISO } = buildGrid(y, m)
       const res = await fetch(
-        `/api/admin/marketing/recap/upcoming?from=${fromISO}&to=${toISO}`,
+        `/api/admin/marketing/recap/upcoming?from=${fromISO}&to=${toISO}&expand=true`,
         { cache: 'no-store' },
       )
       const data = await res.json().catch(() => ({}))
@@ -502,6 +534,8 @@ export function CalendarView({
       const createPayload = {
         ...buildItemPayload(createForm),
         asset_delivery_batch_id: createForm.asset_delivery_batch_id,
+        recurrence_pattern: createForm.recurrence_pattern,
+        recurrence_until: createForm.recurrence_until || null,
       }
       const res = await fetch('/api/admin/marketing/recap/upcoming', {
         method:  'POST',
@@ -561,12 +595,18 @@ export function CalendarView({
    */
   async function patchItemFields(
     target:       UpcomingItem,
-    optimistic:   UpcomingItem,
+    // Object: replace every row with this id (non-recurring — one chip).
+    // Mapper: apply per-row (recurring — preserve each occurrence's date).
+    optimistic:   UpcomingItem | ((existing: UpcomingItem) => UpcomingItem),
     body:         Record<string, unknown>,
     errorFallback = 'Save failed',
+    opts:         { reconcileServerItem?: boolean } = {},
   ): Promise<{ ok: true; serverItem: UpcomingItem | null } | { ok: false; error: string }> {
+    const applyFn = typeof optimistic === 'function'
+      ? optimistic
+      : () => optimistic
     const snapshot = items
-    setItems((prev) => prev.map((x) => (x.id === target.id ? optimistic : x)))
+    setItems((prev) => prev.map((x) => (x.id === target.id ? applyFn(x) : x)))
 
     // ── Phase 1: mutation ─────────────────────────────────────
     let serverItem: UpcomingItem | null = null
@@ -588,7 +628,11 @@ export function CalendarView({
     }
 
     // ── Phase 2: mutation confirmed — reconcile with server row ─
-    if (serverItem) {
+    // For recurring items the server returns the anchor row (one date),
+    // which would collapse all occurrence chips to one day. Skip the
+    // single-row replace in that case (reconcileServerItem=false) and let
+    // the Phase-3 refetch re-expand occurrences correctly.
+    if (serverItem && (opts.reconcileServerItem ?? true)) {
       const s = serverItem
       setItems((prev) => prev.map((x) => (x.id === s.id ? s : x)))
     }
@@ -613,6 +657,10 @@ export function CalendarView({
     const statusChanged = editForm.status !== coerceStatus(target.status)
     const linkChanged =
       editForm.asset_delivery_batch_id !== (target.asset_delivery_batch_id ?? null)
+    const patternChanged =
+      editForm.recurrence_pattern !== coerceRecurrence(target.recurrence_pattern)
+    const untilChanged =
+      (editForm.recurrence_until || null) !== (target.recurrence_until ?? null)
     // Local prediction of the server's auto-flip so the optimistic chip
     // matches (the server is authoritative; patchItemFields reconciles
     // with the returned row regardless).
@@ -620,34 +668,53 @@ export function CalendarView({
       linkChanged && editForm.asset_delivery_batch_id != null && !statusChanged
     const optimisticStatus: UpcomingStatus = willAutoFlip ? 'shipped' : editForm.status
 
-    const optimistic: UpcomingItem = {
-      ...target,
-      scheduled_date:      editForm.scheduled_date,
+    const isRecurring = editForm.recurrence_pattern !== 'none'
+
+    // Common field changes applied to a row (used by both the object and
+    // the per-occurrence mapper forms of the optimistic update).
+    const applyEdits = (base: UpcomingItem): UpcomingItem => ({
+      ...base,
       title:               editForm.title.trim(),
       lane:                editForm.lane,
       status:              optimisticStatus,
       owner:               editForm.owner.trim() || null,
       asset_delivery_batch_id: editForm.asset_delivery_batch_id,
+      recurrence_pattern:  editForm.recurrence_pattern,
+      recurrence_until:    editForm.recurrence_until || null,
       description:         editForm.description.trim() || null,
       asset_count_planned: editForm.asset_count_planned.trim() === ''
         ? null
         : Number(editForm.asset_count_planned),
       notes:               editForm.notes.trim() || null,
-    }
+    })
 
     const editPayload: Record<string, unknown> = buildItemPayload(editForm)
     if (statusChanged) editPayload.status = editForm.status
     if (linkChanged) editPayload.asset_delivery_batch_id = editForm.asset_delivery_batch_id
+    if (patternChanged) editPayload.recurrence_pattern = editForm.recurrence_pattern
+    if (untilChanged) editPayload.recurrence_until = editForm.recurrence_until || null
 
     setEditSaving(true)
     setEditError('')
 
-    const result = await patchItemFields(
-      target,
-      optimistic,
-      editPayload,
-      'Save failed',
-    )
+    // Recurring: a single edit touches many occurrence chips that share
+    // this id — map each, preserving its own scheduled_date, and let the
+    // refetch reconcile (server returns just the anchor row). Non-
+    // recurring: one chip, so replace it wholesale with the new date.
+    const result = isRecurring
+      ? await patchItemFields(
+          target,
+          (x) => applyEdits(x),               // keep each occurrence's date
+          editPayload,
+          'Save failed',
+          { reconcileServerItem: false },
+        )
+      : await patchItemFields(
+          target,
+          { ...applyEdits(target), scheduled_date: editForm.scheduled_date },
+          editPayload,
+          'Save failed',
+        )
 
     if (!result.ok) {
       setEditError(result.error)
@@ -1026,16 +1093,25 @@ export function CalendarView({
                     const isCancelled   = status === 'cancelled'
                     const statusOpacity = isCancelled ? 'opacity-60' : ''
                     const titleClass    = isCancelled ? 'line-through' : ''
+                    // H4: recurring chips show a RotateCw prefix and are
+                    // NOT draggable (recurring items move via editing the
+                    // rule, not via gesture — locked decision #6).
+                    const isRecurring   = coerceRecurrence(it.recurrence_pattern) !== 'none'
+                    const dragHint      = isRecurring ? 'click to view' : 'click to view, drag to reschedule'
                     const statusAria    =
-                      isShipped   ? `${it.title} (shipped) — click to view, drag to reschedule`
-                    : isCancelled ? `${it.title} (cancelled) — click to view, drag to reschedule`
-                                  : `${it.title} — click to view, drag to reschedule`
+                      isShipped   ? `${it.title} (shipped) — ${dragHint}`
+                    : isCancelled ? `${it.title} (cancelled) — ${dragHint}`
+                                  : `${it.title} — ${dragHint}`
+                    const cursorClass   = isRecurring
+                      ? 'cursor-pointer'
+                      : 'cursor-grab active:cursor-grabbing'
                     return (
                       <button
                         key={it.id}
                         type="button"
-                        draggable
+                        draggable={!isRecurring}
                         onDragStart={(e) => {
+                          if (isRecurring) { e.preventDefault(); return }
                           e.stopPropagation()
                           e.dataTransfer.effectAllowed = 'move'
                           e.dataTransfer.setData(
@@ -1062,10 +1138,13 @@ export function CalendarView({
                           e.stopPropagation()
                           setOpenDayISO(cell.iso)
                         }}
-                        className={`text-left text-[10px] leading-tight rounded px-1.5 py-0.5 truncate ${laneStyle(it.lane).chip} ${muted ? 'opacity-60' : ''} ${statusOpacity} ${isDragging ? 'opacity-40' : ''} hover:brightness-95 focus:outline-none focus:ring-1 focus:ring-[#f26b2b]/40 cursor-grab active:cursor-grabbing inline-flex items-center gap-0.5`}
+                        className={`text-left text-[10px] leading-tight rounded px-1.5 py-0.5 truncate ${laneStyle(it.lane).chip} ${muted ? 'opacity-60' : ''} ${statusOpacity} ${isDragging ? 'opacity-40' : ''} hover:brightness-95 focus:outline-none focus:ring-1 focus:ring-[#f26b2b]/40 ${cursorClass} inline-flex items-center gap-0.5`}
                         title={statusAria}
-                        aria-label={`Open ${it.title}${isShipped ? ', shipped' : ''}${isCancelled ? ', cancelled' : ''}`}
+                        aria-label={`Open ${it.title}${isShipped ? ', shipped' : ''}${isCancelled ? ', cancelled' : ''}${isRecurring ? ', recurring' : ''}`}
                       >
+                        {isRecurring && (
+                          <RotateCw className="w-2.5 h-2.5 flex-shrink-0" aria-hidden="true" />
+                        )}
                         {isShipped && (
                           <Check className="w-2.5 h-2.5 flex-shrink-0" aria-hidden="true" />
                         )}
@@ -1227,6 +1306,14 @@ export function CalendarView({
                         <span className="break-words">Linked: {it.asset_delivery_batch_label}</span>
                       </div>
                     )}
+                    {coerceRecurrence(it.recurrence_pattern) !== 'none' && (
+                      <div className="flex items-center gap-1 text-[11px] text-gray-500 mt-1.5">
+                        <RotateCw className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+                        <span className="break-words">
+                          {describeRecurrence(coerceRecurrence(it.recurrence_pattern), it.scheduled_date)}
+                        </span>
+                      </div>
+                    )}
                     {it.description && (
                       <p className="text-[12px] text-gray-600 mt-1.5 leading-relaxed whitespace-pre-wrap">
                         {it.description}
@@ -1305,22 +1392,79 @@ export function CalendarView({
             <InlineAlert kind="error" message={editError} onClose={() => setEditError('')} />
           )}
 
+          {/* H4: recurring-item notice — edit-the-rule model affects all
+              occurrences. */}
+          {editForm.recurrence_pattern !== 'none' && (
+            <InlineAlert
+              kind="info"
+              message={`Recurring item: ${describeRecurrence(editForm.recurrence_pattern, editForm.scheduled_date)}. Changes affect all occurrences.`}
+            />
+          )}
+
           <div className="space-y-3 py-1">
+            {/* H4: the scheduled_date input only renders for non-recurring
+                items. For recurring items the rule defines the dates, so
+                we show a read-only anchor + rule description instead. */}
+            {editForm.recurrence_pattern === 'none' ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="cal-edit-date">
+                  Scheduled date <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="cal-edit-date"
+                  type="date"
+                  value={editForm.scheduled_date}
+                  onChange={(e) => setEditForm({ ...editForm, scheduled_date: e.target.value })}
+                  required
+                />
+                <p className="text-[11px] text-gray-400">
+                  Changing the date moves this item to a different day on the calendar.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label>Recurrence anchor</Label>
+                <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-[#03374f]">
+                  {longDateLabel(editForm.scheduled_date)}
+                  <span className="text-gray-500"> → {describeRecurrence(editForm.recurrence_pattern, editForm.scheduled_date)}</span>
+                </div>
+                <p className="text-[11px] text-gray-400">
+                  The rule is anchored to this date&apos;s weekday / day-of-month. To change the anchor, set recurrence to &quot;Does not repeat&quot;, save, then re-create the rule from the desired date.
+                </p>
+              </div>
+            )}
+
+            {/* H4: recurrence rule select */}
             <div className="space-y-1.5">
-              <Label htmlFor="cal-edit-date">
-                Scheduled date <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="cal-edit-date"
-                type="date"
-                value={editForm.scheduled_date}
-                onChange={(e) => setEditForm({ ...editForm, scheduled_date: e.target.value })}
-                required
-              />
-              <p className="text-[11px] text-gray-400">
-                Changing the date moves this item to a different day on the calendar.
-              </p>
+              <Label htmlFor="cal-edit-recurrence">Recurrence</Label>
+              <select
+                id="cal-edit-recurrence"
+                value={editForm.recurrence_pattern}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, recurrence_pattern: coerceRecurrence(e.target.value) })
+                }
+                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus:border-[#f26b2b] focus:ring-2 focus:ring-[#f26b2b]/15"
+              >
+                {RECURRENCE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
+
+            {editForm.recurrence_pattern !== 'none' && (
+              <div className="space-y-1.5">
+                <Label htmlFor="cal-edit-recur-until">Recur until (optional)</Label>
+                <Input
+                  id="cal-edit-recur-until"
+                  type="date"
+                  value={editForm.recurrence_until}
+                  onChange={(e) => setEditForm({ ...editForm, recurrence_until: e.target.value })}
+                />
+                <p className="text-[11px] text-gray-400">
+                  Leave blank for no end date.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <Label htmlFor="cal-edit-title">
@@ -1468,10 +1612,14 @@ export function CalendarView({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Remove &quot;{confirmDelete?.title}&quot;{confirmDelete ? ` from ${longDateLabel(confirmDelete.scheduled_date)}` : ''}?
+              {confirmDelete && coerceRecurrence(confirmDelete.recurrence_pattern) !== 'none'
+                ? `Remove the recurring item "${confirmDelete.title}"? This will remove all occurrences.`
+                : `Remove "${confirmDelete?.title}"${confirmDelete ? ` from ${longDateLabel(confirmDelete.scheduled_date)}` : ''}?`}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This deactivates the item (soft delete) — it will be hidden from the Weekly Marketing Recap and the calendar, but the record is preserved and can be reactivated from the Table view.
+              {confirmDelete && coerceRecurrence(confirmDelete.recurrence_pattern) !== 'none'
+                ? 'This deactivates the recurrence rule (soft delete), removing every occurrence from the Weekly Marketing Recap and the calendar. The record is preserved and can be reactivated from the Table view.'
+                : 'This deactivates the item (soft delete) — it will be hidden from the Weekly Marketing Recap and the calendar, but the record is preserved and can be reactivated from the Table view.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1569,6 +1717,46 @@ export function CalendarView({
                 setCreateForm({ ...createForm, asset_delivery_batch_id: batchId })
               }
             />
+
+            {/* H4: recurrence. ASYMMETRY vs. edit — the scheduled_date
+                (chosen by the cell click) stays as the anchor here even
+                for recurring patterns; it is only hidden in the EDIT
+                dialog where the anchor already exists. */}
+            <div className="space-y-1.5">
+              <Label htmlFor="cal-create-recurrence">Recurrence</Label>
+              <select
+                id="cal-create-recurrence"
+                value={createForm.recurrence_pattern}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, recurrence_pattern: coerceRecurrence(e.target.value) })
+                }
+                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus:border-[#f26b2b] focus:ring-2 focus:ring-[#f26b2b]/15"
+              >
+                {RECURRENCE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              {createForm.recurrence_pattern !== 'none' && createDateISO && (
+                <p className="text-[11px] text-gray-400">
+                  {describeRecurrence(createForm.recurrence_pattern, createDateISO)} — anchored to {longDateLabel(createDateISO)}.
+                </p>
+              )}
+            </div>
+
+            {createForm.recurrence_pattern !== 'none' && (
+              <div className="space-y-1.5">
+                <Label htmlFor="cal-create-recur-until">Recur until (optional)</Label>
+                <Input
+                  id="cal-create-recur-until"
+                  type="date"
+                  value={createForm.recurrence_until}
+                  onChange={(e) => setCreateForm({ ...createForm, recurrence_until: e.target.value })}
+                />
+                <p className="text-[11px] text-gray-400">
+                  Leave blank for no end date.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <Label htmlFor="cal-create-description">Description</Label>

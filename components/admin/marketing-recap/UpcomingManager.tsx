@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Ban, Check, Edit2, Filter, Loader2, Package, Plus, RefreshCw, Trash2 } from 'lucide-react'
+import { Ban, Check, Edit2, Filter, Loader2, Package, Plus, RefreshCw, RotateCw, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import {
@@ -26,10 +26,30 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { BatchPicker } from '@/components/admin/marketing-recap/BatchPicker'
+import {
+  describeRecurrence,
+  recurrenceShortLabel,
+  RECURRENCE_PATTERNS,
+  type RecurrencePattern,
+} from '@/lib/marketing-recurrence'
 import type { UpcomingItem, UpcomingStatus } from '@/lib/admin-db'
 
 type Lane = 'marketing-piece' | 'social' | 'weekly-email' | 'other'
 type LaneFilter = Lane | 'all'
+
+const RECURRENCE_OPTIONS: Array<{ value: RecurrencePattern; label: string }> = [
+  { value: 'none',            label: 'Does not repeat' },
+  { value: 'weekly',          label: 'Weekly' },
+  { value: 'biweekly',        label: 'Bi-weekly' },
+  { value: 'monthly_day',     label: 'Monthly (day of month)' },
+  { value: 'monthly_weekday', label: 'Monthly (Nth weekday)' },
+]
+
+function coerceRecurrence(v: string | null | undefined): RecurrencePattern {
+  return v && (RECURRENCE_PATTERNS as readonly string[]).includes(v)
+    ? (v as RecurrencePattern)
+    : 'none'
+}
 
 interface Props {
   initialItems: UpcomingItem[]
@@ -44,6 +64,8 @@ interface FormState {
   status: UpcomingStatus
   owner: string
   asset_delivery_batch_id: number | null
+  recurrence_pattern: RecurrencePattern
+  recurrence_until: string
   description: string
   asset_count_planned: string
   notes: string
@@ -118,6 +140,8 @@ function emptyForm(): FormState {
     status: 'planned',
     owner: '',
     asset_delivery_batch_id: null,
+    recurrence_pattern: 'none',
+    recurrence_until: '',
     description: '',
     asset_count_planned: '',
     notes: '',
@@ -134,6 +158,8 @@ function formFromItem(item: UpcomingItem): FormState {
     status: coerceStatus(item.status),
     owner: item.owner ?? '',
     asset_delivery_batch_id: item.asset_delivery_batch_id ?? null,
+    recurrence_pattern: coerceRecurrence(item.recurrence_pattern),
+    recurrence_until: item.recurrence_until ?? '',
     description: item.description ?? '',
     asset_count_planned: item.asset_count_planned == null ? '' : String(item.asset_count_planned),
     notes: item.notes ?? '',
@@ -252,12 +278,22 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
         if (form.asset_delivery_batch_id !== (editingItem.asset_delivery_batch_id ?? null)) {
           payload.asset_delivery_batch_id = form.asset_delivery_batch_id
         }
+        // H4: recurrence — partial-PATCH discipline (send only when changed).
+        if (form.recurrence_pattern !== coerceRecurrence(editingItem.recurrence_pattern)) {
+          payload.recurrence_pattern = form.recurrence_pattern
+        }
+        if ((form.recurrence_until || null) !== (editingItem.recurrence_until ?? null)) {
+          payload.recurrence_until = form.recurrence_until || null
+        }
       } else {
         // Create: send status only when non-default so a linked batch
         // can auto-flip 'planned' → 'shipped' server-side. Always send
         // the link (null = unlinked).
         if (form.status !== 'planned') payload.status = form.status
         payload.asset_delivery_batch_id = form.asset_delivery_batch_id
+        // H4: recurrence on create.
+        payload.recurrence_pattern = form.recurrence_pattern
+        payload.recurrence_until = form.recurrence_until || null
       }
       const res = await fetch(
         editingItem
@@ -440,6 +476,7 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Status</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Owner</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Linked Batch</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-gray-500">Recurrence</TableHead>
                 <TableHead className="min-w-[260px] text-xs uppercase tracking-wide text-gray-500">Description</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Assets Planned</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Active</TableHead>
@@ -453,6 +490,8 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
                 const status = coerceStatus(item.status)
                 const statusInfo = statusMeta(status)
                 const isCancelled = status === 'cancelled'
+                const recurrence = coerceRecurrence(item.recurrence_pattern)
+                const isRecurring = recurrence !== 'none'
 
                 return (
                   <TableRow
@@ -476,10 +515,13 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
                     </TableCell>
                     <TableCell className="max-w-[260px]">
                       <div className={cn(
-                        'font-semibold text-[#03374f] truncate',
+                        'font-semibold text-[#03374f] truncate inline-flex items-center gap-1',
                         isCancelled && 'line-through opacity-70',
                       )}>
-                        {item.title}
+                        {isRecurring && (
+                          <RotateCw className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" aria-label="Recurring" />
+                        )}
+                        <span className="truncate">{item.title}</span>
                       </div>
                       {!item.active && (
                         <div className="text-[10px] uppercase tracking-wide text-gray-400">Inactive</div>
@@ -516,6 +558,19 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
                         <span className="inline-flex items-center gap-1 text-[#03374f]">
                           <Package className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
                           <span className="truncate max-w-[180px]">{item.asset_delivery_batch_label}</span>
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {isRecurring ? (
+                        <span
+                          className="inline-flex items-center gap-1 text-[#03374f]"
+                          title={describeRecurrence(recurrence, item.scheduled_date)}
+                        >
+                          <RotateCw className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" aria-hidden="true" />
+                          {recurrenceShortLabel(recurrence, item.scheduled_date)}
                         </span>
                       ) : (
                         <span className="text-gray-400">—</span>
@@ -583,17 +638,37 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="scheduled-date">Scheduled date</Label>
-              <Input
-                id="scheduled-date"
-                type="date"
-                required
-                value={form.scheduled_date}
-                onChange={(event) => updateForm('scheduled_date', event.target.value)}
-              />
+          {/* H4: recurring-item notice (edit-the-rule model). */}
+          {editingItem && form.recurrence_pattern !== 'none' && (
+            <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+              Recurring item: {describeRecurrence(form.recurrence_pattern, form.scheduled_date)}. Changes affect all occurrences.
             </div>
+          )}
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* H4: the scheduled_date input is hidden when EDITING a
+                recurring item (the rule defines the dates). It stays
+                visible on create — even for recurring patterns — because
+                the picked date is the anchor. */}
+            {editingItem && form.recurrence_pattern !== 'none' ? (
+              <div className="space-y-1.5">
+                <Label>Recurrence anchor</Label>
+                <div className="flex h-10 items-center rounded-md border border-gray-200 bg-gray-50 px-3 text-sm text-[#03374f]">
+                  {formatDate(form.scheduled_date)}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label htmlFor="scheduled-date">Scheduled date</Label>
+                <Input
+                  id="scheduled-date"
+                  type="date"
+                  required
+                  value={form.scheduled_date}
+                  onChange={(event) => updateForm('scheduled_date', event.target.value)}
+                />
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <Label htmlFor="lane">Lane</Label>
@@ -649,6 +724,39 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
                 onChange={(batchId) => updateForm('asset_delivery_batch_id', batchId)}
               />
             </div>
+
+            {/* H4: recurrence rule + optional end date. */}
+            <div className="space-y-1.5">
+              <Label htmlFor="recurrence">Recurrence</Label>
+              <select
+                id="recurrence"
+                value={form.recurrence_pattern}
+                onChange={(event) => updateForm('recurrence_pattern', coerceRecurrence(event.target.value))}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus:border-[#f26b2b] focus:ring-2 focus:ring-[#f26b2b]/15"
+              >
+                {RECURRENCE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              {form.recurrence_pattern !== 'none' && (
+                <p className="text-[11px] text-gray-400">
+                  {describeRecurrence(form.recurrence_pattern, form.scheduled_date)}.
+                </p>
+              )}
+            </div>
+
+            {form.recurrence_pattern !== 'none' && (
+              <div className="space-y-1.5">
+                <Label htmlFor="recur-until">Recur until (optional)</Label>
+                <Input
+                  id="recur-until"
+                  type="date"
+                  value={form.recurrence_until}
+                  onChange={(event) => updateForm('recurrence_until', event.target.value)}
+                />
+                <p className="text-[11px] text-gray-400">Leave blank for no end date.</p>
+              </div>
+            )}
 
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="title">Title</Label>

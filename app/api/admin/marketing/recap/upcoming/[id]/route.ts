@@ -8,6 +8,7 @@ import {
 } from '@/lib/admin-auth'
 import {
   OWNER_MAX,
+  RECURRENCE_PATTERNS,
   deleteUpcomingItem,
   getUpcomingItemById,
   updateUpcomingItem,
@@ -43,6 +44,10 @@ const UpdateBodySchema = z.object({
   // (no transform needed — null flows cleanly). Setting a positive id
   // auto-flips status to 'shipped' server-side (updateUpcomingItem).
   asset_delivery_batch_id: z.number().int().positive().optional().nullable(),
+  // H4 recurrence. Partial-PATCH discipline: undefined skips, explicit
+  // values apply. recurrence_until null clears the end date.
+  recurrence_pattern:   z.enum(RECURRENCE_PATTERNS).optional(),
+  recurrence_until:     z.string().regex(DATE_RE, 'Use YYYY-MM-DD format').optional().nullable(),
 }).refine((body) => Object.keys(body).length > 0, {
   message: 'At least one field is required',
 })

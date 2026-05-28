@@ -8,6 +8,7 @@ import {
 } from '@/lib/admin-auth'
 import {
   OWNER_MAX,
+  RECURRENCE_PATTERNS,
   createUpcomingItem,
   getUpcomingItems,
 } from '@/lib/admin-db'
@@ -37,6 +38,8 @@ const CreateBodySchema = z.object({
                             return t === '' ? null : t
                           }),
   asset_delivery_batch_id: z.number().int().positive().optional().nullable(),
+  recurrence_pattern:   z.enum(RECURRENCE_PATTERNS).optional().default('none'),
+  recurrence_until:     z.string().regex(DATE_RE, 'Use YYYY-MM-DD format').optional().nullable(),
 })
 
 async function getActorEmail(): Promise<string> {
@@ -77,12 +80,16 @@ export async function GET(req: NextRequest) {
   }
 
   const includeInactive = req.nextUrl.searchParams.get('include_inactive') === 'true'
+  // H4: the calendar passes expand=true to receive recurring occurrences
+  // expanded across the window. The table omits it (rules, one row each).
+  const expandRecurring = req.nextUrl.searchParams.get('expand') === 'true'
 
   try {
     const items = await getUpcomingItems({
       fromDate,
       toDate,
       activeOnly: !includeInactive,
+      expandRecurring,
     })
     return NextResponse.json({ items })
   } catch (err) {
@@ -130,6 +137,8 @@ export async function POST(req: NextRequest) {
       status:               statusWasExplicit ? body.status : undefined,
       owner:                body.owner ?? null,
       asset_delivery_batch_id: body.asset_delivery_batch_id ?? null,
+      recurrence_pattern:   body.recurrence_pattern,
+      recurrence_until:     body.recurrence_until ?? null,
       created_by:           adminEmail,
     })
 
