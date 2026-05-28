@@ -11,20 +11,32 @@
  *   Stage G    — read-only display + click-to-view day detail
  *   Stage G+1  — click empty cell background to CREATE
  *   Stage G+2  — Edit + soft-Delete each item from the day-detail
- *                Dialog (THIS stage)
+ *                Dialog
+ *   Stage G+3  — DRAG a chip onto another day cell to reschedule
+ *                (this stage). Closes Stage G+.
  *
  * Click intents on a day cell:
  *   - Cell background / date number / +Add hint  → CREATE Dialog
  *   - Item chip                                  → day-detail Dialog
- *                                                  (which now offers
+ *                                                  (which offers
  *                                                  per-item Edit /
  *                                                  Delete)
  *   - "+N more"                                  → day-detail Dialog
  *
+ * Drag intent:
+ *   - Drag a chip and drop it on another day cell → PATCH the item's
+ *     scheduled_date. Native HTML5 drag-and-drop, desktop-first.
+ *     Same-day drops and drag-cancel are silent no-ops. Adjacent-month
+ *     drops are allowed and trigger a "Moved to {date}" acknowledgment
+ *     with a jump-to-month link, since the chip leaves the visible
+ *     grid after the move. Touch (iOS) is not supported — accepted
+ *     limitation; keyboard / mobile users have form-based reschedule
+ *     via the edit Dialog's date field.
+ *
  * Data: reuses GET / POST / PATCH / DELETE /api/admin/marketing/recap/
  * upcoming(/[id]) — no new API routes were created at any stage.
  *
- * Mutation pattern (create/edit/delete):
+ * Mutation pattern (create/edit/delete/drag-reschedule):
  *   1. Apply OPTIMISTIC update to local items state (with snapshot).
  *   2. Fire mutation; on failure, roll back + InlineAlert.
  *   3. On mutation success, close the form/dialog.
@@ -53,7 +65,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ChevronLeft, ChevronRight, Loader2, CalendarDays, Table as TableIcon,
-  Info, Plus, Pencil, Trash2,
+  Info, Plus, Pencil, Trash2, Clock,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
@@ -320,6 +332,19 @@ export function CalendarView({
   // confirm dialog). Renders inside the day-detail Dialog header.
   const [dayOpError,    setDayOpError]    = useState('')
 
+  /* ── Drag-to-reschedule state (G+3) ──────────────────────── */
+  // `draggingItemId` styles the source chip during the drag.
+  // `dragOverCellISO` styles the prospective drop target.
+  // `dragError` and `moveAck` surface grid-level feedback above the
+  // month grid (errors and "moved to {date}" acknowledgments — the
+  // grid has no Dialog to host an InlineAlert during a drag).
+  const [draggingItemId,  setDraggingItemId]  = useState<number | null>(null)
+  const [dragOverCellISO, setDragOverCellISO] = useState<string | null>(null)
+  const [dragError,       setDragError]       = useState('')
+  const [moveAck,         setMoveAck]         = useState<
+    { message: string; jumpTo: { year: number; month: number } | null } | null
+  >(null)
+
   // PT today recomputed on every render — cheap, and keeps the "Today"
   // highlight correct if the page sits open across midnight PT.
   const today = useMemo(() => todayPT(), [])
@@ -478,19 +503,68 @@ export function CalendarView({
     setEditError('')
   }
 
+  /**
+   * Shared PATCH helper for edit + drag-reschedule.
+   *
+   * Applies the optimistic update FIRST (so the UI reflects the change
+   * immediately), then fires PATCH, rolls back on failure, reconciles
+   * with the server-returned item on success, and runs the masquerade-
+   * safe reconcile fetch.
+   *
+   * Used by:
+   *   - submitEdit (G+2): full field update from the edit form
+   *   - dropReschedule (G+3): scheduled_date-only update from a drag
+   *
+   * Both callers go through this identical code path so the two
+   * editing surfaces cannot diverge in their PATCH behavior.
+   */
+  async function patchItemFields(
+    target:       UpcomingItem,
+    optimistic:   UpcomingItem,
+    body:         Record<string, unknown>,
+    errorFallback = 'Save failed',
+  ): Promise<{ ok: true; serverItem: UpcomingItem | null } | { ok: false; error: string }> {
+    const snapshot = items
+    setItems((prev) => prev.map((x) => (x.id === target.id ? optimistic : x)))
+
+    // ── Phase 1: mutation ─────────────────────────────────────
+    let serverItem: UpcomingItem | null = null
+    try {
+      const res = await fetch(`/api/admin/marketing/recap/upcoming/${target.id}`, {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(unpackApiError(data, res.status, errorFallback))
+      serverItem = (data && typeof data === 'object' && 'item' in data)
+        ? (data as { item: UpcomingItem }).item
+        : null
+    } catch (e) {
+      // Roll back optimistic update.
+      setItems(snapshot)
+      return { ok: false, error: e instanceof Error ? e.message : errorFallback }
+    }
+
+    // ── Phase 2: mutation confirmed — reconcile with server row ─
+    if (serverItem) {
+      const s = serverItem
+      setItems((prev) => prev.map((x) => (x.id === s.id ? s : x)))
+    }
+
+    // ── Phase 3: belt-and-suspenders reconciliation (refresh
+    //            failure NOT reported as a mutation failure) ──
+    await reconcileAfterMutation()
+
+    return { ok: true, serverItem }
+  }
+
   async function submitEdit() {
     if (!editingItem) return
     const validationErr = validateItemForm(editForm)
     if (validationErr) { setEditError(validationErr); return }
 
     const target = editingItem
-    const payload = buildItemPayload(editForm)
-
-    setEditSaving(true)
-    setEditError('')
-
-    // Optimistic update + snapshot for rollback.
-    const snapshot = items
     const optimistic: UpcomingItem = {
       ...target,
       scheduled_date:      editForm.scheduled_date,
@@ -502,39 +576,82 @@ export function CalendarView({
         : Number(editForm.asset_count_planned),
       notes:               editForm.notes.trim() || null,
     }
-    setItems((prev) => prev.map((x) => (x.id === target.id ? optimistic : x)))
 
-    // ── 1. Mutation ──────────────────────────────────────────
-    let serverItem: UpcomingItem | null = null
-    try {
-      const res = await fetch(`/api/admin/marketing/recap/upcoming/${target.id}`, {
-        method:  'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(unpackApiError(data, res.status, 'Save failed'))
-      serverItem = (data && typeof data === 'object' && 'item' in data)
-        ? (data as { item: UpcomingItem }).item
-        : null
-    } catch (e) {
-      // Roll back optimistic update.
-      setItems(snapshot)
-      setEditError(e instanceof Error ? e.message : 'Save failed')
+    setEditSaving(true)
+    setEditError('')
+
+    const result = await patchItemFields(
+      target,
+      optimistic,
+      buildItemPayload(editForm),
+      'Save failed',
+    )
+
+    if (!result.ok) {
+      setEditError(result.error)
       setEditSaving(false)
       return
     }
 
-    // ── 2. Mutation confirmed — reconcile with server truth, close ─
-    if (serverItem) {
-      setItems((prev) => prev.map((x) => (x.id === target.id ? serverItem as UpcomingItem : x)))
-    }
     setEditingItem(null)
     setEditForm(emptyItemForm(''))
     setEditSaving(false)
+  }
 
-    // ── 3. Reconcile (failure here is NOT a mutation failure) ──
-    await reconcileAfterMutation()
+  /* ── Drag-to-reschedule (G+3) ────────────────────────────── */
+
+  /**
+   * Returns true if a YYYY-MM-DD string falls inside the currently
+   * displayed month. Used to decide whether to show the "Moved to…"
+   * acknowledgment (only needed when the chip leaves the visible grid
+   * — for same-month drops the user just sees the chip move).
+   */
+  function isInVisibleMonth(iso: string): boolean {
+    const [y, mo] = iso.split('-').map(Number)
+    return y === year && mo === month
+  }
+
+  /** Year+month components of an ISO date — used to jump-navigate. */
+  function ymOf(iso: string): { year: number; month: number } {
+    const [y, mo] = iso.split('-').map(Number)
+    return { year: y, month: mo }
+  }
+
+  /** "May 2026" — for the acknowledgment "Go to {month}" link copy. */
+  function monthYearLabel(iso: string): string {
+    const { year: y, month: mo } = ymOf(iso)
+    return `${MONTH_NAMES[mo - 1]} ${y}`
+  }
+
+  async function dropReschedule(item: UpcomingItem, newDateISO: string) {
+    // Same-day drop = silent no-op. Already guarded at the drop-handler
+    // call site, but kept here as belt-and-suspenders.
+    if (newDateISO === item.scheduled_date) return
+
+    setDragError('')
+    setMoveAck(null)
+
+    const optimistic: UpcomingItem = { ...item, scheduled_date: newDateISO }
+    const result = await patchItemFields(
+      item,
+      optimistic,
+      { scheduled_date: newDateISO },
+      'Reschedule failed',
+    )
+
+    if (!result.ok) {
+      setDragError(result.error)
+      return
+    }
+
+    // Out-of-month acknowledgment: the chip is now invisible in the
+    // current view, so tell the user where it went and offer to jump.
+    if (!isInVisibleMonth(newDateISO)) {
+      setMoveAck({
+        message: `Moved "${item.title}" to ${longDateLabel(newDateISO)}.`,
+        jumpTo:  ymOf(newDateISO),
+      })
+    }
   }
 
   /* ── Soft-delete (G+2) ───────────────────────────────────── */
@@ -644,6 +761,54 @@ export function CalendarView({
         />
       )}
 
+      {/* Grid-level drag feedback (G+3). Grid-level errors for grid-
+          level actions — the drag happens directly on the grid, with
+          no Dialog to host an InlineAlert. */}
+      {dragError && (
+        <InlineAlert
+          kind="error"
+          message={dragError}
+          onClose={() => setDragError('')}
+        />
+      )}
+
+      {moveAck && (
+        // Custom inline alert (matches InlineAlert styling) because we
+        // need to embed a clickable "Go to {month}" jump-link, which
+        // the plain-text InlineAlert message prop can't render.
+        <div className="flex items-start gap-2.5 p-3.5 rounded-xl text-sm border bg-blue-50 border-blue-100 text-blue-700">
+          <Clock className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <span className="flex-1">
+            {moveAck.message}
+            {moveAck.jumpTo && (
+              <>
+                {' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!moveAck.jumpTo) return
+                    setYear(moveAck.jumpTo.year)
+                    setMonth(moveAck.jumpTo.month)
+                    setMoveAck(null)
+                  }}
+                  className="underline font-semibold hover:text-blue-900 focus:outline-none"
+                >
+                  Go to {monthYearLabel(`${moveAck.jumpTo.year}-${String(moveAck.jumpTo.month).padStart(2, '0')}-01`)}
+                </button>
+              </>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => setMoveAck(null)}
+            className="text-current/60 hover:text-current text-xs"
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Calendar grid */}
       <Card className="p-0 overflow-hidden gap-0">
         {/* Weekday header */}
@@ -679,6 +844,11 @@ export function CalendarView({
 
             const ring = isToday ? 'ring-2 ring-inset ring-[#f26b2b]/50' : ''
 
+            const isDropTarget = dragOverCellISO === cell.iso
+            const dropRing = isDropTarget
+              ? 'ring-2 ring-inset ring-[#f26b2b] bg-[#f26b2b]/10'
+              : ''
+
             return (
               // The cell is a `div` (not a `<button>`) because it
               // contains nested interactive children (item chips and
@@ -694,6 +864,12 @@ export function CalendarView({
               //     stopPropagation prevents the create handler).
               //   - Click "+N more"                → opens the day-detail
               //     dialog (stopPropagation).
+              //
+              // Drag (G+3): every cell is a drop target. onDragOver
+              // and onDragEnter MUST preventDefault — without it,
+              // onDrop never fires (HTML5 quirk: default is reject).
+              // onDragLeave is guarded against the child-traversal
+              // flicker by checking relatedTarget containment.
               <div
                 key={cell.iso}
                 role="button"
@@ -705,8 +881,47 @@ export function CalendarView({
                     openCreate(cell.iso)
                   }
                 }}
-                className={`group relative cursor-pointer text-left border-t border-l border-gray-100 first:border-l-0 [&:nth-child(7n+1)]:border-l-0 min-h-[96px] p-1.5 flex flex-col gap-1 transition-colors hover:bg-gray-50 focus:outline-none focus:bg-gray-50 ${baseBg} ${ring}`}
-                aria-label={`${cell.iso} — ${cellItems.length} item${cellItems.length === 1 ? '' : 's'}. Click to add an item.`}
+                onDragOver={(e) => {
+                  if (draggingItemId === null) return
+                  e.preventDefault()
+                  e.dataTransfer.dropEffect = 'move'
+                  if (dragOverCellISO !== cell.iso) setDragOverCellISO(cell.iso)
+                }}
+                onDragEnter={(e) => {
+                  if (draggingItemId === null) return
+                  e.preventDefault()
+                  setDragOverCellISO(cell.iso)
+                }}
+                onDragLeave={(e) => {
+                  // dragleave fires when entering a child element too.
+                  // Guard: only clear highlight when truly leaving the
+                  // cell (relatedTarget is NOT a descendant).
+                  const next = e.relatedTarget as Node | null
+                  if (next && e.currentTarget.contains(next)) return
+                  if (dragOverCellISO === cell.iso) setDragOverCellISO(null)
+                }}
+                onDrop={(e) => {
+                  if (draggingItemId === null) return
+                  e.preventDefault()
+                  setDragOverCellISO(null)
+                  let payload: { id?: number; fromISO?: string } = {}
+                  try {
+                    const raw = e.dataTransfer.getData('text/plain')
+                    if (raw) payload = JSON.parse(raw)
+                  } catch { /* ignore malformed payload */ }
+                  if (typeof payload.id !== 'number' || typeof payload.fromISO !== 'string') return
+                  // Same-day drop = silent no-op (locked decision #3).
+                  if (payload.fromISO === cell.iso) return
+                  const dragged = items.find((x) => x.id === payload.id)
+                  if (!dragged) return
+                  // Fire the reschedule. Note we intentionally don't
+                  // await — the drop handler completes synchronously
+                  // so the browser releases the drag state; the patch
+                  // runs in the background with its own optimistic UI.
+                  void dropReschedule(dragged, cell.iso)
+                }}
+                className={`group relative cursor-pointer text-left border-t border-l border-gray-100 first:border-l-0 [&:nth-child(7n+1)]:border-l-0 min-h-[96px] p-1.5 flex flex-col gap-1 transition-colors hover:bg-gray-50 focus:outline-none focus:bg-gray-50 ${baseBg} ${ring} ${dropRing}`}
+                aria-label={`${cell.iso} — ${cellItems.length} item${cellItems.length === 1 ? '' : 's'}. Click to add an item, or drop a chip here to reschedule.`}
               >
                 <div className="flex items-center justify-between">
                   <span className={`text-[12px] font-semibold leading-none ${dateNumColor}`}>
@@ -731,23 +946,54 @@ export function CalendarView({
 
                 {/* Items: render up to 3 chips, then "+N more". Each
                     child is a real <button> with stopPropagation so the
-                    cell's create handler doesn't also fire. */}
+                    cell's create handler doesn't also fire.
+                    Chips are draggable (G+3): onDragStart writes the
+                    payload, onDragEnd ALWAYS clears drag state — that's
+                    the catch-all for drag-cancel (Escape, drop outside
+                    grid) because onDrop doesn't fire on cancel. */}
                 <div className="flex flex-col gap-1 overflow-hidden">
-                  {cellItems.slice(0, 3).map((it) => (
-                    <button
-                      key={it.id}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setOpenDayISO(cell.iso)
-                      }}
-                      className={`text-left text-[10px] leading-tight rounded px-1.5 py-0.5 truncate ${laneStyle(it.lane).chip} ${muted ? 'opacity-60' : ''} hover:brightness-95 focus:outline-none focus:ring-1 focus:ring-[#f26b2b]/40`}
-                      title={it.title}
-                      aria-label={`Open ${it.title}`}
-                    >
-                      {it.title}
-                    </button>
-                  ))}
+                  {cellItems.slice(0, 3).map((it) => {
+                    const isDragging = draggingItemId === it.id
+                    return (
+                      <button
+                        key={it.id}
+                        type="button"
+                        draggable
+                        onDragStart={(e) => {
+                          e.stopPropagation()
+                          e.dataTransfer.effectAllowed = 'move'
+                          e.dataTransfer.setData(
+                            'text/plain',
+                            JSON.stringify({ id: it.id, fromISO: cell.iso }),
+                          )
+                          setDraggingItemId(it.id)
+                          // Hide any stale grid-level alerts so they
+                          // don't visually conflict with the in-flight
+                          // drag.
+                          setDragError('')
+                          setMoveAck(null)
+                        }}
+                        onDragEnd={(e) => {
+                          e.stopPropagation()
+                          // ALWAYS clear drag state — this is the only
+                          // cleanup that runs on drag-cancel (Escape,
+                          // drop outside grid). onDrop does NOT fire on
+                          // cancel.
+                          setDraggingItemId(null)
+                          setDragOverCellISO(null)
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setOpenDayISO(cell.iso)
+                        }}
+                        className={`text-left text-[10px] leading-tight rounded px-1.5 py-0.5 truncate ${laneStyle(it.lane).chip} ${muted ? 'opacity-60' : ''} ${isDragging ? 'opacity-40' : ''} hover:brightness-95 focus:outline-none focus:ring-1 focus:ring-[#f26b2b]/40 cursor-grab active:cursor-grabbing`}
+                        title={`${it.title} — click to view, drag to reschedule`}
+                        aria-label={`Open ${it.title}`}
+                      >
+                        {it.title}
+                      </button>
+                    )
+                  })}
                   {cellItems.length > 3 && (
                     <button
                       type="button"
