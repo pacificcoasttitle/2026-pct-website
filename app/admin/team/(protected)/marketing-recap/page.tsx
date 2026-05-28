@@ -8,13 +8,27 @@
  * The (protected) segment already enforces auth; no re-check here.
  */
 import Link from 'next/link'
-import { ArrowLeft, Newspaper, Users, CalendarClock, ChevronRight, Inbox } from 'lucide-react'
+import { ArrowLeft, Newspaper, Users, CalendarClock, ChevronRight } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import { getRecapDrafts, type RecapDraft } from '@/lib/admin-db'
+import { DraftsList } from '@/components/admin/marketing-recap/DraftsList'
 
 export const metadata = { title: 'Marketing Recap | PCT Team Admin' }
 export const dynamic  = 'force-dynamic'
 
 export default async function MarketingRecapHubPage() {
+  // Server-fetch the most recent drafts so the page lands with data already
+  // present. The client component refreshes on its own after mutations
+  // (generate / send), but the first paint comes from this snapshot.
+  let initialDrafts: RecapDraft[] = []
+  let listError = ''
+  try {
+    initialDrafts = await getRecapDrafts({ limit: 20 })
+  } catch (err) {
+    console.warn('[marketing-recap-hub] failed to load drafts', err)
+    listError = 'Could not load drafts. Try refreshing the page.'
+  }
+
   return (
     <div className="space-y-5 pt-2 lg:pt-0 max-w-5xl">
       <header className="space-y-2">
@@ -49,27 +63,8 @@ export default async function MarketingRecapHubPage() {
         />
       </div>
 
-      {/* ── Recent drafts (Phase D placeholder) ─────────────────── */}
-      <Card className="overflow-hidden p-0 gap-0">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Newspaper className="w-4 h-4 text-[#f26b2b]" />
-            <h2 className="font-semibold text-[#03374f] text-sm">Recent Drafts</h2>
-          </div>
-          <span className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">
-            Phase D
-          </span>
-        </div>
-        <div className="px-6 py-14 flex flex-col items-center text-center">
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-            <Inbox className="w-6 h-6 text-gray-400" />
-          </div>
-          <p className="text-sm font-medium text-[#03374f] mb-1">No drafts yet</p>
-          <p className="text-xs text-gray-500 max-w-md">
-            Once Phase D ships, weekly recap drafts will appear here for review before sending. For now, set up your Recipients and Upcoming items so the first draft has something to work with.
-          </p>
-        </div>
-      </Card>
+      {/* ── Recent drafts ───────────────────────────────────────── */}
+      <DraftsList initialDrafts={initialDrafts} initialError={listError} />
     </div>
   )
 }
