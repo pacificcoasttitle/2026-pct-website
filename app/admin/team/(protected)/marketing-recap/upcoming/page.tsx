@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, CalendarDays } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Calendar as CalendarIcon } from 'lucide-react'
 import { getUpcomingItems } from '@/lib/admin-db'
 import { UpcomingManager } from '@/components/admin/marketing-recap/UpcomingManager'
 
@@ -35,14 +35,25 @@ export default async function UpcomingPage() {
         >
           <ArrowLeft className="w-3 h-3" /> Back to Marketing Recap
         </Link>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-[#003d79]">
-          <CalendarDays className="w-6 h-6 text-[#f26b2b]" />
-          Upcoming Items
-        </h1>
-        <p className="text-gray-500 text-sm max-w-2xl">
-          Manage the schedule of upcoming marketing pieces. These appear in the
-          &quot;Coming This Week&quot; section of the Weekly Marketing Recap.
-        </p>
+        <div className="flex items-start gap-3 flex-wrap justify-between">
+          <div>
+            <h1 className="flex items-center gap-2 text-2xl font-bold text-[#003d79]">
+              <CalendarDays className="w-6 h-6 text-[#f26b2b]" />
+              Upcoming Items
+            </h1>
+            <p className="text-gray-500 text-sm max-w-2xl mt-1">
+              Manage the schedule of upcoming marketing pieces. These appear in the
+              &quot;Coming This Week&quot; section of the Weekly Marketing Recap.
+            </p>
+          </div>
+          <Link
+            href="/admin/team/marketing-recap/calendar"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold text-[#03374f] bg-white border border-gray-200 hover:border-[#03374f]/30 hover:bg-gray-50"
+          >
+            <CalendarIcon className="w-3.5 h-3.5" />
+            Calendar view
+          </Link>
+        </div>
       </header>
 
       <UpcomingManager
