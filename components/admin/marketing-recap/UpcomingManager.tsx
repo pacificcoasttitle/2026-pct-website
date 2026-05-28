@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Edit2, Filter, Loader2, Plus, RefreshCw, Trash2 } from 'lucide-react'
+import { Ban, Check, Edit2, Filter, Loader2, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import {
@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
-import type { UpcomingItem } from '@/lib/admin-db'
+import type { UpcomingItem, UpcomingStatus } from '@/lib/admin-db'
 
 type Lane = 'marketing-piece' | 'social' | 'weekly-email' | 'other'
 type LaneFilter = Lane | 'all'
@@ -40,9 +40,44 @@ interface FormState {
   scheduled_date: string
   title: string
   lane: Lane
+  status: UpcomingStatus
   description: string
   asset_count_planned: string
   notes: string
+}
+
+const STATUS_OPTIONS: Array<{
+  value: UpcomingStatus
+  label: string
+  badgeClass: string
+}> = [
+  {
+    value: 'planned',
+    label: 'Planned',
+    badgeClass: 'bg-slate-50 text-slate-600 border-slate-200',
+  },
+  {
+    value: 'shipped',
+    label: 'Shipped',
+    badgeClass: 'bg-green-50 text-green-700 border-green-100',
+  },
+  {
+    value: 'cancelled',
+    label: 'Cancelled',
+    badgeClass: 'bg-gray-100 text-gray-600 border-gray-200',
+  },
+]
+
+function isUpcomingStatus(value: string): value is UpcomingStatus {
+  return value === 'planned' || value === 'shipped' || value === 'cancelled'
+}
+
+function coerceStatus(value: string | null | undefined): UpcomingStatus {
+  return value && isUpcomingStatus(value) ? value : 'planned'
+}
+
+function statusMeta(value: string) {
+  return STATUS_OPTIONS.find((s) => s.value === value) ?? STATUS_OPTIONS[0]
 }
 
 const LANE_OPTIONS: Array<{ value: Lane; label: string; className: string }> = [
@@ -77,6 +112,7 @@ function emptyForm(): FormState {
     scheduled_date: todayDateString(),
     title: '',
     lane: 'other',
+    status: 'planned',
     description: '',
     asset_count_planned: '',
     notes: '',
@@ -90,6 +126,7 @@ function formFromItem(item: UpcomingItem): FormState {
     lane: (LANE_OPTIONS.some((lane) => lane.value === item.lane)
       ? item.lane
       : 'other') as Lane,
+    status: coerceStatus(item.status),
     description: item.description ?? '',
     asset_count_planned: item.asset_count_planned == null ? '' : String(item.asset_count_planned),
     notes: item.notes ?? '',
@@ -182,6 +219,7 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
       scheduled_date: form.scheduled_date,
       title: form.title.trim(),
       lane: form.lane,
+      status: form.status,
       description: form.description.trim() || null,
       asset_count_planned: form.asset_count_planned === ''
         ? null
@@ -266,7 +304,7 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
       <Card className="p-5 border-gray-100 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-sm font-semibold text-[#003d79]">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#03374f]">
               <Filter className="w-4 h-4 text-[#f26b2b]" />
               Live Spreadsheet
             </div>
@@ -282,7 +320,7 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
                 id="lane-filter"
                 value={laneFilter}
                 onChange={(event) => setLaneFilter(event.target.value as LaneFilter)}
-                className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm text-[#003d79] shadow-xs outline-none focus:border-[#f26b2b] focus:ring-2 focus:ring-[#f26b2b]/15"
+                className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm text-[#03374f] shadow-xs outline-none focus:border-[#f26b2b] focus:ring-2 focus:ring-[#f26b2b]/15"
               >
                 <option value="all">All</option>
                 {LANE_OPTIONS.map((lane) => (
@@ -349,7 +387,7 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
       <Card className="overflow-hidden p-0 gap-0 border-gray-100 shadow-sm">
         <div className="flex flex-col gap-1 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-[#003d79]">Upcoming Schedule</h2>
+            <h2 className="text-sm font-semibold text-[#03374f]">Upcoming Schedule</h2>
             <p className="text-xs text-gray-500">
               Showing {visibleItems.length} rows across the selected date range.
             </p>
@@ -361,7 +399,7 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
 
         {visibleItems.length === 0 ? (
           <div className="px-6 py-14 text-center">
-            <p className="text-sm font-medium text-[#003d79]">No upcoming items found</p>
+            <p className="text-sm font-medium text-[#03374f]">No upcoming items found</p>
             <p className="text-xs text-gray-500 mt-1">
               Adjust the filters or add the first item for this recap window.
             </p>
@@ -373,6 +411,7 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
                 <TableHead className="px-4 text-xs uppercase tracking-wide text-gray-500">Date</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Title</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Lane</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-gray-500">Status</TableHead>
                 <TableHead className="min-w-[260px] text-xs uppercase tracking-wide text-gray-500">Description</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Assets Planned</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Active</TableHead>
@@ -383,6 +422,9 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
               {visibleItems.map((item) => {
                 const isPast = item.scheduled_date < today
                 const isToday = item.scheduled_date === today
+                const status = coerceStatus(item.status)
+                const statusInfo = statusMeta(status)
+                const isCancelled = status === 'cancelled'
 
                 return (
                   <TableRow
@@ -395,7 +437,7 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
                     )}
                   >
                     <TableCell className="px-4 font-medium">
-                      <div className={cn(isPast ? 'text-gray-400' : 'text-[#003d79]')}>
+                      <div className={cn(isPast ? 'text-gray-400' : 'text-[#03374f]')}>
                         {formatDate(item.scheduled_date)}
                       </div>
                       {isToday && (
@@ -405,7 +447,12 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
                       )}
                     </TableCell>
                     <TableCell className="max-w-[260px]">
-                      <div className="font-semibold text-[#003d79] truncate">{item.title}</div>
+                      <div className={cn(
+                        'font-semibold text-[#03374f] truncate',
+                        isCancelled && 'line-through opacity-70',
+                      )}>
+                        {item.title}
+                      </div>
                       {!item.active && (
                         <div className="text-[10px] uppercase tracking-wide text-gray-400">Inactive</div>
                       )}
@@ -417,6 +464,16 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
                       )}
                       >
                         {laneLabel(item.lane)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={cn(
+                        'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium',
+                        statusInfo.badgeClass,
+                      )}>
+                        {status === 'shipped'   && <Check className="w-3 h-3" />}
+                        {status === 'cancelled' && <Ban   className="w-3 h-3" />}
+                        {statusInfo.label}
                       </span>
                     </TableCell>
                     <TableCell className="whitespace-normal text-sm text-gray-500">
@@ -473,7 +530,7 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-[#003d79]">
+            <DialogTitle className="text-[#03374f]">
               {editingItem ? 'Edit Upcoming Item' : 'Add Upcoming Item'}
             </DialogTitle>
             <DialogDescription>
@@ -505,6 +562,23 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
                   <option key={lane.value} value={lane.value}>{lane.label}</option>
                 ))}
               </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="status">Status</Label>
+              <select
+                id="status"
+                value={form.status}
+                onChange={(event) => updateForm('status', coerceStatus(event.target.value))}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus:border-[#f26b2b] focus:ring-2 focus:ring-[#f26b2b]/15"
+              >
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <p className="text-[11px] text-gray-400">
+                Cancelled items stay in the table with a line-through. To hide entirely, deactivate.
+              </p>
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">

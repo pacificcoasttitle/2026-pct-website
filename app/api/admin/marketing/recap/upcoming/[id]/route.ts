@@ -16,7 +16,8 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
-const LANES = ['marketing-piece', 'social', 'weekly-email', 'other'] as const
+const LANES    = ['marketing-piece', 'social', 'weekly-email', 'other'] as const
+const STATUSES = ['planned', 'shipped', 'cancelled'] as const
 
 const UpdateBodySchema = z.object({
   scheduled_date:       z.string().regex(DATE_RE, 'Use YYYY-MM-DD format').optional(),
@@ -26,6 +27,7 @@ const UpdateBodySchema = z.object({
   asset_count_planned:  z.coerce.number().int().min(0).max(9999).optional().nullable(),
   notes:                z.string().trim().max(2000).optional().nullable(),
   active:               z.boolean().optional(),
+  status:               z.enum(STATUSES).optional(),
 }).refine((body) => Object.keys(body).length > 0, {
   message: 'At least one field is required',
 })

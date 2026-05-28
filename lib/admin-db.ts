@@ -2666,6 +2666,24 @@ export async function ensureMarketingRecapTables(): Promise<void> {
       updated_by          TEXT
     );
   `)
+  // Additive: status column for Stage H1. Three values — 'planned'
+  // (default), 'shipped', 'cancelled'. Backfills existing rows to
+  // 'planned'. Matches the TEXT-with-CHECK pattern used by the other
+  // status-bearing tables in this file (no pg ENUM type — type-safety
+  // lives in the TS union and the Zod schema at the route layer).
+  await db.query(`
+    ALTER TABLE marketing_upcoming
+    ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'planned'
+  `)
+  await db.query(`
+    ALTER TABLE marketing_upcoming
+    DROP CONSTRAINT IF EXISTS marketing_upcoming_status_check
+  `)
+  await db.query(`
+    ALTER TABLE marketing_upcoming
+    ADD CONSTRAINT marketing_upcoming_status_check
+    CHECK (status IN ('planned', 'shipped', 'cancelled'))
+  `)
   await db.query(`
     CREATE INDEX IF NOT EXISTS idx_upcoming_date
       ON marketing_upcoming (scheduled_date);
@@ -2762,6 +2780,20 @@ export interface RecapRecipient {
   updated_by: string | null
 }
 
+/**
+ * Per-item state for marketing_upcoming. H1 is manual-only — admin
+ * sets via the edit form. H3 will auto-derive 'shipped' from a linked
+ * asset_delivery batch; the manual control stays as an override.
+ * 'cancelled' is orthogonal to soft-delete (active=false): cancelled
+ * items remain visible (with a visual cue); soft-deleted items are
+ * hidden by activeOnly.
+ */
+export type UpcomingStatus = 'planned' | 'shipped' | 'cancelled'
+
+export const UPCOMING_STATUSES: readonly UpcomingStatus[] = [
+  'planned', 'shipped', 'cancelled',
+] as const
+
 export interface UpcomingItem {
   id:                  number
   scheduled_date:      string
@@ -2771,6 +2803,7 @@ export interface UpcomingItem {
   asset_count_planned: number | null
   notes:               string | null
   active:              boolean
+  status:              UpcomingStatus
   created_at:          string
   updated_at:          string
   created_by:          string | null
@@ -2952,7 +2985,7 @@ export async function getUpcomingItems(opts: UpcomingItemQueryOpts = {}): Promis
   const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
   const res = await db.query(
     `SELECT id, scheduled_date::text, title, lane, description,
-            asset_count_planned, notes, active,
+            asset_count_planned, notes, active, status,
             created_at::text, updated_at::text, created_by, updated_by
        FROM marketing_upcoming
        ${whereSql}
@@ -2967,7 +3000,7 @@ export async function getUpcomingItemById(id: number): Promise<UpcomingItem | nu
   const db = getPool()
   const res = await db.query(
     `SELECT id, scheduled_date::text, title, lane, description,
-            asset_count_planned, notes, active,
+            asset_count_planned, notes, active, status,
             created_at::text, updated_at::text, created_by, updated_by
        FROM marketing_upcoming
        WHERE id = $1
@@ -2984,6 +3017,8 @@ export interface UpcomingItemCreateInput {
   description?:         string | null
   asset_count_planned?: number | null
   notes?:               string | null
+  /** Defaults to 'planned' on the DB side when omitted. */
+  status?:              UpcomingStatus
   created_by:           string
 }
 
@@ -2992,10 +3027,10 @@ export async function createUpcomingItem(input: UpcomingItemCreateInput): Promis
   const db = getPool()
   const res = await db.query(
     `INSERT INTO marketing_upcoming
-       (scheduled_date, title, lane, description, asset_count_planned, notes, created_by, updated_by)
-     VALUES ($1::date, $2, $3, $4, $5, $6, $7, $7)
+       (scheduled_date, title, lane, description, asset_count_planned, notes, status, created_by, updated_by)
+     VALUES ($1::date, $2, $3, $4, $5, $6, $7, $8, $8)
      RETURNING id, scheduled_date::text, title, lane, description,
-               asset_count_planned, notes, active,
+               asset_count_planned, notes, active, status,
                created_at::text, updated_at::text, created_by, updated_by`,
     [
       input.scheduled_date,
@@ -3004,6 +3039,7 @@ export async function createUpcomingItem(input: UpcomingItemCreateInput): Promis
       input.description ?? null,
       input.asset_count_planned ?? null,
       input.notes ?? null,
+      input.status ?? 'planned',
       input.created_by,
     ],
   )
@@ -3018,12 +3054,13 @@ export interface UpcomingItemUpdate {
   asset_count_planned?: number | null
   notes?:               string | null
   active?:              boolean
+  status?:              UpcomingStatus
   updated_by:           string
 }
 
 const UPCOMING_UPDATABLE = new Set<keyof UpcomingItemUpdate>([
   'scheduled_date', 'title', 'lane', 'description',
-  'asset_count_planned', 'notes', 'active',
+  'asset_count_planned', 'notes', 'active', 'status',
 ])
 
 export async function updateUpcomingItem(
@@ -3060,7 +3097,7 @@ export async function updateUpcomingItem(
         SET ${fields.join(', ')}
       WHERE id = $${idx}
       RETURNING id, scheduled_date::text, title, lane, description,
-                asset_count_planned, notes, active,
+                asset_count_planned, notes, active, status,
                 created_at::text, updated_at::text, created_by, updated_by`,
     values,
   )

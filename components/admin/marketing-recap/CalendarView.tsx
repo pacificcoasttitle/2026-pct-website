@@ -65,7 +65,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ChevronLeft, ChevronRight, Loader2, CalendarDays, Table as TableIcon,
-  Info, Plus, Pencil, Trash2, Clock,
+  Info, Plus, Pencil, Trash2, Clock, Check, Ban,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
@@ -81,7 +81,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { InlineAlert } from '@/components/admin/marketing/shared'
-import type { UpcomingItem } from '@/lib/admin-db'
+import type { UpcomingItem, UpcomingStatus } from '@/lib/admin-db'
 
 /* ─── Lane palette (mirrors B2's LANE_OPTIONS) ───────────────── */
 
@@ -118,6 +118,22 @@ const LANE_STYLES: Record<Lane, LaneStyle> = {
 
 function laneStyle(lane: string): LaneStyle {
   return LANE_STYLES[(lane as Lane)] ?? LANE_STYLES.other
+}
+
+/* ─── Status options (H1 — manual only) ───────────────────────── */
+
+const STATUS_OPTIONS: Array<{ value: UpcomingStatus; label: string }> = [
+  { value: 'planned',   label: 'Planned'   },
+  { value: 'shipped',   label: 'Shipped'   },
+  { value: 'cancelled', label: 'Cancelled' },
+]
+
+function isUpcomingStatus(value: string): value is UpcomingStatus {
+  return value === 'planned' || value === 'shipped' || value === 'cancelled'
+}
+
+function coerceStatus(value: string | null | undefined): UpcomingStatus {
+  return value && isUpcomingStatus(value) ? value : 'planned'
 }
 
 /* ─── Date helpers (calendar-component arithmetic, never UTC) ─── */
@@ -186,6 +202,7 @@ interface ItemForm {
   scheduled_date:      string  // YYYY-MM-DD
   title:               string
   lane:                Lane
+  status:              UpcomingStatus
   description:         string
   asset_count_planned: string  // string in the input; coerced to number/null at submit
   notes:               string
@@ -196,6 +213,7 @@ function emptyItemForm(scheduledISO: string): ItemForm {
     scheduled_date:      scheduledISO,
     title:               '',
     lane:                'other',
+    status:              'planned',
     description:         '',
     asset_count_planned: '',
     notes:               '',
@@ -208,6 +226,7 @@ function itemToForm(item: UpcomingItem): ItemForm {
     scheduled_date:      item.scheduled_date,
     title:               item.title,
     lane,
+    status:              coerceStatus(item.status),
     description:         item.description ?? '',
     asset_count_planned: item.asset_count_planned == null
       ? ''
@@ -254,6 +273,7 @@ function buildItemPayload(form: ItemForm): Record<string, unknown> {
     scheduled_date:      form.scheduled_date,
     title:               form.title.trim(),
     lane:                form.lane,
+    status:              form.status,
     description:         form.description.trim() || null,
     asset_count_planned: assets,
     notes:               form.notes.trim() || null,
@@ -570,6 +590,7 @@ export function CalendarView({
       scheduled_date:      editForm.scheduled_date,
       title:               editForm.title.trim(),
       lane:                editForm.lane,
+      status:              editForm.status,
       description:         editForm.description.trim() || null,
       asset_count_planned: editForm.asset_count_planned.trim() === ''
         ? null
@@ -954,6 +975,20 @@ export function CalendarView({
                 <div className="flex flex-col gap-1 overflow-hidden">
                   {cellItems.slice(0, 3).map((it) => {
                     const isDragging = draggingItemId === it.id
+                    // Status visual treatment (H1):
+                    //   planned   → baseline chip styling (no extra)
+                    //   shipped   → small Check icon prefix
+                    //   cancelled → line-through title + reduced opacity
+                    // Lane color stays the same in all three cases.
+                    const status        = coerceStatus(it.status)
+                    const isShipped     = status === 'shipped'
+                    const isCancelled   = status === 'cancelled'
+                    const statusOpacity = isCancelled ? 'opacity-60' : ''
+                    const titleClass    = isCancelled ? 'line-through' : ''
+                    const statusAria    =
+                      isShipped   ? `${it.title} (shipped) — click to view, drag to reschedule`
+                    : isCancelled ? `${it.title} (cancelled) — click to view, drag to reschedule`
+                                  : `${it.title} — click to view, drag to reschedule`
                     return (
                       <button
                         key={it.id}
@@ -986,11 +1021,14 @@ export function CalendarView({
                           e.stopPropagation()
                           setOpenDayISO(cell.iso)
                         }}
-                        className={`text-left text-[10px] leading-tight rounded px-1.5 py-0.5 truncate ${laneStyle(it.lane).chip} ${muted ? 'opacity-60' : ''} ${isDragging ? 'opacity-40' : ''} hover:brightness-95 focus:outline-none focus:ring-1 focus:ring-[#f26b2b]/40 cursor-grab active:cursor-grabbing`}
-                        title={`${it.title} — click to view, drag to reschedule`}
-                        aria-label={`Open ${it.title}`}
+                        className={`text-left text-[10px] leading-tight rounded px-1.5 py-0.5 truncate ${laneStyle(it.lane).chip} ${muted ? 'opacity-60' : ''} ${statusOpacity} ${isDragging ? 'opacity-40' : ''} hover:brightness-95 focus:outline-none focus:ring-1 focus:ring-[#f26b2b]/40 cursor-grab active:cursor-grabbing inline-flex items-center gap-0.5`}
+                        title={statusAria}
+                        aria-label={`Open ${it.title}${isShipped ? ', shipped' : ''}${isCancelled ? ', cancelled' : ''}`}
                       >
-                        {it.title}
+                        {isShipped && (
+                          <Check className="w-2.5 h-2.5 flex-shrink-0" aria-hidden="true" />
+                        )}
+                        <span className={`truncate ${titleClass}`}>{it.title}</span>
                       </button>
                     )
                   })}
@@ -1081,17 +1119,32 @@ export function CalendarView({
           ) : (
             <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
               {dayItems.map((it) => {
-                const style = laneStyle(it.lane)
+                const style    = laneStyle(it.lane)
+                const status   = coerceStatus(it.status)
+                const cancelled = status === 'cancelled'
+                const shipped   = status === 'shipped'
                 return (
                   <div
                     key={it.id}
-                    className="rounded-md border border-gray-100 p-3 bg-white"
+                    className={`rounded-md border border-gray-100 p-3 bg-white ${cancelled ? 'opacity-60' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-3 flex-wrap">
-                      <div className="font-semibold text-[#03374f] text-sm flex-1 min-w-0 break-words">
+                      <div className={`font-semibold text-[#03374f] text-sm flex-1 min-w-0 break-words ${cancelled ? 'line-through' : ''}`}>
                         {it.title}
                       </div>
                       <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {shipped && (
+                          <span className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-green-50 text-green-700 border border-green-100">
+                            <Check className="w-2.5 h-2.5" />
+                            Shipped
+                          </span>
+                        )}
+                        {cancelled && (
+                          <span className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                            <Ban className="w-2.5 h-2.5" />
+                            Cancelled
+                          </span>
+                        )}
                         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${style.badge}`}>
                           {style.label}
                         </span>
@@ -1242,6 +1295,28 @@ export function CalendarView({
                   <option key={lane} value={lane}>{LANE_STYLES[lane].label}</option>
                 ))}
               </select>
+            </div>
+
+            {/* Status select (H1 — manual only). H3 will auto-derive
+                'shipped' from an asset-link; this manual select stays
+                as the authoritative override. */}
+            <div className="space-y-1.5">
+              <Label htmlFor="cal-edit-status">Status</Label>
+              <select
+                id="cal-edit-status"
+                value={editForm.status}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, status: coerceStatus(e.target.value) })
+                }
+                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus:border-[#f26b2b] focus:ring-2 focus:ring-[#f26b2b]/15"
+              >
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <p className="text-[11px] text-gray-400">
+                Cancelled items stay visible on the calendar (with a line-through). To hide an item entirely, deactivate it instead.
+              </p>
             </div>
 
             <div className="space-y-1.5">

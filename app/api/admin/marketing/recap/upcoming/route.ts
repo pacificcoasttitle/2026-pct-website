@@ -15,7 +15,8 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
-const LANES = ['marketing-piece', 'social', 'weekly-email', 'other'] as const
+const LANES    = ['marketing-piece', 'social', 'weekly-email', 'other'] as const
+const STATUSES = ['planned', 'shipped', 'cancelled'] as const
 
 const CreateBodySchema = z.object({
   scheduled_date:       z.string().regex(DATE_RE, 'Use YYYY-MM-DD format'),
@@ -24,6 +25,7 @@ const CreateBodySchema = z.object({
   description:          z.string().trim().max(1000).optional().nullable(),
   asset_count_planned:  z.coerce.number().int().min(0).max(9999).optional().nullable(),
   notes:                z.string().trim().max(2000).optional().nullable(),
+  status:               z.enum(STATUSES).optional().default('planned'),
 })
 
 async function getActorEmail(): Promise<string> {
@@ -103,6 +105,7 @@ export async function POST(req: NextRequest) {
       description:          body.description ?? null,
       asset_count_planned:  body.asset_count_planned ?? null,
       notes:                body.notes ?? null,
+      status:               body.status,
       created_by:           adminEmail,
     })
 
