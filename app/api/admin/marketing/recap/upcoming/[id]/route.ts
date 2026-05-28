@@ -39,6 +39,10 @@ const UpdateBodySchema = z.object({
                             const t = v.trim()
                             return t === '' ? null : t
                           }),
+  // undefined = don't touch the link; explicit null = remove the link
+  // (no transform needed — null flows cleanly). Setting a positive id
+  // auto-flips status to 'shipped' server-side (updateUpcomingItem).
+  asset_delivery_batch_id: z.number().int().positive().optional().nullable(),
 }).refine((body) => Object.keys(body).length > 0, {
   message: 'At least one field is required',
 })

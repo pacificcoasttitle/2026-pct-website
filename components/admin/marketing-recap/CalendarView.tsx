@@ -65,7 +65,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ChevronLeft, ChevronRight, Loader2, CalendarDays, Table as TableIcon,
-  Info, Plus, Pencil, Trash2, Clock, Check, Ban, User,
+  Info, Plus, Pencil, Trash2, Clock, Check, Ban, User, Package,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
@@ -81,6 +81,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { InlineAlert } from '@/components/admin/marketing/shared'
+import { BatchPicker } from '@/components/admin/marketing-recap/BatchPicker'
 import type { UpcomingItem, UpcomingStatus } from '@/lib/admin-db'
 
 /* ─── Lane palette (mirrors B2's LANE_OPTIONS) ───────────────── */
@@ -204,6 +205,7 @@ interface ItemForm {
   lane:                Lane
   status:              UpcomingStatus
   owner:               string  // free-text; empty string → null at submit
+  asset_delivery_batch_id: number | null  // H3 link; null = unlinked
   description:         string
   asset_count_planned: string  // string in the input; coerced to number/null at submit
   notes:               string
@@ -216,6 +218,7 @@ function emptyItemForm(scheduledISO: string): ItemForm {
     lane:                'other',
     status:              'planned',
     owner:               '',
+    asset_delivery_batch_id: null,
     description:         '',
     asset_count_planned: '',
     notes:               '',
@@ -230,6 +233,7 @@ function itemToForm(item: UpcomingItem): ItemForm {
     lane,
     status:              coerceStatus(item.status),
     owner:               item.owner ?? '',
+    asset_delivery_batch_id: item.asset_delivery_batch_id ?? null,
     description:         item.description ?? '',
     asset_count_planned: item.asset_count_planned == null
       ? ''
@@ -269,6 +273,12 @@ function validateItemForm(form: ItemForm, opts: { requireDate?: boolean } = {}):
  * .optional() makes the full-shape submit safe — this matches B2,
  * whose buildPayload() sends the same set on both create and edit).
  */
+// Builds the always-sent base fields. status and asset_delivery_batch_id
+// are deliberately EXCLUDED here and added conditionally by the caller:
+// they participate in the H3 auto-flip, so they follow the H2 partial-
+// PATCH discipline (only send when changed) — otherwise re-sending an
+// unchanged status would block the server-side auto-flip, and re-sending
+// an unchanged link would spuriously re-flip status on unrelated edits.
 function buildItemPayload(form: ItemForm): Record<string, unknown> {
   const assets = form.asset_count_planned.trim() === ''
     ? null
@@ -277,7 +287,6 @@ function buildItemPayload(form: ItemForm): Record<string, unknown> {
     scheduled_date:      form.scheduled_date,
     title:               form.title.trim(),
     lane:                form.lane,
-    status:              form.status,
     owner:               form.owner.trim() || null,
     description:         form.description.trim() || null,
     asset_count_planned: assets,
@@ -487,10 +496,17 @@ export function CalendarView({
     // ── 1. Mutation ──────────────────────────────────────────
     let createdItem: UpcomingItem | null = null
     try {
+      // Calendar create has no status control — omit status so the
+      // server defaults to 'planned', or auto-flips to 'shipped' when a
+      // batch link is set here. Always send the link (null = unlinked).
+      const createPayload = {
+        ...buildItemPayload(createForm),
+        asset_delivery_batch_id: createForm.asset_delivery_batch_id,
+      }
       const res = await fetch('/api/admin/marketing/recap/upcoming', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(buildItemPayload(createForm)),
+        body:    JSON.stringify(createPayload),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(unpackApiError(data, res.status, 'Create failed'))
@@ -590,13 +606,28 @@ export function CalendarView({
     if (validationErr) { setEditError(validationErr); return }
 
     const target = editingItem
+
+    // status + link follow the partial-PATCH discipline: include only
+    // when changed. Sending an unchanged status would block the server
+    // auto-flip; sending an unchanged link would spuriously re-flip.
+    const statusChanged = editForm.status !== coerceStatus(target.status)
+    const linkChanged =
+      editForm.asset_delivery_batch_id !== (target.asset_delivery_batch_id ?? null)
+    // Local prediction of the server's auto-flip so the optimistic chip
+    // matches (the server is authoritative; patchItemFields reconciles
+    // with the returned row regardless).
+    const willAutoFlip =
+      linkChanged && editForm.asset_delivery_batch_id != null && !statusChanged
+    const optimisticStatus: UpcomingStatus = willAutoFlip ? 'shipped' : editForm.status
+
     const optimistic: UpcomingItem = {
       ...target,
       scheduled_date:      editForm.scheduled_date,
       title:               editForm.title.trim(),
       lane:                editForm.lane,
-      status:              editForm.status,
+      status:              optimisticStatus,
       owner:               editForm.owner.trim() || null,
+      asset_delivery_batch_id: editForm.asset_delivery_batch_id,
       description:         editForm.description.trim() || null,
       asset_count_planned: editForm.asset_count_planned.trim() === ''
         ? null
@@ -604,13 +635,17 @@ export function CalendarView({
       notes:               editForm.notes.trim() || null,
     }
 
+    const editPayload: Record<string, unknown> = buildItemPayload(editForm)
+    if (statusChanged) editPayload.status = editForm.status
+    if (linkChanged) editPayload.asset_delivery_batch_id = editForm.asset_delivery_batch_id
+
     setEditSaving(true)
     setEditError('')
 
     const result = await patchItemFields(
       target,
       optimistic,
-      buildItemPayload(editForm),
+      editPayload,
       'Save failed',
     )
 
@@ -1186,6 +1221,12 @@ export function CalendarView({
                         <span className="break-words">{it.owner}</span>
                       </div>
                     )}
+                    {it.asset_delivery_batch_label && (
+                      <div className="flex items-center gap-1 text-[11px] text-gray-500 mt-1.5">
+                        <Package className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+                        <span className="break-words">Linked: {it.asset_delivery_batch_label}</span>
+                      </div>
+                    )}
                     {it.description && (
                       <p className="text-[12px] text-gray-600 mt-1.5 leading-relaxed whitespace-pre-wrap">
                         {it.description}
@@ -1347,6 +1388,15 @@ export function CalendarView({
                 Free-text. Typos create separate entries — pick a consistent format.
               </p>
             </div>
+
+            {/* Asset link (H3). Linking a batch auto-flips status to
+                'shipped' server-side. Unlinking leaves status as-is. */}
+            <BatchPicker
+              value={editForm.asset_delivery_batch_id}
+              onChange={(batchId) =>
+                setEditForm({ ...editForm, asset_delivery_batch_id: batchId })
+              }
+            />
 
             <div className="space-y-1.5">
               <Label htmlFor="cal-edit-description">Description</Label>
@@ -1510,6 +1560,15 @@ export function CalendarView({
                 Free-text. Typos create separate entries — pick a consistent format.
               </p>
             </div>
+
+            {/* Asset link (H3). Linking a batch on create records a
+                backdated item that already shipped — auto-flips status. */}
+            <BatchPicker
+              value={createForm.asset_delivery_batch_id}
+              onChange={(batchId) =>
+                setCreateForm({ ...createForm, asset_delivery_batch_id: batchId })
+              }
+            />
 
             <div className="space-y-1.5">
               <Label htmlFor="cal-create-description">Description</Label>

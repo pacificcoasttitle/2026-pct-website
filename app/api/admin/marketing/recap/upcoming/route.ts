@@ -36,6 +36,7 @@ const CreateBodySchema = z.object({
                             const t = v.trim()
                             return t === '' ? null : t
                           }),
+  asset_delivery_batch_id: z.number().int().positive().optional().nullable(),
 })
 
 async function getActorEmail(): Promise<string> {
@@ -97,8 +98,16 @@ export async function POST(req: NextRequest) {
   const adminEmail = await getActorEmail()
 
   let body: z.infer<typeof CreateBodySchema>
+  // Track whether the client actually sent a status. The schema applies
+  // .default('planned'), so body.status is always defined — but the H3
+  // create auto-flip needs to know if status was EXPLICITLY provided
+  // (explicit intent wins; absence lets a batch link derive 'shipped').
+  let statusWasExplicit = false
   try {
     const raw = await req.json()
+    statusWasExplicit =
+      raw != null && typeof raw === 'object' && 'status' in raw &&
+      (raw as Record<string, unknown>).status != null
     body = CreateBodySchema.parse(raw)
   } catch (err) {
     const details = err instanceof z.ZodError
@@ -115,8 +124,12 @@ export async function POST(req: NextRequest) {
       description:          body.description ?? null,
       asset_count_planned:  body.asset_count_planned ?? null,
       notes:                body.notes ?? null,
-      status:               body.status,
+      // Pass status only when the client explicitly sent it; otherwise
+      // leave undefined so createUpcomingItem's auto-flip can derive
+      // 'shipped' from a batch link (falling back to 'planned').
+      status:               statusWasExplicit ? body.status : undefined,
       owner:                body.owner ?? null,
+      asset_delivery_batch_id: body.asset_delivery_batch_id ?? null,
       created_by:           adminEmail,
     })
 

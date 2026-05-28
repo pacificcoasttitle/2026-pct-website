@@ -2693,6 +2693,39 @@ export async function ensureMarketingRecapTables(): Promise<void> {
     ALTER TABLE marketing_upcoming
     ADD COLUMN IF NOT EXISTS owner TEXT
   `)
+  // Additive: asset_delivery_batch_id FK for Stage H3 — links an
+  // upcoming item to the batch that fulfilled it. Nullable (NULL =
+  // "no link"). ON DELETE SET NULL so deleting a batch nulls the link
+  // rather than cascading or blocking. Setting the link auto-flips
+  // status to 'shipped' (in the DB helpers, not here). FK added with a
+  // defensive DROP-IF-EXISTS first so re-runs are safe; partial index
+  // because Postgres doesn't auto-index FK columns.
+  //
+  // The FK references asset_delivery_batches, which lives in its own
+  // ensure-block. Guarantee that table exists first so a cold start
+  // (recap tables initialized before asset-delivery tables) can't fail
+  // the ADD CONSTRAINT.
+  await ensureAssetDeliveryTables()
+  await db.query(`
+    ALTER TABLE marketing_upcoming
+    ADD COLUMN IF NOT EXISTS asset_delivery_batch_id INTEGER
+  `)
+  await db.query(`
+    ALTER TABLE marketing_upcoming
+    DROP CONSTRAINT IF EXISTS marketing_upcoming_asset_link_fk
+  `)
+  await db.query(`
+    ALTER TABLE marketing_upcoming
+    ADD CONSTRAINT marketing_upcoming_asset_link_fk
+    FOREIGN KEY (asset_delivery_batch_id)
+    REFERENCES asset_delivery_batches(id)
+    ON DELETE SET NULL
+  `)
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS marketing_upcoming_asset_link_idx
+      ON marketing_upcoming(asset_delivery_batch_id)
+      WHERE asset_delivery_batch_id IS NOT NULL;
+  `)
   await db.query(`
     CREATE INDEX IF NOT EXISTS idx_upcoming_date
       ON marketing_upcoming (scheduled_date);
@@ -2832,6 +2865,8 @@ export interface UpcomingItem {
   active:              boolean
   status:              UpcomingStatus
   owner:               string | null
+  asset_delivery_batch_id:    number | null
+  asset_delivery_batch_label: string | null
   created_at:          string
   updated_at:          string
   created_by:          string | null
@@ -2996,28 +3031,46 @@ export interface UpcomingItemQueryOpts {
   activeOnly?: boolean
 }
 
+/**
+ * Shared SELECT projection for upcoming items. Aliases the table as `u`
+ * and LEFT JOINs asset_delivery_batches as `b` (the join is 1:1 — the
+ * FK references the unique PK, so no row multiplication). Columns are
+ * qualified because created_at/updated_at/id exist in both tables.
+ * asset_delivery_batch_label is denormalized here so the UI doesn't
+ * need a second fetch.
+ */
+const UPCOMING_SELECT_COLS = `
+  u.id, u.scheduled_date::text, u.title, u.lane, u.description,
+  u.asset_count_planned, u.notes, u.active, u.status, u.owner,
+  u.asset_delivery_batch_id,
+  CASE
+    WHEN b.id IS NULL THEN NULL
+    ELSE 'Batch #' || b.id || ' — ' || b.campaign_name
+  END AS asset_delivery_batch_label,
+  u.created_at::text, u.updated_at::text, u.created_by, u.updated_by
+`
+
 export async function getUpcomingItems(opts: UpcomingItemQueryOpts = {}): Promise<UpcomingItem[]> {
   await ensureMarketingRecapTables()
   const db = getPool()
   const where: string[]  = []
   const values: unknown[] = []
   if (opts.fromDate) {
-    where.push(`scheduled_date >= $${values.length + 1}::date`)
+    where.push(`u.scheduled_date >= $${values.length + 1}::date`)
     values.push(opts.fromDate)
   }
   if (opts.toDate) {
-    where.push(`scheduled_date <= $${values.length + 1}::date`)
+    where.push(`u.scheduled_date <= $${values.length + 1}::date`)
     values.push(opts.toDate)
   }
-  if (opts.activeOnly ?? true) where.push(`active = true`)
+  if (opts.activeOnly ?? true) where.push(`u.active = true`)
   const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
   const res = await db.query(
-    `SELECT id, scheduled_date::text, title, lane, description,
-            asset_count_planned, notes, active, status, owner,
-            created_at::text, updated_at::text, created_by, updated_by
-       FROM marketing_upcoming
+    `SELECT ${UPCOMING_SELECT_COLS}
+       FROM marketing_upcoming u
+       LEFT JOIN asset_delivery_batches b ON b.id = u.asset_delivery_batch_id
        ${whereSql}
-       ORDER BY scheduled_date ASC, id ASC`,
+       ORDER BY u.scheduled_date ASC, u.id ASC`,
     values,
   )
   return res.rows
@@ -3027,11 +3080,10 @@ export async function getUpcomingItemById(id: number): Promise<UpcomingItem | nu
   await ensureMarketingRecapTables()
   const db = getPool()
   const res = await db.query(
-    `SELECT id, scheduled_date::text, title, lane, description,
-            asset_count_planned, notes, active, status, owner,
-            created_at::text, updated_at::text, created_by, updated_by
-       FROM marketing_upcoming
-       WHERE id = $1
+    `SELECT ${UPCOMING_SELECT_COLS}
+       FROM marketing_upcoming u
+       LEFT JOIN asset_delivery_batches b ON b.id = u.asset_delivery_batch_id
+       WHERE u.id = $1
        LIMIT 1`,
     [id],
   )
@@ -3049,19 +3101,29 @@ export interface UpcomingItemCreateInput {
   status?:              UpcomingStatus
   /** Free-text owner (H2). Empty string normalizes to null. */
   owner?:               string | null
+  /** FK to asset_delivery_batches (H3). Setting it auto-flips status. */
+  asset_delivery_batch_id?: number | null
   created_by:           string
 }
 
 export async function createUpcomingItem(input: UpcomingItemCreateInput): Promise<UpcomingItem> {
   await ensureMarketingRecapTables()
   const db = getPool()
+
+  // Auto-flip (H3): if a batch link is being set AND the caller did NOT
+  // explicitly provide a status, derive status='shipped'. Explicit
+  // admin intent (any provided status) always wins.
+  const linkSet = input.asset_delivery_batch_id != null
+  const status =
+    input.status !== undefined ? input.status
+    : linkSet               ? 'shipped'
+    :                         'planned'
+
   const res = await db.query(
     `INSERT INTO marketing_upcoming
-       (scheduled_date, title, lane, description, asset_count_planned, notes, status, owner, created_by, updated_by)
-     VALUES ($1::date, $2, $3, $4, $5, $6, $7, $8, $9, $9)
-     RETURNING id, scheduled_date::text, title, lane, description,
-               asset_count_planned, notes, active, status, owner,
-               created_at::text, updated_at::text, created_by, updated_by`,
+       (scheduled_date, title, lane, description, asset_count_planned, notes, status, owner, asset_delivery_batch_id, created_by, updated_by)
+     VALUES ($1::date, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10)
+     RETURNING id`,
     [
       input.scheduled_date,
       input.title,
@@ -3069,12 +3131,16 @@ export async function createUpcomingItem(input: UpcomingItemCreateInput): Promis
       input.description ?? null,
       input.asset_count_planned ?? null,
       input.notes ?? null,
-      input.status ?? 'planned',
+      status,
       normalizeOwner(input.owner),
+      input.asset_delivery_batch_id ?? null,
       input.created_by,
     ],
   )
-  return res.rows[0]
+  // Re-fetch through the joined projection so the returned row carries
+  // asset_delivery_batch_label.
+  const created = await getUpcomingItemById(res.rows[0].id)
+  return created as UpcomingItem
 }
 
 export interface UpcomingItemUpdate {
@@ -3087,12 +3153,14 @@ export interface UpcomingItemUpdate {
   active?:              boolean
   status?:              UpcomingStatus
   owner?:               string | null
+  asset_delivery_batch_id?: number | null
   updated_by:           string
 }
 
 const UPCOMING_UPDATABLE = new Set<keyof UpcomingItemUpdate>([
   'scheduled_date', 'title', 'lane', 'description',
   'asset_count_planned', 'notes', 'active', 'status', 'owner',
+  'asset_delivery_batch_id',
 ])
 
 export async function updateUpcomingItem(
@@ -3121,22 +3189,37 @@ export async function updateUpcomingItem(
     values.push(key === 'owner' ? normalizeOwner(value as string | null) : value)
     idx++
   }
+
+  // Auto-flip (H3): if this update SETS a batch link (non-null
+  // asset_delivery_batch_id) AND status is NOT in the update body,
+  // also set status='shipped'. Explicit status in the body always wins
+  // (admin intent overrides auto-flip). Removing the link (explicit
+  // null) does NOT touch status — no auto-revert, no silent data loss.
+  const linkBeingSet =
+    updates.asset_delivery_batch_id !== undefined &&
+    updates.asset_delivery_batch_id !== null
+  if (linkBeingSet && updates.status === undefined) {
+    fields.push(`status = $${idx}`)
+    values.push('shipped')
+    idx++
+  }
+
   fields.push(`updated_at = NOW()`)
   fields.push(`updated_by = $${idx}`)
   values.push(updates.updated_by)
   idx++
   values.push(id)
 
-  const res = await db.query(
+  await db.query(
     `UPDATE marketing_upcoming
         SET ${fields.join(', ')}
-      WHERE id = $${idx}
-      RETURNING id, scheduled_date::text, title, lane, description,
-                asset_count_planned, notes, active, status, owner,
-                created_at::text, updated_at::text, created_by, updated_by`,
+      WHERE id = $${idx}`,
     values,
   )
-  return res.rows[0]
+  // Re-fetch through the joined projection so the returned row carries
+  // asset_delivery_batch_label.
+  const updated = await getUpcomingItemById(id)
+  return updated as UpcomingItem
 }
 
 /** Soft-delete: flip active=false. */
@@ -3149,6 +3232,36 @@ export async function deleteUpcomingItem(id: number, updatedBy = 'system'): Prom
       WHERE id = $1`,
     [id, updatedBy],
   )
+}
+
+// ── Batch picker (H3) ────────────────────────────────────────────
+
+/**
+ * Lightweight row for the asset-link picker. Only what the combobox
+ * needs — id, a human-readable label, the creation date for sorting/
+ * display, and status (shown as a subtle hint; the picker does NOT
+ * filter on it, per the locked decision).
+ */
+export interface BatchPickerRow {
+  id:         number
+  label:      string
+  created_at: string
+  status:     string
+}
+
+/** All batches, most-recent first, shaped for the asset-link picker. */
+export async function listBatchesForPicker(): Promise<BatchPickerRow[]> {
+  await ensureAssetDeliveryTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT id,
+            ('Batch #' || id || ' — ' || campaign_name) AS label,
+            created_at::text AS created_at,
+            status
+       FROM asset_delivery_batches
+      ORDER BY created_at DESC, id DESC`,
+  )
+  return res.rows
 }
 
 // ── Drafts ───────────────────────────────────────────────────────

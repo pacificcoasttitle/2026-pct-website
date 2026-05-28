@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Ban, Check, Edit2, Filter, Loader2, Plus, RefreshCw, Trash2 } from 'lucide-react'
+import { Ban, Check, Edit2, Filter, Loader2, Package, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import {
@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { BatchPicker } from '@/components/admin/marketing-recap/BatchPicker'
 import type { UpcomingItem, UpcomingStatus } from '@/lib/admin-db'
 
 type Lane = 'marketing-piece' | 'social' | 'weekly-email' | 'other'
@@ -42,6 +43,7 @@ interface FormState {
   lane: Lane
   status: UpcomingStatus
   owner: string
+  asset_delivery_batch_id: number | null
   description: string
   asset_count_planned: string
   notes: string
@@ -115,6 +117,7 @@ function emptyForm(): FormState {
     lane: 'other',
     status: 'planned',
     owner: '',
+    asset_delivery_batch_id: null,
     description: '',
     asset_count_planned: '',
     notes: '',
@@ -130,6 +133,7 @@ function formFromItem(item: UpcomingItem): FormState {
       : 'other') as Lane,
     status: coerceStatus(item.status),
     owner: item.owner ?? '',
+    asset_delivery_batch_id: item.asset_delivery_batch_id ?? null,
     description: item.description ?? '',
     asset_count_planned: item.asset_count_planned == null ? '' : String(item.asset_count_planned),
     notes: item.notes ?? '',
@@ -217,12 +221,16 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
     setForm((current) => ({ ...current, [field]: value }))
   }
 
+  // Always-sent base fields. status + asset_delivery_batch_id are added
+  // conditionally in saveItem(): they drive the H3 auto-flip, so they
+  // follow the partial-PATCH discipline (send only when changed/explicit)
+  // — re-sending an unchanged status blocks the server auto-flip, and
+  // re-sending an unchanged link would spuriously re-flip status.
   function buildPayload() {
     return {
       scheduled_date: form.scheduled_date,
       title: form.title.trim(),
       lane: form.lane,
-      status: form.status,
       owner: form.owner.trim() || null,
       description: form.description.trim() || null,
       asset_count_planned: form.asset_count_planned === ''
@@ -236,7 +244,21 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
     setSaving(true)
     setError(null)
     try {
-      const payload = buildPayload()
+      const payload: Record<string, unknown> = buildPayload()
+      if (editingItem) {
+        if (form.status !== coerceStatus(editingItem.status)) {
+          payload.status = form.status
+        }
+        if (form.asset_delivery_batch_id !== (editingItem.asset_delivery_batch_id ?? null)) {
+          payload.asset_delivery_batch_id = form.asset_delivery_batch_id
+        }
+      } else {
+        // Create: send status only when non-default so a linked batch
+        // can auto-flip 'planned' → 'shipped' server-side. Always send
+        // the link (null = unlinked).
+        if (form.status !== 'planned') payload.status = form.status
+        payload.asset_delivery_batch_id = form.asset_delivery_batch_id
+      }
       const res = await fetch(
         editingItem
           ? `/api/admin/marketing/recap/upcoming/${editingItem.id}`
@@ -417,6 +439,7 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Lane</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Status</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Owner</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-gray-500">Linked Batch</TableHead>
                 <TableHead className="min-w-[260px] text-xs uppercase tracking-wide text-gray-500">Description</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Assets Planned</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Active</TableHead>
@@ -484,6 +507,16 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
                     <TableCell className="text-sm">
                       {item.owner && item.owner.trim() !== '' ? (
                         <span className="text-[#03374f]">{item.owner}</span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {item.asset_delivery_batch_label ? (
+                        <span className="inline-flex items-center gap-1 text-[#03374f]">
+                          <Package className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                          <span className="truncate max-w-[180px]">{item.asset_delivery_batch_label}</span>
+                        </span>
                       ) : (
                         <span className="text-gray-400">—</span>
                       )}
@@ -606,6 +639,15 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
               <p className="text-[11px] text-gray-400">
                 Free-text. Typos create separate entries — pick a consistent format.
               </p>
+            </div>
+
+            {/* Asset link (H3). Linking a batch auto-flips status to
+                'shipped' server-side; unlinking leaves status as-is. */}
+            <div className="sm:col-span-2">
+              <BatchPicker
+                value={form.asset_delivery_batch_id}
+                onChange={(batchId) => updateForm('asset_delivery_batch_id', batchId)}
+              />
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
