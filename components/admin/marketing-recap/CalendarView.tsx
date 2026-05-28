@@ -65,7 +65,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ChevronLeft, ChevronRight, Loader2, CalendarDays, Table as TableIcon,
-  Info, Plus, Pencil, Trash2, Clock, Check, Ban,
+  Info, Plus, Pencil, Trash2, Clock, Check, Ban, User,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
@@ -203,6 +203,7 @@ interface ItemForm {
   title:               string
   lane:                Lane
   status:              UpcomingStatus
+  owner:               string  // free-text; empty string → null at submit
   description:         string
   asset_count_planned: string  // string in the input; coerced to number/null at submit
   notes:               string
@@ -214,6 +215,7 @@ function emptyItemForm(scheduledISO: string): ItemForm {
     title:               '',
     lane:                'other',
     status:              'planned',
+    owner:               '',
     description:         '',
     asset_count_planned: '',
     notes:               '',
@@ -227,6 +229,7 @@ function itemToForm(item: UpcomingItem): ItemForm {
     title:               item.title,
     lane,
     status:              coerceStatus(item.status),
+    owner:               item.owner ?? '',
     description:         item.description ?? '',
     asset_count_planned: item.asset_count_planned == null
       ? ''
@@ -248,6 +251,7 @@ function validateItemForm(form: ItemForm, opts: { requireDate?: boolean } = {}):
   const title = form.title.trim()
   if (!title)             return 'Title is required.'
   if (title.length > 200) return 'Title must be 200 characters or fewer.'
+  if (form.owner.trim().length > 100) return 'Owner must be 100 characters or fewer.'
   if (form.description.length > 1000) return 'Description must be 1000 characters or fewer.'
   if (form.notes.length > 2000)       return 'Notes must be 2000 characters or fewer.'
   if (form.asset_count_planned.trim() !== '') {
@@ -274,6 +278,7 @@ function buildItemPayload(form: ItemForm): Record<string, unknown> {
     title:               form.title.trim(),
     lane:                form.lane,
     status:              form.status,
+    owner:               form.owner.trim() || null,
     description:         form.description.trim() || null,
     asset_count_planned: assets,
     notes:               form.notes.trim() || null,
@@ -591,6 +596,7 @@ export function CalendarView({
       title:               editForm.title.trim(),
       lane:                editForm.lane,
       status:              editForm.status,
+      owner:               editForm.owner.trim() || null,
       description:         editForm.description.trim() || null,
       asset_count_planned: editForm.asset_count_planned.trim() === ''
         ? null
@@ -1174,6 +1180,12 @@ export function CalendarView({
                         </button>
                       </div>
                     </div>
+                    {it.owner && it.owner.trim() !== '' && (
+                      <div className="flex items-center gap-1 text-[11px] text-gray-500 mt-1.5">
+                        <User className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+                        <span className="break-words">{it.owner}</span>
+                      </div>
+                    )}
                     {it.description && (
                       <p className="text-[12px] text-gray-600 mt-1.5 leading-relaxed whitespace-pre-wrap">
                         {it.description}
@@ -1316,6 +1328,23 @@ export function CalendarView({
               </select>
               <p className="text-[11px] text-gray-400">
                 Cancelled items stay visible on the calendar (with a line-through). To hide an item entirely, deactivate it instead.
+              </p>
+            </div>
+
+            {/* Owner (H2 — free-text). After status: what / what state /
+                who's responsible. No autocomplete or suggestions. */}
+            <div className="space-y-1.5">
+              <Label htmlFor="cal-edit-owner">Owner (optional)</Label>
+              <Input
+                id="cal-edit-owner"
+                type="text"
+                maxLength={100}
+                value={editForm.owner}
+                onChange={(e) => setEditForm({ ...editForm, owner: e.target.value })}
+                placeholder="e.g. Jerry, Marketing Team"
+              />
+              <p className="text-[11px] text-gray-400">
+                Free-text. Typos create separate entries — pick a consistent format.
               </p>
             </div>
 
@@ -1463,6 +1492,23 @@ export function CalendarView({
                   <option key={lane} value={lane}>{LANE_STYLES[lane].label}</option>
                 ))}
               </select>
+            </div>
+
+            {/* Owner (H2 — free-text). Admins may want to set the
+                responsible party at create time. No autocomplete. */}
+            <div className="space-y-1.5">
+              <Label htmlFor="cal-create-owner">Owner (optional)</Label>
+              <Input
+                id="cal-create-owner"
+                type="text"
+                maxLength={100}
+                value={createForm.owner}
+                onChange={(e) => setCreateForm({ ...createForm, owner: e.target.value })}
+                placeholder="e.g. Jerry, Marketing Team"
+              />
+              <p className="text-[11px] text-gray-400">
+                Free-text. Typos create separate entries — pick a consistent format.
+              </p>
             </div>
 
             <div className="space-y-1.5">

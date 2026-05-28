@@ -7,6 +7,7 @@ import {
   verifyAdminToken,
 } from '@/lib/admin-auth'
 import {
+  OWNER_MAX,
   deleteUpcomingItem,
   getUpcomingItemById,
   updateUpcomingItem,
@@ -28,6 +29,16 @@ const UpdateBodySchema = z.object({
   notes:                z.string().trim().max(2000).optional().nullable(),
   active:               z.boolean().optional(),
   status:               z.enum(STATUSES).optional(),
+  owner:                z.string().max(OWNER_MAX).optional().nullable()
+                          .transform((v) => {
+                            // Preserve undefined (key absent) so a partial
+                            // PATCH (e.g. active-toggle) can't clobber owner;
+                            // normalize null/empty/whitespace → null.
+                            if (v === undefined) return undefined
+                            if (v == null) return null
+                            const t = v.trim()
+                            return t === '' ? null : t
+                          }),
 }).refine((body) => Object.keys(body).length > 0, {
   message: 'At least one field is required',
 })

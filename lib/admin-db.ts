@@ -2684,6 +2684,15 @@ export async function ensureMarketingRecapTables(): Promise<void> {
     ADD CONSTRAINT marketing_upcoming_status_check
     CHECK (status IN ('planned', 'shipped', 'cancelled'))
   `)
+  // Additive: owner column for Stage H2. Optional free-text — whoever's
+  // responsible for the item. Nullable (NULL = "unset"); empty string
+  // normalizes to NULL at the API layer. No CHECK (free-text — nothing
+  // to constrain beyond the length cap, which lives in the Zod schemas
+  // at the route layer). No FK to vcard_employees (decision locked).
+  await db.query(`
+    ALTER TABLE marketing_upcoming
+    ADD COLUMN IF NOT EXISTS owner TEXT
+  `)
   await db.query(`
     CREATE INDEX IF NOT EXISTS idx_upcoming_date
       ON marketing_upcoming (scheduled_date);
@@ -2794,6 +2803,24 @@ export const UPCOMING_STATUSES: readonly UpcomingStatus[] = [
   'planned', 'shipped', 'cancelled',
 ] as const
 
+/**
+ * Max length for the free-text owner field (Stage H2). Exported so the
+ * route-layer Zod schemas share a single source of truth with the DB
+ * helpers. Client maxLength mirrors this value.
+ */
+export const OWNER_MAX = 100
+
+/**
+ * Normalize a free-text owner value: trim whitespace, collapse empty
+ * string → null. NULL and empty string are equivalent "no owner set"
+ * representations; we store NULL.
+ */
+export function normalizeOwner(value: string | null | undefined): string | null {
+  if (value == null) return null
+  const trimmed = value.trim()
+  return trimmed === '' ? null : trimmed
+}
+
 export interface UpcomingItem {
   id:                  number
   scheduled_date:      string
@@ -2804,6 +2831,7 @@ export interface UpcomingItem {
   notes:               string | null
   active:              boolean
   status:              UpcomingStatus
+  owner:               string | null
   created_at:          string
   updated_at:          string
   created_by:          string | null
@@ -2985,7 +3013,7 @@ export async function getUpcomingItems(opts: UpcomingItemQueryOpts = {}): Promis
   const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
   const res = await db.query(
     `SELECT id, scheduled_date::text, title, lane, description,
-            asset_count_planned, notes, active, status,
+            asset_count_planned, notes, active, status, owner,
             created_at::text, updated_at::text, created_by, updated_by
        FROM marketing_upcoming
        ${whereSql}
@@ -3000,7 +3028,7 @@ export async function getUpcomingItemById(id: number): Promise<UpcomingItem | nu
   const db = getPool()
   const res = await db.query(
     `SELECT id, scheduled_date::text, title, lane, description,
-            asset_count_planned, notes, active, status,
+            asset_count_planned, notes, active, status, owner,
             created_at::text, updated_at::text, created_by, updated_by
        FROM marketing_upcoming
        WHERE id = $1
@@ -3019,6 +3047,8 @@ export interface UpcomingItemCreateInput {
   notes?:               string | null
   /** Defaults to 'planned' on the DB side when omitted. */
   status?:              UpcomingStatus
+  /** Free-text owner (H2). Empty string normalizes to null. */
+  owner?:               string | null
   created_by:           string
 }
 
@@ -3027,10 +3057,10 @@ export async function createUpcomingItem(input: UpcomingItemCreateInput): Promis
   const db = getPool()
   const res = await db.query(
     `INSERT INTO marketing_upcoming
-       (scheduled_date, title, lane, description, asset_count_planned, notes, status, created_by, updated_by)
-     VALUES ($1::date, $2, $3, $4, $5, $6, $7, $8, $8)
+       (scheduled_date, title, lane, description, asset_count_planned, notes, status, owner, created_by, updated_by)
+     VALUES ($1::date, $2, $3, $4, $5, $6, $7, $8, $9, $9)
      RETURNING id, scheduled_date::text, title, lane, description,
-               asset_count_planned, notes, active, status,
+               asset_count_planned, notes, active, status, owner,
                created_at::text, updated_at::text, created_by, updated_by`,
     [
       input.scheduled_date,
@@ -3040,6 +3070,7 @@ export async function createUpcomingItem(input: UpcomingItemCreateInput): Promis
       input.asset_count_planned ?? null,
       input.notes ?? null,
       input.status ?? 'planned',
+      normalizeOwner(input.owner),
       input.created_by,
     ],
   )
@@ -3055,12 +3086,13 @@ export interface UpcomingItemUpdate {
   notes?:               string | null
   active?:              boolean
   status?:              UpcomingStatus
+  owner?:               string | null
   updated_by:           string
 }
 
 const UPCOMING_UPDATABLE = new Set<keyof UpcomingItemUpdate>([
   'scheduled_date', 'title', 'lane', 'description',
-  'asset_count_planned', 'notes', 'active', 'status',
+  'asset_count_planned', 'notes', 'active', 'status', 'owner',
 ])
 
 export async function updateUpcomingItem(
@@ -3083,7 +3115,10 @@ export async function updateUpcomingItem(
     } else {
       fields.push(`${key} = $${idx}`)
     }
-    values.push(value)
+    // owner is free-text: normalize empty string → null at the DB layer
+    // too (the route Zod transform already does this, but a direct
+    // helper caller should get the same behavior).
+    values.push(key === 'owner' ? normalizeOwner(value as string | null) : value)
     idx++
   }
   fields.push(`updated_at = NOW()`)
@@ -3097,7 +3132,7 @@ export async function updateUpcomingItem(
         SET ${fields.join(', ')}
       WHERE id = $${idx}
       RETURNING id, scheduled_date::text, title, lane, description,
-                asset_count_planned, notes, active, status,
+                asset_count_planned, notes, active, status, owner,
                 created_at::text, updated_at::text, created_by, updated_by`,
     values,
   )

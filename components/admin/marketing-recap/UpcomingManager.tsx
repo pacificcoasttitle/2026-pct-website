@@ -41,6 +41,7 @@ interface FormState {
   title: string
   lane: Lane
   status: UpcomingStatus
+  owner: string
   description: string
   asset_count_planned: string
   notes: string
@@ -113,6 +114,7 @@ function emptyForm(): FormState {
     title: '',
     lane: 'other',
     status: 'planned',
+    owner: '',
     description: '',
     asset_count_planned: '',
     notes: '',
@@ -127,6 +129,7 @@ function formFromItem(item: UpcomingItem): FormState {
       ? item.lane
       : 'other') as Lane,
     status: coerceStatus(item.status),
+    owner: item.owner ?? '',
     description: item.description ?? '',
     asset_count_planned: item.asset_count_planned == null ? '' : String(item.asset_count_planned),
     notes: item.notes ?? '',
@@ -220,6 +223,7 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
       title: form.title.trim(),
       lane: form.lane,
       status: form.status,
+      owner: form.owner.trim() || null,
       description: form.description.trim() || null,
       asset_count_planned: form.asset_count_planned === ''
         ? null
@@ -412,6 +416,7 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Title</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Lane</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Status</TableHead>
+                <TableHead className="text-xs uppercase tracking-wide text-gray-500">Owner</TableHead>
                 <TableHead className="min-w-[260px] text-xs uppercase tracking-wide text-gray-500">Description</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Assets Planned</TableHead>
                 <TableHead className="text-xs uppercase tracking-wide text-gray-500">Active</TableHead>
@@ -475,6 +480,13 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
                         {status === 'cancelled' && <Ban   className="w-3 h-3" />}
                         {statusInfo.label}
                       </span>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {item.owner && item.owner.trim() !== '' ? (
+                        <span className="text-[#03374f]">{item.owner}</span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="whitespace-normal text-sm text-gray-500">
                       {truncateText(item.description)}
@@ -578,6 +590,21 @@ export function UpcomingManager({ initialItems, initialFromDate, initialToDate }
               </select>
               <p className="text-[11px] text-gray-400">
                 Cancelled items stay in the table with a line-through. To hide entirely, deactivate.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="owner">Owner (optional)</Label>
+              <Input
+                id="owner"
+                type="text"
+                maxLength={100}
+                value={form.owner}
+                onChange={(event) => updateForm('owner', event.target.value)}
+                placeholder="e.g. Jerry, Marketing Team"
+              />
+              <p className="text-[11px] text-gray-400">
+                Free-text. Typos create separate entries — pick a consistent format.
               </p>
             </div>
 

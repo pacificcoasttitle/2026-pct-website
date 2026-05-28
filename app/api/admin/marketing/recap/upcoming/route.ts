@@ -7,6 +7,7 @@ import {
   verifyAdminToken,
 } from '@/lib/admin-auth'
 import {
+  OWNER_MAX,
   createUpcomingItem,
   getUpcomingItems,
 } from '@/lib/admin-db'
@@ -26,6 +27,15 @@ const CreateBodySchema = z.object({
   asset_count_planned:  z.coerce.number().int().min(0).max(9999).optional().nullable(),
   notes:                z.string().trim().max(2000).optional().nullable(),
   status:               z.enum(STATUSES).optional().default('planned'),
+  owner:                z.string().max(OWNER_MAX).optional().nullable()
+                          .transform((v) => {
+                            // Preserve undefined (key absent) so it can't
+                            // clobber; normalize null/empty/whitespace → null.
+                            if (v === undefined) return undefined
+                            if (v == null) return null
+                            const t = v.trim()
+                            return t === '' ? null : t
+                          }),
 })
 
 async function getActorEmail(): Promise<string> {
@@ -106,6 +116,7 @@ export async function POST(req: NextRequest) {
       asset_count_planned:  body.asset_count_planned ?? null,
       notes:                body.notes ?? null,
       status:               body.status,
+      owner:                body.owner ?? null,
       created_by:           adminEmail,
     })
 
