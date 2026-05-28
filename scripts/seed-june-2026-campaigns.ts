@@ -11,7 +11,9 @@
  *
  * Safety:
  *   - Dry-run by default (no writes without --commit)
- *   - Validates every row against the same Zod shape as POST /upcoming
+ *   - Validates every row against POST /upcoming's CreateBodySchema,
+ *     imported directly from the route — single source of truth, so the
+ *     seed can't drift from what the API would accept
  *   - Aborts on any conflict (existing item with same date+title)
  *   - Aborts on any past-dated item (would immediately slip)
  *   - Exhaustive pre-flight gating before ANY write (all-or-nothing at
@@ -64,26 +66,10 @@ const cwd = process.cwd()
 loadEnvFile(resolve(cwd, '.env.local')) || loadEnvFile(resolve(cwd, '.env'))
 
 import { createUpcomingItem, getPool } from '../lib/admin-db'
-
-// ── Validation schema ───────────────────────────────────────────────
-// Mirrors the POST /upcoming CreateBodySchema (app/api/admin/marketing/
-// recap/upcoming/route.ts). The route's schema is a non-exported const
-// and this ticket forbids modifying application files, so it's mirrored
-// here rather than imported. Kept field-for-field identical for the
-// fields this seed touches.
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
-const LANES    = ['marketing-piece', 'social', 'weekly-email', 'other'] as const
-const STATUSES = ['planned', 'shipped', 'cancelled'] as const
-
-const SeedRowSchema = z.object({
-  scheduled_date:      z.string().regex(DATE_RE, 'Use YYYY-MM-DD format'),
-  title:               z.string().trim().min(1).max(200),
-  lane:                z.enum(LANES).optional().default('other'),
-  description:         z.string().trim().max(1000).optional().nullable(),
-  asset_count_planned: z.coerce.number().int().min(0).max(9999).optional().nullable(),
-  notes:               z.string().trim().max(2000).optional().nullable(),
-  status:              z.enum(STATUSES).optional().default('planned'),
-})
+// Single source of truth: the same schema + lane list the POST /upcoming
+// route uses to validate inbound items. Imported (not mirrored) so the
+// seed can never drift from the API's contract.
+import { CreateBodySchema, LANES } from '@/app/api/admin/marketing/recap/upcoming/route'
 
 // ── The 14 seed items (locked spec) ─────────────────────────────────
 const SEED_ITEMS = [
@@ -162,10 +148,10 @@ async function main() {
   console.log(`\nPCT June 2026 Calendar Seed — ${isCommit ? 'COMMIT MODE' : 'DRY RUN'}`)
 
   // ── STEP 1: validate all rows against the Zod shape (no writes) ──
-  const validated: Array<z.infer<typeof SeedRowSchema>> = []
+  const validated: Array<z.infer<typeof CreateBodySchema>> = []
   const validationErrors: string[] = []
   SEED_ITEMS.forEach((row, i) => {
-    const parsed = SeedRowSchema.safeParse(row)
+    const parsed = CreateBodySchema.safeParse(row)
     if (parsed.success) {
       validated.push(parsed.data)
     } else {

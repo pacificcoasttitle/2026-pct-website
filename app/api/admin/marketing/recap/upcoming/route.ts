@@ -17,10 +17,10 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
-const LANES    = ['marketing-piece', 'social', 'weekly-email', 'other'] as const
+export const LANES    = ['marketing-piece', 'social', 'weekly-email', 'other'] as const
 const STATUSES = ['planned', 'shipped', 'cancelled'] as const
 
-const CreateBodySchema = z.object({
+export const CreateBodySchema = z.object({
   scheduled_date:       z.string().regex(DATE_RE, 'Use YYYY-MM-DD format'),
   title:                z.string().trim().min(1).max(200),
   lane:                 z.enum(LANES).optional().default('other'),
