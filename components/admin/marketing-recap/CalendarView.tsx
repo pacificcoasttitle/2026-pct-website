@@ -111,13 +111,13 @@ function coerceRecurrence(v: string | null | undefined): RecurrencePattern {
 
 type Lane = 'marketing-piece' | 'social' | 'weekly-email' | 'other'
 
-interface LaneStyle {
+export interface LaneStyle {
   label:  string
   chip:   string  // bg + text + border classes for the day-cell chip
   badge:  string  // larger badge for the day-detail dialog
 }
 
-const LANE_STYLES: Record<Lane, LaneStyle> = {
+export const LANE_STYLES: Record<Lane, LaneStyle> = {
   'marketing-piece': {
     label: 'Marketing Piece',
     chip:  'bg-orange-50 text-orange-700 border border-orange-100',
@@ -140,7 +140,7 @@ const LANE_STYLES: Record<Lane, LaneStyle> = {
   },
 }
 
-function laneStyle(lane: string): LaneStyle {
+export function laneStyle(lane: string): LaneStyle {
   return LANE_STYLES[(lane as Lane)] ?? LANE_STYLES.other
 }
 
@@ -366,12 +366,29 @@ interface Props {
   initialMonth: number              // 1-12
   initialItems: UpcomingItem[]
   initialError?: string
+  /* ── I2 coordination (optional — calendar works standalone too) ──
+   * The completion card lives as a sibling on the page and must agree
+   * with the calendar on the current month + re-fetch when data
+   * mutates. Rather than lift the calendar's year/month state up (a
+   * large refactor of its internal nav), we keep the state here and
+   * emit changes via callbacks. The page mirrors them into the state
+   * it feeds the card. */
+  onMonthChange?: (year: number, month: number) => void
+  onMutated?: () => void
+  // When set (by the card's slippage [Open] button), the calendar opens
+  // its existing edit Dialog for that item, then calls
+  // onEditRequestConsumed so the page can clear the trigger. Routes the
+  // card to the SAME edit pipeline — no duplicate dialog, no new
+  // mutation path.
+  editRequest?: UpcomingItem | null
+  onEditRequestConsumed?: () => void
 }
 
 /* ─── Component ──────────────────────────────────────────────── */
 
 export function CalendarView({
   initialYear, initialMonth, initialItems, initialError = '',
+  onMonthChange, onMutated, editRequest, onEditRequestConsumed,
 }: Props) {
   const [year,  setYear]  = useState(initialYear)
   const [month, setMonth] = useState(initialMonth)
@@ -469,6 +486,24 @@ export function CalendarView({
     fetchMonth(year, month)
   }, [year, month, didMount, fetchMonth])
 
+  // I2: keep the page (and thus the completion card) in sync with the
+  // calendar's current month. Fires on mount too, which conveniently
+  // seeds the page with the initial month.
+  useEffect(() => {
+    onMonthChange?.(year, month)
+  }, [year, month, onMonthChange])
+
+  // I2: the completion card's slippage [Open] button sets editRequest on
+  // the page; the calendar reacts by opening its EXISTING edit Dialog
+  // for that item, then signals consumption so the trigger clears (and a
+  // future identical request can re-fire).
+  useEffect(() => {
+    if (!editRequest) return
+    openEdit(editRequest)
+    onEditRequestConsumed?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editRequest])
+
   function shiftMonth(delta: number) {
     let m = month + delta
     let y = year
@@ -498,6 +533,12 @@ export function CalendarView({
    * Fixes the G+1 masquerade bug; reused by create / edit / delete.
    */
   async function reconcileAfterMutation() {
+    // I2: notify the page that data changed BEFORE the refetch. Every
+    // successful mutation (create / edit / delete / drag / recurrence)
+    // funnels through here, so this single call is the shared "data may
+    // have changed" signal that tells the completion card to re-fetch.
+    // Fired before fetchMonth so a refresh hiccup can't suppress it.
+    onMutated?.()
     try {
       await fetchMonth(year, month)
     } catch (err) {

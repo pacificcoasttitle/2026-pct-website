@@ -18,7 +18,7 @@
 import Link from 'next/link'
 import { ArrowLeft, CalendarDays, Table as TableIcon } from 'lucide-react'
 import { getUpcomingItems, type UpcomingItem } from '@/lib/admin-db'
-import { CalendarView } from '@/components/admin/marketing-recap/CalendarView'
+import { CalendarWithCompletion } from '@/components/admin/marketing-recap/CalendarWithCompletion'
 
 export const dynamic  = 'force-dynamic'
 export const metadata = { title: 'Marketing Calendar | PCT' }
@@ -117,7 +117,10 @@ export default async function MarketingCalendarPage() {
         </div>
       </header>
 
-      <CalendarView
+      {/* I2: the completion card renders above the month grid inside this
+          client island, which coordinates month sync + refresh-on-mutation
+          + slippage→edit-Dialog routing. */}
+      <CalendarWithCompletion
         initialYear={year}
         initialMonth={month}
         initialItems={initialItems}
