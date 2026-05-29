@@ -51,17 +51,15 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'People',
     items: [
-      { href: '/admin/team/employees',                label: 'Employees',        icon: Users },
+      { href: '/admin/team/employees',                label: 'Sales Reps',       icon: Users },
     ],
   },
   {
     label: 'Marketing',
     items: [
       { href: '/admin/team/marketing',                label: 'Email Marketing',  icon: Mail },
-      { href: '/admin/team/sms',                      label: 'SMS',              icon: MessageSquare },
-      { href: '/admin/team/farms',                    label: 'Farm Requests',    icon: List },
-      { href: '/admin/team/signatures',               label: 'Signature Center', icon: PenLine },
-      { href: '/admin/team/asset-delivery',           label: 'Asset Delivery',   icon: Paperclip },
+      { href: '/admin/team/sms',                      label: 'Text Reps',        icon: MessageSquare },
+      { href: '/admin/team/asset-delivery',           label: 'Email Reps',       icon: Paperclip },
       { href: '/admin/team/marketing-recap',          label: 'Marketing Recap',  icon: Newspaper },
       { href: '/admin/team/marketing-recap/calendar', label: 'Calendar',         icon: CalendarDays },
     ],
@@ -70,9 +68,18 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Client Tools',
     items: [
       { href: '/admin/team/assessments',              label: 'Assessments',      icon: ClipboardCheck },
+      { href: '/admin/team/farms',                    label: 'Farm Requests',    icon: List },
+    ],
+  },
+  {
+    label: 'Internal Tools',
+    items: [
+      { href: '/admin/team/signatures',               label: 'Signature Center', icon: PenLine },
     ],
   },
 ]
+
+const ALL_HREFS = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href))
 
 function roleLabel(role: string) {
   return role === 'top_level' ? 'Super Admin' : role === 'manager' ? 'Manager' : role
@@ -97,26 +104,32 @@ export default function AdminSidebar({
   }
 
   /**
-   * Active-state matcher.
+   * Active-state matcher — most-specific match wins.
    *
-   * Trailing-slash-safe prefix check fixes the previous
-   * `pathname.startsWith(href)` collision where `/marketing-recap`
-   * matched BOTH `/marketing` and `/marketing-recap` simultaneously.
+   * Builds on d02f2ce's trailing-slash-safe prefix check (which fixed
+   * the `pathname.startsWith(href)` collision where `/marketing-recap`
+   * matched BOTH `/marketing` and `/marketing-recap`). We keep that
+   * exact rule, then resolve ties by picking the LONGEST matching href
+   * so only the single deepest entry lights up.
+   *
+   * This fixes the Calendar "stuck together" bug: at
+   * `/marketing-recap/calendar`, both Marketing Recap (prefix match)
+   * and Calendar (exact match) qualified and both highlighted. Now the
+   * longer href (Calendar) wins and Marketing Recap stays inactive.
    *
    * Dashboard keeps its exact-match special case because EVERY admin
    * route starts with `/admin/team/`, so a prefix rule would light it
    * up everywhere.
-   *
-   * Nested routes light up BOTH the parent and the specific child
-   * entry — e.g. `/marketing-recap/calendar` highlights Marketing
-   * Recap AND Calendar. This mirrors the existing inheritance for
-   * routes like `/employees/[slug]` and is intentional: it signals
-   * "you are inside the Recap area, specifically on Calendar".
    */
-  function isActive(href: string): boolean {
+  function matches(href: string): boolean {
     if (href === '/admin/team') return pathname === '/admin/team'
     return pathname === href || pathname.startsWith(href + '/')
   }
+
+  const activeHref = ALL_HREFS.reduce<string | null>((best, href) => {
+    if (!matches(href)) return best
+    return best === null || href.length > best.length ? href : best
+  }, null)
 
   const navItems = (
     <nav className="flex flex-col px-3 mt-2">
@@ -132,7 +145,7 @@ export default function AdminSidebar({
           )}
           <div className="flex flex-col gap-1">
             {group.items.map(({ href, label, icon: Icon }) => {
-              const active = isActive(href)
+              const active = href === activeHref
               return (
                 <Link
                   key={href}
