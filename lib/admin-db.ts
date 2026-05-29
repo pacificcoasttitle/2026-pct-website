@@ -2618,7 +2618,38 @@ export async function getSendsByBatchId(batchId: string): Promise<AssetDeliveryS
 let _marketingRecapTablesReady = false
 export async function ensureMarketingRecapTables(): Promise<void> {
   if (_marketingRecapTablesReady) return
+  // Set the guard BEFORE the work (not after). This is convenience
+  // schema-maintenance, not a read prerequisite; if a statement throws,
+  // the caller's defensive wrap lets the read proceed, and we must not
+  // re-attempt ~20 DDL queries on every subsequent request in the
+  // process (the prior end-of-function placement caused exactly that
+  // retry storm during the 42710 incident).
+  _marketingRecapTablesReady = true
   const db = getPool()
+
+  // Idempotent constraint (re)creation. DROP IF EXISTS + ADD already
+  // makes this re-runnable within one connection, but concurrent
+  // serverless cold starts can still race (another connection ADDs
+  // between this connection's DROP and ADD), surfacing 42710
+  // (duplicate_object). A constraint already existing IS the desired
+  // end state, so 42710 is treated as success. Scope is TIGHT: only
+  // 42710 is benign here; every other code re-throws.
+  const ensureConstraint = async (dropSql: string, addSql: string, name: string) => {
+    try {
+      await db.query(dropSql)
+      await db.query(addSql)
+    } catch (err) {
+      const code = (err as { code?: string })?.code
+      if (code === '42710') {
+        const constraint = (err as { constraint?: string })?.constraint
+        console.warn(
+          `[ensureMarketingRecapTables] constraint already exists (42710), treating as success: ${constraint ?? name}`,
+        )
+      } else {
+        throw err
+      }
+    }
+  }
 
   // ── 1. marketing_recap_recipients ───────────────────────────────
   await db.query(`
@@ -2680,15 +2711,14 @@ export async function ensureMarketingRecapTables(): Promise<void> {
     ALTER TABLE marketing_upcoming
     ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'planned'
   `)
-  await db.query(`
-    ALTER TABLE marketing_upcoming
-    DROP CONSTRAINT IF EXISTS marketing_upcoming_status_check
-  `)
-  await db.query(`
-    ALTER TABLE marketing_upcoming
-    ADD CONSTRAINT marketing_upcoming_status_check
-    CHECK (status IN ('planned', 'shipped', 'cancelled'))
-  `)
+  await ensureConstraint(
+    `ALTER TABLE marketing_upcoming
+       DROP CONSTRAINT IF EXISTS marketing_upcoming_status_check`,
+    `ALTER TABLE marketing_upcoming
+       ADD CONSTRAINT marketing_upcoming_status_check
+       CHECK (status IN ('planned', 'shipped', 'cancelled'))`,
+    'marketing_upcoming_status_check',
+  )
   // Additive: owner column for Stage H2. Optional free-text — whoever's
   // responsible for the item. Nullable (NULL = "unset"); empty string
   // normalizes to NULL at the API layer. No CHECK (free-text — nothing
@@ -2715,17 +2745,16 @@ export async function ensureMarketingRecapTables(): Promise<void> {
     ALTER TABLE marketing_upcoming
     ADD COLUMN IF NOT EXISTS asset_delivery_batch_id INTEGER
   `)
-  await db.query(`
-    ALTER TABLE marketing_upcoming
-    DROP CONSTRAINT IF EXISTS marketing_upcoming_asset_link_fk
-  `)
-  await db.query(`
-    ALTER TABLE marketing_upcoming
-    ADD CONSTRAINT marketing_upcoming_asset_link_fk
-    FOREIGN KEY (asset_delivery_batch_id)
-    REFERENCES asset_delivery_batches(id)
-    ON DELETE SET NULL
-  `)
+  await ensureConstraint(
+    `ALTER TABLE marketing_upcoming
+       DROP CONSTRAINT IF EXISTS marketing_upcoming_asset_link_fk`,
+    `ALTER TABLE marketing_upcoming
+       ADD CONSTRAINT marketing_upcoming_asset_link_fk
+       FOREIGN KEY (asset_delivery_batch_id)
+       REFERENCES asset_delivery_batches(id)
+       ON DELETE SET NULL`,
+    'marketing_upcoming_asset_link_fk',
+  )
   await db.query(`
     CREATE INDEX IF NOT EXISTS marketing_upcoming_asset_link_idx
       ON marketing_upcoming(asset_delivery_batch_id)
@@ -2753,15 +2782,14 @@ export async function ensureMarketingRecapTables(): Promise<void> {
      WHERE recurrence_pattern IS NULL
         OR recurrence_pattern NOT IN ('none','weekly','biweekly','monthly_day','monthly_weekday')
   `)
-  await db.query(`
-    ALTER TABLE marketing_upcoming
-    DROP CONSTRAINT IF EXISTS marketing_upcoming_recurrence_pattern_check
-  `)
-  await db.query(`
-    ALTER TABLE marketing_upcoming
-    ADD CONSTRAINT marketing_upcoming_recurrence_pattern_check
-    CHECK (recurrence_pattern IN ('none','weekly','biweekly','monthly_day','monthly_weekday'))
-  `)
+  await ensureConstraint(
+    `ALTER TABLE marketing_upcoming
+       DROP CONSTRAINT IF EXISTS marketing_upcoming_recurrence_pattern_check`,
+    `ALTER TABLE marketing_upcoming
+       ADD CONSTRAINT marketing_upcoming_recurrence_pattern_check
+       CHECK (recurrence_pattern IN ('none','weekly','biweekly','monthly_day','monthly_weekday'))`,
+    'marketing_upcoming_recurrence_pattern_check',
+  )
   await db.query(`
     CREATE INDEX IF NOT EXISTS marketing_upcoming_recurrence_idx
       ON marketing_upcoming(recurrence_pattern)
@@ -2840,8 +2868,7 @@ export async function ensureMarketingRecapTables(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_recap_sends_status
       ON marketing_recap_sends (draft_id, send_status);
   `)
-
-  _marketingRecapTablesReady = true
+  // (Guard already set at the top — see the note there.)
 }
 
 // ── Types ────────────────────────────────────────────────────────
@@ -3131,7 +3158,21 @@ function withAnchorDate(row: UpcomingItem): UpcomingItem {
 }
 
 export async function getUpcomingItems(opts: UpcomingItemQueryOpts = {}): Promise<UpcomingItem[]> {
-  await ensureMarketingRecapTables()
+  // DECOUPLED: ensureMarketingRecapTables is convenience schema-maintenance
+  // that auto-applies columns/constraints on cold start. It is NOT a
+  // prerequisite for reading existing data — production's schema is
+  // already current. If the self-heal throws (e.g. a 42710 constraint race
+  // on concurrent cold starts), log it but PROCEED with the read; a
+  // schema-maintenance failure must never 500 a data fetch (this read path
+  // backs the calendar grid, the completion card, AND the Monday recap
+  // cron). Note: this catches ALL self-heal errors at the caller, whereas
+  // the self-heal internally only treats 42710 as benign — two different
+  // scopes by design.
+  try {
+    await ensureMarketingRecapTables()
+  } catch (err) {
+    console.error('[getUpcomingItems] self-heal failed; proceeding with read (schema assumed already current):', err)
+  }
   const db = getPool()
   const activeOnly = opts.activeOnly ?? true
   const hasRange = Boolean(opts.fromDate && opts.toDate)
