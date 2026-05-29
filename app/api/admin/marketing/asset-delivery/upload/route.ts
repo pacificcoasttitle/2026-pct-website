@@ -5,25 +5,32 @@
  * DELETE — remove a single file (R2 + DB row + decrement batch counts).
  *
  * Filename convention enforced:
- *   {campaign-slug}__C-<n>[-<firstname>]__{format}.{ext}
+ *   C-<n>[-<firstname>].{ext}
  *
- *   - {campaign-slug}   must match the batch's campaign_slug
  *   - C-<n>             active vcard_employees.sms_code (case-insensitive,
  *                       dash optional: C-28, C28, c-28 all valid). For
  *                       team codes (multiple reps share a code, e.g. C-4)
  *                       this resolves to the lowest-id active holder
  *                       (the "senior team rep") — delivery uses that
  *                       rep's email, which is typically the shared team
- *                       inbox (e.g. teamlopez@pct.com for C-4).
+ *                       inbox (e.g. teamlopez@pct.com for C-4). This is
+ *                       the WHOLE basename now — no campaign-slug prefix,
+ *                       no format suffix, no '__' delimiter.
  *   - [-<firstname>]    optional, validation-only. If present and it
  *                       doesn't match the matched rep's first_name we
  *                       log a structured warning but ACCEPT the upload.
  *                       Hyphens allowed in the name suffix for compound
  *                       names (-mary-jane).
- *   - {format}          one of: flyer, social, social-story,
- *                       email-insert, print
- *   - {ext}             format-specific (pdf for flyer/print, png/jpg
- *                       for social/social-story/email-insert)
+ *   - {ext}             .pdf → always classified 'flyer'. .png/.jpg/.jpeg
+ *                       → image; the specific format (social /
+ *                       social-story / email-insert) is DERIVED from a
+ *                       single batch-level picker the client sends as the
+ *                       `image_format` field (not read from the filename).
+ *
+ * The old long grammar ({slug}__C-<n>__{format}.ext) is RETIRED — there
+ * is no backward-compat path. The campaign_slug was vestigial in the
+ * filename (only asserted == batch.campaign_slug, never stored, never in
+ * the R2 key); it stays as a batch COLUMN but is gone from the filename.
  *
  * Bulk uploads: the UI calls POST once per file. 21 reps × 3 formats =
  * 63 sequential requests with client-side concurrency throttling. Keeps
@@ -49,20 +56,11 @@ export const runtime = 'nodejs'
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20 MB
 const ALLOWED_MIME  = new Set(['application/pdf', 'image/png', 'image/jpeg'])
-const ALLOWED_FORMATS = new Set([
-  'flyer',
-  'social',
-  'social-story',
-  'email-insert',
-  'print',
-])
-const FORMAT_EXT_RULES: Record<string, { exts: string[]; label: string }> = {
-  flyer:          { exts: ['pdf'],                label: 'PDF' },
-  print:          { exts: ['pdf'],                label: 'PDF' },
-  social:         { exts: ['png', 'jpg', 'jpeg'], label: 'PNG or JPG' },
-  'social-story': { exts: ['png', 'jpg', 'jpeg'], label: 'PNG or JPG' },
-  'email-insert': { exts: ['png', 'jpg', 'jpeg'], label: 'PNG or JPG' },
-}
+// Image extensions and the three image formats the batch-level picker
+// offers. PDFs are always 'flyer' (no picker, no ambiguity) — we no
+// longer distinguish flyer vs print on upload.
+const IMAGE_EXTS     = new Set(['png', 'jpg', 'jpeg'])
+const IMAGE_FORMATS  = new Set(['social', 'social-story', 'email-insert'])
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -156,66 +154,51 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  /* 4. Filename parse + validate. */
+  /* 4. Filename parse (short grammar: C-<n>[-<name>].ext).
+     The basename IS the rep-code segment — no slug, no format segment,
+     no '__' delimiter. Reuse the existing SMS-code regex on the whole
+     basename. */
   const filename = file.name
   const extMatch = filename.match(/\.([^.]+)$/)
   const ext      = extMatch ? extMatch[1].toLowerCase() : ''
   const baseName = extMatch ? filename.slice(0, -extMatch[0].length) : filename
-  const parts    = baseName.split('__')
 
-  if (parts.length !== 3 || parts.some((p) => p.trim() === '')) {
-    return NextResponse.json(
-      {
-        error:
-          'Filename must have three segments: {campaign-slug}__C-<n>[-<name>]__{format}.{ext}. ' +
-          'Example: prelim-toolkit__C-28-jerry__flyer.pdf',
-      },
-      { status: 400 },
-    )
-  }
-
-  const [slug, codeSegment, format] = parts
-
-  if (slug !== batch.campaign_slug) {
-    return NextResponse.json(
-      {
-        error: `Filename slug '${slug}' doesn't match batch campaign '${batch.campaign_slug}'`,
-      },
-      { status: 400 },
-    )
-  }
-
-  if (!ALLOWED_FORMATS.has(format)) {
-    return NextResponse.json(
-      {
-        error: `Unknown format '${format}'. Valid formats: flyer, social, social-story, email-insert, print`,
-      },
-      { status: 400 },
-    )
-  }
-
-  const extRule = FORMAT_EXT_RULES[format]
-  if (!extRule.exts.includes(ext)) {
-    return NextResponse.json(
-      { error: `Format '${format}' requires ${extRule.label} file, got '${ext || 'unknown'}'` },
-      { status: 400 },
-    )
-  }
-
-  /* 5. Parse rep segment + look up by sms_code. */
-  const parsed = parseSmsCodeSegment(codeSegment)
+  const parsed = parseSmsCodeSegment(baseName)
   if (!parsed) {
     return NextResponse.json(
-      {
-        error:
-          `Rep segment '${codeSegment}' is not a valid SMS code. Expected: C-<n> with optional ` +
-          `-<firstname> suffix (e.g., C-28, C-28-jerry, c4-mary-jane). ` +
-          `Example filename: prelim-toolkit__C-28-jerry__flyer.pdf`,
-      },
+      { error: 'Filename must be C-<rep#>.<ext> (e.g. C-28.pdf or C-28-jane.jpg)' },
       { status: 400 },
     )
   }
   const { code: normalizedCode, nameSuffix } = parsed
+
+  /* 4b. Derive format from the extension (+ batch-level picker for
+     images). PDF is always a flyer; PNG/JPG/JPEG take the image_format
+     the client sends from the single batch-level picker. */
+  let format: string
+  if (ext === 'pdf') {
+    format = 'flyer'
+  } else if (IMAGE_EXTS.has(ext)) {
+    const imageFormat = String(form.get('image_format') || '').trim()
+    if (!IMAGE_FORMATS.has(imageFormat)) {
+      return NextResponse.json(
+        {
+          error:
+            `Image uploads require an image_format of 'social', 'social-story', or ` +
+            `'email-insert' (got '${imageFormat || 'none'}').`,
+        },
+        { status: 400 },
+      )
+    }
+    format = imageFormat
+  } else {
+    return NextResponse.json(
+      { error: `Unsupported file type: .${ext || 'unknown'}` },
+      { status: 400 },
+    )
+  }
+
+  /* 5. Look up rep by sms_code (resolution UNCHANGED). */
 
   let rep:
     | {

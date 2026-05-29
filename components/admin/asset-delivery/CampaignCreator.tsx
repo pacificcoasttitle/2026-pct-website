@@ -16,12 +16,13 @@
  * batch payload itself.
  *
  * Filename contract enforced by the backend:
- *   {campaign-slug}__{rep-prefix}__{format}.{ext}
+ *   C-<rep#>[-<firstname>].{ext}
  *
- * Formats allowed (ext-matched server-side):
- *   flyer/print          → pdf
- *   social/social-story  → png|jpg|jpeg
- *   email-insert         → png|jpg|jpeg
+ * Format is DERIVED, not in the filename:
+ *   .pdf                 → flyer (always)
+ *   .png|.jpg|.jpeg      → image; the specific format (social /
+ *                          social-story / email-insert) comes from the
+ *                          single batch-level picker on the upload step.
  *
  * "Send Test" deviates from the spec a little: the spec said "send test to
  * current admin's email", but the backend's test_recipient_email validates
@@ -89,7 +90,8 @@ const LANE_OPTIONS: Array<{ value: Lane; label: string }> = [
   { value: 'other',           label: 'Other' },
 ]
 
-const FORMATS = ['flyer', 'social', 'social-story', 'email-insert', 'print'] as const
+// Upload-time formats. 'print' is retired — every PDF is a 'flyer'.
+const FORMATS = ['flyer', 'social', 'social-story', 'email-insert'] as const
 type FormatKey = typeof FORMATS[number]
 
 const FORMAT_LABELS: Record<FormatKey, string> = {
@@ -97,8 +99,17 @@ const FORMAT_LABELS: Record<FormatKey, string> = {
   social:         'Social',
   'social-story': 'Social Story',
   'email-insert': 'Email Insert',
-  print:          'Print',
 }
+
+// The three image formats the single batch-level picker offers. PDFs
+// bypass the picker entirely (always 'flyer').
+type ImageFormatKey = 'social' | 'social-story' | 'email-insert'
+const IMAGE_FORMAT_OPTIONS: Array<{ value: ImageFormatKey; label: string }> = [
+  { value: 'social',       label: 'Social' },
+  { value: 'social-story', label: 'Social Story' },
+  { value: 'email-insert', label: 'Email Insert' },
+]
+const DEFAULT_IMAGE_FORMAT: ImageFormatKey = 'social-story'
 
 type UploadState =
   | { kind: 'pending';   filename: string }
@@ -157,49 +168,47 @@ function slugify(s: string): string {
 // formatBytes lives in @/lib/format-utils — see import above.
 
 /**
- * Parse a filename and classify it against the campaign slug + rep roster.
- * Mirrors the server's validation. Used for visual feedback before upload.
+ * Parse a filename (short grammar C-<n>[-<name>].ext) and classify it
+ * against the rep roster. Mirrors the server's validation. Format is
+ * DERIVED: PDF → 'flyer'; image → the batch-level picker value.
  */
 function classifyFile(
-  filename:     string,
-  campaignSlug: string,
-  reps:         RepRoster[],
+  filename:    string,
+  reps:        RepRoster[],
+  imageFormat: ImageFormatKey,
 ): {
   ok:      boolean
-  slug?:   string
   rep?:    RepRoster
   format?: FormatKey
   error?:  string
 } {
   const extMatch = filename.match(/\.([^.]+)$/)
+  const ext  = extMatch ? extMatch[1].toLowerCase() : ''
   const base = extMatch ? filename.slice(0, -extMatch[0].length) : filename
-  const parts = base.split('__')
 
-  if (parts.length !== 3 || parts.some((p) => !p.trim())) {
-    return { ok: false, error: 'Filename must be slug__C-<n>[-<name>]__format.ext' }
-  }
-  const [slug, codeSegment, format] = parts
-
-  if (slug !== campaignSlug) {
-    return { ok: false, error: `Slug "${slug}" ≠ campaign "${campaignSlug}"` }
-  }
-  if (!(FORMATS as readonly string[]).includes(format)) {
-    return { ok: false, error: `Unknown format "${format}"` }
-  }
-  // Same regex the server uses (lib/upload/route.ts SMS_CODE_RE).
-  const codeMatch = codeSegment.match(/^c-?(\d+)(?:-([a-z0-9-]+))?$/i)
+  // The whole basename IS the rep-code segment now. Same regex the
+  // server uses (upload/route.ts SMS_CODE_RE).
+  const codeMatch = base.match(/^c-?(\d+)(?:-([a-z0-9-]+))?$/i)
   if (!codeMatch) {
-    return {
-      ok: false,
-      error: `Rep segment "${codeSegment}" is not a valid SMS code (expected C-<n>[-<name>])`,
-    }
+    return { ok: false, error: 'Filename must be C-<rep#>.<ext> (e.g. C-28.pdf or C-28-jane.jpg)' }
   }
   const normalizedCode = `C-${codeMatch[1]}`
   const rep = reps.find((r) => (r.sms_code || '').toUpperCase() === normalizedCode)
   if (!rep) {
     return { ok: false, error: `No active rep matches "${normalizedCode}"` }
   }
-  return { ok: true, slug, rep, format: format as FormatKey }
+
+  // Derive format from the extension. PDF is always a flyer; images take
+  // the batch-level picker value.
+  let format: FormatKey
+  if (ext === 'pdf') {
+    format = 'flyer'
+  } else if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
+    format = imageFormat
+  } else {
+    return { ok: false, error: `Unsupported file type: .${ext || 'unknown'}` }
+  }
+  return { ok: true, rep, format }
 }
 
 /* ─── Component ──────────────────────────────────────────────── */
@@ -242,6 +251,14 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
 
   /* ── Step 2 upload state ─────────────────────────────────── */
   const [uploads, setUploads] = useState<Record<string, UploadState>>({})
+  // Batch-level image format picker — one choice applies to every image
+  // uploaded in this session. PDFs ignore it (always 'flyer').
+  const [imageFormat, setImageFormat] = useState<ImageFormatKey>(DEFAULT_IMAGE_FORMAT)
+  // Mirror the picker into a ref so the queued uploadOne (captured by the
+  // memoized drainQueue) always reads the CURRENT choice, never a stale
+  // closure value from an earlier render.
+  const imageFormatRef = useRef<ImageFormatKey>(DEFAULT_IMAGE_FORMAT)
+  useEffect(() => { imageFormatRef.current = imageFormat }, [imageFormat])
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const dropAreaRef  = useRef<HTMLDivElement | null>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -353,6 +370,10 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
       const form = new FormData()
       form.append('file', file)
       form.append('batchId', batchId)
+      // Batch-level image format (read from the ref to avoid a stale
+      // closure). The server ignores it for PDFs (always 'flyer') and
+      // requires it for images.
+      form.append('image_format', imageFormatRef.current)
       const res = await fetch('/api/admin/marketing/asset-delivery/upload', {
         method: 'POST',
         body:   form,
@@ -384,7 +405,7 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
     const files = Array.from(fileList)
     const accepted: File[] = []
     for (const f of files) {
-      const cls = classifyFile(f.name, campaignSlug, reps)
+      const cls = classifyFile(f.name, reps, imageFormat)
       if (!cls.ok) {
         setUploadState(f.name, {
           kind: 'no-match', filename: f.name, error: cls.error || 'Invalid filename',
@@ -455,14 +476,14 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
     const inFlightEmails = new Set<string>()
     for (const u of Object.values(uploads)) {
       if (u.kind === 'pending' || u.kind === 'uploading' || u.kind === 'failed') {
-        const cls = classifyFile(u.filename, campaignSlug, reps)
+        const cls = classifyFile(u.filename, reps, imageFormat)
         if (cls.ok && cls.rep) inFlightEmails.add(cls.rep.email.toLowerCase())
       }
     }
     const baseEmails = new Set(repsWithFiles.map((r) => r.email.toLowerCase()))
     inFlightEmails.forEach((e) => baseEmails.add(e))
     return reps.filter((r) => baseEmails.has(r.email.toLowerCase()))
-  }, [repsWithFiles, uploads, campaignSlug, reps])
+  }, [repsWithFiles, uploads, reps, imageFormat])
 
   // Auto-select the first rep with files for the Step 3 preview.
   useEffect(() => {
@@ -613,8 +634,9 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
 
       {step === 2 && batchId && (
         <Step2
-          campaignSlug={campaignSlug}
           reps={reps}
+          imageFormat={imageFormat}
+          setImageFormat={setImageFormat}
           gridReps={gridReps}
           filesByRepAndFormat={filesByRepAndFormat}
           uploads={uploads}
@@ -774,11 +796,11 @@ function Step1(props: {
           placeholder="wire-fraud-prevention"
           maxLength={120}
         />
-        <p className="text-[11px] text-gray-500 font-mono">
-          Filenames must start with this slug: <span className="text-[#03374f]">{props.campaignSlug || '<slug>'}__C-&lt;n&gt;[-&lt;name&gt;]__{'{format}'}.{'{ext}'}</span>
+        <p className="text-[11px] text-gray-500">
+          Internal identifier for this campaign. It is <span className="font-semibold">not</span> part of the upload filenames.
         </p>
         <p className="text-[11px] text-gray-500">
-          Example: <span className="font-mono text-[#03374f]">{(props.campaignSlug || 'prelim-toolkit')}__C-28-jerry__flyer.pdf</span>. The rep is matched by SMS code (e.g.&nbsp;C-28), with an optional first-name suffix that&apos;s validated but not required. Team codes (e.g.&nbsp;C-4 for Lopez team) route to the team&apos;s shared email automatically.
+          Files are named <span className="font-mono text-[#03374f]">C-&lt;rep#&gt;[-&lt;name&gt;].{'{ext}'}</span> — e.g. <span className="font-mono text-[#03374f]">C-28.pdf</span> or <span className="font-mono text-[#03374f]">C-28-jane.jpg</span>. The rep is matched by SMS code (e.g.&nbsp;C-28), with an optional first-name suffix that&apos;s validated but not required. Team codes (e.g.&nbsp;C-4 for Lopez team) route to the team&apos;s shared email automatically.
         </p>
       </div>
 
@@ -845,8 +867,9 @@ function Step1(props: {
 /* ─── Step 2: Upload Files ───────────────────────────────────── */
 
 function Step2(props: {
-  campaignSlug: string
   reps: RepRoster[]
+  imageFormat: ImageFormatKey
+  setImageFormat: (v: ImageFormatKey) => void
   gridReps: RepRoster[]
   filesByRepAndFormat: Map<string, Map<string, BatchFile>>
   uploads: Record<string, UploadState>
@@ -890,13 +913,13 @@ function Step2(props: {
           <Upload className={`w-10 h-10 mx-auto mb-3 ${props.dragOver ? 'text-[#f26b2b]' : 'text-gray-400'}`} />
           <p className="font-semibold text-[#03374f] mb-1">Drop files here</p>
           <p className="text-xs text-gray-500 mb-1">
-            Filename format: <span className="font-mono text-[#03374f]">{props.campaignSlug}__C-&lt;n&gt;[-&lt;name&gt;]__{'{format}'}.{'{ext}'}</span>
+            Filename format: <span className="font-mono text-[#03374f]">C-&lt;rep#&gt;[-&lt;name&gt;].{'{ext}'}</span>
           </p>
           <p className="text-xs text-gray-500 mb-1">
-            Example: <span className="font-mono text-[#03374f]">{props.campaignSlug}__C-28-jerry__flyer.pdf</span> · Team codes (e.g.&nbsp;C-4) route to the team&apos;s shared email automatically.
+            Example: <span className="font-mono text-[#03374f]">C-28.pdf</span> or <span className="font-mono text-[#03374f]">C-28-jane.jpg</span> · Team codes (e.g.&nbsp;C-4) route to the team&apos;s shared email automatically.
           </p>
           <p className="text-xs text-gray-500 mb-4">
-            Formats: flyer/print (.pdf), social/social-story/email-insert (.png .jpg)
+            PDFs are delivered as flyers. PNG/JPG images use the image format selected below.
           </p>
           <Button variant="outline" size="sm" onClick={props.onPickClick}>
             <Upload className="w-3.5 h-3.5 mr-1" /> or browse for files
@@ -909,6 +932,36 @@ function Step2(props: {
             accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
             onChange={props.onPickFiles}
           />
+        </div>
+      </Card>
+
+      {/* Batch-level image format picker — applies to ALL images in this
+          upload session. PDFs ignore it (always flyer). */}
+      <Card className="p-4">
+        <Label className="text-xs font-semibold text-[#03374f]">
+          Image format (applies to all images in this upload)
+        </Label>
+        <p className="text-[11px] text-gray-500 mb-2">
+          PDFs are always flyers. This choice applies to every PNG/JPG you upload.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {IMAGE_FORMAT_OPTIONS.map((opt) => {
+            const active = props.imageFormat === opt.value
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => props.setImageFormat(opt.value)}
+                className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
+                  active
+                    ? 'border-[#f26b2b] bg-[#f26b2b]/10 text-[#03374f] font-semibold'
+                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                }`}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
         </div>
       </Card>
 
@@ -955,18 +1008,18 @@ function Step2(props: {
                       </td>
                       {FORMATS.map((fmt) => {
                         const existing = inner?.get(fmt)
-                        // Match in-flight uploads by `slug__C-<n>` prefix —
-                        // tolerant of optional name suffix and extension.
-                        const codeForMatch = (rep.sms_code || '').toLowerCase()
-                        const expectedPrefix = codeForMatch
-                          ? `${props.campaignSlug}__${codeForMatch}`
-                          : null
-                        const pending = expectedPrefix
-                          ? Object.values(props.uploads).find((u) => {
-                              const lower = u.filename.toLowerCase()
-                              return lower.startsWith(expectedPrefix) && lower.includes(`__${fmt}.`)
-                            })
-                          : undefined
+                        // Match in-flight uploads by re-deriving each file's
+                        // rep + format from its filename (same logic as
+                        // classifyFile): the rep must match this row and the
+                        // derived format must match this column.
+                        const pending = Object.values(props.uploads).find((u) => {
+                          const cls = classifyFile(u.filename, props.reps, props.imageFormat)
+                          return (
+                            cls.ok &&
+                            cls.rep?.email.toLowerCase() === rep.email.toLowerCase() &&
+                            cls.format === fmt
+                          )
+                        })
                         return (
                           <td key={fmt} className="px-3 py-2.5 text-center">
                             {existing ? (
