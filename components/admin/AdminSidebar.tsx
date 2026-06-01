@@ -21,6 +21,7 @@ import {
   Newspaper,
   CalendarDays,
   ClipboardCheck,
+  Calculator,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -75,6 +76,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Internal Tools',
     items: [
       { href: '/admin/team/signatures',               label: 'Signature Center', icon: PenLine },
+      { href: '/admin',                               label: 'Fee Management',   icon: Calculator },
     ],
   },
 ]

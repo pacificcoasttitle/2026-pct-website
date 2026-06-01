@@ -9,7 +9,7 @@ import { Suspense } from 'react'
 function LoginForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
-  const from         = searchParams.get('from') ?? '/admin'
+  const from         = searchParams.get('from') ?? '/admin/team'
 
   const [username,     setUsername]     = useState('')
   const [password,     setPassword]     = useState('')

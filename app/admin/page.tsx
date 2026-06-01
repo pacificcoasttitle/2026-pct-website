@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import {
   Shield,
   LogOut,
@@ -15,6 +16,7 @@ import {
   Save,
   RefreshCw,
   ChevronDown,
+  ArrowLeft,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -532,10 +534,19 @@ export default function AdminDashboard() {
                 <span className="text-xs text-gray-400 ml-2">Rate Calculator Management</span>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/admin/team"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-[#03374f] hover:bg-[#03374f]/5 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Team Admin
+              </Link>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>
