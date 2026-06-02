@@ -48,9 +48,12 @@ export default async function NewCampaignPage() {
   let employees: Awaited<ReturnType<typeof getAllEmployeesAdmin>> = []
   try { employees = await getAllEmployeesAdmin() } catch { /* db offline */ }
 
-  // Active+website-active first, with audience or without (without are shown disabled).
+  // Recipient roster = active reps WITH a Mailchimp audience (the sendable
+  // list). website_active is a public-vCard visibility flag and is NOT a
+  // campaign-eligibility criterion. The has-audience check uses the same
+  // truthy semantics as the client layer (null and '' both excluded).
   const showable = employees
-    .filter((e) => e.active && e.website_active)
+    .filter((e) => e.active && !!e.mailchimp_audience_id)
     .sort((a, b) => a.name.localeCompare(b.name))
 
   const counts = await Promise.all(
