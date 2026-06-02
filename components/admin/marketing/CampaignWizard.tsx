@@ -166,7 +166,7 @@ export function CampaignWizard({ reps, mailchimpServer, regions }: Props) {
     if (!selectedTemplate) return ''
     let html = selectedTemplate.html_content
     if (!SAMPLE_REP.photo_url) {
-      html = html.replace(/<img\b[^>]*\{\{REP_PHOTO\}\}[^>]*\/?>/gi, '')
+      html = html.replace(/<img\b[^>]*\{\{rep_photo_url\}\}[^>]*\/?>/gi, '')
     }
     html = replaceMergeTags(html, SAMPLE_REP)
     html = resolveHeroImage(html, heroImageUrl)
