@@ -5,8 +5,11 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import {
   ArrowLeft, ArrowRight, Check, ChevronRight, Loader2, Search, Send, Save, Zap,
-  ExternalLink, Upload, X, AlertCircle, CheckCircle2, Eye,
+  ExternalLink, Upload, X, AlertCircle, CheckCircle2, Eye, Mail,
 } from 'lucide-react'
+import {
+  replaceMergeTags, resolveHeroImage, type MergeTagRep,
+} from '@/lib/marketing-mailchimp'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -72,6 +75,18 @@ interface BatchResponse {
 
 type Action = 'draft' | 'schedule' | 'send'
 
+/* Generic sample rep for the on-screen resolved preview — mirrors the
+ * SAMPLE_REP used by the preview-to-reps route. That one is a server-side
+ * route-local const (not exported), so we define the same shape here for
+ * the client preview rather than importing across the server boundary. */
+const SAMPLE_REP: MergeTagRep = {
+  name:      'Your Name',
+  title:     'Sales Representative',
+  email:     'you@pct.com',
+  phone:     '(866) 724-1050',
+  photo_url: '',
+}
+
 interface Props {
   reps:             RepLite[]
   mailchimpServer:  string
@@ -118,9 +133,17 @@ export function CampaignWizard({ reps, mailchimpServer, regions }: Props) {
 
   /* ── Submission ─────────────────────────────────────────── */
   const [submitting, setSubmitting] = useState<Action | null>(null)
-  const [confirmSendNow, setConfirmSendNow] = useState(false)
+  // Step 3 send controls: the three actions are now a selection
+  // (Schedule pre-selected) → one Finalize button → a confirm modal that
+  // executes the chosen action. Replaces the old instant-fire cards and
+  // the Send-Now-only confirm dialog.
+  const [chosenAction, setChosenAction] = useState<Action>('schedule')
+  const [confirmFinalize, setConfirmFinalize] = useState(false)
   const [batchResult, setBatchResult] = useState<BatchResponse | null>(null)
   const [submitError, setSubmitError] = useState('')
+
+  /* ── On-screen resolved email preview (Step 3, sends nothing) ─── */
+  const [previewEmailOpen, setPreviewEmailOpen] = useState(false)
 
   /* ── Preview-to-reps (SendGrid side-channel) ────────────── */
   // Separate loading + message state so the preview button never
@@ -133,6 +156,22 @@ export function CampaignWizard({ reps, mailchimpServer, regions }: Props) {
     () => templates?.find((t) => t.id === selectedTemplateId) || null,
     [templates, selectedTemplateId],
   )
+
+  // Resolved email HTML for the on-screen preview: hero filled + a generic
+  // sample rep merged in, using the SAME transforms the real send path
+  // uses (replaceMergeTags + resolveHeroImage). The empty sample photo's
+  // <img> is stripped first so it doesn't render broken. In-memory only —
+  // this never sends anything.
+  const resolvedPreviewHtml = useMemo(() => {
+    if (!selectedTemplate) return ''
+    let html = selectedTemplate.html_content
+    if (!SAMPLE_REP.photo_url) {
+      html = html.replace(/<img\b[^>]*\{\{REP_PHOTO\}\}[^>]*\/?>/gi, '')
+    }
+    html = replaceMergeTags(html, SAMPLE_REP)
+    html = resolveHeroImage(html, heroImageUrl)
+    return html
+  }, [selectedTemplate, heroImageUrl])
 
   // When user picks a template, prefill subject/preheader/namePrefix (only if blank).
   useEffect(() => {
@@ -223,7 +262,7 @@ export function CampaignWizard({ reps, mailchimpServer, regions }: Props) {
       setSubmitError(e instanceof Error ? e.message : 'Batch failed')
     } finally {
       setSubmitting(null)
-      setConfirmSendNow(false)
+      setConfirmFinalize(false)
     }
   }
 
@@ -329,10 +368,11 @@ export function CampaignWizard({ reps, mailchimpServer, regions }: Props) {
           submitting={submitting}
           sendingPreview={sendingPreview}
           onSendPreview={sendPreviewToReps}
+          chosenAction={chosenAction}
+          setChosenAction={setChosenAction}
+          onFinalize={() => setConfirmFinalize(true)}
+          onPreviewEmail={() => setPreviewEmailOpen(true)}
           onBack={() => setStep(2)}
-          onDraft={() => submitBatch('draft')}
-          onSchedule={() => submitBatch('schedule')}
-          onSendNow={() => setConfirmSendNow(true)}
         />
       )}
 
@@ -375,27 +415,99 @@ export function CampaignWizard({ reps, mailchimpServer, regions }: Props) {
         </DialogContent>
       </Dialog>
 
-      {/* Send-now confirmation */}
-      <AlertDialog open={confirmSendNow} onOpenChange={setConfirmSendNow}>
+      {/* Resolved email preview (Step 3) — hero + sample rep merged.
+          Sends nothing; on-screen only. Separate from the Step 1 raw
+          template dialog above. */}
+      <Dialog open={previewEmailOpen} onOpenChange={setPreviewEmailOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Email preview (with sample rep)</DialogTitle>
+          </DialogHeader>
+          {selectedTemplate ? (
+            <div className="space-y-2">
+              <p className="text-xs text-gray-500">
+                Subject: <span className="text-gray-800 font-medium">{subject || selectedTemplate.subject}</span>
+              </p>
+              <p className="text-[11px] text-gray-400">
+                Rep details shown are a sample; each rep&apos;s real info merges at send.
+              </p>
+              <iframe title="resolved-preview"
+                      srcDoc={resolvedPreviewHtml}
+                      sandbox="allow-same-origin"
+                      className="w-full bg-white border border-gray-200 rounded-xl" style={{ height: 540 }} />
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">Select a template first.</p>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Finalize confirmation — generalized over the chosen action. */}
+      <AlertDialog open={confirmFinalize} onOpenChange={setConfirmFinalize}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Send right away?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will send the campaign to <strong>{selectedReps.length} {selectedReps.length === 1 ? 'rep' : 'reps'}</strong> (~{totalSubscribers.toLocaleString()} subscribers) immediately. There is no cancel window once sent.
+            <AlertDialogTitle>
+              {chosenAction === 'send'  ? 'Send immediately?'
+               : chosenAction === 'draft' ? 'Save as draft?'
+               : 'Schedule this campaign?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold ${
+                  chosenAction === 'send'
+                    ? 'bg-red-50 text-red-700'
+                    : 'bg-[#03374f]/10 text-[#03374f]'
+                }`}>
+                  {chosenAction === 'send' ? 'SEND IMMEDIATELY'
+                   : chosenAction === 'draft' ? 'SAVE AS DRAFT'
+                   : 'SCHEDULE'}
+                </div>
+                <dl className="space-y-1 text-gray-600">
+                  <div className="flex gap-2"><dt className="text-gray-400 w-24 shrink-0">Template</dt><dd className="font-medium text-[#03374f]">{selectedTemplate?.name}</dd></div>
+                  <div className="flex gap-2"><dt className="text-gray-400 w-24 shrink-0">Subject</dt><dd className="font-medium text-[#03374f]">{subject || selectedTemplate?.subject}</dd></div>
+                  <div className="flex gap-2"><dt className="text-gray-400 w-24 shrink-0">Recipients</dt><dd className="font-medium text-[#03374f]">{selectedReps.length} {selectedReps.length === 1 ? 'rep' : 'reps'} · ~{totalSubscribers.toLocaleString()} subscribers</dd></div>
+                  {chosenAction === 'schedule' && (
+                    <div className="flex gap-2"><dt className="text-gray-400 w-24 shrink-0">Goes out</dt><dd className="font-medium text-[#03374f]">~{scheduleEtaLabel()} (about 30 min from now)</dd></div>
+                  )}
+                </dl>
+                {chosenAction === 'send' && (
+                  <p className="text-red-600 font-medium">This sends right away — there is no cancel window once sent.</p>
+                )}
+                {chosenAction === 'draft' && (
+                  <p className="text-gray-500">Drafts are created in Mailchimp for you to review and send manually.</p>
+                )}
+                {chosenAction === 'schedule' && (
+                  <p className="text-gray-500">You can cancel any time before the send time from the results screen.</p>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => submitBatch('send')} className="bg-red-600 hover:bg-red-700 text-white">
-              {submitting === 'send'
-                ? <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Sending…</>
-                : <>Yes, send now</>}
+            <AlertDialogAction
+              onClick={() => submitBatch(chosenAction)}
+              className={chosenAction === 'send'
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : 'bg-[#03374f] hover:bg-[#03374f]/90 text-white'}
+            >
+              {submitting === chosenAction
+                ? <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Working…</>
+                : chosenAction === 'send' ? 'Yes, send now'
+                  : chosenAction === 'draft' ? 'Save draft'
+                  : 'Schedule it'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
   )
+}
+
+/** Local-time label ~30 min from now for the schedule confirmation. */
+function scheduleEtaLabel(): string {
+  return new Date(Date.now() + 30 * 60 * 1000).toLocaleTimeString('en-US', {
+    hour: 'numeric', minute: '2-digit',
+  })
 }
 
 /* ══════════════════════════════════════════════════════════════ */
@@ -626,7 +738,8 @@ function Step3({
   replyToGlobal, setReplyToGlobal,
   submitting,
   sendingPreview, onSendPreview,
-  onBack, onDraft, onSchedule, onSendNow,
+  chosenAction, setChosenAction, onFinalize, onPreviewEmail,
+  onBack,
 }: {
   template: Template
   selectedReps: RepLite[]
@@ -641,10 +754,11 @@ function Step3({
   submitting: Action | null
   sendingPreview: boolean
   onSendPreview: () => void
+  chosenAction: Action
+  setChosenAction: (a: Action) => void
+  onFinalize: () => void
+  onPreviewEmail: () => void
   onBack: () => void
-  onDraft: () => void
-  onSchedule: () => void
-  onSendNow: () => void
 }) {
   const previewCount = 5
   const extraNames   = Math.max(0, selectedReps.length - previewCount)
@@ -653,7 +767,15 @@ function Step3({
     <div className="space-y-5">
       {/* Summary */}
       <Card className="p-5 space-y-3">
-        <h2 className="font-semibold text-[#03374f]">Campaign details</h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="font-semibold text-[#03374f]">Campaign details</h2>
+          {/* On-screen resolved preview of the piece being reviewed. Sends
+              nothing — distinct from "Send preview to reps" in the footer. */}
+          <Button variant="outline" size="sm" onClick={onPreviewEmail} disabled={!template}
+                  className="border-[#03374f] text-[#03374f] hover:bg-[#03374f]/5 shrink-0">
+            <Eye className="w-4 h-4 mr-1.5" /> Preview email
+          </Button>
+        </div>
         <dl className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
           <Field label="Template" value={template.name} />
           <Field label="Recipients" value={`${selectedReps.length} ${selectedReps.length === 1 ? 'rep' : 'reps'}`} />
@@ -752,51 +874,69 @@ function Step3({
         </ul>
       </Card>
 
-      {/* Send options */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <SendOption
-          icon={<Save className="w-5 h-5" />}
-          title="Save as Draft"
-          desc="Create drafts in Mailchimp. Review and send manually from there."
-          loading={submitting === 'draft'}
-          onClick={onDraft}
-        />
-        <SendOption
-          icon={<Send className="w-5 h-5" />}
-          title="Schedule (recommended)"
-          desc="Schedule for ~30 minutes from now. Cancel anytime before send."
-          loading={submitting === 'schedule'}
-          onClick={onSchedule}
-          recommended
-        />
-        <SendOption
-          icon={<Zap className="w-5 h-5" />}
-          title="Send Immediately"
-          desc="Sends right away. No cancel window."
-          loading={submitting === 'send'}
-          onClick={onSendNow}
-          danger
-        />
+      {/* Send action selection — pick one, then Finalize to confirm. The
+          cards no longer fire on click; only the confirm modal sends. */}
+      <div>
+        <h2 className="font-semibold text-[#03374f] text-sm mb-2">Choose what happens on finalize</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <SendOption
+            icon={<Save className="w-5 h-5" />}
+            title="Save as Draft"
+            desc="Create drafts in Mailchimp. Review and send manually from there."
+            selected={chosenAction === 'draft'}
+            onSelect={() => setChosenAction('draft')}
+          />
+          <SendOption
+            icon={<Send className="w-5 h-5" />}
+            title="Schedule (recommended)"
+            desc="Schedule for ~30 minutes from now. Cancel anytime before send."
+            selected={chosenAction === 'schedule'}
+            onSelect={() => setChosenAction('schedule')}
+            recommended
+          />
+          <SendOption
+            icon={<Zap className="w-5 h-5" />}
+            title="Send Immediately"
+            desc="Sends right away. No cancel window."
+            selected={chosenAction === 'send'}
+            onSelect={() => setChosenAction('send')}
+            danger
+          />
+        </div>
       </div>
 
-      <div className="flex items-center justify-between pt-1">
-        <Button variant="outline" onClick={onBack} disabled={submitting !== null || sendingPreview}>
+      {/* Finalize — opens the confirmation modal for the chosen action. */}
+      <div className="flex justify-end">
+        <Button
+          onClick={onFinalize}
+          disabled={submitting !== null}
+          className="bg-[#03374f] hover:bg-[#03374f]/90 text-white"
+        >
+          <Check className="w-4 h-4 mr-1.5" />
+          {chosenAction === 'send' ? 'Finalize & Send Now'
+           : chosenAction === 'draft' ? 'Finalize & Save Draft'
+           : 'Finalize & Schedule'}
+        </Button>
+      </div>
+
+      <div className="flex items-center justify-between pt-1 border-t border-gray-100 mt-1">
+        <Button variant="outline" onClick={onBack} disabled={submitting !== null || sendingPreview} className="mt-3">
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Back
         </Button>
 
-        {/* Secondary action — SendGrid preview to the sales team. Visually
-            distinct from the three Mailchimp send cards above so it's not
-            confused with the real client send. */}
+        {/* Secondary action — SendGrid preview to the sales team. Mail icon
+            + footer placement keep it distinct from the top "Preview email"
+            (Eye, on-screen only) and from the Mailchimp finalize flow. */}
         <Button
           variant="outline"
           onClick={onSendPreview}
           disabled={!template || sendingPreview || submitting !== null}
-          className="border-[#03374f] text-[#03374f] hover:bg-[#03374f]/5"
+          className="border-[#03374f] text-[#03374f] hover:bg-[#03374f]/5 mt-3"
           title="Email this campaign piece to the sales team via SendGrid (not Mailchimp)"
         >
           {sendingPreview
             ? <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Sending preview…</>
-            : <><Eye className="w-4 h-4 mr-1.5" /> Send preview to reps</>}
+            : <><Mail className="w-4 h-4 mr-1.5" /> Send preview to reps</>}
         </Button>
       </div>
     </div>
@@ -813,13 +953,13 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 function SendOption({
-  icon, title, desc, loading, onClick, recommended, danger,
+  icon, title, desc, selected, onSelect, recommended, danger,
 }: {
   icon: React.ReactNode
   title: string
   desc: string
-  loading: boolean
-  onClick: () => void
+  selected: boolean
+  onSelect: () => void
   recommended?: boolean
   danger?: boolean
 }) {
@@ -828,13 +968,15 @@ function SendOption({
     : danger
       ? 'border-red-200 hover:border-red-300 hover:bg-red-50/40'
       : 'border-gray-200 hover:bg-gray-50'
+  // Selection wins over the base accent: a navy ring marks the chosen card.
+  const selRing = selected ? 'ring-2 ring-[#03374f] border-[#03374f] bg-[#03374f]/5' : accent
   return (
-    <button type="button" onClick={onClick} disabled={loading}
-            className={`text-left rounded-xl border p-4 transition-all disabled:opacity-60 ${accent}`}>
+    <button type="button" onClick={onSelect} aria-pressed={selected}
+            className={`relative text-left rounded-xl border p-4 transition-all ${selRing}`}>
       <div className={`flex items-center gap-2 mb-2 ${
         recommended ? 'text-[#f26b2b]' : danger ? 'text-red-600' : 'text-[#03374f]'
       }`}>
-        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : icon}
+        {icon}
         <p className="font-semibold text-sm">{title}</p>
         {recommended && (
           <span className="ml-auto text-[10px] font-bold uppercase tracking-wide bg-[#f26b2b] text-white px-1.5 py-0.5 rounded">
@@ -843,6 +985,11 @@ function SendOption({
         )}
       </div>
       <p className="text-xs text-gray-500 leading-relaxed">{desc}</p>
+      {selected && !recommended && (
+        <span className="absolute top-2.5 right-2.5 text-[#03374f]">
+          <Check className="w-4 h-4" />
+        </span>
+      )}
     </button>
   )
 }

@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
 import { useTessa } from '@/contexts/TessaContext'
 import { MessageCircle, X, Send, FileText, Loader2, Sparkles, Upload, Trash2 } from 'lucide-react'
 
 export function TessaChatWidget() {
+  const pathname = usePathname()
   const { messages, isLoading, isOpen, openChat, closeChat, sendMessage, analyzePdf, clearHistory } = useTessa()
   const [input, setInput] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -92,6 +94,13 @@ export function TessaChatWidget() {
 
   // Filter out system messages for display
   const displayMessages = messages.filter(m => m.role !== 'system')
+
+  // Suppress the floating widget on admin routes — it's a fixed z-50
+  // bottom-right pill that overlaps admin action buttons. Hooks above run
+  // unconditionally; only the visible widget is gated. The TessaProvider
+  // (which wraps children in app/layout.tsx) stays mounted, so the public
+  // marketing site is unaffected.
+  if (pathname?.startsWith('/admin')) return null
 
   return (
     <>
