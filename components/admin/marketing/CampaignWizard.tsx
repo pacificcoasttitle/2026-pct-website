@@ -122,6 +122,12 @@ export function CampaignWizard({ reps, mailchimpServer, regions }: Props) {
   const [batchResult, setBatchResult] = useState<BatchResponse | null>(null)
   const [submitError, setSubmitError] = useState('')
 
+  /* ── Preview-to-reps (SendGrid side-channel) ────────────── */
+  // Separate loading + message state so the preview button never
+  // collides with the draft/schedule/send buttons.
+  const [sendingPreview, setSendingPreview] = useState(false)
+  const [previewMessage, setPreviewMessage] = useState('')
+
   /* ── Helpers ────────────────────────────────────────────── */
   const selectedTemplate = useMemo(
     () => templates?.find((t) => t.id === selectedTemplateId) || null,
@@ -221,6 +227,35 @@ export function CampaignWizard({ reps, mailchimpServer, regions }: Props) {
     }
   }
 
+  /* ── Send preview to reps (SendGrid, not Mailchimp) ────── */
+  async function sendPreviewToReps() {
+    if (!selectedTemplate) { setSubmitError('Select a template first.'); return }
+    if (!subject.trim()) { setSubmitError('Subject is required.'); return }
+
+    setSendingPreview(true); setSubmitError(''); setPreviewMessage('')
+    try {
+      const res = await fetch('/api/admin/marketing/campaigns/preview-to-reps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          templateId:   selectedTemplate.id,
+          subject,
+          heroImageUrl: heroImageUrl || null,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Preview send failed')
+      const parts = [`Preview sent to ${data.sent} ${data.sent === 1 ? 'rep' : 'reps'}`]
+      if (data.skipped_no_email > 0) parts.push(`${data.skipped_no_email} skipped (no email)`)
+      if (data.failed > 0) parts.push(`${data.failed} failed`)
+      setPreviewMessage(parts.join(' · '))
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Preview send failed')
+    } finally {
+      setSendingPreview(false)
+    }
+  }
+
   /* ── Cancel batch (success screen) ─────────────────────── */
   const [cancelling, setCancelling] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
@@ -250,6 +285,7 @@ export function CampaignWizard({ reps, mailchimpServer, regions }: Props) {
 
       {loadError && <InlineAlert kind="error" message={loadError} />}
       {submitError && <InlineAlert kind="error" message={submitError} onClose={() => setSubmitError('')} />}
+      {previewMessage && <InlineAlert kind="success" message={previewMessage} onClose={() => setPreviewMessage('')} />}
 
       {step === 1 && (
         <Step1
@@ -291,6 +327,8 @@ export function CampaignWizard({ reps, mailchimpServer, regions }: Props) {
           replyToMode={replyToMode} setReplyToMode={setReplyToMode}
           replyToGlobal={replyToGlobal} setReplyToGlobal={setReplyToGlobal}
           submitting={submitting}
+          sendingPreview={sendingPreview}
+          onSendPreview={sendPreviewToReps}
           onBack={() => setStep(2)}
           onDraft={() => submitBatch('draft')}
           onSchedule={() => submitBatch('schedule')}
@@ -587,6 +625,7 @@ function Step3({
   replyToMode, setReplyToMode,
   replyToGlobal, setReplyToGlobal,
   submitting,
+  sendingPreview, onSendPreview,
   onBack, onDraft, onSchedule, onSendNow,
 }: {
   template: Template
@@ -600,6 +639,8 @@ function Step3({
   replyToMode: 'rep' | 'global'; setReplyToMode: (v: 'rep' | 'global') => void
   replyToGlobal: string; setReplyToGlobal: (v: string) => void
   submitting: Action | null
+  sendingPreview: boolean
+  onSendPreview: () => void
   onBack: () => void
   onDraft: () => void
   onSchedule: () => void
@@ -739,8 +780,23 @@ function Step3({
       </div>
 
       <div className="flex items-center justify-between pt-1">
-        <Button variant="outline" onClick={onBack} disabled={submitting !== null}>
+        <Button variant="outline" onClick={onBack} disabled={submitting !== null || sendingPreview}>
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Back
+        </Button>
+
+        {/* Secondary action — SendGrid preview to the sales team. Visually
+            distinct from the three Mailchimp send cards above so it's not
+            confused with the real client send. */}
+        <Button
+          variant="outline"
+          onClick={onSendPreview}
+          disabled={!template || sendingPreview || submitting !== null}
+          className="border-[#03374f] text-[#03374f] hover:bg-[#03374f]/5"
+          title="Email this campaign piece to the sales team via SendGrid (not Mailchimp)"
+        >
+          {sendingPreview
+            ? <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Sending preview…</>
+            : <><Eye className="w-4 h-4 mr-1.5" /> Send preview to reps</>}
         </Button>
       </div>
     </div>

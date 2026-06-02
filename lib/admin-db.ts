@@ -216,6 +216,46 @@ export async function getEmployeeAdminBySlug(slug: string): Promise<AdminEmploye
   return res.rows[0] ?? null
 }
 
+export interface PreviewRecipientRep {
+  email: string
+  name:  string
+}
+
+/**
+ * Recipients for the "Send preview to reps" side-channel. Mirrors the
+ * Sales Reps admin page (/admin/team/employees), whose default view shows
+ * `active = true` employees (the status toggle defaults to 'active', no
+ * sales_manager / website_active requirement). We additionally require a
+ * usable email — reps the page would show but can't be emailed are
+ * partitioned out and counted as `skippedNoEmail` so the caller can report
+ * them.
+ */
+export async function getPreviewRecipientReps(): Promise<{
+  recipients:     PreviewRecipientRep[]
+  skippedNoEmail: number
+}> {
+  const db = getPool()
+  const res = await db.query(`
+    SELECT
+      TRIM(COALESCE(e.email, ''))                        AS email,
+      TRIM(e.first_name || ' ' || e.last_name)           AS name
+    FROM vcard_employees e
+    WHERE e.active = true
+    ORDER BY e.last_name ASC, e.first_name ASC
+  `)
+  const recipients: PreviewRecipientRep[] = []
+  let skippedNoEmail = 0
+  for (const row of res.rows as Array<{ email: string; name: string }>) {
+    const email = (row.email || '').trim()
+    if (!email) {
+      skippedNoEmail++
+      continue
+    }
+    recipients.push({ email, name: (row.name || '').trim() || email })
+  }
+  return { recipients, skippedNoEmail }
+}
+
 export interface EmployeeUpdatePayload {
   first_name?:              string
   last_name?:               string
