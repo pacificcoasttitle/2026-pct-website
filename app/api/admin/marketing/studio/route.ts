@@ -30,7 +30,10 @@ async function getActorUsername() {
   }
 }
 
-/* ─── Replace our {{REP_*}} merge tags with real data ─────────── */
+/* ─── Replace our {{rep_*}} merge tags with real data ─────────── *
+ * Token names match the shipped templates: lowercase, photo is
+ * {{rep_photo_url}} (not {{rep_photo}}). The `i` flag makes the match
+ * case-resilient; the photo token NAME fix is still required. */
 function replaceMergeTags(
   html: string,
   rep: {
@@ -42,11 +45,11 @@ function replaceMergeTags(
   }
 ): string {
   return html
-    .replace(/\{\{REP_NAME\}\}/g,  rep.name || '')
-    .replace(/\{\{REP_TITLE\}\}/g, rep.title || '')
-    .replace(/\{\{REP_EMAIL\}\}/g, rep.email || '')
-    .replace(/\{\{REP_PHONE\}\}/g, rep.phone || '')
-    .replace(/\{\{REP_PHOTO\}\}/g, rep.photo_url || '')
+    .replace(/\{\{rep_name\}\}/gi,      rep.name || '')
+    .replace(/\{\{rep_title\}\}/gi,     rep.title || '')
+    .replace(/\{\{rep_email\}\}/gi,     rep.email || '')
+    .replace(/\{\{rep_phone\}\}/gi,     rep.phone || '')
+    .replace(/\{\{rep_photo_url\}\}/gi, rep.photo_url || '')
 }
 
 /* ─── GET — templates + campaigns ─────────────────────────────── */

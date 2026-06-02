@@ -18,14 +18,22 @@ export interface MergeTagRep {
   photo_url: string | null
 }
 
-/** Replace {{REP_*}} merge tags with real rep data. */
+/**
+ * Replace {{rep_*}} merge tags with real rep data.
+ *
+ * Token names MUST match what the shipped templates actually use:
+ * lowercase, and the photo token is {{rep_photo_url}} (not {{rep_photo}}).
+ * The `i` flag makes the match case-resilient so a template author using
+ * {{REP_NAME}} also resolves — but the photo token NAME still has to be
+ * right (case-insensitivity does not fix rep_photo vs rep_photo_url).
+ */
 export function replaceMergeTags(html: string, rep: MergeTagRep): string {
   return html
-    .replace(/\{\{REP_NAME\}\}/g,  rep.name      || '')
-    .replace(/\{\{REP_TITLE\}\}/g, rep.title     || '')
-    .replace(/\{\{REP_EMAIL\}\}/g, rep.email     || '')
-    .replace(/\{\{REP_PHONE\}\}/g, rep.phone     || '')
-    .replace(/\{\{REP_PHOTO\}\}/g, rep.photo_url || '')
+    .replace(/\{\{rep_name\}\}/gi,      rep.name      || '')
+    .replace(/\{\{rep_title\}\}/gi,     rep.title     || '')
+    .replace(/\{\{rep_email\}\}/gi,     rep.email     || '')
+    .replace(/\{\{rep_phone\}\}/gi,     rep.phone     || '')
+    .replace(/\{\{rep_photo_url\}\}/gi, rep.photo_url || '')
 }
 
 /**
