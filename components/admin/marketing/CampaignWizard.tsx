@@ -57,7 +57,7 @@ interface BatchCampaignResult {
   repSlug:     string
   repName:     string | null
   success:     boolean
-  status:      'draft' | 'scheduled' | 'sent' | 'failed' | 'skipped'
+  status:      'draft' | 'scheduled' | 'sent' | 'cancelled' | 'failed' | 'skipped'
   campaignId?: string
   webId?:      string
   editUrl?:    string | null
@@ -309,6 +309,34 @@ export function CampaignWizard({ reps, mailchimpServer, regions }: Props) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Cancel failed')
       setCancelMessage(`${data.cancelled} cancelled · ${data.failed} failed · ${data.skipped} already settled.`)
+
+      // Refresh Step 4's frozen batchResult so the per-rep pills reflect
+      // the cancellation. The route returns per-campaign results keyed by
+      // rep_slug; flip ONLY the rows it reports as 'cancelled'. Rows that
+      // failed to cancel (still scheduled) or were skipped (already
+      // settled) keep their existing status — no blanket flip.
+      const results = Array.isArray(data.results)
+        ? (data.results as Array<{ rep_slug: string | null; status: string }>)
+        : []
+      const cancelledSlugs = new Set(
+        results
+          .filter((r) => r.status === 'cancelled' && r.rep_slug)
+          .map((r) => String(r.rep_slug)),
+      )
+      if (cancelledSlugs.size > 0) {
+        setBatchResult((prev) =>
+          prev
+            ? {
+                ...prev,
+                campaigns: prev.campaigns.map((c) =>
+                  cancelledSlugs.has(c.repSlug)
+                    ? { ...c, status: 'cancelled' as const }
+                    : c,
+                ),
+              }
+            : prev,
+        )
+      }
     } catch (e) {
       setCancelMessage(e instanceof Error ? e.message : 'Cancel failed')
     } finally {
