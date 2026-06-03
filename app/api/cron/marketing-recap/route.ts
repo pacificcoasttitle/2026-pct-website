@@ -22,7 +22,7 @@ import { NextResponse } from 'next/server'
 import { randomUUID } from 'node:crypto'
 
 import { verifyCronAuth } from '@/lib/cron-auth'
-import { createRecapDraft } from '@/lib/admin-db'
+import { createRecapDraft, createRepRecapDraft } from '@/lib/admin-db'
 import { buildMarketingRecapContext } from '@/lib/marketing-recap-data'
 import {
   MARKETING_RECAP_TEMPLATE,
@@ -92,12 +92,33 @@ export async function GET(request: Request) {
         `html_bytes=${htmlContent.length}`,
     )
 
+    // ── Additive rep "Week Ahead" draft (Phase 1) ─────────────────
+    // Reuses the SAME forward-looking context the manager draft was
+    // built from. Independently guarded: a failure here must NOT break
+    // the manager draft (already created above), so it's wrapped in its
+    // own try/catch and only logged.
+    let repDraftId: string | null = null
+    try {
+      const repDraft = await createRepRecapDraft(context, { created_by: 'cron@pct.com' })
+      repDraftId = repDraft.draft_id
+      console.log(
+        `[cron-recap] generated rep draft_id=${repDraftId} ` +
+          `week_ahead=${context.next_week_start}..${context.next_week_end} ` +
+          `upcoming=${context.upcoming_items.length}`,
+      )
+    } catch (repErr) {
+      console.error('[cron-recap] rep draft generation failed (manager draft unaffected)', {
+        error: repErr instanceof Error ? repErr.message : String(repErr),
+      })
+    }
+
     return NextResponse.json(
       {
         ok:               true,
         draft_id:         draft.draft_id,
         status:           draft.status,
         subject:          draft.subject,
+        rep_draft_id:     repDraftId,
         week_range_label: context.week_range_label,
         generated_at:     new Date().toISOString(),
       },

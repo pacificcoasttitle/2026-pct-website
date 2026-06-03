@@ -11,6 +11,12 @@ import {
   type RecurrencePattern,
 } from '@/lib/marketing-recurrence'
 import { ASSET_DELIVERY_HTML } from '@/lib/email-templates/asset-delivery'
+import {
+  REP_WEEK_AHEAD_TEMPLATE,
+  renderRepWeekAhead,
+  buildRepWeekAheadSubject,
+} from '@/lib/email-templates/rep-week-ahead'
+import type { MarketingRecapContext } from '@/types/marketing-recap'
 import { CORPORATE_STANDARD_HTML } from '@/lib/signature-templates/corporate-standard'
 import {
   HOLIDAY_GREETING_HTML,
@@ -2908,6 +2914,56 @@ export async function ensureMarketingRecapTables(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_recap_sends_status
       ON marketing_recap_sends (draft_id, send_status);
   `)
+
+  // ── 5. marketing_rep_recap_drafts ───────────────────────────────
+  // SEPARATE storage for the rep-facing "Week Ahead" email (Phase 1).
+  // Parallels marketing_recap_drafts (the manager draft) but is its own
+  // table so the working manager flow is never touched. Forward-only:
+  // week_start_date/week_end_date anchor the NEXT week (the manager
+  // table anchors the prior week). Status carries a CHECK constraint
+  // (TEXT-with-CHECK idiom used by the other status-bearing tables in
+  // this file) and adds 'cancelled' so a draft can be discarded.
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS marketing_rep_recap_drafts (
+      id               SERIAL PRIMARY KEY,
+      draft_id         TEXT NOT NULL,
+      week_start_date  DATE NOT NULL,
+      week_end_date    DATE NOT NULL,
+      status           TEXT NOT NULL DEFAULT 'draft',
+      subject          TEXT NOT NULL,
+      html_content     TEXT NOT NULL,
+      context_json     JSONB,
+      recipient_count  INTEGER     NOT NULL DEFAULT 0,
+      successful_sends INTEGER     NOT NULL DEFAULT 0,
+      failed_sends     INTEGER     NOT NULL DEFAULT 0,
+      sent_at          TIMESTAMPTZ,
+      error_summary    TEXT,
+      created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_by       TEXT,
+      updated_by       TEXT
+    );
+  `)
+  await ensureConstraint(
+    `ALTER TABLE marketing_rep_recap_drafts
+       DROP CONSTRAINT IF EXISTS marketing_rep_recap_drafts_status_check`,
+    `ALTER TABLE marketing_rep_recap_drafts
+       ADD CONSTRAINT marketing_rep_recap_drafts_status_check
+       CHECK (status IN ('draft','sending','sent','failed','cancelled'))`,
+    'marketing_rep_recap_drafts_status_check',
+  )
+  await db.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_rep_recap_drafts_draft_id
+      ON marketing_rep_recap_drafts (draft_id);
+  `)
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS idx_rep_recap_drafts_week_start
+      ON marketing_rep_recap_drafts (week_start_date DESC);
+  `)
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS idx_rep_recap_drafts_status
+      ON marketing_rep_recap_drafts (status);
+  `)
   // (Guard already set at the top — see the note there.)
 }
 
@@ -3634,6 +3690,138 @@ export async function updateRecapDraftStatus(
                 recipient_count, successful_sends, failed_sends,
                 sent_at::text, error_summary, is_test,
                 created_at::text, updated_at::text, created_by, updated_by`,
+    values,
+  )
+  return res.rows[0] || null
+}
+
+// ── Rep "Week Ahead" drafts (separate from the manager drafts) ────
+//
+// Backs the rep-facing weekly "What's Coming This Week" email. Storage
+// is fully SEPARATE from marketing_recap_drafts so the manager flow is
+// never touched. Forward-only: week_start/week_end anchor the NEXT week.
+
+export type RepRecapDraftStatus = 'draft' | 'sending' | 'sent' | 'failed' | 'cancelled'
+
+export interface RepRecapDraft {
+  id:               number
+  draft_id:         string
+  week_start_date:  string
+  week_end_date:    string
+  status:           RepRecapDraftStatus
+  subject:          string
+  html_content:     string
+  context_json:     unknown
+  recipient_count:  number
+  successful_sends: number
+  failed_sends:     number
+  sent_at:          string | null
+  error_summary:    string | null
+  created_at:       string
+  updated_at:       string
+  created_by:       string | null
+  updated_by:       string | null
+}
+
+const REP_RECAP_DRAFT_COLS = `
+  id, draft_id, week_start_date::text, week_end_date::text,
+  status, subject, html_content, context_json,
+  recipient_count, successful_sends, failed_sends,
+  sent_at::text, error_summary,
+  created_at::text, updated_at::text, created_by, updated_by`
+
+/**
+ * Renders the forward-only rep template against the already-computed
+ * forward-looking context and persists a new 'draft' row. Mirrors
+ * createRecapDraft's structure but renders internally (the rep subject
+ * + html are derived from the context, so the cron step is one call).
+ * The week anchor is the NEXT week (next_week_start/next_week_end).
+ */
+export async function createRepRecapDraft(
+  context: MarketingRecapContext,
+  opts:    { created_by?: string } = {},
+): Promise<RepRecapDraft> {
+  await ensureMarketingRecapTables()
+  const db          = getPool()
+  const draftId     = randomUUID()
+  const subject     = buildRepWeekAheadSubject(context)
+  const htmlContent = renderRepWeekAhead(REP_WEEK_AHEAD_TEMPLATE, context)
+  const createdBy   = opts.created_by ?? 'cron@pct.com'
+  const res = await db.query(
+    `INSERT INTO marketing_rep_recap_drafts
+       (draft_id, week_start_date, week_end_date, status, subject,
+        html_content, context_json, created_by, updated_by)
+     VALUES ($1, $2::date, $3::date, 'draft', $4,
+             $5, $6, $7, $7)
+     RETURNING ${REP_RECAP_DRAFT_COLS}`,
+    [
+      draftId,
+      context.next_week_start,
+      context.next_week_end,
+      subject,
+      htmlContent,
+      JSON.stringify(context),
+      createdBy,
+    ],
+  )
+  return res.rows[0]
+}
+
+export async function getRepRecapDraftByDraftId(draftId: string): Promise<RepRecapDraft | null> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT ${REP_RECAP_DRAFT_COLS}
+       FROM marketing_rep_recap_drafts
+      WHERE draft_id = $1
+      LIMIT 1`,
+    [draftId],
+  )
+  return res.rows[0] || null
+}
+
+export interface RepRecapDraftStatusUpdate {
+  successful_sends?: number
+  failed_sends?:     number
+  recipient_count?:  number
+  sent_at?:          string
+  error_summary?:    string
+  updated_by:        string
+}
+
+export async function updateRepRecapDraftStatus(
+  draftId: string,
+  status:  'sending' | 'sent' | 'failed' | 'cancelled',
+  updates: RepRecapDraftStatusUpdate,
+): Promise<RepRecapDraft | null> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+
+  const sets: string[]    = ['status = $1']
+  const values: unknown[] = [status]
+  let   idx               = 2
+  const push = (col: string, value: unknown, cast = '') => {
+    sets.push(`${col} = $${idx}${cast}`)
+    values.push(value)
+    idx++
+  }
+  if (updates.successful_sends !== undefined) push('successful_sends', updates.successful_sends)
+  if (updates.failed_sends     !== undefined) push('failed_sends',     updates.failed_sends)
+  if (updates.recipient_count  !== undefined) push('recipient_count',  updates.recipient_count)
+  if (updates.sent_at          !== undefined) push('sent_at',          updates.sent_at, '::timestamptz')
+  if (updates.error_summary    !== undefined) push('error_summary',    updates.error_summary)
+
+  sets.push('updated_at = NOW()')
+  sets.push(`updated_by = $${idx}`)
+  values.push(updates.updated_by)
+  idx++
+  values.push(draftId)
+
+  const res = await db.query(
+    `UPDATE marketing_rep_recap_drafts
+        SET ${sets.join(', ')}
+      WHERE draft_id = $${idx}
+      RETURNING ${REP_RECAP_DRAFT_COLS}`,
     values,
   )
   return res.rows[0] || null
