@@ -122,7 +122,10 @@ export async function POST(
   }
 
   // Claim the draft with a conditional UPDATE so concurrent requests
-  // can't both fan out.
+  // can't both fan out. Claimable statuses are ONLY 'draft' and
+  // 'failed' (retry-from-failed is intended). 'cancelled' stays dead
+  // (a cancelled draft must never send), and 'sending'/'sent' are
+  // already-in-flight / done.
   const db    = getPool()
   const claim = await db.query(
     `UPDATE marketing_rep_recap_drafts
@@ -130,120 +133,146 @@ export async function POST(
             updated_at = NOW(),
             updated_by = $1
       WHERE draft_id   = $2
-        AND status NOT IN ('sending', 'sent')
+        AND status IN ('draft', 'failed')
       RETURNING draft_id`,
     [adminEmail, draftId],
   )
   if (claim.rowCount === 0) {
-    if (draft.status === 'sent') {
-      return NextResponse.json(
-        { error: 'Draft already sent. Generate a new draft to resend.' },
-        { status: 409 },
-      )
-    }
-    if (draft.status === 'sending') {
-      return NextResponse.json(
-        { error: 'Another send is already in progress for this draft.' },
-        { status: 409 },
-      )
-    }
     return NextResponse.json(
-      { error: 'Could not claim draft for send' },
+      {
+        error:
+          'Draft is not in a sendable state (cancelled, already sending, or already sent).',
+        status: draft.status,
+      },
       { status: 409 },
     )
   }
 
-  // Resolve the active-rep roster (after the claim so failures release
-  // it via a 'failed' status update).
-  const { recipients, skippedNoEmail } = await getPreviewRecipientReps()
-  if (recipients.length === 0) {
-    await updateRepRecapDraftStatus(draftId, 'failed', {
-      error_summary: 'No emailable reps in the roster',
-      updated_by:    adminEmail,
-    })
-    return NextResponse.json(
-      { error: 'No emailable reps in the roster', skipped_no_email: skippedNoEmail },
-      { status: 400 },
-    )
-  }
+  // ── Post-claim pipeline ─────────────────────────────────────────
+  // The draft is now 'sending'. EVERYTHING below must be wrapped so no
+  // throw can strand the row in 'sending' (which the claim predicate
+  // would then block from retry — bricked). On any unexpected throw we
+  // best-effort mark the draft 'failed' (guarded) so it stays
+  // re-claimable, then surface a 500.
+  try {
+    // Resolve the active-rep roster.
+    const { recipients, skippedNoEmail } = await getPreviewRecipientReps()
+    if (recipients.length === 0) {
+      await updateRepRecapDraftStatus(draftId, 'failed', {
+        error_summary: 'No emailable reps in the roster',
+        updated_by:    adminEmail,
+      })
+      return NextResponse.json(
+        { error: 'No emailable reps in the roster', skipped_no_email: skippedNoEmail },
+        { status: 400 },
+      )
+    }
 
-  const sg = getSg()
-  if (!sg) {
-    await updateRepRecapDraftStatus(draftId, 'failed', {
-      error_summary: 'SendGrid not configured',
-      updated_by:    adminEmail,
-    })
-    return NextResponse.json(
-      { error: 'Email service not configured' },
-      { status: 500 },
-    )
-  }
+    const sg = getSg()
+    if (!sg) {
+      await updateRepRecapDraftStatus(draftId, 'failed', {
+        error_summary: 'SendGrid not configured',
+        updated_by:    adminEmail,
+      })
+      return NextResponse.json(
+        { error: 'Email service not configured' },
+        { status: 500 },
+      )
+    }
 
-  // Per-rep fan-out (no per-rep cc — see the batch-level record copy below).
-  const outcomes: Outcome[] = await runWithConcurrency(recipients, CONCURRENCY, async (rep) => {
+    // Per-rep fan-out (no per-rep cc — see the batch-level record copy below).
+    const outcomes: Outcome[] = await runWithConcurrency(recipients, CONCURRENCY, async (rep) => {
+      try {
+        await sg.send({
+          to:      rep.email,
+          from:    FROM,
+          subject: draft.subject,
+          html:    draft.html_content,
+        })
+        return { email: rep.email, ok: true }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error(`[rep-recap-send] send failed for ${rep.email}:`, msg)
+        return { email: rep.email, ok: false, error: msg.slice(0, 500) }
+      }
+    })
+
+    const successful_sends = outcomes.filter((o) => o.ok).length
+    const failed_sends     = outcomes.length - successful_sends
+    const failures = outcomes
+      .filter((o) => !o.ok)
+      .map((o) => ({ email: o.email, error: o.error || 'Unknown error' }))
+
+    // Single batch-level record copy to marketing (NOT a per-rep cc).
+    // Best-effort: a failure here doesn't change the rep send outcome.
     try {
       await sg.send({
-        to:      rep.email,
+        to:      RECORD_CC,
         from:    FROM,
-        subject: draft.subject,
+        subject: `[Rep copy] ${draft.subject}`,
         html:    draft.html_content,
       })
-      return { email: rep.email, ok: true }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      console.error(`[rep-recap-send] send failed for ${rep.email}:`, msg)
-      return { email: rep.email, ok: false, error: msg.slice(0, 500) }
+      console.error('[rep-recap-send] record copy to marketing failed', {
+        error: err instanceof Error ? err.message : String(err),
+      })
     }
-  })
 
-  const successful_sends = outcomes.filter((o) => o.ok).length
-  const failed_sends     = outcomes.length - successful_sends
-  const failures = outcomes
-    .filter((o) => !o.ok)
-    .map((o) => ({ email: o.email, error: o.error || 'Unknown error' }))
+    // All-failed (every recipient errored, no throw) → 'failed';
+    // partial success (at least one delivered) → 'sent'.
+    const finalStatus: 'sent' | 'failed' =
+      successful_sends === 0 && failed_sends > 0 ? 'failed' : 'sent'
 
-  // Single batch-level record copy to marketing (NOT a per-rep cc).
-  // Best-effort: a failure here doesn't change the rep send outcome.
-  try {
-    await sg.send({
-      to:      RECORD_CC,
-      from:    FROM,
-      subject: `[Rep copy] ${draft.subject}`,
-      html:    draft.html_content,
-    })
-  } catch (err) {
-    console.error('[rep-recap-send] record copy to marketing failed', {
-      error: err instanceof Error ? err.message : String(err),
-    })
-  }
-
-  const finalStatus: 'sent' | 'failed' =
-    successful_sends === 0 && failed_sends > 0 ? 'failed' : 'sent'
-
-  await updateRepRecapDraftStatus(draftId, finalStatus, {
-    recipient_count:  recipients.length,
-    successful_sends,
-    failed_sends,
-    sent_at:          new Date().toISOString(),
-    updated_by:       adminEmail,
-  })
-
-  console.log(
-    `[rep-recap-send] admin=${adminEmail} draft=${draftId} ` +
-      `recipients=${recipients.length} successful=${successful_sends} ` +
-      `failed=${failed_sends} skipped_no_email=${skippedNoEmail} status=${finalStatus}`,
-  )
-
-  return NextResponse.json(
-    {
-      draft_id:         draftId,
-      status:           finalStatus,
+    await updateRepRecapDraftStatus(draftId, finalStatus, {
       recipient_count:  recipients.length,
       successful_sends,
       failed_sends,
-      skipped_no_email: skippedNoEmail,
-      failures,
-    },
-    { status: 200 },
-  )
+      sent_at:          new Date().toISOString(),
+      updated_by:       adminEmail,
+    })
+
+    console.log(
+      `[rep-recap-send] admin=${adminEmail} draft=${draftId} ` +
+        `recipients=${recipients.length} successful=${successful_sends} ` +
+        `failed=${failed_sends} skipped_no_email=${skippedNoEmail} status=${finalStatus}`,
+    )
+
+    return NextResponse.json(
+      {
+        draft_id:         draftId,
+        status:           finalStatus,
+        recipient_count:  recipients.length,
+        successful_sends,
+        failed_sends,
+        skipped_no_email: skippedNoEmail,
+        failures,
+      },
+      { status: 200 },
+    )
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err)
+    console.error('[rep-recap-send] post-claim failure', {
+      admin:    adminEmail,
+      draft_id: draftId,
+      error:    errorMessage,
+    })
+    // Best-effort: release the 'sending' claim by marking 'failed' so
+    // the draft is never stuck and stays re-claimable. Guarded so a
+    // failed status-write can't mask the original error.
+    try {
+      await updateRepRecapDraftStatus(draftId, 'failed', {
+        error_summary: errorMessage.slice(0, 500),
+        updated_by:    adminEmail,
+      })
+    } catch (updateErr) {
+      console.error('[rep-recap-send] failed to mark draft failed after post-claim error', {
+        draft_id: draftId,
+        error:    updateErr instanceof Error ? updateErr.message : String(updateErr),
+      })
+    }
+    return NextResponse.json(
+      { error: 'Send failed', detail: errorMessage.slice(0, 500) },
+      { status: 500 },
+    )
+  }
 }
