@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ExternalLink, Loader2, RefreshCw, AlertCircle, BarChart3 } from 'lucide-react'
+import { ExternalLink, Loader2, RefreshCw, AlertCircle, BarChart3, Mail } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -55,6 +57,10 @@ export function BatchDetail({ batchId }: { batchId: string }) {
 
   const [confirmStats, setConfirmStats] = useState(false)
   const [sendingStats, setSendingStats] = useState(false)
+
+  const [sampleOpen, setSampleOpen] = useState(false)
+  const [sampleEmail, setSampleEmail] = useState('')
+  const [sendingSample, setSendingSample] = useState(false)
 
   async function load() {
     setLoading(true); setError('')
@@ -112,6 +118,32 @@ export function BatchDetail({ batchId }: { batchId: string }) {
     }
   }
 
+  const sampleEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sampleEmail.trim())
+
+  async function sendSample() {
+    setSendingSample(true); setError(''); setInfo('')
+    try {
+      const res = await fetch(`/api/admin/marketing/campaigns/${batchId}/send-stats-sample`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email: sampleEmail.trim() }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Sample send failed')
+      if (data.reason === 'no_sendable_stats' || data.sent === 0) {
+        setInfo('No sent campaign with stats yet — nothing to sample.')
+      } else {
+        const rep = data.sampled_rep ? ` (using ${data.sampled_rep}'s stats)` : ''
+        setInfo(`Sample sent to ${sampleEmail.trim()}${rep}.`)
+      }
+      setSampleOpen(false)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Sample send failed')
+    } finally {
+      setSendingSample(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-3">
@@ -165,6 +197,16 @@ export function BatchDetail({ batchId }: { batchId: string }) {
                 {sendingStats
                   ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Sending…</>
                   : <><BarChart3 className="w-3.5 h-3.5 mr-1" /> Send stats to reps</>}
+              </Button>
+            )}
+            {hasSent && (
+              <Button variant="outline" size="sm"
+                      onClick={() => { setError(''); setInfo(''); setSampleOpen(true) }}
+                      disabled={sendingSample}
+                      className="text-[#03374f] border-gray-300 hover:bg-gray-50">
+                {sendingSample
+                  ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Sending…</>
+                  : <><Mail className="w-3.5 h-3.5 mr-1" /> Send sample…</>}
               </Button>
             )}
             {hasScheduled && (
@@ -234,6 +276,38 @@ export function BatchDetail({ batchId }: { batchId: string }) {
           </table>
         </div>
       </Card>
+
+      <AlertDialog open={sampleOpen} onOpenChange={(open) => { if (!sendingSample) setSampleOpen(open) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send a sample stats email</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sends a sample to one address using the first rep&apos;s real numbers, so you can eyeball it before sending to all reps. Subject is prefixed &ldquo;[SAMPLE]&rdquo;.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-1.5 py-1">
+            <Label htmlFor="sample-email" className="text-xs text-gray-500">Send sample to</Label>
+            <Input
+              id="sample-email"
+              type="email"
+              placeholder="you@pct.com"
+              value={sampleEmail}
+              onChange={(e) => setSampleEmail(e.target.value)}
+              autoComplete="email"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={sendingSample}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); sendSample() }}
+              disabled={sendingSample || !sampleEmailValid}
+              className="bg-[#f26b2b] hover:bg-[#d8551b] text-white">
+              {sendingSample && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
+              {sendingSample ? 'Sending…' : 'Send sample'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={confirmStats} onOpenChange={(open) => { if (!sendingStats) setConfirmStats(open) }}>
         <AlertDialogContent>
