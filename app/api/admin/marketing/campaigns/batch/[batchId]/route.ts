@@ -5,11 +5,33 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/admin-auth'
-import { getBatchCampaigns } from '@/lib/admin-db'
+import { getBatchCampaigns, updateCampaignStatus } from '@/lib/admin-db'
+import { getCampaignReport } from '@/lib/marketing-mailchimp'
 
 export const runtime = 'nodejs'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+// Reconcile concurrency cap (matches send-stats / preview-to-reps).
+const RECONCILE_CONCURRENCY = 5
+
+async function runWithConcurrency<TIn, TOut>(
+  items:  TIn[],
+  limit:  number,
+  worker: (item: TIn, index: number) => Promise<TOut>,
+): Promise<TOut[]> {
+  const results: TOut[] = new Array(items.length)
+  let cursor = 0
+  const workerCount = Math.max(1, Math.min(limit, items.length))
+  const runners = Array.from({ length: workerCount }, async () => {
+    while (cursor < items.length) {
+      const idx = cursor++
+      results[idx] = await worker(items[idx], idx)
+    }
+  })
+  await Promise.all(runners)
+  return results
+}
 
 export async function GET(
   _req: NextRequest,
@@ -27,6 +49,47 @@ export async function GET(
   const rows = await getBatchCampaigns(batchId)
   if (rows.length === 0) {
     return NextResponse.json({ error: 'Batch not found' }, { status: 404 })
+  }
+
+  // ── Self-heal stale 'scheduled' rows ─────────────────────────────
+  // Mailchimp doesn't push status back to us, so a scheduled campaign
+  // that has actually sent stays 'scheduled' locally forever. On view,
+  // reconcile candidate rows against the Mailchimp report (the oracle
+  // for "did it send?"). Candidates are EXACTLY: status='scheduled' AND
+  // scheduled_at in the past AND a non-null mailchimp_campaign_id —
+  // nothing else hits Mailchimp. Concurrency-capped at 5, per-row
+  // failure-isolated, and self-extinguishing (a healed row is no longer
+  // a candidate). The in-memory rows are mutated so counts below (and
+  // the response) reflect reality without a re-fetch.
+  const now = Date.now()
+  const candidates = rows.filter(
+    (r) =>
+      r.status === 'scheduled' &&
+      !!r.mailchimp_campaign_id &&
+      !!r.scheduled_at &&
+      new Date(r.scheduled_at).getTime() < now,
+  )
+  if (candidates.length > 0) {
+    await runWithConcurrency(candidates, RECONCILE_CONCURRENCY, async (row) => {
+      try {
+        const report = await getCampaignReport(row.mailchimp_campaign_id as string)
+        if (!report) return // unsent / no report yet → leave 'scheduled'
+        const sentAtIso = new Date(report.sendTime).toISOString()
+        // Idempotent: the status='scheduled' guard makes a concurrent
+        // view that already healed this row a harmless no-op.
+        await updateCampaignStatus(row.id, 'sent', {
+          sentAt:          sentAtIso,
+          onlyIfScheduled: true,
+        })
+        row.status = 'sent' // reflect in the response + counts below
+      } catch (err) {
+        // One bad report must never abort the reconcile or the route.
+        console.warn('[batch-detail] reconcile skipped a row', {
+          campaign_id: row.mailchimp_campaign_id,
+          error:       err instanceof Error ? err.message : String(err),
+        })
+      }
+    })
   }
 
   const server = process.env.MAILCHIMP_SERVER

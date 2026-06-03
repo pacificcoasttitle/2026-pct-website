@@ -652,7 +652,8 @@ async function ensureExtraTables() {
     ALTER TABLE vcard_email_campaigns
       ADD COLUMN IF NOT EXISTS batch_id UUID,
       ADD COLUMN IF NOT EXISTS rep_slug TEXT,
-      ADD COLUMN IF NOT EXISTS reply_to_mode TEXT DEFAULT 'global';
+      ADD COLUMN IF NOT EXISTS reply_to_mode TEXT DEFAULT 'global',
+      ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ;
   `)
   await db.query(`
     CREATE INDEX IF NOT EXISTS idx_vcard_email_campaigns_batch_id
@@ -1316,15 +1317,44 @@ export async function getBatchCampaigns(batchId: string): Promise<BatchCampaignR
   return res.rows
 }
 
-/** Update one campaign's status (e.g. flip 'scheduled' → 'cancelled'). */
+/**
+ * Update one campaign's status (e.g. flip 'scheduled' → 'cancelled').
+ *
+ * Optional `opts`:
+ *   - sentAt: ISO string to also stamp into sent_at (used by the
+ *     self-heal sent-transition). Pass new Date(...).toISOString() —
+ *     never a raw JS Date.
+ *   - onlyIfScheduled: when true, the UPDATE only applies to rows still
+ *     in 'scheduled' status (idempotent no-op once another view already
+ *     healed the row). Used by the self-heal reconcile.
+ *
+ * The default two-arg call (e.g. the cancel flow's
+ * updateCampaignStatus(id, 'cancelled')) is unchanged: no sent_at, no
+ * status guard.
+ */
 export async function updateCampaignStatus(
   id: number,
   status: string,
+  opts: { sentAt?: string; onlyIfScheduled?: boolean } = {},
 ): Promise<void> {
   await ensureExtraTables()
+  const sets: string[]    = ['status = $1']
+  const values: unknown[] = [status]
+  let   idx               = 2
+  if (opts.sentAt !== undefined) {
+    sets.push(`sent_at = $${idx}::timestamptz`)
+    values.push(opts.sentAt)
+    idx++
+  }
+  const where: string[] = [`id = $${idx}`]
+  values.push(id)
+  idx++
+  if (opts.onlyIfScheduled) {
+    where.push(`status = 'scheduled'`)
+  }
   await getPool().query(
-    `UPDATE vcard_email_campaigns SET status = $1 WHERE id = $2`,
-    [status, id],
+    `UPDATE vcard_email_campaigns SET ${sets.join(', ')} WHERE ${where.join(' AND ')}`,
+    values,
   )
 }
 
