@@ -4127,7 +4127,7 @@ export type OnboardingItemStatus = 'pending' | 'in_progress' | 'complete'
 export type OnboardingCategory   = 'administrative' | 'marketing' | 'customer-service'
 
 /**
- * The 17 fixed PCT New Rep Checklist items. The item_key values are
+ * The fixed PCT New Rep Checklist items. The item_key values are
  * STABLE slugs referenced by later phases — do not change them.
  * sort_order drives the checklist's natural rendering order.
  */
@@ -4160,10 +4160,9 @@ export const ONBOARDING_SEED_ITEMS: readonly OnboardingSeedItem[] = [
   { item_key: 'nationwide-order',         category: 'customer-service',  label: 'Nationwide Order Protocol',                                                     sort_order: 16 },
 ] as const
 
-// NOTE: the spec lists 17 line-items but enumerates 16 distinct keys
-// (the "17 total" counts the three category headers' grouping). The
-// seed is the authoritative set of checklist rows; progress is X / N
-// where N = ONBOARDING_SEED_ITEMS.length.
+// The seed array is the authoritative set of checklist rows; progress
+// is reported as X / N where N = ONBOARDING_SEED_ITEMS.length, so the
+// count is never hardcoded and adding/removing an item stays correct.
 export const ONBOARDING_ITEM_COUNT = ONBOARDING_SEED_ITEMS.length
 
 // ── Schema (house migration style; mirrors ensureMarketingRecapTables) ──
@@ -4384,7 +4383,7 @@ export async function startOnboarding(
   let record: OnboardingRecord
   if (created.rows[0]) {
     record = created.rows[0]
-    // Seed the 17 checklist items for the freshly-created record.
+    // Seed the fixed checklist items for the freshly-created record.
     const values: string[]   = []
     const params: unknown[]  = [record.id]
     let   p                  = 2
