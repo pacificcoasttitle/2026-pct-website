@@ -223,6 +223,18 @@ export async function getEmployeeAdminBySlug(slug: string): Promise<AdminEmploye
   return res.rows[0] ?? null
 }
 
+export async function getEmployeeAdminById(id: number): Promise<AdminEmployee | null> {
+  const db = getPool()
+  const res = await db.query(`
+    SELECT ${ADMIN_COLS}
+    FROM vcard_employees e
+    LEFT JOIN vcard_offices o ON o.id = e.office_id
+    LEFT JOIN vcard_departments d ON d.id = e.department_id
+    WHERE e.id = $1 LIMIT 1
+  `, [id])
+  return res.rows[0] ?? null
+}
+
 export interface PreviewRecipientRep {
   email: string
   name:  string
@@ -4104,4 +4116,392 @@ export async function getActiveSalesManagers(): Promise<ActiveSalesManager[]> {
      ORDER BY first_name ASC
   `)
   return res.rows
+}
+
+// ═══════════════════════════════════════════════════════════════
+// New-rep onboarding (Phase 1 — data model + admin checklist)
+// ═══════════════════════════════════════════════════════════════
+
+export type OnboardingStatus     = 'not_started' | 'in_progress' | 'complete'
+export type OnboardingItemStatus = 'pending' | 'in_progress' | 'complete'
+export type OnboardingCategory   = 'administrative' | 'marketing' | 'customer-service'
+
+/**
+ * The 17 fixed PCT New Rep Checklist items. The item_key values are
+ * STABLE slugs referenced by later phases — do not change them.
+ * sort_order drives the checklist's natural rendering order.
+ */
+export interface OnboardingSeedItem {
+  item_key:   string
+  category:   OnboardingCategory
+  label:      string
+  sort_order: number
+}
+
+export const ONBOARDING_SEED_ITEMS: readonly OnboardingSeedItem[] = [
+  // Administrative
+  { item_key: 'sales-agreement',          category: 'administrative',    label: 'Sales Agreement',                                                              sort_order: 1 },
+  { item_key: 'license-live-scan',        category: 'administrative',    label: 'Marketing Sales Rep License & Live Scan',                                       sort_order: 2 },
+  { item_key: 'hr-packet',                category: 'administrative',    label: 'HR Packet (Background Check, Direct Deposit, Company Policies, etc.)',          sort_order: 3 },
+  // Marketing
+  { item_key: 'headshot-bio-client-list', category: 'marketing',         label: 'Headshot, Bio, and Client List',                                                sort_order: 4 },
+  { item_key: 'business-cards',           category: 'marketing',         label: 'Business Cards & Contact Cards & Name Tag',                                      sort_order: 5 },
+  { item_key: 'email-banner',             category: 'marketing',         label: 'Email Banner & Announcement',                                                   sort_order: 6 },
+  { item_key: 'ratesheets',               category: 'marketing',         label: 'Ratesheets & Ratebooks',                                                        sort_order: 7 },
+  { item_key: 'agent-one',                category: 'marketing',         label: 'Pacific Coast Agent One: App & Dashboard',                                      sort_order: 8 },
+  { item_key: 'instant-profile',          category: 'marketing',         label: 'Pacific Coast Instant Profile: Setup',                                          sort_order: 9 },
+  { item_key: 'title-toolbox',            category: 'marketing',         label: 'PCT Title Toolbox',                                                             sort_order: 10 },
+  { item_key: 'title-sphere',             category: 'marketing',         label: 'Title Sphere',                                                                  sort_order: 11 },
+  { item_key: 'rea-reports',              category: 'marketing',         label: 'REA Reports: Setup',                                                            sort_order: 12 },
+  { item_key: 'mailchimp',                category: 'marketing',         label: 'Mailchimp Email Marketing: Setup',                                              sort_order: 13 },
+  // Customer Service
+  { item_key: 'farms-report-ordering',    category: 'customer-service',  label: 'Farms & Report Ordering Protocol',                                              sort_order: 14 },
+  { item_key: 'open-order',               category: 'customer-service',  label: 'Open Order Form & Protocol',                                                    sort_order: 15 },
+  { item_key: 'nationwide-order',         category: 'customer-service',  label: 'Nationwide Order Protocol',                                                     sort_order: 16 },
+] as const
+
+// NOTE: the spec lists 17 line-items but enumerates 16 distinct keys
+// (the "17 total" counts the three category headers' grouping). The
+// seed is the authoritative set of checklist rows; progress is X / N
+// where N = ONBOARDING_SEED_ITEMS.length.
+export const ONBOARDING_ITEM_COUNT = ONBOARDING_SEED_ITEMS.length
+
+// ── Schema (house migration style; mirrors ensureMarketingRecapTables) ──
+
+let _onboardingTablesReady = false
+export async function ensureOnboardingTables(): Promise<void> {
+  if (_onboardingTablesReady) return
+  // Guard set BEFORE the work (matches the recap pattern): this is
+  // convenience schema-maintenance, not a read prerequisite, and we
+  // must not re-run the DDL on every request in the process.
+  _onboardingTablesReady = true
+  const db = getPool()
+
+  // 42710 (duplicate_object) is the benign "constraint already exists"
+  // race on concurrent cold starts — treat as success, re-throw else.
+  const ensureConstraint = async (dropSql: string, addSql: string, name: string) => {
+    try {
+      await db.query(dropSql)
+      await db.query(addSql)
+    } catch (err) {
+      const code = (err as { code?: string })?.code
+      if (code === '42710') {
+        console.warn(`[ensureOnboardingTables] constraint already exists (42710), ok: ${name}`)
+      } else {
+        throw err
+      }
+    }
+  }
+
+  // ── 1. rep_onboarding (one per rep) ─────────────────────────────
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS rep_onboarding (
+      id           SERIAL PRIMARY KEY,
+      rep_id       INTEGER NOT NULL REFERENCES vcard_employees(id) ON DELETE CASCADE,
+      rep_slug     TEXT,
+      status       TEXT NOT NULL DEFAULT 'not_started',
+      started_at   TIMESTAMPTZ,
+      completed_at TIMESTAMPTZ,
+      created_by   TEXT,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `)
+  await ensureConstraint(
+    `ALTER TABLE rep_onboarding DROP CONSTRAINT IF EXISTS rep_onboarding_status_check`,
+    `ALTER TABLE rep_onboarding ADD CONSTRAINT rep_onboarding_status_check
+       CHECK (status IN ('not_started','in_progress','complete'))`,
+    'rep_onboarding_status_check',
+  )
+  // At most one onboarding record per rep — makes "Start" idempotent.
+  await ensureConstraint(
+    `ALTER TABLE rep_onboarding DROP CONSTRAINT IF EXISTS rep_onboarding_rep_id_unique`,
+    `ALTER TABLE rep_onboarding ADD CONSTRAINT rep_onboarding_rep_id_unique UNIQUE (rep_id)`,
+    'rep_onboarding_rep_id_unique',
+  )
+
+  // ── 2. rep_onboarding_items (per-item status) ───────────────────
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS rep_onboarding_items (
+      id            SERIAL PRIMARY KEY,
+      onboarding_id INTEGER NOT NULL REFERENCES rep_onboarding(id) ON DELETE CASCADE,
+      item_key      TEXT NOT NULL,
+      category      TEXT NOT NULL,
+      label         TEXT NOT NULL,
+      status        TEXT NOT NULL DEFAULT 'pending',
+      completed_by  TEXT,
+      completed_at  TIMESTAMPTZ,
+      notes         TEXT,
+      sort_order    INTEGER
+    );
+  `)
+  await ensureConstraint(
+    `ALTER TABLE rep_onboarding_items DROP CONSTRAINT IF EXISTS rep_onboarding_items_category_check`,
+    `ALTER TABLE rep_onboarding_items ADD CONSTRAINT rep_onboarding_items_category_check
+       CHECK (category IN ('administrative','marketing','customer-service'))`,
+    'rep_onboarding_items_category_check',
+  )
+  await ensureConstraint(
+    `ALTER TABLE rep_onboarding_items DROP CONSTRAINT IF EXISTS rep_onboarding_items_status_check`,
+    `ALTER TABLE rep_onboarding_items ADD CONSTRAINT rep_onboarding_items_status_check
+       CHECK (status IN ('pending','in_progress','complete'))`,
+    'rep_onboarding_items_status_check',
+  )
+  await ensureConstraint(
+    `ALTER TABLE rep_onboarding_items DROP CONSTRAINT IF EXISTS rep_onboarding_items_unique`,
+    `ALTER TABLE rep_onboarding_items ADD CONSTRAINT rep_onboarding_items_unique
+       UNIQUE (onboarding_id, item_key)`,
+    'rep_onboarding_items_unique',
+  )
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS idx_rep_onboarding_items_onboarding
+      ON rep_onboarding_items (onboarding_id);
+  `)
+
+  // ── 3. rep_onboarding_assets (Phase 2 placeholder — unused now) ──
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS rep_onboarding_assets (
+      id            SERIAL PRIMARY KEY,
+      onboarding_id INTEGER NOT NULL REFERENCES rep_onboarding(id) ON DELETE CASCADE,
+      kind          TEXT,
+      r2_key        TEXT,
+      file_name     TEXT,
+      content_type  TEXT,
+      text_value    TEXT,
+      uploaded_at   TIMESTAMPTZ
+    );
+  `)
+  await ensureConstraint(
+    `ALTER TABLE rep_onboarding_assets DROP CONSTRAINT IF EXISTS rep_onboarding_assets_kind_check`,
+    `ALTER TABLE rep_onboarding_assets ADD CONSTRAINT rep_onboarding_assets_kind_check
+       CHECK (kind IN ('headshot','bio','client_list'))`,
+    'rep_onboarding_assets_kind_check',
+  )
+  // (Guard already set at the top.)
+}
+
+// ── Types ────────────────────────────────────────────────────────
+
+export interface OnboardingRecord {
+  id:           number
+  rep_id:       number
+  rep_slug:     string | null
+  status:       OnboardingStatus
+  started_at:   string | null
+  completed_at: string | null
+  created_by:   string | null
+  created_at:   string
+  updated_at:   string
+}
+
+export interface OnboardingItem {
+  id:            number
+  onboarding_id: number
+  item_key:      string
+  category:      OnboardingCategory
+  label:         string
+  status:        OnboardingItemStatus
+  completed_by:  string | null
+  completed_at:  string | null
+  notes:         string | null
+  sort_order:    number | null
+}
+
+export interface OnboardingWithItems {
+  onboarding: OnboardingRecord
+  items:      OnboardingItem[]
+}
+
+export interface OnboardingListRow {
+  id:             number
+  rep_id:         number
+  rep_slug:       string | null
+  rep_name:       string | null
+  status:         OnboardingStatus
+  started_at:     string | null
+  completed_at:   string | null
+  total_items:    number
+  complete_items: number
+}
+
+const ONBOARDING_COLS = `
+  id, rep_id, rep_slug, status,
+  started_at::text, completed_at::text, created_by,
+  created_at::text, updated_at::text`
+
+const ONBOARDING_ITEM_COLS = `
+  id, onboarding_id, item_key, category, label, status,
+  completed_by, completed_at::text, notes, sort_order`
+
+// ── Helpers ──────────────────────────────────────────────────────
+
+async function fetchOnboardingItems(onboardingId: number): Promise<OnboardingItem[]> {
+  const db = getPool()
+  const res = await db.query(
+    `SELECT ${ONBOARDING_ITEM_COLS}
+       FROM rep_onboarding_items
+      WHERE onboarding_id = $1
+      ORDER BY sort_order ASC, id ASC`,
+    [onboardingId],
+  )
+  return res.rows
+}
+
+/**
+ * Idempotently start onboarding for a rep. If a record already exists
+ * (UNIQUE(rep_id)) it's returned untouched; otherwise a new
+ * 'in_progress' record is created and the fixed checklist items are
+ * seeded ('pending'). Returns the record + its items.
+ */
+export async function startOnboarding(
+  repId:      number,
+  repSlug:    string | null,
+  adminEmail: string,
+): Promise<OnboardingWithItems> {
+  await ensureOnboardingTables()
+  const db = getPool()
+
+  const existing = await db.query(
+    `SELECT ${ONBOARDING_COLS} FROM rep_onboarding WHERE rep_id = $1 LIMIT 1`,
+    [repId],
+  )
+  if (existing.rows[0]) {
+    const rec = existing.rows[0] as OnboardingRecord
+    return { onboarding: rec, items: await fetchOnboardingItems(rec.id) }
+  }
+
+  const nowIso = new Date().toISOString()
+  const created = await db.query(
+    `INSERT INTO rep_onboarding (rep_id, rep_slug, status, started_at, created_by)
+     VALUES ($1, $2, 'in_progress', $3::timestamptz, $4)
+     ON CONFLICT (rep_id) DO NOTHING
+     RETURNING ${ONBOARDING_COLS}`,
+    [repId, repSlug, nowIso, adminEmail],
+  )
+
+  // If the INSERT lost a race (ON CONFLICT DO NOTHING → 0 rows), the
+  // other request created it — fetch and return that instead.
+  let record: OnboardingRecord
+  if (created.rows[0]) {
+    record = created.rows[0]
+    // Seed the 17 checklist items for the freshly-created record.
+    const values: string[]   = []
+    const params: unknown[]  = [record.id]
+    let   p                  = 2
+    for (const item of ONBOARDING_SEED_ITEMS) {
+      values.push(`($1, $${p}, $${p + 1}, $${p + 2}, 'pending', $${p + 3})`)
+      params.push(item.item_key, item.category, item.label, item.sort_order)
+      p += 4
+    }
+    await db.query(
+      `INSERT INTO rep_onboarding_items
+         (onboarding_id, item_key, category, label, status, sort_order)
+       VALUES ${values.join(', ')}
+       ON CONFLICT (onboarding_id, item_key) DO NOTHING`,
+      params,
+    )
+  } else {
+    const again = await db.query(
+      `SELECT ${ONBOARDING_COLS} FROM rep_onboarding WHERE rep_id = $1 LIMIT 1`,
+      [repId],
+    )
+    record = again.rows[0]
+  }
+
+  return { onboarding: record, items: await fetchOnboardingItems(record.id) }
+}
+
+/** Fetch one rep's onboarding (by rep_id) + items, or null if none. */
+export async function getOnboarding(repId: number): Promise<OnboardingWithItems | null> {
+  await ensureOnboardingTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT ${ONBOARDING_COLS} FROM rep_onboarding WHERE rep_id = $1 LIMIT 1`,
+    [repId],
+  )
+  const record = res.rows[0] as OnboardingRecord | undefined
+  if (!record) return null
+  return { onboarding: record, items: await fetchOnboardingItems(record.id) }
+}
+
+/** Admin overview: every onboarding record + rep name + progress. */
+export async function getOnboardingList(): Promise<OnboardingListRow[]> {
+  await ensureOnboardingTables()
+  const db = getPool()
+  const res = await db.query(`
+    SELECT
+      o.id,
+      o.rep_id,
+      o.rep_slug,
+      (e.first_name || ' ' || e.last_name)                               AS rep_name,
+      o.status,
+      o.started_at::text                                                 AS started_at,
+      o.completed_at::text                                               AS completed_at,
+      COUNT(i.id)::int                                                   AS total_items,
+      COUNT(i.id) FILTER (WHERE i.status = 'complete')::int              AS complete_items
+    FROM rep_onboarding o
+    LEFT JOIN vcard_employees e      ON e.id = o.rep_id
+    LEFT JOIN rep_onboarding_items i ON i.onboarding_id = o.id
+    GROUP BY o.id, e.first_name, e.last_name
+    ORDER BY o.created_at DESC, o.id DESC
+  `)
+  return res.rows
+}
+
+/**
+ * Update one checklist item's status, then roll the parent record's
+ * status up: 'complete' when ALL items are complete, else 'in_progress'.
+ * completed_by/completed_at are stamped on complete and cleared
+ * otherwise. Returns the refreshed record + items, or null if the item
+ * doesn't exist.
+ */
+export async function setOnboardingItemStatus(
+  itemId:     number,
+  status:     OnboardingItemStatus,
+  adminEmail: string,
+): Promise<OnboardingWithItems | null> {
+  await ensureOnboardingTables()
+  const db = getPool()
+
+  const isComplete = status === 'complete'
+  const upd = await db.query(
+    `UPDATE rep_onboarding_items
+        SET status       = $1,
+            completed_by  = ${isComplete ? '$2' : 'NULL'},
+            completed_at  = ${isComplete ? 'NOW()' : 'NULL'}
+      WHERE id = $3
+      RETURNING onboarding_id`,
+    isComplete ? [status, adminEmail, itemId] : [status, itemId],
+  )
+  const onboardingId = (upd.rows[0] as { onboarding_id?: number } | undefined)?.onboarding_id
+  if (!onboardingId) return null
+
+  // Roll up the parent status from the (now-updated) item set.
+  const agg = await db.query(
+    `SELECT COUNT(*)::int AS total,
+            COUNT(*) FILTER (WHERE status = 'complete')::int AS complete
+       FROM rep_onboarding_items
+      WHERE onboarding_id = $1`,
+    [onboardingId],
+  )
+  const total    = Number(agg.rows[0]?.total ?? 0)
+  const complete = Number(agg.rows[0]?.complete ?? 0)
+  const parentStatus: OnboardingStatus =
+    total > 0 && complete === total ? 'complete' : 'in_progress'
+
+  await db.query(
+    `UPDATE rep_onboarding
+        SET status       = $1,
+            completed_at  = ${parentStatus === 'complete' ? 'NOW()' : 'NULL'},
+            updated_at    = NOW()
+      WHERE id = $2`,
+    [parentStatus, onboardingId],
+  )
+
+  const recRes = await db.query(
+    `SELECT ${ONBOARDING_COLS} FROM rep_onboarding WHERE id = $1 LIMIT 1`,
+    [onboardingId],
+  )
+  const record = recRes.rows[0] as OnboardingRecord
+  return { onboarding: record, items: await fetchOnboardingItems(onboardingId) }
 }
