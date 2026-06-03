@@ -834,8 +834,12 @@ function Step3({
             <Input id="cn-preheader" value={preheader} onChange={(e) => setPreheader(e.target.value)} className="mt-1" />
           </div>
           <div>
-            <Label htmlFor="cn-from" className="text-xs text-gray-500">From Name</Label>
-            <Input id="cn-from" value={fromName} onChange={(e) => setFromName(e.target.value)} className="mt-1" />
+            <Label htmlFor="cn-from" className="text-xs text-gray-500">Brand suffix (after rep name)</Label>
+            <Input id="cn-from" value={fromName} onChange={(e) => setFromName(e.target.value)} className="mt-1"
+                   placeholder="Pacific Coast Title" />
+            <p className="text-[11px] text-gray-400 mt-1">
+              Each rep&apos;s campaign sends as <span className="font-mono text-[#03374f]">{(selectedReps[0]?.name || 'Rep Name')}{fromName.trim() ? ` | ${fromName.trim()}` : ''}</span>. Leave blank to send as just the rep&apos;s name.
+            </p>
           </div>
           <div>
             <Label className="text-xs text-gray-500">Reply-To</Label>

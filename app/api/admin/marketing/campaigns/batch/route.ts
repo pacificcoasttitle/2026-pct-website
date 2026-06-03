@@ -130,7 +130,11 @@ export async function POST(req: NextRequest) {
   const subject       = String(body.subject ?? '').trim()
   const preheader     = String(body.preheader ?? '').trim()
   const heroImageUrl  = String(body.heroImageUrl ?? '').trim()
-  const fromName      = String(body.fromName ?? 'Pacific Coast Title').trim()
+  // The `fromName` body field now carries the BRAND SUFFIX (not the full
+  // from-name). Per-rep from-name is composed in the loop as
+  // "{rep.name} | {brandSuffix}". Body key kept as `fromName` to avoid a
+  // wider wire rename; only its meaning changed.
+  const brandSuffix   = String(body.fromName ?? 'Pacific Coast Title').trim()
   const replyToMode   = body.replyToMode === 'rep' ? 'rep' : 'global'
   const replyToGlobal = String(body.replyToGlobal ?? '').trim()
   const namePrefix    = String(body.campaignNamePrefix ?? '').trim()
@@ -194,6 +198,14 @@ export async function POST(req: NextRequest) {
         ? (rep.email?.trim() || replyToGlobal)
         : replyToGlobal
 
+      // Per-rep from-name: "{rep.name} | {brandSuffix}". Falls back to the
+      // suffix alone when a rep has no name, and to 'Pacific Coast Title'
+      // if both are empty — never blank.
+      const repName = (rep.name || '').trim()
+      const perRepFromName = repName
+        ? (brandSuffix ? `${repName} | ${brandSuffix}` : repName)
+        : (brandSuffix || 'Pacific Coast Title')
+
       // Apply merge tags + hero image.
       let html = template.html_content
       html = replaceMergeTags(html, rep)
@@ -209,7 +221,7 @@ export async function POST(req: NextRequest) {
         subject,
         preheader,
         campaignName,
-        fromName,
+        fromName: perRepFromName,
         replyTo,
         html,
       })
