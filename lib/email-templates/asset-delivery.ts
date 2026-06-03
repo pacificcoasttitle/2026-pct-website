@@ -27,11 +27,7 @@ import Mustache from 'mustache'
 //   {{ai_intro_paragraph}}    — 2-3 sentence AI-generated personalised intro
 //   {{asset_preview_cards}}   — HTML for all attached files, built server-side
 //                                via renderAssetPreviewCard() below
-//   {{use_case_1}} … {{use_case_4}}
 //   {{questions_callout}}     — optional callout text override
-//
-// Conditional sections (rendered only when truthy):
-//   {{#use_case_4}}…{{/use_case_4}}   — 4th use case is optional
 //
 // The send endpoint should:
 //   1. Build {{asset_preview_cards}} by mapping attachments through
@@ -152,10 +148,6 @@ export function renderAssetPreviewCard(input: AssetPreviewCardInput): string {
 //     campaign_name:        batch.campaign_name,
 //     ai_intro_paragraph:   aiIntroHtmlSafe,
 //     asset_preview_cards:  attachments.map(renderAssetPreviewCard).join(''),
-//     use_case_1:           '…',
-//     use_case_2:           '…',
-//     use_case_3:           '…',
-//     use_case_4:           '…' // omit/falsy → 4th row not rendered
 //     questions_callout:    'Need changes? Reply to this email.',
 //   })
 
@@ -222,67 +214,6 @@ td    { mso-line-height-rule: exactly; }
               {{{asset_preview_cards}}}
             </div>
 
-            <!-- "How to Use This" warm-neutral box -->
-            <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%" bgcolor="${WARM_NEUTRAL}" style="background-color:${WARM_NEUTRAL};border-radius:8px;margin-bottom:24px;">
-              <tr>
-                <td style="padding:24px;font-family:${FONT_STACK};">
-                  <p style="font-family:${FONT_STACK};font-size:13px;font-weight:bold;color:${NAVY};text-transform:uppercase;letter-spacing:0.1em;margin:0 0 16px 0;line-height:1.3;">
-                    How to Use This
-                  </p>
-
-                  <!-- Use case 1 -->
-                  <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%" style="margin-bottom:10px;">
-                    <tr>
-                      <td width="20" valign="top" style="padding-top:2px;">
-                        <span style="display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;background-color:${NAVY};color:${WHITE};font-family:${FONT_STACK};font-size:11px;font-weight:bold;border-radius:10px;">&#10003;</span>
-                      </td>
-                      <td valign="top" style="padding-left:10px;font-family:${FONT_STACK};font-size:14px;color:${TEXT_DARK};line-height:1.5;">
-                        {{use_case_1}}
-                      </td>
-                    </tr>
-                  </table>
-
-                  <!-- Use case 2 -->
-                  <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%" style="margin-bottom:10px;">
-                    <tr>
-                      <td width="20" valign="top" style="padding-top:2px;">
-                        <span style="display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;background-color:${NAVY};color:${WHITE};font-family:${FONT_STACK};font-size:11px;font-weight:bold;border-radius:10px;">&#10003;</span>
-                      </td>
-                      <td valign="top" style="padding-left:10px;font-family:${FONT_STACK};font-size:14px;color:${TEXT_DARK};line-height:1.5;">
-                        {{use_case_2}}
-                      </td>
-                    </tr>
-                  </table>
-
-                  <!-- Use case 3 -->
-                  <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%" style="margin-bottom:10px;">
-                    <tr>
-                      <td width="20" valign="top" style="padding-top:2px;">
-                        <span style="display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;background-color:${NAVY};color:${WHITE};font-family:${FONT_STACK};font-size:11px;font-weight:bold;border-radius:10px;">&#10003;</span>
-                      </td>
-                      <td valign="top" style="padding-left:10px;font-family:${FONT_STACK};font-size:14px;color:${TEXT_DARK};line-height:1.5;">
-                        {{use_case_3}}
-                      </td>
-                    </tr>
-                  </table>
-
-                  {{#use_case_4}}
-                  <!-- Use case 4 (optional) -->
-                  <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%" style="margin-bottom:0;">
-                    <tr>
-                      <td width="20" valign="top" style="padding-top:2px;">
-                        <span style="display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;background-color:${NAVY};color:${WHITE};font-family:${FONT_STACK};font-size:11px;font-weight:bold;border-radius:10px;">&#10003;</span>
-                      </td>
-                      <td valign="top" style="padding-left:10px;font-family:${FONT_STACK};font-size:14px;color:${TEXT_DARK};line-height:1.5;">
-                        {{use_case_4}}
-                      </td>
-                    </tr>
-                  </table>
-                  {{/use_case_4}}
-                </td>
-              </tr>
-            </table>
-
             <!-- Orange callout: "Questions?" -->
             <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%" bgcolor="${ORANGE_TINT}" style="background-color:${ORANGE_TINT};border-left:4px solid ${ORANGE};border-radius:0 6px 6px 0;margin:24px 0;">
               <tr>
@@ -346,10 +277,6 @@ td    { mso-line-height-rule: exactly; }
 
 // Defaults that the send endpoint can spread into the Mustache context.
 export const ASSET_DELIVERY_DEFAULTS = {
-  use_case_1:        'Forward to clients in active escrow',
-  use_case_2:        'Post on Instagram and LinkedIn',
-  use_case_3:        'Include in your weekly client emails',
-  use_case_4:        null,
   questions_callout: 'Need changes or a different version? Reply to this email and the marketing team will help.',
 } as const
 

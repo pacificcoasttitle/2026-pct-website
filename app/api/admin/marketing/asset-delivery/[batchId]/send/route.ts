@@ -322,10 +322,6 @@ async function sendOneRep(
       campaign_name:       ctx.campaignName,
       ai_intro_paragraph:  intro,
       asset_preview_cards: cardsHtml,
-      use_case_1:          ASSET_DELIVERY_DEFAULTS.use_case_1,
-      use_case_2:          ASSET_DELIVERY_DEFAULTS.use_case_2,
-      use_case_3:          ASSET_DELIVERY_DEFAULTS.use_case_3,
-      use_case_4:          ASSET_DELIVERY_DEFAULTS.use_case_4,
       questions_callout:   ASSET_DELIVERY_DEFAULTS.questions_callout,
     })
 
