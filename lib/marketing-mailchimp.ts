@@ -139,3 +139,96 @@ export async function createMailchimpCampaign(
     editUrl: webId ? `https://${server}.admin.mailchimp.com/campaigns/edit?id=${webId}` : null,
   }
 }
+
+// ───── Per-campaign report reader (GET /reports/{campaign_id}) ─────
+//
+// Thin reader for Mailchimp's report endpoint, which is keyed by the
+// MAILCHIMP campaign id. The report exists iff Mailchimp actually sent
+// the campaign — independent of our LOCAL status (which can go stale).
+// So callers TRUST this reader: a non-null return means "sent, here are
+// the numbers"; null means "no report / not sent yet → skip this rep".
+
+export interface CampaignReport {
+  campaignId:   string
+  campaignTitle: string
+  subjectLine:  string
+  sendTime:     string          // ISO; empty/absent → treated as "no report"
+  emailsSent:   number
+  opensTotal:   number
+  uniqueOpens:  number
+  openRate:     number          // fraction 0..1 (Mailchimp's open_rate)
+  clicksTotal:  number
+  uniqueClicks: number
+  clickRate:    number          // fraction 0..1
+  bounces:      number          // hard + soft
+  unsubscribed: number
+}
+
+/**
+ * Fetch + shape one campaign's Mailchimp report. Returns null on a 404,
+ * any non-2xx, a network/parse error, OR an unsent/empty report (no
+ * send_time) — so a single missing report never throws and never aborts
+ * a batch-wide send. The caller skips that rep on null.
+ *
+ * Field paths mapped from Mailchimp's GET /3.0/reports/{campaign_id}:
+ *   emails_sent, send_time, opens.{opens_total,unique_opens,open_rate},
+ *   clicks.{clicks_total,unique_clicks,click_rate},
+ *   bounces.{hard_bounces,soft_bounces}, unsubscribed,
+ *   campaign_title, subject_line.
+ */
+export async function getCampaignReport(campaignId: string): Promise<CampaignReport | null> {
+  const apiKey = process.env.MAILCHIMP_API_KEY
+  const server = process.env.MAILCHIMP_SERVER
+  if (!apiKey || !server || !campaignId) return null
+
+  try {
+    const res = await fetch(
+      `https://${server}.api.mailchimp.com/3.0/reports/${encodeURIComponent(campaignId)}`,
+      { headers: { Authorization: mailchimpAuthHeader(apiKey) } },
+    )
+    if (!res.ok) {
+      // 404 = no report (campaign not sent / doesn't exist). Any other
+      // non-2xx is logged and treated as "no report" so the batch send
+      // continues for the other reps.
+      if (res.status !== 404) {
+        console.warn(`[getCampaignReport] ${campaignId} → HTTP ${res.status}`)
+      }
+      return null
+    }
+    const d = (await res.json().catch(() => null)) as Record<string, unknown> | null
+    if (!d) return null
+
+    const sendTime = String(d.send_time ?? '')
+    // No send_time → the campaign hasn't actually sent yet; skip it.
+    if (!sendTime) return null
+
+    const opens   = (d.opens   ?? {}) as Record<string, unknown>
+    const clicks  = (d.clicks  ?? {}) as Record<string, unknown>
+    const bounces = (d.bounces ?? {}) as Record<string, unknown>
+    const num = (v: unknown) => {
+      const n = Number(v)
+      return Number.isFinite(n) ? n : 0
+    }
+
+    return {
+      campaignId,
+      campaignTitle: String(d.campaign_title ?? ''),
+      subjectLine:   String(d.subject_line ?? ''),
+      sendTime,
+      emailsSent:    num(d.emails_sent),
+      opensTotal:    num(opens.opens_total),
+      uniqueOpens:   num(opens.unique_opens),
+      openRate:      num(opens.open_rate),
+      clicksTotal:   num(clicks.clicks_total),
+      uniqueClicks:  num(clicks.unique_clicks),
+      clickRate:     num(clicks.click_rate),
+      bounces:       num(bounces.hard_bounces) + num(bounces.soft_bounces),
+      unsubscribed:  num(d.unsubscribed),
+    }
+  } catch (err) {
+    console.warn(`[getCampaignReport] ${campaignId} fetch failed`, {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return null
+  }
+}

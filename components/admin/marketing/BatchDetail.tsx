@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ExternalLink, Loader2, RefreshCw, AlertCircle } from 'lucide-react'
+import { ExternalLink, Loader2, RefreshCw, AlertCircle, BarChart3 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -53,6 +53,9 @@ export function BatchDetail({ batchId }: { batchId: string }) {
   const [confirmCancel, setConfirmCancel] = useState(false)
   const [cancelling, setCancelling] = useState(false)
 
+  const [confirmStats, setConfirmStats] = useState(false)
+  const [sendingStats, setSendingStats] = useState(false)
+
   async function load() {
     setLoading(true); setError('')
     try {
@@ -83,6 +86,32 @@ export function BatchDetail({ batchId }: { batchId: string }) {
     }
   }
 
+  async function sendStats() {
+    setSendingStats(true); setError(''); setInfo('')
+    try {
+      const res = await fetch(`/api/admin/marketing/campaigns/${batchId}/send-stats`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Send stats failed')
+      const sent    = data.sent    ?? 0
+      const failed  = data.failed  ?? 0
+      const skipped = data.skipped ?? 0
+      let summary = `Stats sent to ${sent} rep${sent === 1 ? '' : 's'}.`
+      if (failed > 0) summary += ` ${failed} failed.`
+      if (skipped > 0) {
+        const reasons: string[] = []
+        if (data.skipped_no_report      > 0) reasons.push(`${data.skipped_no_report} no report yet`)
+        if (data.skipped_no_campaign_id > 0) reasons.push(`${data.skipped_no_campaign_id} never pushed`)
+        if (data.skipped_no_email       > 0) reasons.push(`${data.skipped_no_email} no email`)
+        summary += ` ${skipped} skipped${reasons.length ? ` (${reasons.join(', ')})` : ''}.`
+      }
+      setInfo(summary)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Send stats failed')
+    } finally {
+      setSendingStats(false); setConfirmStats(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-3">
@@ -102,6 +131,7 @@ export function BatchDetail({ batchId }: { batchId: string }) {
   }
 
   const hasScheduled = batch.scheduled > 0
+  const hasSent      = batch.sent > 0
 
   return (
     <div className="space-y-5">
@@ -127,6 +157,16 @@ export function BatchDetail({ batchId }: { batchId: string }) {
             <Button variant="outline" size="sm" onClick={load}>
               <RefreshCw className="w-3.5 h-3.5 mr-1" /> Refresh
             </Button>
+            {hasSent && (
+              <Button variant="outline" size="sm"
+                      onClick={() => { setError(''); setInfo(''); setConfirmStats(true) }}
+                      disabled={sendingStats}
+                      className="text-[#03374f] border-[#f26b2b]/40 hover:bg-[#f26b2b]/10">
+                {sendingStats
+                  ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Sending…</>
+                  : <><BarChart3 className="w-3.5 h-3.5 mr-1" /> Send stats to reps</>}
+              </Button>
+            )}
             {hasScheduled && (
               <Button variant="outline" size="sm"
                       onClick={() => setConfirmCancel(true)} disabled={cancelling}
@@ -194,6 +234,27 @@ export function BatchDetail({ batchId }: { batchId: string }) {
           </table>
         </div>
       </Card>
+
+      <AlertDialog open={confirmStats} onOpenChange={(open) => { if (!sendingStats) setConfirmStats(open) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send each rep their campaign stats?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Each rep with a sent campaign in this batch gets an email with their own campaign&apos;s performance (opens, clicks, bounces, unsubscribes). Stats are an early snapshot &ldquo;as of today&rdquo; and keep updating for a few days after send. Reps with no report yet are skipped.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={sendingStats}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); sendStats() }}
+              disabled={sendingStats}
+              className="bg-[#f26b2b] hover:bg-[#d8551b] text-white">
+              {sendingStats && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
+              {sendingStats ? 'Sending…' : 'Send stats to reps'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
         <AlertDialogContent>
