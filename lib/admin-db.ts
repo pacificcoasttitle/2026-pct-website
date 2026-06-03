@@ -17,6 +17,7 @@ import {
   buildRepWeekAheadSubject,
 } from '@/lib/email-templates/rep-week-ahead'
 import type { MarketingRecapContext } from '@/types/marketing-recap'
+import { getCampaignReport } from '@/lib/marketing-mailchimp'
 import { CORPORATE_STANDARD_HTML } from '@/lib/signature-templates/corporate-standard'
 import {
   HOLIDAY_GREETING_HTML,
@@ -1216,6 +1217,81 @@ export interface EmailCampaignBatchSummary {
  * Fetch batches plus optional non-batch tail (older single-campaign rows).
  * Returns `hasMore` so the caller can paginate.
  */
+// Bounded reconcile cap — the hard ceiling on Mailchimp report calls
+// per history-list load (see reconcileScheduledBatchRows).
+const HISTORY_HEAL_CALL_CAP   = 30
+const HISTORY_HEAL_CONCURRENCY = 5
+
+/** Minimal concurrency worker pool (matches the send routes' shape). */
+async function runReconcileConcurrency<TIn>(
+  items:  TIn[],
+  limit:  number,
+  worker: (item: TIn) => Promise<void>,
+): Promise<void> {
+  let cursor = 0
+  const workerCount = Math.max(1, Math.min(limit, items.length))
+  const runners = Array.from({ length: workerCount }, async () => {
+    while (cursor < items.length) {
+      const idx = cursor++
+      await worker(items[idx])
+    }
+  })
+  await Promise.all(runners)
+}
+
+/**
+ * Best-effort self-heal of stale 'scheduled' rows for the history list.
+ *
+ * Mailchimp doesn't push status back, so scheduled campaigns it has
+ * already sent stay 'scheduled' locally. The list pills come from a SQL
+ * aggregate (no per-row array to mutate like the detail heal), so we
+ * reconcile the underlying rows in the DB FIRST, then the existing
+ * aggregate reflects reality.
+ *
+ * HARD-BOUNDED so it never hammers Mailchimp or blocks the list:
+ *   - PAGE-SCOPED: only candidates within the supplied page batch ids.
+ *   - HARD CAP: at most HISTORY_HEAL_CALL_CAP (30) candidates per load.
+ *   - CONCURRENCY: HISTORY_HEAL_CONCURRENCY (5).
+ *   - SELF-EXTINGUISHING: healed rows leave the candidate set.
+ *   - PER-ROW ISOLATED: one report failure skips that row only.
+ * The caller wraps this in try/catch so any unexpected failure falls
+ * through to the aggregate (the list still renders).
+ */
+async function reconcileScheduledBatchRows(pageBatchIds: string[]): Promise<void> {
+  if (pageBatchIds.length === 0) return
+  const db = getPool()
+  const candRes = await db.query(
+    `SELECT id, mailchimp_campaign_id
+       FROM vcard_email_campaigns
+      WHERE status = 'scheduled'
+        AND scheduled_at < NOW()
+        AND mailchimp_campaign_id IS NOT NULL
+        AND batch_id = ANY($1::uuid[])
+      ORDER BY scheduled_at DESC
+      LIMIT ${HISTORY_HEAL_CALL_CAP}`,
+    [pageBatchIds],
+  )
+  const candidates = candRes.rows as Array<{ id: number; mailchimp_campaign_id: string }>
+  if (candidates.length === 0) return
+
+  await runReconcileConcurrency(candidates, HISTORY_HEAL_CONCURRENCY, async (row) => {
+    try {
+      const report = await getCampaignReport(row.mailchimp_campaign_id)
+      if (!report) return // unsent / no report yet → leave 'scheduled'
+      await updateCampaignStatus(row.id, 'sent', {
+        sentAt:          new Date(report.sendTime).toISOString(),
+        onlyIfScheduled: true, // idempotent — concurrent heal is a no-op
+      })
+    } catch (err) {
+      // Per-row isolation: one bad report never aborts the reconcile.
+      console.warn('[history-list] reconcile skipped a row', {
+        campaign_id: row.mailchimp_campaign_id,
+        error:       err instanceof Error ? err.message : String(err),
+      })
+    }
+  })
+}
+
 export async function getEmailCampaignBatches(
   opts: { limit?: number; offset?: number; includeNonBatch?: boolean } = {},
 ): Promise<{ batches: EmailCampaignBatchSummary[]; hasMore: boolean }> {
@@ -1223,6 +1299,31 @@ export async function getEmailCampaignBatches(
   const db = getPool()
   const limit  = Math.max(1, Math.min(opts.limit  ?? 50, 200))
   const offset = Math.max(0, opts.offset ?? 0)
+
+  // ── Best-effort self-heal BEFORE the aggregate ──────────────────
+  // Determine the visible page's batch ids (same ordering/limit/offset
+  // as the aggregate), reconcile their stale 'scheduled' rows, THEN run
+  // the unchanged aggregate so pills reflect reality. Wrapped so any
+  // failure falls through to the aggregate — the list still renders.
+  try {
+    const pageIdsRes = await db.query(
+      `SELECT batch_id::text AS batch_id
+         FROM vcard_email_campaigns
+        WHERE batch_id IS NOT NULL
+        GROUP BY batch_id
+        ORDER BY MIN(created_at) DESC
+        LIMIT $1 OFFSET $2`,
+      [limit, offset],
+    )
+    const pageBatchIds = (pageIdsRes.rows as Array<{ batch_id: string }>)
+      .map((r) => r.batch_id)
+      .filter(Boolean)
+    await reconcileScheduledBatchRows(pageBatchIds)
+  } catch (err) {
+    console.warn('[history-list] self-heal reconcile failed (list still renders)', {
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
 
   // Fetch limit+1 to detect whether there are more batches.
   const batchRes = await db.query(`
