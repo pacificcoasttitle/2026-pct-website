@@ -3767,6 +3767,35 @@ export async function createRepRecapDraft(
   return res.rows[0]
 }
 
+export interface RepRecapDraftQueryOpts {
+  status?: RepRecapDraftStatus
+  limit?:  number
+}
+
+/** Recent rep "week ahead" drafts, newest first. Parallels getRecapDrafts. */
+export async function getRepRecapDrafts(opts: RepRecapDraftQueryOpts = {}): Promise<RepRecapDraft[]> {
+  await ensureMarketingRecapTables()
+  const db = getPool()
+  const limit  = Math.max(1, Math.min(opts.limit ?? 20, 200))
+  const where: string[]   = []
+  const values: unknown[] = []
+  if (opts.status) {
+    where.push(`status = $${values.length + 1}`)
+    values.push(opts.status)
+  }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
+  values.push(limit)
+  const res = await db.query(
+    `SELECT ${REP_RECAP_DRAFT_COLS}
+       FROM marketing_rep_recap_drafts
+       ${whereSql}
+       ORDER BY week_start_date DESC, id DESC
+       LIMIT $${values.length}`,
+    values,
+  )
+  return res.rows
+}
+
 export async function getRepRecapDraftByDraftId(draftId: string): Promise<RepRecapDraft | null> {
   await ensureMarketingRecapTables()
   const db = getPool()

@@ -10,8 +10,9 @@
 import Link from 'next/link'
 import { ArrowLeft, Newspaper, Users, CalendarClock, ChevronRight } from 'lucide-react'
 import { Card } from '@/components/ui/card'
-import { getRecapDrafts, type RecapDraft } from '@/lib/admin-db'
+import { getRecapDrafts, getRepRecapDrafts, type RecapDraft, type RepRecapDraft } from '@/lib/admin-db'
 import { DraftsList } from '@/components/admin/marketing-recap/DraftsList'
+import { RepWeekAheadPanel } from '@/components/admin/marketing-recap/RepWeekAheadPanel'
 
 export const metadata = { title: 'Marketing Recap | PCT Team Admin' }
 export const dynamic  = 'force-dynamic'
@@ -27,6 +28,16 @@ export default async function MarketingRecapHubPage() {
   } catch (err) {
     console.warn('[marketing-recap-hub] failed to load drafts', err)
     listError = 'Could not load drafts. Try refreshing the page.'
+  }
+
+  // Latest rep "week ahead" draft (Phase 2). Independent of the manager
+  // drafts above — a fetch failure here must not break the manager list.
+  let latestRepDraft: RepRecapDraft | null = null
+  try {
+    const repDrafts = await getRepRecapDrafts({ limit: 1 })
+    latestRepDraft = repDrafts[0] ?? null
+  } catch (err) {
+    console.warn('[marketing-recap-hub] failed to load rep draft', err)
   }
 
   return (
@@ -63,8 +74,12 @@ export default async function MarketingRecapHubPage() {
         />
       </div>
 
-      {/* ── Recent drafts ───────────────────────────────────────── */}
+      {/* ── Manager Recap drafts ────────────────────────────────── */}
       <DraftsList initialDrafts={initialDrafts} initialError={listError} />
+
+      {/* ── Rep Week-Ahead draft (separate audience: ~all reps) ───── */}
+      <div className="pt-2 border-t border-gray-200" />
+      <RepWeekAheadPanel initialDraft={latestRepDraft} />
     </div>
   )
 }
