@@ -420,6 +420,11 @@ export function CalendarView({
   // after the per-item form/dialog has closed (e.g. a delete from the
   // confirm dialog). Renders inside the day-detail Dialog header.
   const [dayOpError,    setDayOpError]    = useState('')
+  // Id of the item whose ship-toggle PATCH is in flight (disables that
+  // toggle so a double-click can't fire two PATCHes). The optimistic
+  // update in patchItemFields flips the pill immediately and rolls back
+  // on failure, so this is purely a re-entrancy guard.
+  const [togglingShipId, setTogglingShipId] = useState<number | null>(null)
 
   /* ── Drag-to-reschedule state (G+3) ──────────────────────── */
   // `draggingItemId` styles the source chip during the drag.
@@ -871,6 +876,29 @@ export function CalendarView({
     await reconcileAfterMutation()
   }
 
+  /* ── Mark-shipped toggle (day-detail per-item) ───────────── */
+  // Two-way planned ↔ shipped, partial { status } PATCH via the shared
+  // helper (optimistic + rollback + reconcile → live pill/completion
+  // refresh). Never touches 'cancelled' items — callers guard on that.
+  async function toggleShipped(it: UpcomingItem) {
+    const status = coerceStatus(it.status)
+    if (status === 'cancelled') return
+    const newStatus = status === 'shipped' ? 'planned' : 'shipped'
+    setDayOpError('')
+    setTogglingShipId(it.id)
+    try {
+      const result = await patchItemFields(
+        it,
+        (existing) => ({ ...existing, status: newStatus }),
+        { status: newStatus },
+        newStatus === 'shipped' ? 'Could not mark as shipped' : 'Could not mark as planned',
+      )
+      if (!result.ok) setDayOpError(result.error)
+    } finally {
+      setTogglingShipId(null)
+    }
+  }
+
   /* ── Open day dialog ────────────────────────────────────── */
   const dayItems = openDayISO ? (itemsByDate.get(openDayISO) ?? []) : []
   const openDayLabel = useMemo(() => {
@@ -1300,11 +1328,28 @@ export function CalendarView({
                         {it.title}
                       </div>
                       <div className="flex items-center gap-1.5 flex-shrink-0">
-                        {shipped && (
-                          <span className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-green-50 text-green-700 border border-green-100">
-                            <Check className="w-2.5 h-2.5" />
-                            Shipped
-                          </span>
+                        {/* Two-way ship toggle IS the shipped indicator
+                            (replaces the old static pill so the two can't
+                            desync). Hidden on cancelled items. */}
+                        {!cancelled && (
+                          <button
+                            type="button"
+                            onClick={() => toggleShipped(it)}
+                            disabled={togglingShipId === it.id}
+                            aria-pressed={shipped}
+                            title={shipped ? 'Shipped — click to mark as planned' : 'Mark as shipped'}
+                            aria-label={shipped ? `Mark ${it.title} as planned` : `Mark ${it.title} as shipped`}
+                            className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold border transition-colors disabled:opacity-50 focus:outline-none focus:ring-1 focus:ring-[#03374f]/40 ${
+                              shipped
+                                ? 'bg-green-50 text-green-700 border-green-100 hover:bg-green-100'
+                                : 'bg-white text-[#03374f] border-gray-200 hover:border-[#03374f]/40 hover:bg-[#03374f]/5'
+                            }`}
+                          >
+                            {togglingShipId === it.id
+                              ? <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                              : <Check className="w-2.5 h-2.5" />}
+                            {shipped ? 'Shipped' : 'Mark shipped'}
+                          </button>
                         )}
                         {cancelled && (
                           <span className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-gray-100 text-gray-600 border border-gray-200">
@@ -1424,7 +1469,7 @@ export function CalendarView({
         open={editingItem !== null}
         onOpenChange={(open) => { if (!open) closeEdit() }}
       >
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-[#03374f]">
               <Pencil className="w-5 h-5 text-[#f26b2b]" />
@@ -1448,7 +1493,7 @@ export function CalendarView({
             />
           )}
 
-          <div className="space-y-3 py-1">
+          <div className="space-y-3 py-1 flex-1 overflow-y-auto min-h-0">
             {/* H4: the scheduled_date input only renders for non-recurring
                 items. For recurring items the rule defines the dates, so
                 we show a read-only anchor + rule description instead. */}
@@ -1693,7 +1738,7 @@ export function CalendarView({
         open={createDateISO !== null}
         onOpenChange={(open) => { if (!open) closeCreate() }}
       >
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-[#03374f]">
               <Plus className="w-5 h-5 text-[#f26b2b]" />
@@ -1710,7 +1755,7 @@ export function CalendarView({
             <InlineAlert kind="error" message={createError} onClose={() => setCreateError('')} />
           )}
 
-          <div className="space-y-3 py-1">
+          <div className="space-y-3 py-1 flex-1 overflow-y-auto min-h-0">
             <div className="space-y-1.5">
               <Label htmlFor="cal-create-title">
                 Title <span className="text-red-500">*</span>
