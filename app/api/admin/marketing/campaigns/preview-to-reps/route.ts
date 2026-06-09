@@ -38,6 +38,7 @@ const CONCURRENCY = 5
  * photo_url is empty; the empty rep-photo <img> is stripped below so it
  * doesn't render a broken image (mirrors resolveHeroImage's behavior). */
 const SAMPLE_REP: MergeTagRep = {
+  first_name: 'Your',
   name:      'Your Name',
   title:     'Sales Representative',
   email:     'you@pct.com',
@@ -128,14 +129,14 @@ export async function POST(req: NextRequest) {
   }
 
   /* Render the body — EXACT transforms from the batch route, with the
-     generic sample rep block. The empty rep-photo <img> is stripped
-     first so it doesn't render a broken image (replaceMergeTags would
-     otherwise leave src=""). The Mailchimp footer tags (*|UNSUB|*) are
-     left as-is per Decision 2. */
+     generic sample rep block. This is a GENERIC preview (no real rep),
+     so the rep-photo <img> is stripped first — otherwise replaceMergeTags
+     now resolves the sample to the R2 <Firstname>.png fallback, which
+     for the placeholder name would be a broken image. The real per-rep
+     send (batch route) always renders the rep's resolved photo. The
+     Mailchimp footer tags (*|UNSUB|*) are left as-is per Decision 2. */
   let html = template.html_content
-  if (!SAMPLE_REP.photo_url) {
-    html = html.replace(/<img\b[^>]*\{\{REP_PHOTO\}\}[^>]*\/?>/gi, '')
-  }
+  html = html.replace(/<img\b[^>]*\{\{rep_photo_url\}\}[^>]*\/?>/gi, '')
   html = replaceMergeTags(html, SAMPLE_REP)
   html = resolveHeroImage(html, heroImageUrl)
 

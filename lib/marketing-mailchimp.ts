@@ -10,7 +10,11 @@
 // in the studio route. Behaviour-preserving: the studio route now
 // re-exports the same logic.
 
+import { resolvePhotoUrl } from '@/types/employee'
+
 export interface MergeTagRep {
+  /** Needed to resolve the photo fallback (…/<Firstname>.png). */
+  first_name: string
   name:      string
   title:     string | null
   email:     string | null
@@ -26,14 +30,20 @@ export interface MergeTagRep {
  * The `i` flag makes the match case-resilient so a template author using
  * {{REP_NAME}} also resolves — but the photo token NAME still has to be
  * right (case-insensitivity does not fix rep_photo vs rep_photo_url).
+ *
+ * PHOTO: resolved centrally via the shared resolvePhotoUrl() so NO
+ * render path can ship a base-less or empty <img src>. A stored
+ * absolute (http) URL is used as-is; otherwise the R2 <Firstname>.png
+ * fallback is substituted — matching how the website renders the photo.
  */
 export function replaceMergeTags(html: string, rep: MergeTagRep): string {
+  const photoUrl = resolvePhotoUrl({ first_name: rep.first_name, photo_url: rep.photo_url })
   return html
     .replace(/\{\{rep_name\}\}/gi,      rep.name      || '')
     .replace(/\{\{rep_title\}\}/gi,     rep.title     || '')
     .replace(/\{\{rep_email\}\}/gi,     rep.email     || '')
     .replace(/\{\{rep_phone\}\}/gi,     rep.phone     || '')
-    .replace(/\{\{rep_photo_url\}\}/gi, rep.photo_url || '')
+    .replace(/\{\{rep_photo_url\}\}/gi, photoUrl)
 }
 
 /**

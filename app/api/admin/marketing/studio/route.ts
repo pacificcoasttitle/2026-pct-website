@@ -8,6 +8,7 @@ import {
   seedDefaultTemplates,
   getEmployeeAdminBySlug,
 } from '@/lib/admin-db'
+import { replaceMergeTags } from '@/lib/marketing-mailchimp'
 import { cookies } from 'next/headers'
 
 export const runtime = 'nodejs'
@@ -30,27 +31,9 @@ async function getActorUsername() {
   }
 }
 
-/* ─── Replace our {{rep_*}} merge tags with real data ─────────── *
- * Token names match the shipped templates: lowercase, photo is
- * {{rep_photo_url}} (not {{rep_photo}}). The `i` flag makes the match
- * case-resilient; the photo token NAME fix is still required. */
-function replaceMergeTags(
-  html: string,
-  rep: {
-    name: string
-    title: string | null
-    email: string | null
-    phone: string | null
-    photo_url: string | null
-  }
-): string {
-  return html
-    .replace(/\{\{rep_name\}\}/gi,      rep.name || '')
-    .replace(/\{\{rep_title\}\}/gi,     rep.title || '')
-    .replace(/\{\{rep_email\}\}/gi,     rep.email || '')
-    .replace(/\{\{rep_phone\}\}/gi,     rep.phone || '')
-    .replace(/\{\{rep_photo_url\}\}/gi, rep.photo_url || '')
-}
+/* Merge-tag substitution is centralized in lib/marketing-mailchimp.ts
+ * (replaceMergeTags) so the rep photo resolves through the shared
+ * resolvePhotoUrl() — no render path can ship a base-less <img src>. */
 
 /* ─── GET — templates + campaigns ─────────────────────────────── */
 export async function GET() {

@@ -80,6 +80,7 @@ type Action = 'draft' | 'schedule' | 'send'
  * route-local const (not exported), so we define the same shape here for
  * the client preview rather than importing across the server boundary. */
 const SAMPLE_REP: MergeTagRep = {
+  first_name: 'Your',
   name:      'Your Name',
   title:     'Sales Representative',
   email:     'you@pct.com',
