@@ -215,16 +215,16 @@ export const TITLE_INDUSTRY_NEWS_HTML = `<table cellpadding="0" cellspacing="0" 
             <!-- REP SIGNATURE BLOCK -->
             <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;margin-top:32px;border-top:1px solid #e5e7eb;padding-top:24px;">
               <tr>
-                <td width="72" valign="top" style="padding:24px 16px 0 0;">
-                  <img src="{{rep_photo_url}}" alt="{{rep_name}}" width="56" height="56" style="display:block;width:56px;height:56px;border-radius:28px;border:0;outline:none;">
+                <td width="96" valign="top" style="padding:24px 16px 0 0;">
+                  <img src="{{rep_photo_url}}" alt="{{rep_name}}" width="80" height="80" style="display:block;width:80px;height:80px;border-radius:40px;border:0;outline:none;">
                 </td>
                 <td valign="top" style="padding-top:24px;">
-                  <p style="font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#1f2937;margin:0 0 2px 0;line-height:1.2;">{{rep_name}}</p>
-                  <p style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6b7280;margin:0 0 12px 0;">{{rep_title}}</p>
-                  <p style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1f2937;margin:0 0 4px 0;">
+                  <p style="font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:bold;color:#1f2937;margin:0 0 3px 0;line-height:1.2;">{{rep_name}}</p>
+                  <p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#6b7280;margin:0 0 14px 0;">{{rep_title}}</p>
+                  <p style="font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#1f2937;margin:0 0 6px 0;">
                     <a href="tel:{{rep_phone}}" style="color:#1f2937;text-decoration:none;">{{rep_phone}}</a>
                   </p>
-                  <p style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1f2937;margin:0;">
+                  <p style="font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#1f2937;margin:0;">
                     <a href="mailto:{{rep_email}}" style="color:#f26b2b;text-decoration:none;">{{rep_email}}</a>
                   </p>
                 </td>
