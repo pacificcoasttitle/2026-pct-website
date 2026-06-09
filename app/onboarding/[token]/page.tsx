@@ -18,9 +18,11 @@ import {
   resolveOnboardingByToken,
   getOnboarding,
   getEmployeeAdminById,
+  getOnboardingAssetKinds,
   type OnboardingItem,
 } from '@/lib/admin-db'
 import { OnboardingProfileForm } from './OnboardingProfileForm'
+import { OnboardingUploads } from './OnboardingUploads'
 
 export const dynamic = 'force-dynamic'
 
@@ -156,6 +158,14 @@ export default async function OnboardingTokenPage({
     grouped.get(it.category)?.push(it)
   }
 
+  // Initial presence for the rep's action item (assets + employee state).
+  const assetKinds = await getOnboardingAssetKinds(record.id)
+  const present = {
+    headshot:    assetKinds.includes('headshot') || !!(rep?.photo_url && rep.photo_url.trim()),
+    bio:         assetKinds.includes('bio')       || !!(rep?.bio && rep.bio.trim()),
+    client_list: assetKinds.includes('client_list'),
+  }
+
   return (
     <PageShell>
       {/* Welcome */}
@@ -188,6 +198,14 @@ export default async function OnboardingTokenPage({
           website:     rep?.website     || '',
         }}
         initialVerifiedAt={record.info_verified_at}
+      />
+
+      {/* Action items (2d) — headshot / bio / client list uploads. */}
+      <OnboardingUploads
+        token={token}
+        initialPhoto={rep?.photo_url ?? null}
+        initialBio={rep?.bio || ''}
+        initialPresent={present}
       />
 
       {/* Progress */}

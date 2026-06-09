@@ -4487,7 +4487,17 @@ export async function setOnboardingItemStatus(
   const onboardingId = (upd.rows[0] as { onboarding_id?: number } | undefined)?.onboarding_id
   if (!onboardingId) return null
 
-  // Roll up the parent status from the (now-updated) item set.
+  return rollUpAndReturnOnboarding(onboardingId)
+}
+
+/**
+ * Recompute rep_onboarding.status from its item set ('complete' when
+ * ALL items are complete, else 'in_progress') and return the refreshed
+ * record + items. Shared by the admin (itemId) and rep-actor (item_key)
+ * item-status setters so the roll-up logic lives in one place.
+ */
+async function rollUpAndReturnOnboarding(onboardingId: number): Promise<OnboardingWithItems> {
+  const db = getPool()
   const agg = await db.query(
     `SELECT COUNT(*)::int AS total,
             COUNT(*) FILTER (WHERE status = 'complete')::int AS complete
@@ -4515,6 +4525,84 @@ export async function setOnboardingItemStatus(
   )
   const record = recRes.rows[0] as OnboardingRecord
   return { onboarding: record, items: await fetchOnboardingItems(onboardingId) }
+}
+
+/**
+ * Rep-actor variant of setOnboardingItemStatus, keyed by
+ * (onboarding_id, item_key) instead of a raw item id (the rep never
+ * sees item ids). Used by the 2d upload flow. completedBy defaults to
+ * 'rep-self-serve'. Reuses the shared parent-status roll-up. Returns
+ * null if the item row doesn't exist for that onboarding.
+ */
+export async function setOnboardingItemStatusByKey(
+  onboardingId: number,
+  itemKey:      string,
+  status:       OnboardingItemStatus,
+  completedBy:  string = 'rep-self-serve',
+): Promise<OnboardingWithItems | null> {
+  await ensureOnboardingTables()
+  const db = getPool()
+
+  const isComplete = status === 'complete'
+  const upd = await db.query(
+    `UPDATE rep_onboarding_items
+        SET status       = $1,
+            completed_by  = ${isComplete ? '$2' : 'NULL'},
+            completed_at  = ${isComplete ? 'NOW()' : 'NULL'}
+      WHERE onboarding_id = ${isComplete ? '$3' : '$2'}
+        AND item_key      = ${isComplete ? '$4' : '$3'}
+      RETURNING id`,
+    isComplete ? [status, completedBy, onboardingId, itemKey] : [status, onboardingId, itemKey],
+  )
+  if (!upd.rows[0]) return null
+
+  return rollUpAndReturnOnboarding(onboardingId)
+}
+
+export type OnboardingAssetKind = 'headshot' | 'bio' | 'client_list'
+
+/**
+ * Upsert an onboarding asset by (onboarding_id, kind) — re-uploading a
+ * kind REPLACES the prior row (one current headshot, one current client
+ * list). Stores metadata ONLY; for the client list the bytes live in R2
+ * and are never read back here. Done as delete-then-insert (the Phase 1
+ * table has no unique(onboarding_id, kind) constraint).
+ */
+export async function upsertOnboardingAsset(input: {
+  onboardingId: number
+  kind:         OnboardingAssetKind
+  r2_key?:      string | null
+  file_name?:   string | null
+  content_type?: string | null
+  text_value?:  string | null
+}): Promise<void> {
+  await ensureOnboardingTables()
+  const db = getPool()
+  await db.query(
+    `DELETE FROM rep_onboarding_assets WHERE onboarding_id = $1 AND kind = $2`,
+    [input.onboardingId, input.kind],
+  )
+  await db.query(
+    `INSERT INTO rep_onboarding_assets
+       (onboarding_id, kind, r2_key, file_name, content_type, text_value, uploaded_at)
+     VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+    [
+      input.onboardingId, input.kind,
+      input.r2_key ?? null, input.file_name ?? null,
+      input.content_type ?? null, input.text_value ?? null,
+    ],
+  )
+}
+
+/** The set of asset kinds currently present for an onboarding record. */
+export async function getOnboardingAssetKinds(onboardingId: number): Promise<OnboardingAssetKind[]> {
+  await ensureOnboardingTables()
+  const db = getPool()
+  const res = await db.query(
+    `SELECT DISTINCT kind FROM rep_onboarding_assets WHERE onboarding_id = $1`,
+    [onboardingId],
+  )
+  return res.rows.map((r) => r.kind as OnboardingAssetKind)
 }
 
 // ── Phase 2a: rep-onboarding token mechanism ─────────────────────
