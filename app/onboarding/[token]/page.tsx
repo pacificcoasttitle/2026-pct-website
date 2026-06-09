@@ -20,6 +20,7 @@ import {
   getEmployeeAdminById,
   type OnboardingItem,
 } from '@/lib/admin-db'
+import { OnboardingProfileForm } from './OnboardingProfileForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -169,23 +170,25 @@ export default async function OnboardingTokenPage({
         </p>
       </div>
 
-      {/* Info on file (display only — editable form is 2c) */}
-      <div style={{ backgroundColor: '#fff', borderRadius: 16, padding: '24px 28px', marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-        <h2 style={{ margin: '0 0 16px 0', fontSize: 16, color: NAVY }}>Your information on file</h2>
-        <dl style={{ margin: 0, display: 'grid', gridTemplateColumns: '120px 1fr', rowGap: 10, columnGap: 12 }}>
-          <dt style={{ fontSize: 13, color: '#9ca3af' }}>Name</dt>
-          <dd style={{ margin: 0, fontSize: 14, color: NAVY, fontWeight: 600 }}>{rep?.name || '—'}</dd>
-          <dt style={{ fontSize: 13, color: '#9ca3af' }}>Title</dt>
-          <dd style={{ margin: 0, fontSize: 14, color: '#374151' }}>{rep?.title || '—'}</dd>
-          <dt style={{ fontSize: 13, color: '#9ca3af' }}>Email</dt>
-          <dd style={{ margin: 0, fontSize: 14, color: '#374151' }}>{rep?.email || '—'}</dd>
-          <dt style={{ fontSize: 13, color: '#9ca3af' }}>Phone</dt>
-          <dd style={{ margin: 0, fontSize: 14, color: '#374151' }}>{rep?.phone || '—'}</dd>
-        </dl>
-        <p style={{ margin: '16px 0 0 0', fontSize: 12, color: '#9ca3af', fontStyle: 'italic' }}>
-          You’ll be able to review and update these details soon.
-        </p>
-      </div>
+      {/* Verify-info form (2c) — editable allowlist; locked fields read-only.
+          The server route re-verifies the token + enforces the allowlist. */}
+      <OnboardingProfileForm
+        token={token}
+        locked={{ name: rep?.name || '', title: rep?.title || '', email: rep?.email || '' }}
+        initial={{
+          phone:       rep?.phone       || '',
+          mobile:      rep?.mobile      || '',
+          bio:         rep?.bio         || '',
+          specialties: rep?.specialties || '',
+          languages:   rep?.languages   || '',
+          linkedin:    rep?.linkedin    || '',
+          facebook:    rep?.facebook    || '',
+          instagram:   rep?.instagram   || '',
+          twitter:     rep?.twitter     || '',
+          website:     rep?.website     || '',
+        }}
+        initialVerifiedAt={record.info_verified_at}
+      />
 
       {/* Progress */}
       <div style={{ backgroundColor: '#fff', borderRadius: 16, padding: '24px 28px', marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>

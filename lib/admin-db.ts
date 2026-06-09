@@ -288,6 +288,10 @@ export interface EmployeeUpdatePayload {
   languages?:               string
   specialties?:             string
   linkedin?:                string
+  facebook?:                string
+  instagram?:               string
+  twitter?:                 string
+  website?:                 string
   office_id?:               number | null
   department_id?:           number | null
   active?:                  boolean
@@ -4295,6 +4299,7 @@ export interface OnboardingRecord {
   status:       OnboardingStatus
   started_at:   string | null
   completed_at: string | null
+  info_verified_at: string | null
   created_by:   string | null
   created_at:   string
   updated_at:   string
@@ -4332,7 +4337,7 @@ export interface OnboardingListRow {
 
 const ONBOARDING_COLS = `
   id, rep_id, rep_slug, status,
-  started_at::text, completed_at::text, created_by,
+  started_at::text, completed_at::text, info_verified_at::text, created_by,
   created_at::text, updated_at::text`
 
 const ONBOARDING_ITEM_COLS = `
@@ -4582,6 +4587,26 @@ export async function resolveOnboardingByToken(token: string): Promise<Onboardin
   } catch {
     return null
   }
+}
+
+/**
+ * Stamp info_verified_at = now on the onboarding row (set when a rep
+ * saves/verifies their profile in 2c). Returns the ISO timestamp set,
+ * or null if the row is gone. Idempotent — re-verifying updates it.
+ */
+export async function markOnboardingInfoVerified(onboardingId: number): Promise<string | null> {
+  await ensureOnboardingTables()
+  const db = getPool()
+  const nowIso = new Date().toISOString()
+  const res = await db.query(
+    `UPDATE rep_onboarding
+        SET info_verified_at = $1::timestamptz,
+            updated_at       = NOW()
+      WHERE id = $2
+      RETURNING id`,
+    [nowIso, onboardingId],
+  )
+  return res.rows[0] ? nowIso : null
 }
 
 /** Revoke any active link by nulling the stored hash + expiry. */
