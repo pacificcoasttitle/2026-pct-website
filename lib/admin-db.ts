@@ -11,6 +11,7 @@ import {
   type RecurrencePattern,
 } from '@/lib/marketing-recurrence'
 import { ASSET_DELIVERY_HTML } from '@/lib/email-templates/asset-delivery'
+import { signOnboardingToken, verifyOnboardingToken, hashToken } from '@/lib/onboarding-token'
 import {
   REP_WEEK_AHEAD_TEMPLATE,
   renderRepWeekAhead,
@@ -4206,6 +4207,12 @@ export async function ensureOnboardingTables(): Promise<void> {
       updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `)
+  // Phase 2a token mechanism (additive, idempotent). The raw token is
+  // NEVER stored — only its sha256 hash. token_expires_at is the
+  // authoritative (revocable) expiry. info_verified_at is written in 2c.
+  await db.query(`ALTER TABLE rep_onboarding ADD COLUMN IF NOT EXISTS access_token_hash TEXT`)
+  await db.query(`ALTER TABLE rep_onboarding ADD COLUMN IF NOT EXISTS token_expires_at TIMESTAMPTZ`)
+  await db.query(`ALTER TABLE rep_onboarding ADD COLUMN IF NOT EXISTS info_verified_at TIMESTAMPTZ`)
   await ensureConstraint(
     `ALTER TABLE rep_onboarding DROP CONSTRAINT IF EXISTS rep_onboarding_status_check`,
     `ALTER TABLE rep_onboarding ADD CONSTRAINT rep_onboarding_status_check
@@ -4503,4 +4510,90 @@ export async function setOnboardingItemStatus(
   )
   const record = recRes.rows[0] as OnboardingRecord
   return { onboarding: record, items: await fetchOnboardingItems(onboardingId) }
+}
+
+// ── Phase 2a: rep-onboarding token mechanism ─────────────────────
+
+/**
+ * Issue a fresh signed onboarding link token for a record. Computes
+ * its sha256 hash + a 14-day expiry and writes BOTH onto the row,
+ * overwriting any prior token (so a resend invalidates the old link).
+ * Returns the RAW token for the caller to email — only the hash is
+ * persisted. (Built for 2e; nothing calls it yet in 2a.)
+ */
+export async function issueOnboardingToken(onboardingId: number): Promise<string | null> {
+  await ensureOnboardingTables()
+  const db = getPool()
+
+  const token   = await signOnboardingToken(onboardingId)
+  const hash    = hashToken(token)
+  const expIso  = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+
+  const res = await db.query(
+    `UPDATE rep_onboarding
+        SET access_token_hash = $1,
+            token_expires_at  = $2::timestamptz,
+            updated_at        = NOW()
+      WHERE id = $3
+      RETURNING id`,
+    [hash, expIso, onboardingId],
+  )
+  if (!res.rows[0]) return null
+  return token
+}
+
+/**
+ * THE token gate. Verifies, in order:
+ *   1. JWT signature + expiry + purpose (verifyOnboardingToken)
+ *   2. the onboarding row exists
+ *   3. sha256(presentedToken) === stored access_token_hash
+ *   4. stored token_expires_at is in the future (authoritative,
+ *      revocable expiry — defense-in-depth beyond the JWT exp)
+ * Returns the onboarding record on all-valid, else null. Never throws.
+ */
+export async function resolveOnboardingByToken(token: string): Promise<OnboardingRecord | null> {
+  try {
+    const verified = await verifyOnboardingToken(token)
+    if (!verified) return null
+
+    await ensureOnboardingTables()
+    const db = getPool()
+    const res = await db.query(
+      `SELECT ${ONBOARDING_COLS},
+              access_token_hash,
+              token_expires_at::text AS token_expires_at
+         FROM rep_onboarding
+        WHERE id = $1
+        LIMIT 1`,
+      [verified.onboarding_id],
+    )
+    const row = res.rows[0] as
+      (OnboardingRecord & { access_token_hash: string | null; token_expires_at: string | null })
+      | undefined
+    if (!row) return null
+
+    if (!row.access_token_hash || row.access_token_hash !== hashToken(token)) return null
+    if (!row.token_expires_at || new Date(row.token_expires_at).getTime() <= Date.now()) return null
+
+    // Strip the auth-only fields before returning the record.
+    const { access_token_hash: _h, token_expires_at: _e, ...record } = row
+    void _h; void _e
+    return record as OnboardingRecord
+  } catch {
+    return null
+  }
+}
+
+/** Revoke any active link by nulling the stored hash + expiry. */
+export async function revokeOnboardingToken(onboardingId: number): Promise<void> {
+  await ensureOnboardingTables()
+  const db = getPool()
+  await db.query(
+    `UPDATE rep_onboarding
+        SET access_token_hash = NULL,
+            token_expires_at  = NULL,
+            updated_at        = NOW()
+      WHERE id = $1`,
+    [onboardingId],
+  )
 }
