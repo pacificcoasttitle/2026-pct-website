@@ -8,6 +8,7 @@
 import { notFound } from 'next/navigation'
 import { getOnboarding, getEmployeeAdminById } from '@/lib/admin-db'
 import { OnboardingChecklist } from '@/components/admin/onboarding/OnboardingChecklist'
+import { OnboardingWelcomeAction } from '@/components/admin/onboarding/OnboardingWelcomeAction'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,10 +31,17 @@ export default async function RepOnboardingPage({ params }: { params: Promise<{ 
   if (!data) notFound()
 
   return (
-    <OnboardingChecklist
-      repId={repIdNum}
-      repName={emp?.name ?? data.onboarding.rep_slug ?? `Rep #${repIdNum}`}
-      initial={data}
-    />
+    <div className="space-y-5">
+      <OnboardingWelcomeAction
+        repId={repIdNum}
+        repEmail={emp?.email ?? null}
+        initialWelcomeSentAt={data.onboarding.welcome_sent_at}
+      />
+      <OnboardingChecklist
+        repId={repIdNum}
+        repName={emp?.name ?? data.onboarding.rep_slug ?? `Rep #${repIdNum}`}
+        initial={data}
+      />
+    </div>
   )
 }

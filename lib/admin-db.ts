@@ -4217,6 +4217,8 @@ export async function ensureOnboardingTables(): Promise<void> {
   await db.query(`ALTER TABLE rep_onboarding ADD COLUMN IF NOT EXISTS access_token_hash TEXT`)
   await db.query(`ALTER TABLE rep_onboarding ADD COLUMN IF NOT EXISTS token_expires_at TIMESTAMPTZ`)
   await db.query(`ALTER TABLE rep_onboarding ADD COLUMN IF NOT EXISTS info_verified_at TIMESTAMPTZ`)
+  // Phase 2e welcome email — when the admin last sent the onboarding link.
+  await db.query(`ALTER TABLE rep_onboarding ADD COLUMN IF NOT EXISTS welcome_sent_at TIMESTAMPTZ`)
   await ensureConstraint(
     `ALTER TABLE rep_onboarding DROP CONSTRAINT IF EXISTS rep_onboarding_status_check`,
     `ALTER TABLE rep_onboarding ADD CONSTRAINT rep_onboarding_status_check
@@ -4337,7 +4339,8 @@ export interface OnboardingListRow {
 
 const ONBOARDING_COLS = `
   id, rep_id, rep_slug, status,
-  started_at::text, completed_at::text, info_verified_at::text, created_by,
+  started_at::text, completed_at::text, info_verified_at::text,
+  welcome_sent_at::text, created_by,
   created_at::text, updated_at::text`
 
 const ONBOARDING_ITEM_COLS = `
@@ -4690,6 +4693,22 @@ export async function markOnboardingInfoVerified(onboardingId: number): Promise<
     `UPDATE rep_onboarding
         SET info_verified_at = $1::timestamptz,
             updated_at       = NOW()
+      WHERE id = $2
+      RETURNING id`,
+    [nowIso, onboardingId],
+  )
+  return res.rows[0] ? nowIso : null
+}
+
+/** Stamp welcome_sent_at when the admin sends the onboarding welcome email. */
+export async function markOnboardingWelcomeSent(onboardingId: number): Promise<string | null> {
+  await ensureOnboardingTables()
+  const db = getPool()
+  const nowIso = new Date().toISOString()
+  const res = await db.query(
+    `UPDATE rep_onboarding
+        SET welcome_sent_at = $1::timestamptz,
+            updated_at      = NOW()
       WHERE id = $2
       RETURNING id`,
     [nowIso, onboardingId],
