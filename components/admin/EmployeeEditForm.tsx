@@ -342,7 +342,7 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {([
             { field: 'active',         label: 'Active',           desc: 'Shows in directory' },
-            { field: 'website_active', label: 'Website Page Live', desc: 'pct.com/team/slug' },
+            { field: 'website_active', label: 'Website Page Live', desc: 'pct.com/slug' },
             { field: 'featured',       label: 'Featured',          desc: 'Shown at top' },
             { field: 'sales_manager',  label: 'Sales Manager',     desc: 'Receives manager recaps' },
           ] as const).map(({ field, label, desc }) => (
@@ -511,9 +511,9 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
       </Section>
 
       {/* ── Website Page ── */}
-      <Section title="Website Page (pct.com/team/slug)" icon={Globe}>
+      <Section title="Website Page (pct.com/slug)" icon={Globe}>
         <div className="text-xs text-gray-400 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
-          URL: <span className="font-mono text-[#03374f]">https://www.pct.com/team/{emp.slug}</span>
+          URL: <span className="font-mono text-[#03374f]">https://www.pct.com/{emp.slug}</span>
           {' · '}
           <span className={emp.website_active ? 'text-green-600 font-medium' : 'text-gray-400'}>
             {emp.website_active ? 'Live' : 'Hidden'}

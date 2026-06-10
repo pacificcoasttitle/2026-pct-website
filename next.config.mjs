@@ -87,9 +87,10 @@ const nextConfig = {
         destination: "https://documents.pct.com/industry-documents/:path*",
         permanent: true,
       },
-      // /team has been retired publicly (we don't expose rep contacts to the
-      // open web). Old bookmarks, vCard QR codes, and search-engine cache
-      // entries get sent to /contact instead of 404'ing.
+      // Bare /team (no slug) → /contact. Legacy /team/{slug} bookmarks and
+      // QR codes heal onto the canonical rep page at /{slug}. The vCard
+      // download at /api/team/{slug}/vcf is unaffected (/api/... does not
+      // match this /team/:slug* source).
       {
         source: "/team",
         destination: "/contact",
@@ -97,7 +98,7 @@ const nextConfig = {
       },
       {
         source: "/team/:slug*",
-        destination: "/contact",
+        destination: "/:slug*",
         permanent: true,
       },
     ]
