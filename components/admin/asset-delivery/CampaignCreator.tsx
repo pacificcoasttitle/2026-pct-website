@@ -211,6 +211,14 @@ function classifyFile(
   return { ok: true, rep, format }
 }
 
+/** Surface Zod field-level details from API errors when present. */
+function apiErrorMessage(data: { error?: string; details?: unknown }): string {
+  if (Array.isArray(data.details) && data.details.length > 0) {
+    return data.details.map((d) => (typeof d === 'string' ? d : String(d))).join('; ')
+  }
+  return data.error || 'Request failed'
+}
+
 /* ─── Component ──────────────────────────────────────────────── */
 
 export function CampaignCreator({ reps, adminEmail }: Props) {
@@ -230,6 +238,7 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
   const [description,  setDescription]  = useState('')
   const [emailSubject, setEmailSubject] = useState('')
   const [creatingBatch, setCreatingBatch] = useState(false)
+  const [continuingToPreview, setContinuingToPreview] = useState(false)
 
   // Keep slug in sync with name until the user touches it manually.
   useEffect(() => {
@@ -274,8 +283,8 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
   const [testSending, setTestSending] = useState(false)
 
   /* ── Hydrate batch payload (on resume or after Step 1) ───── */
-  const refreshBatch = useCallback(async () => {
-    if (!batchId) return
+  const refreshBatch = useCallback(async (): Promise<boolean> => {
+    if (!batchId) return false
     try {
       const res = await fetch(
         `/api/admin/marketing/asset-delivery/batches/${batchId}`,
@@ -291,10 +300,13 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
         setCampaignSlug(data.batch.campaign_slug)
         if (data.batch.lane) setLane(data.batch.lane as Lane)
         setEmailSubject(data.batch.email_subject)
+        if (data.batch.description) setDescription(data.batch.description)
         setSlugTouched(true)
       }
+      return true
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load batch')
+      return false
     }
   }, [batchId])
 
@@ -380,17 +392,17 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
       })
       const data = await res.json()
       if (!res.ok) {
-        throw new Error(data.error || 'Upload failed')
+        throw new Error(apiErrorMessage(data))
       }
+      // Sync batchFiles before marking 'done' so the grid / Continue never
+      // get ahead of server state.
+      await refreshBatch()
       setUploadState(key, {
         kind:     'done',
         filename: key,
         fileId:   data.file_id,
         bytes:    data.file_size_bytes,
       })
-      // Cheap refresh — adds the new row to our local grid so the user
-      // sees aggregate counts update.
-      await refreshBatch()
     } catch (e) {
       setUploadState(key, {
         kind:     'failed',
@@ -531,7 +543,7 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
         },
       )
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'AI intro failed')
+      if (!res.ok) throw new Error(apiErrorMessage(data))
       setIntrosByRep((prev) => ({ ...prev, [repEmail]: data.intro }))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'AI intro failed')
@@ -540,14 +552,27 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
     }
   }
 
-  // Auto-generate an intro for the currently previewed rep if one doesn't
-  // exist yet. Only when on Step 3 and the rep has files.
+  // Auto-generate when Step 3 has valid state — wait for campaignName +
+  // batchFiles instead of firing once on stale hydration.
   useEffect(() => {
     if (step !== 3 || !previewRepEmail) return
     if (introsByRep[previewRepEmail]) return
+    if (!campaignName.trim()) return
+    const repFiles = batchFiles.filter(
+      (f) => f.rep_email.toLowerCase() === previewRepEmail.toLowerCase(),
+    )
+    if (repFiles.length === 0) return
     generateIntro(previewRepEmail)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, previewRepEmail])
+  }, [step, previewRepEmail, campaignName, batchFiles, introsByRep])
+
+  async function continueToPreview() {
+    setContinuingToPreview(true)
+    setError('')
+    const ok = await refreshBatch()
+    if (ok) setStep(3)
+    setContinuingToPreview(false)
+  }
 
   /* ── Step 4: send ────────────────────────────────────────── */
   async function sendTest() {
@@ -885,6 +910,7 @@ function Step2(props: {
   onRemoveUploaded: (fileId: number) => void
   onBack: () => void
   onContinue: () => void
+  continuing?: boolean
   totals: { reps: number; files: number; totalBytes: number; etaSeconds: number }
 }) {
   const inFlight = Object.values(props.uploads).filter(
@@ -1083,10 +1109,14 @@ function Step2(props: {
         </Button>
         <Button
           onClick={props.onContinue}
-          disabled={totalUploaded === 0 || inFlight > 0}
+          disabled={totalUploaded === 0 || inFlight > 0 || props.continuing}
           className="bg-[#f26b2b] hover:bg-[#d8551b] text-white"
         >
-          Continue to Preview <ArrowRight className="w-4 h-4 ml-1.5" />
+          {props.continuing ? (
+            <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Loading…</>
+          ) : (
+            <>Continue to Preview <ArrowRight className="w-4 h-4 ml-1.5" /></>
+          )}
         </Button>
       </div>
     </div>
