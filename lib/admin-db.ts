@@ -4302,6 +4302,7 @@ export interface OnboardingRecord {
   started_at:   string | null
   completed_at: string | null
   info_verified_at: string | null
+  welcome_sent_at:  string | null
   created_by:   string | null
   created_at:   string
   updated_at:   string
