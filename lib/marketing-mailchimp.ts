@@ -49,22 +49,32 @@ export function replaceMergeTags(html: string, rep: MergeTagRep): string {
 /**
  * Resolve the {{HERO_IMAGE}} merge tag.
  *
- * When a hero URL is supplied, substitute it directly. When it's
- * missing/empty, strip the entire <img> tag that contains the merge
- * tag so the email doesn't render a clearly broken image. We use a
- * non-greedy match so multiple <img>s in the same document are
- * handled independently.
+ * Templates have historically drifted to lowercase {{hero_image}},
+ * bare tokens outside an <img>, or no token at all. To stop the hero
+ * from silently disappearing we handle BOTH token cases:
+ *
+ *   - WITH a url: replace {{HERO_IMAGE}} and {{hero_image}}
+ *     (case-insensitive) with the url, wherever they appear.
+ *   - WITHOUT a url: cleanly remove the hero token's OWN <img> tag
+ *     (the one whose src IS the token), then strip any remaining bare
+ *     token text — so no broken-image icon and no raw token leak.
+ *
+ * The removal is scoped to an <img> whose src attribute is the hero
+ * token, so adjacent body/sample images (real src URLs) are untouched.
  */
 export function resolveHeroImage(html: string, heroImageUrl: string | null | undefined): string {
   const url = (heroImageUrl ?? '').trim()
   if (url) {
-    return html.replace(/\{\{HERO_IMAGE\}\}/g, url)
+    // Case-insensitive token → covers {{HERO_IMAGE}} and {{hero_image}}.
+    return html.replace(/\{\{hero_image\}\}/gi, url)
   }
-  // Strip the <img …{{HERO_IMAGE}}…> wrapper if present, then any
-  // remaining bare {{HERO_IMAGE}} occurrences (e.g. inside <a href>).
+  // No url: remove ONLY the <img> whose src is the hero token (either
+  // case, quotes optional), regardless of attribute order — then clean
+  // any remaining bare token text. The src=token anchor keeps this from
+  // touching body images that have real URLs.
   return html
-    .replace(/<img\b[^>]*\{\{HERO_IMAGE\}\}[^>]*\/?>/gi, '')
-    .replace(/\{\{HERO_IMAGE\}\}/g, '')
+    .replace(/<img\b[^>]*\bsrc\s*=\s*["']?\{\{hero_image\}\}["']?[^>]*\/?>/gi, '')
+    .replace(/\{\{hero_image\}\}/gi, '')
 }
 
 /** Mailchimp expects HTTP Basic with username "any". */

@@ -998,6 +998,11 @@ export async function upsertEmailTemplate(input: {
 }): Promise<EmailTemplate> {
   await ensureExtraTables()
   const db = getPool()
+  // Anti-drift: normalize lowercase {{hero_image}} → canonical
+  // {{HERO_IMAGE}} on save (both new + edited templates) so the hero
+  // token can't re-enter in a form the renderer might miss. Surgical —
+  // only the hero token is touched.
+  const html_content = input.html_content.replace(/\{\{hero_image\}\}/g, '{{HERO_IMAGE}}')
   if (input.id) {
     const updated = await db.query(`
       UPDATE vcard_email_templates
@@ -1008,7 +1013,7 @@ export async function upsertEmailTemplate(input: {
       input.name,
       input.subject,
       input.preheader || null,
-      input.html_content,
+      html_content,
       input.thumbnail_url || null,
       input.actor || null,
       input.id,
@@ -1024,7 +1029,7 @@ export async function upsertEmailTemplate(input: {
     input.name,
     input.subject,
     input.preheader || null,
-    input.html_content,
+    html_content,
     input.thumbnail_url || null,
     input.category || null,
     input.actor || null,
