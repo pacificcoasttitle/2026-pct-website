@@ -85,6 +85,7 @@ const SAMPLE_REP: MergeTagRep = {
   title:     'Sales Representative',
   email:     'you@pct.com',
   phone:     '(866) 724-1050',
+  mobile:    '(562) 555-0123',
   photo_url: '',
 }
 

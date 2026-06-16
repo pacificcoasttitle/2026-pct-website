@@ -19,6 +19,7 @@ export interface MergeTagRep {
   title:     string | null
   email:     string | null
   phone:     string | null
+  mobile:    string | null
   photo_url: string | null
 }
 
@@ -42,7 +43,13 @@ export function replaceMergeTags(html: string, rep: MergeTagRep): string {
     .replace(/\{\{rep_name\}\}/gi,      rep.name      || '')
     .replace(/\{\{rep_title\}\}/gi,     rep.title     || '')
     .replace(/\{\{rep_email\}\}/gi,     rep.email     || '')
-    .replace(/\{\{rep_phone\}\}/gi,     rep.phone     || '')
+    // {{rep_phone}} intentionally resolves to the rep's MOBILE (cell),
+    // not the branch/office `phone` — Jerry's call. The token NAME is
+    // kept as {{rep_phone}} to avoid editing every template; templates
+    // use it for both the displayed number and href="tel:", so both
+    // follow this mapping. Always mobile, no phone fallback (all active
+    // reps have a mobile on file).
+    .replace(/\{\{rep_phone\}\}/gi,     rep.mobile    || '')
     .replace(/\{\{rep_photo_url\}\}/gi, photoUrl)
 }
 
