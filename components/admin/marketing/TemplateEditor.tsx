@@ -722,12 +722,18 @@ ${body}
       ) as HTMLImageElement | null
 
       if (existing) {
-        // In-place mutation — never insertContent here.
-        existing.src = url
-        existing.setAttribute('data-hero', '1')
-        existing.classList.add(HERO_MARKER_CLASS)
-        existing.setAttribute('alt', 'Hero image')
-        existing.setAttribute(
+        // In-place mutation — never insertContent here. Mutate through
+        // TinyMCE's DOMUtils (ed.dom) so the editor's internal source
+        // model (data-mce-src) updates and getContent() serializes the
+        // NEW src. Raw `existing.src = url` left data-mce-src stale, so
+        // getContent() (which both preview and save read) kept the OLD
+        // hero — that was the bug.
+        ed.dom.setAttrib(existing, 'src', url)
+        ed.dom.setAttrib(existing, 'data-hero', '1')
+        ed.dom.addClass(existing, HERO_MARKER_CLASS)
+        ed.dom.setAttrib(existing, 'alt', 'Hero image')
+        ed.dom.setAttrib(
+          existing,
           'style',
           'max-width:100%;height:auto;display:block;margin:16px auto;border-radius:8px;',
         )
@@ -742,6 +748,12 @@ ${body}
       // Notify TinyMCE so dirty / preview / undo all update.
       ed.undoManager.add()
       ed.fire('change')
+
+      // Force the preview's source of truth to refresh immediately with
+      // the NEW src — don't rely only on the debounced schedule. Now
+      // that getContent() serializes the new src, the preview updates
+      // at once.
+      setPreviewHtml(ed.getContent())
 
       try {
         ed.notificationManager.open({
