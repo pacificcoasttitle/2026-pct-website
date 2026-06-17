@@ -21,6 +21,7 @@ export interface MergeTagRep {
   phone:     string | null
   mobile:    string | null
   photo_url: string | null
+  slug:      string | null
 }
 
 /**
@@ -39,6 +40,7 @@ export interface MergeTagRep {
  */
 export function replaceMergeTags(html: string, rep: MergeTagRep): string {
   const photoUrl = resolvePhotoUrl({ first_name: rep.first_name, photo_url: rep.photo_url })
+  const repUrl = rep.slug ? `https://www.pct.com/${rep.slug}` : ''
   return html
     .replace(/\{\{rep_name\}\}/gi,      rep.name      || '')
     .replace(/\{\{rep_title\}\}/gi,     rep.title     || '')
@@ -51,6 +53,15 @@ export function replaceMergeTags(html: string, rep: MergeTagRep): string {
     // reps have a mobile on file).
     .replace(/\{\{rep_phone\}\}/gi,     rep.mobile    || '')
     .replace(/\{\{rep_photo_url\}\}/gi, photoUrl)
+    // Legacy photo alias: 6 live templates use {{REP_PHOTO}} (a
+    // DIFFERENT token name than {{rep_photo_url}}, so /gi can't bridge
+    // them). The }} immediately after "rep_photo" anchors this so it
+    // matches {{rep_photo}}/{{REP_PHOTO}} but NEVER {{rep_photo_url}}
+    // (whose next char is '_', not '}') — no clobber of the canonical.
+    .replace(/\{\{rep_photo\}\}/gi,     photoUrl)
+    // {{rep_url}} → the rep's public page (the "View My Page" footer
+    // link). Unmapped before → broken in all templates that use it.
+    .replace(/\{\{rep_url\}\}/gi,       repUrl)
 }
 
 /**

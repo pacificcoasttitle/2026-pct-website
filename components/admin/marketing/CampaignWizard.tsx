@@ -87,6 +87,7 @@ const SAMPLE_REP: MergeTagRep = {
   phone:     '(866) 724-1050',
   mobile:    '(562) 555-0123',
   photo_url: '',
+  slug:      'your-name',
 }
 
 interface Props {
