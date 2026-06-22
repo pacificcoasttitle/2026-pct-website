@@ -7,12 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { cookies } from 'next/headers'
-import {
-  isAuthenticated,
-  verifyAdminToken,
-  ADMIN_COOKIE,
-} from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   PCT_BRAND_VOICE_RULES,
   PCT_BRAND_VOICE_SELF_CHECK,
@@ -99,24 +94,10 @@ LENGTH GUIDANCE:
 
 // HTML sanitiser moved to @/lib/marketing-ai (sanitizeAiHtml).
 
-// ── Actor email (for log line) ──────────────────────────────────
-async function getActorEmail(): Promise<string> {
-  try {
-    const jar   = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return 'unknown'
-    const session = await verifyAdminToken(token)
-    return session?.username || 'unknown'
-  } catch {
-    return 'unknown'
-  }
-}
-
 // ── Route ───────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
 
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
@@ -140,7 +121,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { prompt, mode, length, existingContent } = body
-  const adminEmail = await getActorEmail()
+  const adminEmail = auth.session.username || 'unknown'
 
   // ── Build messages ────────────────────────────────────────────
   const userParts: string[] = []

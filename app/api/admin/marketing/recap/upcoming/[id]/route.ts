@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
-import {
-  ADMIN_COOKIE,
-  isAuthenticated,
-  verifyAdminToken,
-} from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   OWNER_MAX,
   RECURRENCE_PATTERNS,
@@ -52,18 +47,6 @@ const UpdateBodySchema = z.object({
   message: 'At least one field is required',
 })
 
-async function getActorEmail(): Promise<string> {
-  try {
-    const jar = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return 'unknown'
-    const session = await verifyAdminToken(token)
-    return session?.username || 'unknown'
-  } catch {
-    return 'unknown'
-  }
-}
-
 async function parseId(params: Promise<{ id: string }>) {
   const { id } = await params
   const itemId = parseInt(id, 10)
@@ -77,10 +60,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const adminEmail = await getActorEmail()
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
+  const adminEmail = auth.session.username || 'unknown'
 
   const itemId = await parseId(params)
   if (!itemId) {
@@ -124,10 +106,9 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const adminEmail = await getActorEmail()
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
+  const adminEmail = auth.session.username || 'unknown'
 
   const itemId = await parseId(params)
   if (!itemId) {

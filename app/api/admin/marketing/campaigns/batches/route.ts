@@ -6,7 +6,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { getEmailCampaignBatches } from '@/lib/admin-db'
 
 export const runtime = 'nodejs'
@@ -19,9 +19,8 @@ function parseIntParam(value: string | null, fallback: number, min: number, max:
 }
 
 export async function GET(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
   const url    = new URL(req.url)
   const limit  = parseIntParam(url.searchParams.get('limit'),  50, 1, 200)
   const offset = parseIntParam(url.searchParams.get('offset'),  0, 0, 100_000)

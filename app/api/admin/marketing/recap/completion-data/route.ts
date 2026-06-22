@@ -22,11 +22,11 @@
  * "today" via Intl en-CA / America/Los_Angeles. Never new Date('YYYY-MM-
  * DD') (UTC-midnight trap in negative-offset zones).
  *
- * Read-only. Same isAuthenticated() gate as the other recap routes.
+ * Read-only. Same requireApiRole('marketing') gate as the other recap routes.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { getUpcomingItems } from '@/lib/admin-db'
 
 export const runtime = 'nodejs'
@@ -50,9 +50,8 @@ function pacificTodayISO(): string {
 }
 
 export async function GET(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
 
   const parsed = QuerySchema.safeParse({
     from: req.nextUrl.searchParams.get('from'),

@@ -4,12 +4,11 @@
  * Server-side proxy — keeps API key off the client.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 
 export async function GET(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
 
   const audienceId = req.nextUrl.searchParams.get('audienceId')
   if (!audienceId) {

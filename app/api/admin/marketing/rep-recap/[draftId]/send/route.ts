@@ -27,13 +27,8 @@
  * send route).
  */
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import sgMail from '@sendgrid/mail'
-import {
-  isAuthenticated,
-  verifyAdminToken,
-  ADMIN_COOKIE,
-} from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   getPool,
   getPreviewRecipientReps,
@@ -43,20 +38,6 @@ import {
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-// ───── Local getActorEmail helper (matches the manager send route) ─────
-
-async function getActorEmail(): Promise<string> {
-  try {
-    const jar   = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return 'unknown'
-    const session = await verifyAdminToken(token)
-    return session?.username || 'unknown'
-  } catch {
-    return 'unknown'
-  }
-}
 
 // ───── SendGrid lazy-init (matches the manager send route) ─────
 
@@ -109,10 +90,9 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ draftId: string }> },
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const adminEmail  = await getActorEmail()
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
+  const adminEmail  = auth.session.username || 'unknown'
   const { draftId } = await params
 
   // Fetch up front for a clean 404 + current-status messaging on 409.

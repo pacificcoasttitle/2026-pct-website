@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { isAuthenticated, verifyAdminToken, ADMIN_COOKIE } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   createEmailCampaignLog,
   getEmailCampaignLogs,
@@ -9,7 +9,6 @@ import {
   getEmployeeAdminBySlug,
 } from '@/lib/admin-db'
 import { replaceMergeTags } from '@/lib/marketing-mailchimp'
-import { cookies } from 'next/headers'
 
 export const runtime = 'nodejs'
 
@@ -18,28 +17,14 @@ function mcAuthHeader(apiKey: string) {
   return `Basic ${Buffer.from(`any:${apiKey}`).toString('base64')}`
 }
 
-/* ─── Actor username from JWT cookie ──────────────────────────── */
-async function getActorUsername() {
-  try {
-    const jar = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return null
-    const session = await verifyAdminToken(token)
-    return session?.username || null
-  } catch {
-    return null
-  }
-}
-
 /* Merge-tag substitution is centralized in lib/marketing-mailchimp.ts
  * (replaceMergeTags) so the rep photo resolves through the shared
  * resolvePhotoUrl() — no render path can ship a base-less <img src>. */
 
 /* ─── GET — templates + campaigns ─────────────────────────────── */
 export async function GET() {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
   // Seed 4 default templates on first load
   await seedDefaultTemplates()
   const [templates, campaigns] = await Promise.all([
@@ -51,9 +36,8 @@ export async function GET() {
 
 /* ─── POST — save-template | create-campaign ──────────────────── */
 export async function POST(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
 
   try {
     const body = await req.json()
@@ -67,7 +51,7 @@ export async function POST(req: NextRequest) {
       if (!name || !subject || !html_content) {
         return NextResponse.json({ error: 'Name, subject, and html content are required' }, { status: 400 })
       }
-      const actor = await getActorUsername()
+      const actor = auth.session.username || null
       const template = await upsertEmailTemplate({
         id: body.id ? Number(body.id) : undefined,
         name,

@@ -13,13 +13,8 @@
  * consistency across the admin API surface.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
-import {
-  isAuthenticated,
-  verifyAdminToken,
-  ADMIN_COOKIE,
-} from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   getRecapRecipients,
   createRecapRecipient,
@@ -37,24 +32,11 @@ const CreateBodySchema = z.object({
   notes: z.string().trim().max(2000).optional().nullable(),
 })
 
-async function getActorEmail(): Promise<string> {
-  try {
-    const jar   = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return 'unknown'
-    const session = await verifyAdminToken(token)
-    return session?.username || 'unknown'
-  } catch {
-    return 'unknown'
-  }
-}
-
 /* ─── GET ──────────────────────────────────────────────────────── */
 
 export async function GET(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
 
   const includeInactive = req.nextUrl.searchParams.get('include_inactive') === 'true'
 
@@ -70,10 +52,9 @@ export async function GET(req: NextRequest) {
 /* ─── POST ─────────────────────────────────────────────────────── */
 
 export async function POST(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const adminEmail = await getActorEmail()
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
+  const adminEmail = auth.session.username || 'unknown'
 
   let body: z.infer<typeof CreateBodySchema>
   try {

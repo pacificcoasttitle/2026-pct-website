@@ -6,7 +6,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   getBatchCampaigns,
   updateCampaignStatus,
@@ -31,9 +31,8 @@ export async function POST(
   _req: NextRequest,
   ctx: { params: Promise<{ batchId: string }> },
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
 
   const { batchId } = await ctx.params
   if (!batchId || !UUID_RE.test(batchId)) {

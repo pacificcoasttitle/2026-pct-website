@@ -11,16 +11,15 @@
  * employee profile toggle, not here.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { getActiveSalesManagers } from '@/lib/admin-db'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(_req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
 
   try {
     const sales_managers = await getActiveSalesManagers()

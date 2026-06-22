@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { listBatchesForPicker } from '@/lib/admin-db'
 
 export const runtime = 'nodejs'
@@ -8,9 +8,8 @@ export const dynamic = 'force-dynamic'
 // Feeds the H3 asset-link BatchPicker: all batches, most-recent first.
 // No filters (admin discretion — show every batch regardless of status).
 export async function GET() {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
 
   try {
     const batches = await listBatchesForPicker()

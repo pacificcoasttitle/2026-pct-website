@@ -15,16 +15,15 @@
  * Auth: Admin session required. Returns 401 otherwise.
  */
 import { NextResponse } from 'next/server'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { getRecapDrafts } from '@/lib/admin-db'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
 
   const url = new URL(request.url)
   const limit = Math.min(

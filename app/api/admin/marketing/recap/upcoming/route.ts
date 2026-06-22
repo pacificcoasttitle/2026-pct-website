@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
-import {
-  ADMIN_COOKIE,
-  isAuthenticated,
-  verifyAdminToken,
-} from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   OWNER_MAX,
   RECURRENCE_PATTERNS,
@@ -42,18 +37,6 @@ export const CreateBodySchema = z.object({
   recurrence_until:     z.string().regex(DATE_RE, 'Use YYYY-MM-DD format').optional().nullable(),
 })
 
-async function getActorEmail(): Promise<string> {
-  try {
-    const jar = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return 'unknown'
-    const session = await verifyAdminToken(token)
-    return session?.username || 'unknown'
-  } catch {
-    return 'unknown'
-  }
-}
-
 function parseDateParam(value: string | null, label: string) {
   if (!value) return undefined
   if (!DATE_RE.test(value)) {
@@ -63,9 +46,8 @@ function parseDateParam(value: string | null, label: string) {
 }
 
 export async function GET(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
 
   let fromDate: string | undefined
   let toDate: string | undefined
@@ -99,10 +81,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const adminEmail = await getActorEmail()
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
+  const adminEmail = auth.session.username || 'unknown'
 
   let body: z.infer<typeof CreateBodySchema>
   // Track whether the client actually sent a status. The schema applies

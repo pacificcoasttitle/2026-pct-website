@@ -21,7 +21,7 @@
  */
 import { NextResponse } from 'next/server'
 import sgMail from '@sendgrid/mail'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { getBatchCampaigns, getEmployeeAdminBySlug } from '@/lib/admin-db'
 import { getCampaignReport } from '@/lib/marketing-mailchimp'
 import {
@@ -111,9 +111,8 @@ export async function POST(
   _request: Request,
   { params }: { params: Promise<{ batchId: string }> },
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
   const { batchId } = await params
 
   let campaigns

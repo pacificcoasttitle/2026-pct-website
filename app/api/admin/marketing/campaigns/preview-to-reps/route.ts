@@ -15,7 +15,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import sgMail from '@sendgrid/mail'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   getEmailTemplates,
   getPreviewRecipientReps,
@@ -92,9 +92,8 @@ interface PreviewRequestBody {
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
 
   /* Parse + validate body. */
   let body: PreviewRequestBody

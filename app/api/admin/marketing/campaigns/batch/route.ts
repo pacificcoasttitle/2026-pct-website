@@ -6,12 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'node:crypto'
-import { cookies } from 'next/headers'
-import {
-  isAuthenticated,
-  verifyAdminToken,
-  ADMIN_COOKIE,
-} from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   createEmailCampaignLog,
   getEmployeeAdminBySlug,
@@ -35,18 +30,6 @@ const CONCURRENCY = 5
 const SCHEDULE_DELAY_MINUTES = 30
 
 type Action = 'draft' | 'schedule' | 'send'
-
-async function getActorUsername(): Promise<string | null> {
-  try {
-    const jar   = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return null
-    const session = await verifyAdminToken(token)
-    return session?.username || null
-  } catch {
-    return null
-  }
-}
 
 interface BatchRequestBody {
   templateId?:         number | string
@@ -92,9 +75,8 @@ async function runWithConcurrency<TIn, TOut>(
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('marketing')
+  if ('error' in auth) return auth.error
 
   // ── Mailchimp config ────────────────────────────────────────────
   const apiKey = process.env.MAILCHIMP_API_KEY
@@ -163,7 +145,7 @@ export async function POST(req: NextRequest) {
   const uniqueSlugs = Array.from(new Set(repSlugs))
 
   const batchId  = randomUUID()
-  const actor    = await getActorUsername()
+  const actor    = auth.session.username || null
   const scheduleTime = action === 'schedule' ? computeScheduleTime(SCHEDULE_DELAY_MINUTES) : null
   const scheduleIso  = scheduleTime ? toMailchimpScheduleString(scheduleTime) : null
 
