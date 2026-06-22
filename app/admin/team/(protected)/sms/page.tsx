@@ -7,11 +7,13 @@ import { getSmsEmployees } from '@/lib/admin-db'
 import { CopyButton } from '@/components/admin/CopyButton'
 import { SmsStudioWithLogs } from '@/components/admin/SmsStudioWithLogs'
 import { SmsServiceBadge } from '@/components/admin/SmsServiceBadge'
+import { requirePageRole } from '@/lib/auth/guards'
 
 export const metadata = { title: 'SMS | PCT Team Admin' }
 export const dynamic = 'force-dynamic'
 
 export default async function SmsPage() {
+  await requirePageRole('sms')
   const employees = await getSmsEmployees()
   const active    = employees.filter((e) => e.active)
   const totalOptIns = employees.reduce((sum, e) => sum + e.sms_opt_ins, 0)

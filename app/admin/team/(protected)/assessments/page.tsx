@@ -1,11 +1,13 @@
 import { ClipboardCheck } from 'lucide-react'
 import { getAssessments } from '@/lib/admin-db'
 import { AssessmentsClient } from '@/components/admin/AssessmentsClient'
+import { requirePageRole } from '@/lib/auth/guards'
 
 export const metadata = { title: 'Assessments | PCT Team Admin' }
 export const dynamic = 'force-dynamic'
 
 export default async function AssessmentsPage() {
+  await requirePageRole('assessments')
   let rows: Awaited<ReturnType<typeof getAssessments>> = []
   try {
     rows = await getAssessments(300)

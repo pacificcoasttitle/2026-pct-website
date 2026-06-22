@@ -12,11 +12,15 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { getDashboardStats } from '@/lib/admin-db'
+import { requirePageRole } from '@/lib/auth/guards'
 
 export const metadata = { title: 'Dashboard | PCT Team Admin' }
 export const revalidate = 60
 
 export default async function AdminDashboard() {
+  // 'dashboard' is HR-allowed and the redirect target for denied users,
+  // so this gate can never cause a redirect loop.
+  await requirePageRole('dashboard')
   const stats = await getDashboardStats()
 
   return (
