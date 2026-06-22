@@ -50,12 +50,15 @@ export const ALL_GROUPS: CapabilityGroup[] = [
  * - `top_level` → `'all'` sentinel: access everything; new groups are
  *   auto-included (future-proof).
  * - `hr` → employee-related set (incl. signatures + hr-tools).
- * - `manager` → `[]`: no groups defined yet; fails closed until set.
+ * - `manager` → `'all'`: 3 active admin users (hugo, LAsales, neil)
+ *   have role='manager'; full access preserves the status quo (today
+ *   every logged-in admin has full access). Scoping the manager role
+ *   is a separate, deliberate future decision.
  */
 const ROLE_GROUPS: Record<AdminRole, CapabilityGroup[] | 'all'> = {
   top_level: 'all',
   hr: ['dashboard', 'employees', 'onboarding', 'signatures', 'hr-tools'],
-  manager: [],
+  manager: 'all', // 3 active admins are 'manager'; full access (status quo). Scope later if desired.
 }
 
 /**
