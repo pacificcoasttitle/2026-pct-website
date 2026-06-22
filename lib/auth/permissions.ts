@@ -1,0 +1,93 @@
+// ============================================================
+// PCT Admin — Central RBAC permission map (Phase 1a foundation)
+//
+// THE single source of truth for which roles can access which
+// capability groups. Page-gating, API-gating, and the sidebar filter
+// (Phases 1c/1d/1e) all read from this one map so they can't drift.
+//
+// SAFETY PROPERTY: DEFAULT-DENY. A null/unknown role, or a role with
+// no group for the requested capability, resolves to false. We NEVER
+// default to true.
+//
+// NOTE: This module is currently UNREFERENCED — nothing enforces it
+// yet, so it changes no existing behavior. Enforcement lands later.
+// ============================================================
+
+/** Known admin roles. `manager` is typed but not yet granted groups. */
+export type AdminRole = 'top_level' | 'hr' | 'manager'
+
+/** Distinct admin capability areas, derived from the route map. */
+export type CapabilityGroup =
+  | 'dashboard'
+  | 'employees'
+  | 'onboarding'
+  | 'signatures'
+  | 'hr-tools'
+  | 'marketing'
+  | 'sms'
+  | 'asset-delivery'
+  | 'farms'
+  | 'assessments'
+  | 'fees'
+
+/** Every capability group — used to resolve the `'all'` sentinel. */
+export const ALL_GROUPS: CapabilityGroup[] = [
+  'dashboard',
+  'employees',
+  'onboarding',
+  'signatures',
+  'hr-tools',
+  'marketing',
+  'sms',
+  'asset-delivery',
+  'farms',
+  'assessments',
+  'fees',
+]
+
+/**
+ * Role → capability groups. The single source of truth.
+ * - `top_level` → `'all'` sentinel: access everything; new groups are
+ *   auto-included (future-proof).
+ * - `hr` → employee-related set (incl. signatures + hr-tools).
+ * - `manager` → `[]`: no groups defined yet; fails closed until set.
+ */
+const ROLE_GROUPS: Record<AdminRole, CapabilityGroup[] | 'all'> = {
+  top_level: 'all',
+  hr: ['dashboard', 'employees', 'onboarding', 'signatures', 'hr-tools'],
+  manager: [],
+}
+
+/**
+ * Can `role` access `group`? DEFAULT-DENY:
+ * - no role (null/undefined/'') → false
+ * - unknown role → false
+ * - role with groups but not this one → false
+ * Only an explicit grant (or the `'all'` sentinel) returns true.
+ */
+export function roleCanAccess(
+  role: AdminRole | string | null | undefined,
+  group: CapabilityGroup,
+): boolean {
+  if (!role) return false
+  const groups = ROLE_GROUPS[role as AdminRole]
+  if (groups === undefined) return false
+  if (groups === 'all') return true
+  return groups.includes(group)
+}
+
+/**
+ * The capability groups a role can access, resolving the `'all'`
+ * sentinel to the full group list. Consistent with roleCanAccess.
+ * Unknown/null role → `[]` (fails closed). Useful for the sidebar
+ * filter in a later phase.
+ */
+export function groupsForRole(
+  role: AdminRole | string | null | undefined,
+): CapabilityGroup[] {
+  if (!role) return []
+  const groups = ROLE_GROUPS[role as AdminRole]
+  if (groups === undefined) return []
+  if (groups === 'all') return [...ALL_GROUPS]
+  return [...groups]
+}
