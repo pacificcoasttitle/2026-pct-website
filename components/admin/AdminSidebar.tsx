@@ -24,59 +24,66 @@ import {
   Calculator,
   type LucideIcon,
 } from 'lucide-react'
+import { roleCanAccess, type CapabilityGroup } from '@/lib/auth/permissions'
 
 /**
  * Sidebar information architecture.
  *
  * Grouped, non-collapsible sections. The first group is intentionally
  * headerless (Overview reads cleaner without a label above a single
- * Dashboard entry). All items remain visible to every admin — there is
- * NO role-gating here; the `role` prop is used only for the display
- * label in the user-card chrome below.
+ * Dashboard entry).
+ *
+ * Each item is tagged with its CapabilityGroup and the nav is filtered
+ * by roleCanAccess(role, group) — the SAME 1a permission map the page/
+ * API gates use, so the sidebar can never show a link the route would
+ * reject. roleCanAccess is a pure map lookup (no cookies/redirect), so
+ * it's safe to call in this client component. Empty section headers
+ * (all children filtered) are hidden too. top_level + manager ('all')
+ * see everything.
  *
  * Calendar (/admin/team/marketing-recap/calendar) is promoted from
  * cross-link-only to a top-level Marketing entry. Recipients and
  * Upcoming remain cross-linked from the Recap hub — they're
  * configuration surfaces, not daily destinations.
  */
-type NavItem = { href: string; label: string; icon: LucideIcon }
+type NavItem = { href: string; label: string; icon: LucideIcon; group: CapabilityGroup }
 type NavGroup = { label: string | null; items: NavItem[] }
 
 const NAV_GROUPS: NavGroup[] = [
   {
     label: null,
     items: [
-      { href: '/admin/team',                          label: 'Dashboard',        icon: LayoutDashboard },
+      { href: '/admin/team',                          label: 'Dashboard',        icon: LayoutDashboard, group: 'dashboard' },
     ],
   },
   {
     label: 'People',
     items: [
-      { href: '/admin/team/employees',                label: 'Sales Reps',       icon: Users },
+      { href: '/admin/team/employees',                label: 'Sales Reps',       icon: Users,           group: 'employees' },
     ],
   },
   {
     label: 'Marketing',
     items: [
-      { href: '/admin/team/marketing',                label: 'Email Marketing',  icon: Mail },
-      { href: '/admin/team/sms',                      label: 'Text Reps',        icon: MessageSquare },
-      { href: '/admin/team/asset-delivery',           label: 'Email Reps',       icon: Paperclip },
-      { href: '/admin/team/marketing-recap',          label: 'Marketing Recap',  icon: Newspaper },
-      { href: '/admin/team/marketing-recap/calendar', label: 'Calendar',         icon: CalendarDays },
+      { href: '/admin/team/marketing',                label: 'Email Marketing',  icon: Mail,            group: 'marketing' },
+      { href: '/admin/team/sms',                      label: 'Text Reps',        icon: MessageSquare,   group: 'sms' },
+      { href: '/admin/team/asset-delivery',           label: 'Email Reps',       icon: Paperclip,       group: 'asset-delivery' },
+      { href: '/admin/team/marketing-recap',          label: 'Marketing Recap',  icon: Newspaper,       group: 'marketing' },
+      { href: '/admin/team/marketing-recap/calendar', label: 'Calendar',         icon: CalendarDays,    group: 'marketing' },
     ],
   },
   {
     label: 'Client Tools',
     items: [
-      { href: '/admin/team/assessments',              label: 'Assessments',      icon: ClipboardCheck },
-      { href: '/admin/team/farms',                    label: 'Farm Requests',    icon: List },
+      { href: '/admin/team/assessments',              label: 'Assessments',      icon: ClipboardCheck,  group: 'assessments' },
+      { href: '/admin/team/farms',                    label: 'Farm Requests',    icon: List,            group: 'farms' },
     ],
   },
   {
     label: 'Internal Tools',
     items: [
-      { href: '/admin/team/signatures',               label: 'Signature Center', icon: PenLine },
-      { href: '/admin',                               label: 'Fee Management',   icon: Calculator },
+      { href: '/admin/team/signatures',               label: 'Signature Center', icon: PenLine,         group: 'signatures' },
+      { href: '/admin',                               label: 'Fee Management',   icon: Calculator,      group: 'fees' },
     ],
   },
 ]
@@ -133,9 +140,20 @@ export default function AdminSidebar({
     return best === null || href.length > best.length ? href : best
   }, null)
 
+  // Role-filtered nav: keep only items whose CapabilityGroup the role
+  // can access (same 1a map as the page/API gates), then drop any
+  // section left with no visible items (no empty headers). top_level +
+  // manager ('all') keep everything.
+  const visibleGroups = NAV_GROUPS
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => roleCanAccess(role, item.group)),
+    }))
+    .filter((group) => group.items.length > 0)
+
   const navItems = (
     <nav className="flex flex-col px-3 mt-2">
-      {NAV_GROUPS.map((group, gi) => (
+      {visibleGroups.map((group, gi) => (
         <div
           key={group.label ?? `__group_${gi}`}
           className={gi === 0 ? 'pt-1' : 'pt-5'}
