@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { isAuthenticated } from "@/lib/admin-auth"
+import { requireApiRole } from "@/lib/auth/guards"
 import fs from "fs"
 import path from "path"
 
@@ -16,10 +16,8 @@ function writeFees(fees: any[]) {
 
 // GET - List all fees
 export async function GET() {
-  const authenticated = await isAuthenticated()
-  if (!authenticated) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const auth = await requireApiRole('fees')
+  if ('error' in auth) return auth.error
 
   try {
     const fees = readFees()
@@ -31,10 +29,8 @@ export async function GET() {
 
 // POST - Create a new fee
 export async function POST(request: NextRequest) {
-  const authenticated = await isAuthenticated()
-  if (!authenticated) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const auth = await requireApiRole('fees')
+  if ('error' in auth) return auth.error
 
   try {
     const body = await request.json()
@@ -67,10 +63,8 @@ export async function POST(request: NextRequest) {
 
 // PUT - Update a fee
 export async function PUT(request: NextRequest) {
-  const authenticated = await isAuthenticated()
-  if (!authenticated) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const auth = await requireApiRole('fees')
+  if ('error' in auth) return auth.error
 
   try {
     const body = await request.json()
@@ -106,10 +100,8 @@ export async function PUT(request: NextRequest) {
 
 // DELETE - Delete a fee
 export async function DELETE(request: NextRequest) {
-  const authenticated = await isAuthenticated()
-  if (!authenticated) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const auth = await requireApiRole('fees')
+  if ('error' in auth) return auth.error
 
   try {
     const { searchParams } = new URL(request.url)

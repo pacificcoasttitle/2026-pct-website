@@ -9,12 +9,7 @@
  *          been sent. Sent batches cannot be deleted via this endpoint.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import {
-  isAuthenticated,
-  verifyAdminToken,
-  ADMIN_COOKIE,
-} from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   getAssetDeliveryBatchById,
   getFilesByBatchId,
@@ -28,27 +23,14 @@ export const dynamic = 'force-dynamic'
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
-async function getActorEmail(): Promise<string> {
-  try {
-    const jar   = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return 'unknown'
-    const session = await verifyAdminToken(token)
-    return session?.username || 'unknown'
-  } catch {
-    return 'unknown'
-  }
-}
-
 /* ─── GET ──────────────────────────────────────────────────────── */
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ batchId: string }> },
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('asset-delivery')
+  if ('error' in auth) return auth.error
 
   const { batchId } = await params
   if (!UUID_RE.test(batchId)) {
@@ -77,10 +59,9 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ batchId: string }> },
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const adminEmail = await getActorEmail()
+  const auth = await requireApiRole('asset-delivery')
+  if ('error' in auth) return auth.error
+  const adminEmail = auth.session.username || 'unknown'
 
   const { batchId } = await params
   if (!UUID_RE.test(batchId)) {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { getSmsSendLog } from '@/lib/admin-db'
 
 export const runtime = 'nodejs'
@@ -8,9 +8,8 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('sms')
+  if ('error' in auth) return auth.error
   const { id } = await params
   const numId = Number(id)
   if (!Number.isFinite(numId) || numId <= 0) {

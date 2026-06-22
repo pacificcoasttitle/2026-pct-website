@@ -19,14 +19,9 @@
  * skips the batch-status update — used by the UI's "Send Test" button.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
 import sgMail from '@sendgrid/mail'
-import {
-  isAuthenticated,
-  verifyAdminToken,
-  ADMIN_COOKIE,
-} from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   getPool,
   getAssetDeliveryBatchById,
@@ -78,20 +73,6 @@ function getSg(): typeof sgMail | null {
     sgInitialized = true
   }
   return sgMail
-}
-
-/* ─── Auth helper ──────────────────────────────────────────────── */
-
-async function getActorEmail(): Promise<string> {
-  try {
-    const jar   = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return 'unknown'
-    const session = await verifyAdminToken(token)
-    return session?.username || 'unknown'
-  } catch {
-    return 'unknown'
-  }
 }
 
 /* ─── Rep lookup ───────────────────────────────────────────────── */
@@ -387,10 +368,9 @@ export async function POST(
 ) {
   const startedAt = Date.now()
 
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const adminEmail = await getActorEmail()
+  const auth = await requireApiRole('asset-delivery')
+  if ('error' in auth) return auth.error
+  const adminEmail = auth.session.username || 'unknown'
 
   const { batchId } = await params
   if (!UUID_RE.test(batchId)) {

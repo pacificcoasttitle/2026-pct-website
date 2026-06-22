@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { getSmsSendLogs } from '@/lib/admin-db'
 
 export const runtime = 'nodejs'
 
 export async function GET(req: Request) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('sms')
+  if ('error' in auth) return auth.error
   const url = new URL(req.url)
   const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') || 25)))
   const logs = await getSmsSendLogs(limit)

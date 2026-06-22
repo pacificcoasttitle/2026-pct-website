@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 
 export const runtime = 'nodejs'
 
 export async function GET() {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('sms')
+  if ('error' in auth) return auth.error
 
   const base = process.env.RENDER_API_URL || 'https://main-website-files.onrender.com'
   try {

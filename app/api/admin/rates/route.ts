@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { isAuthenticated } from "@/lib/admin-auth"
+import { requireApiRole } from "@/lib/auth/guards"
 import fs from "fs"
 import path from "path"
 
@@ -16,10 +16,8 @@ function writeJsonFile(filename: string, data: any) {
 
 // GET - List rates by type (title, escrow-resale, escrow-refinance, endorsements)
 export async function GET(request: NextRequest) {
-  const authenticated = await isAuthenticated()
-  if (!authenticated) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const auth = await requireApiRole('fees')
+  if ('error' in auth) return auth.error
 
   try {
     const { searchParams } = new URL(request.url)
@@ -47,10 +45,8 @@ export async function GET(request: NextRequest) {
 
 // PUT - Update a specific rate entry
 export async function PUT(request: NextRequest) {
-  const authenticated = await isAuthenticated()
-  if (!authenticated) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const auth = await requireApiRole('fees')
+  if ('error' in auth) return auth.error
 
   try {
     const body = await request.json()
@@ -85,10 +81,8 @@ export async function PUT(request: NextRequest) {
 
 // POST - Add a new rate entry
 export async function POST(request: NextRequest) {
-  const authenticated = await isAuthenticated()
-  if (!authenticated) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const auth = await requireApiRole('fees')
+  if ('error' in auth) return auth.error
 
   try {
     const body = await request.json()
@@ -119,10 +113,8 @@ export async function POST(request: NextRequest) {
 
 // DELETE - Delete a rate entry by index
 export async function DELETE(request: NextRequest) {
-  const authenticated = await isAuthenticated()
-  if (!authenticated) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const auth = await requireApiRole('fees')
+  if ('error' in auth) return auth.error
 
   try {
     const { searchParams } = new URL(request.url)

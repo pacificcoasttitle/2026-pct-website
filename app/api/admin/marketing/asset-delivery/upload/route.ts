@@ -37,8 +37,7 @@
  * server-side handling simple and lets the UI retry individual failures.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { isAuthenticated, verifyAdminToken, ADMIN_COOKIE } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   getAssetDeliveryBatchById,
   getFilesByBatchId,
@@ -85,27 +84,12 @@ function parseSmsCodeSegment(segment: string): { code: string; nameSuffix: strin
   }
 }
 
-/* ─── Auth helper ──────────────────────────────────────────────── */
-
-async function getActorEmail(): Promise<string> {
-  try {
-    const jar = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return 'unknown'
-    const session = await verifyAdminToken(token)
-    return session?.username || 'unknown'
-  } catch {
-    return 'unknown'
-  }
-}
-
 /* ─── POST ─────────────────────────────────────────────────────── */
 
 export async function POST(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const adminEmail = await getActorEmail()
+  const auth = await requireApiRole('asset-delivery')
+  if ('error' in auth) return auth.error
+  const adminEmail = auth.session.username || 'unknown'
 
   /* 1. Parse multipart body. */
   let form: FormData
@@ -348,10 +332,9 @@ export async function POST(req: NextRequest) {
 /* ─── DELETE ───────────────────────────────────────────────────── */
 
 export async function DELETE(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const adminEmail = await getActorEmail()
+  const auth = await requireApiRole('asset-delivery')
+  if ('error' in auth) return auth.error
+  const adminEmail = auth.session.username || 'unknown'
 
   const fileIdRaw = req.nextUrl.searchParams.get('fileId')
   const fileId    = fileIdRaw ? parseInt(fileIdRaw, 10) : NaN

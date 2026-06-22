@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { isAuthenticated, verifyAdminToken, ADMIN_COOKIE } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { sendBatchMms, sendSingleSms, sendTextBatch } from '@/lib/render-sms'
 import {
   getEmployeeAdminBySlug,
@@ -21,20 +20,9 @@ function defaultTestPhone() {
   return process.env.RENDER_SMS_TEST_PHONE || undefined
 }
 
-async function currentActor(): Promise<string | null> {
-  try {
-    const jar = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return null
-    const session = await verifyAdminToken(token)
-    return session?.username ?? null
-  } catch { return null }
-}
-
 export async function GET() {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('sms')
+  if ('error' in auth) return auth.error
 
   return NextResponse.json({
     serviceUrl: process.env.RENDER_API_URL || 'https://main-website-files.onrender.com',
@@ -44,9 +32,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('sms')
+  if ('error' in auth) return auth.error
 
   try {
     const body = await req.json()
@@ -56,7 +43,7 @@ export async function POST(req: NextRequest) {
     const preview_mode =
       typeof body.preview_mode === 'boolean' ? body.preview_mode : defaultPreviewMode()
     const test_phone = String(body.test_phone || defaultTestPhone() || '').trim() || undefined
-    const actor = await currentActor()
+    const actor = auth.session.username ?? null
 
     if (!message) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 })

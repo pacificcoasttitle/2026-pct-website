@@ -11,13 +11,8 @@
  * short, varied per-rep intros.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
-import {
-  isAuthenticated,
-  verifyAdminToken,
-  ADMIN_COOKIE,
-} from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   ASSET_DELIVERY_INTRO_SYSTEM_PROMPT,
   buildIntroUserMessage,
@@ -53,18 +48,6 @@ const BodySchema = z.object({
 
 /* ─── Helpers ──────────────────────────────────────────────────── */
 
-async function getActorEmail(): Promise<string> {
-  try {
-    const jar   = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return 'unknown'
-    const session = await verifyAdminToken(token)
-    return session?.username || 'unknown'
-  } catch {
-    return 'unknown'
-  }
-}
-
 function stripWrappingQuotes(s: string): string {
   // Common quote characters the model wraps output in (ASCII, curly, guillemets).
   const pairs: Array<[string, string]> = [
@@ -92,9 +75,8 @@ function countWords(s: string): number {
 /* ─── Route ────────────────────────────────────────────────────── */
 
 export async function POST(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('asset-delivery')
+  if ('error' in auth) return auth.error
 
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
@@ -123,7 +105,7 @@ export async function POST(req: NextRequest) {
     campaign_description,
     asset_summary,
   } = body
-  const adminEmail = await getActorEmail()
+  const adminEmail = auth.session.username || 'unknown'
 
   const userMessage = buildIntroUserMessage({
     rep_first_name,

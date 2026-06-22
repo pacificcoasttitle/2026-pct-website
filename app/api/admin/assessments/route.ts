@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { getAssessments } from '@/lib/admin-db'
 
 export async function GET() {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('assessments')
+  if ('error' in auth) return auth.error
   const rows = await getAssessments(300)
   return NextResponse.json(rows)
 }
