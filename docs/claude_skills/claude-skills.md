@@ -141,6 +141,106 @@ Before every commit, verify these paths are NOT in `git status`:
 
 Any of these in `git status` → STOP, do not commit, report.
 
+### 7. Branch Hygiene — Checkout `main` FIRST (augments Rule 1)
+
+Step 0 of every Builder prompt does `git checkout main` **FIRST**, then
+`git checkout -b <type>/<name>`. Branching off a dirty or already-on-a-
+feature-branch tree causes branches to **stack** on unmerged work.
+
+- Confirm the `main` tip (`git log main -1 --oneline`) and report it.
+- One branch in flight to merge at a time.
+- Rebase onto the latest `main` right before merge (so the branch
+  reflects what actually shipped, not a stale base).
+- Parked branches exist — never branch on or touch them.
+
+**Why:** This session repeatedly confirmed the `main` tip in Step 0 and
+caught prerequisite commits (1a→1b→1d-1→1d-2…) before stacking the next
+phase on an unmerged base.
+
+### 8. Look At The Real Data BEFORE Building (strengthens "investigate first")
+
+Before designing or fixing, read the **actual** artifact/data/code — do
+not theorize from assumptions. The Investigator step isn't just "read
+the code"; for anything touching live data it means **read the real DB
+rows.**
+
+**Real catches this session:**
+- Reading the real `vcard_admin_users.role` rows caught **3 active
+  `manager` admins** who would have been 403'd — drove the
+  `manager → 'all'` map fix before enforcement shipped.
+- Reading the real table overlap caught that a roster was **109 rows,
+  not the assumed 35**.
+- Reading the real field-conflicts caught **6 duplicate-human rows**
+  before a backfill.
+
+### 9. Pre-Merge: Verify Against Real Data
+
+When code begins **enforcing** against live data (auth, roles,
+migrations), check the real DB rows **before merging**. "The logic is
+correct" ≠ "safe to deploy" if the data isn't what you assumed. Logic
+review and data review are two separate gates — pass both.
+
+### 10. Authorization: Default-Deny + Single Source of Truth
+
+- **Default-deny / allowlist, never denylist.** Every route declares its
+  capability group; an unmapped route or unknown role fails **CLOSED**
+  (→ deny), never open.
+- **Dual enforcement — gate BOTH pages AND APIs.** Page-only gating is
+  cosmetic; the API is the real boundary. Pages redirect, APIs return
+  401/403.
+- **One shared permission map** drives API gates, page gates, AND the
+  sidebar filter. Never reimplement the role check or keep a parallel
+  allow-list — parallel logic drifts. (This session: `lib/auth/
+  permissions.ts` → `roleCanAccess`/`groupsForRole`, consumed by
+  `requireApiRole`, `requirePageRole`, and `AdminSidebar`.)
+
+### 11. Fail Loud, Not Silent (secrets)
+
+A missing **production** secret must `throw`, not silently fall back to
+an in-repo default (a forgeable, committed fallback is a security hole).
+Use `.trim()` so a blank/whitespace env var counts as missing — the
+`??` operator treats an empty string as "defined" (the empty-string
+trap). Keep the dev fallback for non-prod only.
+
+### 12. Canonical Token Contract (marketing templates)
+
+Email templates drift (legacy `{{REP_PHOTO}}`, `{{rep_url}}`, lowercase
+`{{hero_image}}`, etc.). The durable fix is three-pronged: a **tolerant
+resolver** (alias legacy → canonical), **canonicalize the templates**,
+and **normalize-on-save** so drift can't re-enter. Only touch what's
+actually broken.
+
+### 13. Mutate Framework-Managed DOM Via The Framework API
+
+When a framework owns the DOM (e.g. TinyMCE), mutate through its API
+(`ed.dom.setAttrib`, `ed.dom.addClass`) — never raw DOM
+(`el.src = …`/`setAttribute`). Raw mutations leave the framework's
+serialized state (`getContent()` / `data-mce-src`) **stale**, so
+preview and save ship the old value.
+
+### 14. Batched, Table-Driven Review For Large Changes
+
+For sweeping mechanical changes (e.g. gating ~50 routes), **batch by
+capability group** and report a **TABLE** (`route | methods | group`)
+per batch so the Reviewer verifies the **classification**, not 50 raw
+diffs. Smaller, safer reviews beat one wall-of-diff.
+
+### 15. Environment Quirks Are Never Code Errors
+
+- **Windows/Dropbox `EBUSY` on the first `.next` build** → re-run with
+  `rm -rf .next && npm run build` (PowerShell: `Remove-Item -Recurse
+  -Force .next`). It is a file-lock race, NEVER a code error.
+- **`git grep` exit code 1 = zero matches = clean**, NOT a failure. A
+  grep-zero sweep is the *success* signal for "no remaining callers /
+  no leftover old-auth references."
+
+### 16. Verify Pasted Reports Match The Branch In Flight
+
+Before acting on a pasted report, confirm its **commit hash + file list
+match the branch being merged**. Stale or wrong-report pastes happened
+repeatedly this session — a 2-second hash+files check prevents merging
+the wrong work.
+
 ---
 
 ## 🤖 AGENT ROLES
@@ -1163,6 +1263,7 @@ Before any feature ships to production:
 | 2026-05-20 | Initial version with brand standards and content rules                   | Jerry Hernandez via Claude |
 | 2026-05-20 | Added agent roles, email marketing system architecture, MCP access notes | Jerry Hernandez via Claude |
 | 2026-05-22 | Archived legacy docs to _archive/; established /docs/system/ (7 living docs) | Documentation Agent        |
+| 2026-06-22 | Added session-hardened process rules 7–16 (checkout-main-first, look-at-real-data, pre-merge data verify, default-deny/dual-enforcement/single-source RBAC, fail-loud secrets, canonical tokens, framework-DOM, batched table-review, EBUSY/grep-exit-1, verify pasted reports) | Builder via Claude         |
 
 
 ---
