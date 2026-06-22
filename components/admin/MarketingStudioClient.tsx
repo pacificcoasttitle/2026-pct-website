@@ -91,7 +91,7 @@ function ImageUploader({ assets, setAssets, onInsert }: {
     setAssets((prev) => [...prev, { url: '', previewUrl, name: file.name, uploading: true }])
     try {
       const form = new FormData(); form.append('file', file)
-      const res = await fetch('/api/admin/upload', { method: 'POST', body: form })
+      const res = await fetch('/api/admin/marketing/upload', { method: 'POST', body: form })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Upload failed')
       setAssets((p) => p.map((a) => a.previewUrl === previewUrl ? { ...a, url: data.url, uploading: false } : a))
@@ -396,7 +396,7 @@ export function MarketingStudioClient({ audiences, mailchimpServer = 'us1' }: Pr
       images_upload_handler: async (blobInfo: any) => {
         const formData = new FormData()
         formData.append('file', blobInfo.blob(), blobInfo.filename())
-        const res = await fetch('/api/admin/upload', { method: 'POST', body: formData })
+        const res = await fetch('/api/admin/marketing/upload', { method: 'POST', body: formData })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Upload failed')
         return data.url

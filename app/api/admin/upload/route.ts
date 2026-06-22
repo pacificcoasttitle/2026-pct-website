@@ -1,168 +1,32 @@
 /**
- * /api/admin/upload — upload an image to Cloudflare R2 (pct-files/marketing/)
+ * /api/admin/upload — RETIRED.
  *
- * Uses the R2 S3-compatible API with AWS Sig V4 signing.
- * No extra packages — pure Node.js crypto + fetch.
+ * This endpoint used to be a single shared image upload serving four
+ * capability groups (employees + signatures, which are HR-allowed, and
+ * marketing + sms, which are HR-blocked). Because it served both
+ * HR-allowed and HR-blocked features, it couldn't be role-gated
+ * without either breaking HR or leaving a hole.
  *
- * Required Vercel environment variables:
- *   R2_ACCOUNT_ID        – Cloudflare account ID
- *   R2_BUCKET_NAME       – bucket name (e.g. pct-files)
- *   R2_ACCESS_KEY_ID     – R2 API token access key
- *   R2_SECRET_ACCESS_KEY – R2 API token secret
- *   R2_PUBLIC_URL        – public base URL (e.g. https://pub-xxx.r2.dev)
+ * It has been split into four capability-specific gated endpoints:
+ *   POST /api/admin/employees/upload   (employees)
+ *   POST /api/admin/signatures/upload  (signatures)
+ *   POST /api/admin/marketing/upload   (marketing)
+ *   POST /api/admin/sms/upload         (sms — preserves sms_code filename)
+ *
+ * The file is kept (not deleted) so any un-grepped/external caller
+ * gets a clear 410 Gone instead of a 404 mystery — but it no longer
+ * uploads anything.
  */
-import { NextRequest, NextResponse } from 'next/server'
-import { createHash, createHmac } from 'crypto'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 
-// ── AWS Sig V4 helpers ────────────────────────────────────────────
-function sha256hex(data: string | Buffer): string {
-  return createHash('sha256').update(data).digest('hex')
-}
-
-function hmacSha256(key: Buffer | string, data: string): Buffer {
-  return createHmac('sha256', key).update(data).digest()
-}
-
-function getSigningKey(secret: string, date: string, region: string, service: string): Buffer {
-  const kDate    = hmacSha256(`AWS4${secret}`, date)
-  const kRegion  = hmacSha256(kDate, region)
-  const kService = hmacSha256(kRegion, service)
-  return hmacSha256(kService, 'aws4_request')
-}
-
-async function uploadToR2(
-  body: Buffer,
-  key: string,
-  contentType: string
-): Promise<string> {
-  const accountId  = process.env.R2_ACCOUNT_ID!
-  const bucket     = process.env.R2_BUCKET_NAME!
-  const accessKey  = process.env.R2_ACCESS_KEY_ID!
-  const secret     = process.env.R2_SECRET_ACCESS_KEY!
-  const publicBase = (process.env.R2_PUBLIC_URL || '').replace(/\/$/, '')
-
-  const host        = `${accountId}.r2.cloudflarestorage.com`
-  const region      = 'auto'
-  const service     = 's3'
-  const endpoint    = `https://${host}`
-  const objectPath  = `/${bucket}/${key}`
-
-  // Timestamps
-  const now      = new Date()
-  const amzDate  = now.toISOString().replace(/[:\-]|\.\d{3}/g, '').slice(0, 15) + 'Z'
-  const dateOnly = amzDate.slice(0, 8)
-
-  const payloadHash = sha256hex(body)
-
-  // ── Canonical request ─────────────────────────────────────────
-  const canonicalHeaders =
-    `content-type:${contentType}\n` +
-    `host:${host}\n` +
-    `x-amz-content-sha256:${payloadHash}\n` +
-    `x-amz-date:${amzDate}\n`
-
-  const signedHeaders = 'content-type;host;x-amz-content-sha256;x-amz-date'
-
-  const canonicalRequest = [
-    'PUT',
-    objectPath,
-    '',                   // no query string
-    canonicalHeaders,
-    signedHeaders,
-    payloadHash,
-  ].join('\n')
-
-  // ── String to sign ────────────────────────────────────────────
-  const credentialScope = `${dateOnly}/${region}/${service}/aws4_request`
-  const stringToSign = [
-    'AWS4-HMAC-SHA256',
-    amzDate,
-    credentialScope,
-    sha256hex(canonicalRequest),
-  ].join('\n')
-
-  // ── Signature ─────────────────────────────────────────────────
-  const signingKey  = getSigningKey(secret, dateOnly, region, service)
-  const signature   = createHmac('sha256', signingKey).update(stringToSign).digest('hex')
-  const authorization =
-    `AWS4-HMAC-SHA256 Credential=${accessKey}/${credentialScope}, ` +
-    `SignedHeaders=${signedHeaders}, Signature=${signature}`
-
-  // ── Upload ────────────────────────────────────────────────────
-  const res = await fetch(`${endpoint}${objectPath}`, {
-    method: 'PUT',
-    headers: {
-      Authorization:            authorization,
-      'Content-Type':           contentType,
-      'Content-Length':         String(body.length),
-      'x-amz-content-sha256':   payloadHash,
-      'x-amz-date':             amzDate,
+export async function POST() {
+  return NextResponse.json(
+    {
+      error:
+        'This endpoint has been split by capability. Use the capability-specific upload endpoint.',
     },
-    body,
-    // @ts-expect-error – Node fetch needs duplex for streaming
-    duplex: 'half',
-  })
-
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`R2 upload failed (${res.status}): ${text}`)
-  }
-
-  // Return public CDN URL
-  return `${publicBase}/${key}`
-}
-
-// ── Route handler ─────────────────────────────────────────────────
-export async function POST(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const { R2_ACCOUNT_ID, R2_BUCKET_NAME, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = process.env
-  if (!R2_ACCOUNT_ID || !R2_BUCKET_NAME || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
-    return NextResponse.json(
-      { error: 'R2 storage not configured. Add R2_* env vars to Vercel.' },
-      { status: 500 }
-    )
-  }
-
-  try {
-    const form = await req.formData()
-    const file = form.get('file') as File | null
-    if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
-
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json({ error: 'Only image files are accepted' }, { status: 400 })
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: 'File too large (max 10 MB)' }, { status: 400 })
-    }
-
-    const ext       = (file.name.split('.').pop() || 'jpg').toLowerCase()
-
-    // Optional prefix lets the SMS Studio embed the rep's `sms_code`
-    // (e.g. "C-9") in the filename so the Render service's
-    // `extract_sms_code_from_filename` routes the MMS to the right rep.
-    const rawPrefix = String(form.get('prefix') || '').trim()
-    const safePrefix = rawPrefix.replace(/[^A-Za-z0-9-]/g, '').slice(0, 20)
-    const folder    = safePrefix ? 'sms' : 'marketing'
-    const stem      = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    const safeName  = safePrefix ? `${safePrefix}_${stem}.${ext}` : `${stem}.${ext}`
-    const key       = `${folder}/${safeName}`
-
-    const buffer    = Buffer.from(await file.arrayBuffer())
-    const publicUrl = await uploadToR2(buffer, key, file.type)
-
-    return NextResponse.json({ url: publicUrl, key, size: file.size, name: file.name })
-  } catch (err) {
-    console.error('[upload] R2 error:', err)
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Upload failed' },
-      { status: 500 }
-    )
-  }
+    { status: 410 },
+  )
 }

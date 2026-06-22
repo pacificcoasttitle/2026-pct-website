@@ -100,7 +100,7 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
     try {
       const fd = new FormData()
       fd.append('file', file)
-      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+      const res = await fetch('/api/admin/employees/upload', { method: 'POST', body: fd })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Upload failed')
       setEmp((prev) => ({ ...prev, photo_url: data.url }))

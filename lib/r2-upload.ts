@@ -15,6 +15,7 @@
  *   R2_PUBLIC_URL        — public base URL (e.g. https://pub-xxx.r2.dev)
  */
 import { createHash, createHmac } from 'crypto'
+import { NextRequest, NextResponse } from 'next/server'
 
 export interface R2UploadOptions {
   buffer:      Buffer
@@ -292,4 +293,70 @@ export async function deleteFromR2(key: string): Promise<void> {
     const text = await res.text().catch(() => '')
     throw new Error(`R2 delete failed (${res.status}): ${text.slice(0, 300)}`)
   }
+}
+
+/* ─── Shared admin image-upload handler ────────────────────────────
+ * One place for the validate → R2 PUT → JSON-shape logic that the four
+ * capability-gated upload routes (employees, signatures, marketing,
+ * sms) share. The routes differ ONLY in their requireApiRole() gate
+ * and the folder/key they pick — so the R2 SigV4 logic lives once
+ * (above) and the validation/response shape lives once (here).
+ *
+ * Validation + return shape are identical to the original shared
+ * /api/admin/upload route (images only, 10 MB cap, {url,key,size,name})
+ * so callers need only a URL change, not a response-handling change.
+ */
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024
+
+/** Build the object key for an uploaded image, given a target folder. */
+type KeyBuilder = (ctx: { ext: string; form: FormData }) => string
+
+/**
+ * Parse the multipart form, validate (image + size), upload to R2 at
+ * the key produced by `buildKey`, and return the standard JSON. On any
+ * validation/config failure returns the appropriate error NextResponse.
+ */
+export async function handleAdminImageUpload(
+  req: NextRequest,
+  buildKey: KeyBuilder,
+): Promise<NextResponse> {
+  const { R2_ACCOUNT_ID, R2_BUCKET_NAME, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = process.env
+  if (!R2_ACCOUNT_ID || !R2_BUCKET_NAME || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+    return NextResponse.json(
+      { error: 'R2 storage not configured. Add R2_* env vars to Vercel.' },
+      { status: 500 },
+    )
+  }
+
+  try {
+    const form = await req.formData()
+    const file = form.get('file') as File | null
+    if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+
+    if (!file.type.startsWith('image/')) {
+      return NextResponse.json({ error: 'Only image files are accepted' }, { status: 400 })
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      return NextResponse.json({ error: 'File too large (max 10 MB)' }, { status: 400 })
+    }
+
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+    const key = buildKey({ ext, form })
+
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const { url } = await uploadToR2({ buffer, key, contentType: file.type })
+
+    return NextResponse.json({ url, key, size: file.size, name: file.name })
+  } catch (err) {
+    console.error('[admin-image-upload] R2 error:', err)
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Upload failed' },
+      { status: 500 },
+    )
+  }
+}
+
+/** Random object stem, e.g. "1718900000000-a1b2c3". */
+export function randomStem(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }

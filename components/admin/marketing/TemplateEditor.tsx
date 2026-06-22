@@ -481,7 +481,7 @@ ${body}
       images_upload_handler: async (blobInfo: any) => {
         const fd = new FormData()
         fd.append('file', blobInfo.blob(), blobInfo.filename())
-        const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+        const res = await fetch('/api/admin/marketing/upload', { method: 'POST', body: fd })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Upload failed')
         return data.url as string
@@ -574,7 +574,7 @@ ${body}
         try {
           const fd = new FormData()
           fd.append('file', file)
-          const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+          const res = await fetch('/api/admin/marketing/upload', { method: 'POST', body: fd })
           const data = await res.json()
           if (!res.ok) throw new Error(data.error || 'Upload failed')
           editor.focus()
@@ -673,7 +673,7 @@ ${body}
       try {
         const fd = new FormData()
         fd.append('file', file)
-        const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+        const res = await fetch('/api/admin/marketing/upload', { method: 'POST', body: fd })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Upload failed')
         ed.focus()
@@ -710,7 +710,7 @@ ${body}
     try {
       const fd = new FormData()
       fd.append('file', file)
-      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+      const res = await fetch('/api/admin/marketing/upload', { method: 'POST', body: fd })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || `Upload failed: ${res.status}`)
       const url: string | undefined = data.url

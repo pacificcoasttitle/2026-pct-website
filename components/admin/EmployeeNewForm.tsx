@@ -93,7 +93,7 @@ export default function EmployeeNewForm({ offices, depts }: Props) {
     try {
       const fd = new FormData()
       fd.append('file', file)
-      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+      const res = await fetch('/api/admin/employees/upload', { method: 'POST', body: fd })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Upload failed')
       setForm((f) => ({ ...f, photo_url: data.url }))

@@ -4,7 +4,7 @@
  * StaffEditClient — form for updating a staff_members row.
  *
  * Fields are grouped (Photo / Identity / Role / Contact / Office /
- * Compliance / Status). Photo upload posts to /api/admin/upload (R2);
+ * Compliance / Status). Photo upload posts to /api/admin/signatures/upload (R2);
  * the returned URL is stashed in the form state but not persisted until
  * the user clicks Save. The form PATCHes /api/admin/signatures/staff/[id]
  * with only the fields the user changed (no full overwrites) so concurrent
@@ -124,7 +124,7 @@ export function StaffEditClient({ staff, offices }: Props) {
     try {
       const fd = new FormData()
       fd.append('file', file)
-      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+      const res = await fetch('/api/admin/signatures/upload', { method: 'POST', body: fd })
       if (res.status === 401) { window.location.href = '/admin'; return }
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))

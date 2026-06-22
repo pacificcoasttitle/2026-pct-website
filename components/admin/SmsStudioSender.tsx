@@ -242,7 +242,7 @@ export function SmsStudioSender({ repCount, reps, onSendComplete }: Props) {
       form.append('file', compressed)
       const code = repBySlug[repSlug]?.sms_code
       if (code) form.append('prefix', code)
-      const res = await fetch('/api/admin/upload', { method: 'POST', body: form })
+      const res = await fetch('/api/admin/sms/upload', { method: 'POST', body: form })
 
       // Defensive: if the platform returns an HTML error page (e.g. 413,
       // gateway timeout) res.json() throws "Unexpected token …". Read

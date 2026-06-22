@@ -220,7 +220,7 @@ export function CampaignWizard({ reps, mailchimpServer, regions }: Props) {
     try {
       const form = new FormData()
       form.append('file', file)
-      const res = await fetch('/api/admin/upload', { method: 'POST', body: form })
+      const res = await fetch('/api/admin/marketing/upload', { method: 'POST', body: form })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Upload failed')
       setHeroImageUrl(data.url)
