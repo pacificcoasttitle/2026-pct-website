@@ -8,13 +8,8 @@
  * in the response or logged.
  */
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import sgMail from '@sendgrid/mail'
-import {
-  isAuthenticated,
-  verifyAdminToken,
-  ADMIN_COOKIE,
-} from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   getOnboarding,
   getEmployeeAdminById,
@@ -40,27 +35,14 @@ function getSg(): typeof sgMail | null {
   return sgMail
 }
 
-async function getActorEmail(): Promise<string> {
-  try {
-    const jar = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return 'unknown'
-    const session = await verifyAdminToken(token)
-    return session?.username || 'unknown'
-  } catch {
-    return 'unknown'
-  }
-}
-
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ repId: string }> },
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('onboarding')
+  if ('error' in auth) return auth.error
 
-  const adminEmail = await getActorEmail()
+  const adminEmail = auth.session.username || 'unknown'
   const { repId: repIdRaw } = await params
   const repId = parseInt(repIdRaw, 10)
   if (!Number.isFinite(repId) || repId <= 0) {

@@ -1,29 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { isAuthenticated, verifyAdminToken, ADMIN_COOKIE } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { renderSignatureForStaff, SignatureRenderError } from '@/lib/signature-renderer'
 
 export const runtime = 'nodejs'
-
-async function getActorEmail(): Promise<string | null> {
-  try {
-    const jar = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return null
-    const session = await verifyAdminToken(token)
-    return session?.username || null
-  } catch {
-    return null
-  }
-}
 
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ staffId: string }> }
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('signatures')
+  if ('error' in auth) return auth.error
 
   const { staffId: staffIdRaw } = await params
   const staffId = parseInt(staffIdRaw, 10)
@@ -31,7 +17,7 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid staff id' }, { status: 400 })
   }
 
-  const adminEmail = (await getActorEmail()) || 'unknown'
+  const adminEmail = auth.session.username || 'unknown'
 
   try {
     const { staff, template, html } = await renderSignatureForStaff(staffId)

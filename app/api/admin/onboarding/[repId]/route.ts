@@ -4,7 +4,7 @@
  * One rep's onboarding record + checklist items. 404 if none started.
  */
 import { NextResponse } from 'next/server'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { getOnboarding } from '@/lib/admin-db'
 
 export const runtime = 'nodejs'
@@ -14,9 +14,8 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ repId: string }> },
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('onboarding')
+  if ('error' in auth) return auth.error
   const { repId } = await params
   const repIdNum = Number(repId)
   if (!Number.isInteger(repIdNum) || repIdNum <= 0) {

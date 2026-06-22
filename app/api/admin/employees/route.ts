@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
-import { isAuthenticated } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { createEmployee } from '@/lib/admin-db'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: Request) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('employees')
+  if ('error' in auth) return auth.error
 
   let body: Record<string, unknown>
   try {

@@ -6,29 +6,12 @@
  * complete, else 'in_progress'. Admin only.
  */
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
-import {
-  isAuthenticated,
-  verifyAdminToken,
-  ADMIN_COOKIE,
-} from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { setOnboardingItemStatus } from '@/lib/admin-db'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-async function getActorEmail(): Promise<string> {
-  try {
-    const jar   = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return 'unknown'
-    const session = await verifyAdminToken(token)
-    return session?.username || 'unknown'
-  } catch {
-    return 'unknown'
-  }
-}
 
 const BodySchema = z.object({
   status: z.enum(['pending', 'in_progress', 'complete']),
@@ -38,10 +21,9 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ itemId: string }> },
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const adminEmail = await getActorEmail()
+  const auth = await requireApiRole('onboarding')
+  if ('error' in auth) return auth.error
+  const adminEmail = auth.session.username || 'unknown'
 
   const { itemId } = await params
   const itemIdNum = Number(itemId)

@@ -1,23 +1,15 @@
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
-import { cookies } from 'next/headers'
-import { verifyAdminToken, ADMIN_COOKIE } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { updateEmployee, getEmployeeAdminBySlug } from '@/lib/admin-db'
-
-async function requireAuth() {
-  const jar   = await cookies()
-  const token = jar.get(ADMIN_COOKIE)?.value
-  if (!token) return null
-  return verifyAdminToken(token)
-}
 
 // GET — fetch single employee
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const session = await requireAuth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await requireApiRole('employees')
+  if ('error' in auth) return auth.error
 
   const { slug } = await params
   const emp = await getEmployeeAdminBySlug(slug)
@@ -31,8 +23,8 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const session = await requireAuth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await requireApiRole('employees')
+  if ('error' in auth) return auth.error
 
   const { slug } = await params
   const body = await req.json()

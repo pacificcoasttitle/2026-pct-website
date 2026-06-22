@@ -7,37 +7,19 @@
  * employee creation.
  */
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
-import {
-  isAuthenticated,
-  verifyAdminToken,
-  ADMIN_COOKIE,
-} from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import { startOnboarding, getEmployeeAdminById } from '@/lib/admin-db'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-async function getActorEmail(): Promise<string> {
-  try {
-    const jar   = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return 'unknown'
-    const session = await verifyAdminToken(token)
-    return session?.username || 'unknown'
-  } catch {
-    return 'unknown'
-  }
-}
-
 const BodySchema = z.object({ repId: z.coerce.number().int().positive() }).strict()
 
 export async function POST(request: Request) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const adminEmail = await getActorEmail()
+  const auth = await requireApiRole('onboarding')
+  if ('error' in auth) return auth.error
+  const adminEmail = auth.session.username || 'unknown'
 
   let repId: number
   try {

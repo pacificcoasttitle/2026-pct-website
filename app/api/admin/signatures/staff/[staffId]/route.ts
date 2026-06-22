@@ -9,9 +9,8 @@
  * the office_locations table before the UPDATE is issued.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
-import { isAuthenticated, verifyAdminToken, ADMIN_COOKIE } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   getStaffMemberById,
   getStaffMemberByEmail,
@@ -23,18 +22,6 @@ import {
 import { normalizePhone } from '@/lib/phone-utils'
 
 export const runtime = 'nodejs'
-
-async function getActorEmail(): Promise<string | null> {
-  try {
-    const jar = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return null
-    const session = await verifyAdminToken(token)
-    return session?.username || null
-  } catch {
-    return null
-  }
-}
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -77,9 +64,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ staffId: string }> },
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('signatures')
+  if ('error' in auth) return auth.error
 
   const { staffId: raw } = await params
   const staffId = parseStaffId(raw)
@@ -170,7 +156,7 @@ export async function PATCH(
     dbInput.fax = normalizePhone(dbInput.fax)
   }
 
-  const adminEmail = (await getActorEmail()) || 'unknown'
+  const adminEmail = auth.session.username || 'unknown'
 
   try {
     const updated = await updateStaffMember(staffId, dbInput, adminEmail)
@@ -193,9 +179,8 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ staffId: string }> },
 ) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('signatures')
+  if ('error' in auth) return auth.error
 
   const { staffId: raw } = await params
   const staffId = parseStaffId(raw)
@@ -203,7 +188,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Invalid staff id' }, { status: 400 })
   }
 
-  const adminEmail = (await getActorEmail()) || 'unknown'
+  const adminEmail = auth.session.username || 'unknown'
 
   try {
     const deleted = await deleteStaffMember(staffId)

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
-import { isAuthenticated, verifyAdminToken, ADMIN_COOKIE } from '@/lib/admin-auth'
+import { requireApiRole } from '@/lib/auth/guards'
 import {
   getAllOfficeLocations,
   getStaffMemberByEmail,
@@ -42,18 +41,6 @@ const BodySchema = z.object({
 
 /* ─── Helpers ──────────────────────────────────────────────────── */
 
-async function getActorEmail(): Promise<string | null> {
-  try {
-    const jar = await cookies()
-    const token = jar.get(ADMIN_COOKIE)?.value
-    if (!token) return null
-    const session = await verifyAdminToken(token)
-    return session?.username || null
-  } catch {
-    return null
-  }
-}
-
 // RFC-5322-lite. Avoids false negatives on common addresses without going overboard.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -85,9 +72,8 @@ interface ValidationError {
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await isAuthenticated())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireApiRole('signatures')
+  if ('error' in auth) return auth.error
 
   let parsed
   try {
@@ -105,7 +91,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { mode, rows } = parsed.data
-  const adminEmail = (await getActorEmail()) || 'unknown'
+  const adminEmail = auth.session.username || 'unknown'
 
   /* ── 1. Load valid office slugs once ──────────────────────────── */
   let validOfficeSlugs: Set<string>
