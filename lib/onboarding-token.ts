@@ -23,7 +23,18 @@ const EXPIRES = '14d'
  * secret — a different env var and a different dev fallback string.
  */
 function onboardingSecret() {
-  const s = process.env.ONBOARDING_TOKEN_SECRET ?? 'dev-onboarding-secret-change-me-in-env'
+  // .trim() matters: the ?? trap treats an empty/whitespace env var as
+  // "defined". Treat blank as missing.
+  const resolved = process.env.ONBOARDING_TOKEN_SECRET?.trim() || ''
+
+  if (process.env.NODE_ENV === 'production' && !resolved) {
+    throw new Error(
+      'ONBOARDING_TOKEN_SECRET is required in production — refusing to sign/verify onboarding tokens with a dev fallback',
+    )
+  }
+
+  // Non-production keeps the dev fallback so local dev works without env vars.
+  const s = resolved || 'dev-onboarding-secret-change-me-in-env'
   return new TextEncoder().encode(s)
 }
 
