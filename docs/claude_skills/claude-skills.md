@@ -816,11 +816,8 @@ For now, team audiences are assigned to a designated team lead's row. Future enh
 - `{{REP_EMAIL}}` — Email address
 - `{{REP_PHONE}}` — Phone number
 - `{{REP_PHOTO}}` — Photo URL
+- `{{rep_url}}` — Canonical rep page → `https://www.pct.com/{slug}`. Live again as of `d6198af`; legacy `/team/{slug}` URLs 308-redirect to `/{slug}` (per the team-slug fix `20c79da`), so the tag is safe + current. Resolved by the tolerant resolver (see Rule 12, canonical token contract).
 - `{{HERO_IMAGE}}` — Per-campaign hero image (substituted client-side)
-
-**Retired tags (do not use):**
-
-- ~~`{{REP_URL}}`~~ — Pointed to retired `/team/<slug>` page
 
 ---
 
