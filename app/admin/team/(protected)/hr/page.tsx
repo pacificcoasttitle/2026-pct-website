@@ -17,8 +17,15 @@ import HrRosterClient from '@/components/admin/HrRosterClient'
 export const metadata = { title: 'HR Roster | PCT Team Admin' }
 export const revalidate = 60
 
-export default async function HrRosterPage() {
+export default async function HrRosterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ dedup?: string }>
+}) {
   await requirePageRole('hr-tools')
+
+  const { dedup } = await searchParams
+  const dedupOnly = dedup === '1'
 
   const employees = await getAllHrEmployees()
 
@@ -33,5 +40,5 @@ export default async function HrRosterPage() {
     needs_dedup_review: e.needs_dedup_review,
   }))
 
-  return <HrRosterClient employees={data} />
+  return <HrRosterClient employees={data} dedupOnly={dedupOnly} />
 }

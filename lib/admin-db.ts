@@ -1907,6 +1907,73 @@ export interface HrEmployee {
   updated_at:         string
 }
 
+export interface HrDashboardStats {
+  total:           number
+  active:          number
+  inactive:        number
+  needsDedupReview: number
+  recentAdditions: number   // created in the last 30 days (see caveat below)
+  byDepartment:    Array<{ department: string; count: number }>
+  byOffice:        Array<{ office: string; count: number }>
+}
+
+/**
+ * At-a-glance HR aggregates for the HR dashboard. DB-light: all counts
+ * computed with SQL aggregates (COUNT / GROUP BY) — never by loading all
+ * rows and counting in JS. No external calls.
+ *
+ * CAVEAT — recentAdditions (created_at, last 30 days): immediately after
+ * the 3b backfill this is ~the entire roster (every row was created the
+ * same day). The dashboard labels it accordingly and does not headline
+ * it; it becomes meaningful once organic adds/edits accrue (2d+).
+ *
+ * NOTE — no birthday/anniversary aggregates: birthday/start_date are
+ * NULL until Phase 3 collects them, so there's nothing to aggregate yet.
+ *
+ * NULL handling: department/office can be NULL; they're bucketed under a
+ * '(Unassigned)' label so the breakdowns always sum to the headcount.
+ */
+export async function getHrDashboardStats(): Promise<HrDashboardStats> {
+  const db = getPool()
+
+  const [headcount, byDept, byOffice] = await Promise.all([
+    db.query(`
+      SELECT
+        COUNT(*)::int                                                   AS total,
+        COUNT(*) FILTER (WHERE active = true)::int                      AS active,
+        COUNT(*) FILTER (WHERE active = false)::int                     AS inactive,
+        COUNT(*) FILTER (WHERE needs_dedup_review = true)::int          AS needs_dedup,
+        COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::int AS recent
+      FROM hr_employees
+    `),
+    db.query(`
+      SELECT COALESCE(NULLIF(TRIM(department), ''), '(Unassigned)') AS department,
+             COUNT(*)::int AS count
+      FROM hr_employees
+      GROUP BY 1
+      ORDER BY count DESC, department ASC
+    `),
+    db.query(`
+      SELECT COALESCE(NULLIF(TRIM(office), ''), '(Unassigned)') AS office,
+             COUNT(*)::int AS count
+      FROM hr_employees
+      GROUP BY 1
+      ORDER BY count DESC, office ASC
+    `),
+  ])
+
+  const h = headcount.rows[0]
+  return {
+    total:            h.total,
+    active:           h.active,
+    inactive:         h.inactive,
+    needsDedupReview: h.needs_dedup,
+    recentAdditions:  h.recent,
+    byDepartment:     byDept.rows,
+    byOffice:         byOffice.rows,
+  }
+}
+
 /**
  * Read the full HR roster. Order: active first, then alphabetical by
  * last name — same convention as the Sales Reps (vcard) list. DB-light:

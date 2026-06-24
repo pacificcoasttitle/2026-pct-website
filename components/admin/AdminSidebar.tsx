@@ -66,6 +66,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'HR',
     items: [
+      { href: '/admin/team/hr/dashboard',             label: 'HR Dashboard',     icon: LayoutDashboard, group: 'hr-tools' },
       { href: '/admin/team/hr',                       label: 'HR Roster',        icon: IdCard,          group: 'hr-tools' },
     ],
   },

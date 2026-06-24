@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useMemo } from 'react'
-import { Search, Users, AlertTriangle } from 'lucide-react'
+import Link from 'next/link'
+import { Search, Users, AlertTriangle, LayoutDashboard } from 'lucide-react'
 
 interface HrRosterRow {
   id:                 number
@@ -14,10 +15,19 @@ interface HrRosterRow {
   needs_dedup_review: boolean
 }
 
-export default function HrRosterClient({ employees }: { employees: HrRosterRow[] }) {
+export default function HrRosterClient({
+  employees,
+  dedupOnly = false,
+}: {
+  employees: HrRosterRow[]
+  dedupOnly?: boolean
+}) {
   const [query,      setQuery]      = useState('')
   const [deptFilter, setDeptFilter] = useState('all')
-  const [showActive, setShowActive] = useState<'all' | 'active' | 'inactive'>('active')
+  // When linked from the dashboard's dedup CTA (?dedup=1), default to
+  // showing all statuses so flagged inactive rows aren't hidden.
+  const [showActive, setShowActive] = useState<'all' | 'active' | 'inactive'>(dedupOnly ? 'all' : 'active')
+  const [flaggedOnly, setFlaggedOnly] = useState(dedupOnly)
 
   const depts = useMemo(() => {
     const names = [...new Set(employees.map((e) => e.department).filter(Boolean))] as string[]
@@ -32,6 +42,7 @@ export default function HrRosterClient({ employees }: { employees: HrRosterRow[]
   const filtered = useMemo(() => {
     const q = query.toLowerCase()
     return employees.filter((e) => {
+      if (flaggedOnly && !e.needs_dedup_review) return false
       if (showActive === 'active'   && !e.active) return false
       if (showActive === 'inactive' &&  e.active) return false
       if (deptFilter !== 'all' && e.department !== deptFilter) return false
@@ -40,7 +51,7 @@ export default function HrRosterClient({ employees }: { employees: HrRosterRow[]
                !e.title?.toLowerCase().includes(q)) return false
       return true
     })
-  }, [employees, query, deptFilter, showActive])
+  }, [employees, query, deptFilter, showActive, flaggedOnly])
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pt-2 lg:pt-0">
@@ -53,6 +64,13 @@ export default function HrRosterClient({ employees }: { employees: HrRosterRow[]
             Showing {filtered.length} of {employees.length}
           </p>
         </div>
+        <Link
+          href="/admin/team/hr/dashboard"
+          className="h-10 px-4 inline-flex items-center gap-2 rounded-xl bg-white border border-gray-200 text-[#03374f] text-sm font-semibold hover:border-[#f26b2b]/40 hover:text-[#f26b2b] transition-colors flex-shrink-0"
+        >
+          <LayoutDashboard className="w-4 h-4" />
+          <span className="hidden sm:inline">Dashboard</span>
+        </Link>
       </div>
 
       {/* Dedup review notice — surfaces the flagged rows so HR can spot
@@ -113,6 +131,22 @@ export default function HrRosterClient({ employees }: { employees: HrRosterRow[]
             </button>
           ))}
         </div>
+
+        {/* Flagged-only toggle */}
+        {flaggedCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setFlaggedOnly((v) => !v)}
+            className={`px-3 h-9 inline-flex items-center gap-1.5 rounded-xl border text-xs font-medium transition-all ${
+              flaggedOnly
+                ? 'bg-amber-100 text-amber-700 border-amber-300'
+                : 'bg-gray-50 text-gray-500 border-gray-200 hover:text-gray-700'
+            }`}
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+            Flagged only
+          </button>
+        )}
       </div>
 
       {/* Table */}
