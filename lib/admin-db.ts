@@ -2077,6 +2077,177 @@ export async function getHrDashboardStats(): Promise<HrDashboardStats> {
   }
 }
 
+// Light, read-only summaries of the linked facets — just enough to show
+// "has marketing page / has signature" + build a deep-link to the page
+// that OWNS each facet. We never edit the facets from the HR workspace.
+export interface HrFacetSummary {
+  vcard: {
+    id:     number
+    slug:   string | null
+    name:   string
+    active: boolean
+  } | null
+  staff: {
+    id:                    number
+    name:                  string
+    active:                boolean
+    has_signature_template: boolean
+  } | null
+}
+
+export interface HrEmployeeWithFacets {
+  employee: HrEmployee
+  facets:   HrFacetSummary
+}
+
+/**
+ * Fetch one HR employee + light, READ-ONLY summaries of their linked
+ * marketing (vcard) + signature (staff) facets. Returns null if no row.
+ *
+ * The facet sub-selects are display-only (slug/name/active + whether a
+ * signature template is attached) — used to render presence badges and
+ * deep-links to the pages that own those facets. Nothing here writes to
+ * vcard_employees / staff_members.
+ */
+export async function getHrEmployeeById(id: number): Promise<HrEmployeeWithFacets | null> {
+  const db = getPool()
+  const res = await db.query(`SELECT * FROM hr_employees WHERE id = $1 LIMIT 1`, [id])
+  const employee: HrEmployee | undefined = res.rows[0]
+  if (!employee) return null
+
+  let vcard: HrFacetSummary['vcard'] = null
+  if (employee.vcard_employee_id != null) {
+    const v = await db.query(
+      `SELECT id, slug, first_name || ' ' || last_name AS name, active
+         FROM vcard_employees WHERE id = $1 LIMIT 1`,
+      [employee.vcard_employee_id],
+    )
+    if (v.rows[0]) {
+      vcard = {
+        id:     v.rows[0].id,
+        slug:   v.rows[0].slug ?? null,
+        name:   v.rows[0].name,
+        active: v.rows[0].active,
+      }
+    }
+  }
+
+  let staff: HrFacetSummary['staff'] = null
+  if (employee.staff_member_id != null) {
+    const s = await db.query(
+      `SELECT id, first_name || ' ' || last_name AS name, active, signature_template_id
+         FROM staff_members WHERE id = $1 LIMIT 1`,
+      [employee.staff_member_id],
+    )
+    if (s.rows[0]) {
+      staff = {
+        id:                     s.rows[0].id,
+        name:                   s.rows[0].name,
+        active:                 s.rows[0].active,
+        has_signature_template: s.rows[0].signature_template_id != null,
+      }
+    }
+  }
+
+  return { employee, facets: { vcard, staff } }
+}
+
+export interface UpdateHrEmployeeInput {
+  first_name?:   string
+  last_name?:    string
+  full_legal_name?: string | null
+  title?:        string | null
+  department?:   string | null
+  office?:       string | null
+  email?:        string
+  mobile?:       string | null
+  office_phone?: string | null
+  active?:       boolean
+  updated_by?:   string | null
+}
+
+/**
+ * Update an HR employee's core fields. Touches ONLY hr_employees.
+ *
+ * Reuses the 2d active/deactivated_at semantics: if `active` is included,
+ * active=false stamps deactivated_at=NOW() and active=true clears it to
+ * NULL — identical to setHrEmployeeActive, not a forked code path.
+ *
+ * email (if provided) is normalized lower/trim and the UNIQUE constraint
+ * applies — a duplicate throws a friendly 'already' error (route → 409).
+ * Returns null if the row doesn't exist.
+ */
+export async function updateHrEmployee(
+  id: number,
+  input: UpdateHrEmployeeInput,
+): Promise<HrEmployee | null> {
+  const db = getPool()
+
+  const sets: string[] = []
+  const vals: unknown[] = []
+  function add(col: string, value: unknown) {
+    vals.push(value)
+    sets.push(`${col} = $${vals.length}`)
+  }
+
+  if (input.first_name !== undefined)      add('first_name', input.first_name.trim())
+  if (input.last_name !== undefined)       add('last_name', input.last_name.trim())
+  if (input.full_legal_name !== undefined) add('full_legal_name', input.full_legal_name?.trim() || null)
+  if (input.title !== undefined)           add('title', input.title?.trim() || null)
+  if (input.department !== undefined)      add('department', input.department?.trim() || null)
+  if (input.office !== undefined)          add('office', input.office?.trim() || null)
+  if (input.mobile !== undefined)          add('mobile', input.mobile?.trim() || null)
+  if (input.office_phone !== undefined)    add('office_phone', input.office_phone?.trim() || null)
+
+  if (input.email !== undefined) {
+    const email = input.email.trim().toLowerCase()
+    if (!email) throw new Error('email cannot be blank')
+    const dup = await db.query(
+      `SELECT id FROM hr_employees WHERE email = $1 AND id <> $2 LIMIT 1`,
+      [email, id],
+    )
+    if (dup.rowCount && dup.rowCount > 0) {
+      throw new Error(`An employee with email ${email} already exists.`)
+    }
+    add('email', email)
+  }
+
+  // Reuse the 2d deactivate semantics for the active toggle: a single
+  // bound param drives both `active` and the `deactivated_at` CASE, so
+  // the behavior is identical to setHrEmployeeActive (not forked).
+  if (input.active !== undefined) {
+    vals.push(input.active)
+    const p = `$${vals.length}`
+    sets.push(`active = ${p}`)
+    sets.push(`deactivated_at = CASE WHEN ${p} = false THEN NOW() ELSE NULL END`)
+  }
+
+  // Always stamp the actor + updated_at.
+  add('updated_by', input.updated_by?.trim() || null)
+  sets.push(`updated_at = NOW()`)
+
+  if (sets.length === 0) {
+    // Nothing to update — return the current row unchanged.
+    const cur = await db.query(`SELECT * FROM hr_employees WHERE id = $1 LIMIT 1`, [id])
+    return cur.rows[0] || null
+  }
+
+  vals.push(id)
+  try {
+    const res = await db.query(
+      `UPDATE hr_employees SET ${sets.join(', ')} WHERE id = $${vals.length} RETURNING *`,
+      vals,
+    )
+    return res.rows[0] || null
+  } catch (err) {
+    const code = (err as { code?: string })?.code
+    if (code === '23505') {
+      throw new Error('An employee with that email already exists.')
+    }
+    throw err
+  }
+}
+
 /**
  * Read the full HR roster. Order: active first, then alphabetical by
  * last name — same convention as the Sales Reps (vcard) list. DB-light:

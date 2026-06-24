@@ -224,31 +224,36 @@ export default function HrRosterClient({
                 key={emp.id}
                 className="flex items-center gap-4 px-5 py-3.5"
               >
-                {/* Name + title */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[#03374f] truncate flex items-center gap-2">
-                    {emp.name}
-                    {emp.needs_dedup_review && (
-                      <span
-                        title="Possible duplicate — flagged for HR review"
-                        className="inline-flex items-center gap-1 text-[10px] bg-amber-100 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0"
-                      >
-                        <AlertTriangle className="w-2.5 h-2.5" /> review
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-xs text-gray-400 truncate">{emp.title ?? '—'}</p>
-                </div>
+                {/* Name + title + dept + office (links to detail) */}
+                <Link
+                  href={`/admin/team/hr/${emp.id}`}
+                  className="flex items-center gap-4 flex-1 min-w-0 group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[#03374f] group-hover:text-[#f26b2b] transition-colors truncate flex items-center gap-2">
+                      {emp.name}
+                      {emp.needs_dedup_review && (
+                        <span
+                          title="Possible duplicate — flagged for HR review"
+                          className="inline-flex items-center gap-1 text-[10px] bg-amber-100 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0"
+                        >
+                          <AlertTriangle className="w-2.5 h-2.5" /> review
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-gray-400 truncate">{emp.title ?? '—'}</p>
+                  </div>
 
-                {/* Department */}
-                <span className="hidden sm:block text-xs text-gray-500 flex-shrink-0 w-32 truncate">
-                  {emp.department ?? '—'}
-                </span>
+                  {/* Department */}
+                  <span className="hidden sm:block text-xs text-gray-500 flex-shrink-0 w-32 truncate">
+                    {emp.department ?? '—'}
+                  </span>
 
-                {/* Office */}
-                <span className="hidden md:block text-xs text-gray-400 flex-shrink-0 w-36 truncate">
-                  {emp.office ?? '—'}
-                </span>
+                  {/* Office */}
+                  <span className="hidden md:block text-xs text-gray-400 flex-shrink-0 w-36 truncate">
+                    {emp.office ?? '—'}
+                  </span>
+                </Link>
 
                 {/* Active status badge */}
                 <div className="flex items-center w-16 justify-end flex-shrink-0">
