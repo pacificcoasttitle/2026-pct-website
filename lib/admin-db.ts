@@ -13,6 +13,11 @@ import {
 import { ASSET_DELIVERY_HTML } from '@/lib/email-templates/asset-delivery'
 import { signOnboardingToken, verifyOnboardingToken, hashToken } from '@/lib/onboarding-token'
 import {
+  signHrOnboardingToken,
+  verifyHrOnboardingToken,
+  hashHrOnboardingToken,
+} from '@/lib/hr-onboarding-token'
+import {
   REP_WEEK_AHEAD_TEMPLATE,
   renderRepWeekAhead,
   buildRepWeekAheadSubject,
@@ -2267,6 +2272,162 @@ export async function getAllHrEmployees(): Promise<HrEmployee[]> {
   `)
   return res.rows
 }
+
+// ── HR Onboarding (Phase 4 — token issue/resolve) ─────────────────
+//
+// Modeled on issueOnboardingToken / resolveOnboardingByToken (rep flow),
+// but isolated: HR's own token primitive (lib/hr-onboarding-token.ts) +
+// its own table (hr_onboarding). WRITTEN FOR REVIEW (4a) — not wired to
+// any route yet (4c does the public surface).
+
+export interface HrOnboardingRecord {
+  id:               number
+  hr_employee_id:   number | null
+  status:           string
+  invited_email:    string | null
+  payload:          Record<string, unknown>
+  created_by:       string | null
+  created_at:       string
+  updated_at:       string
+  invited_at:       string | null
+  submitted_at:     string | null
+  finalized_at:     string | null
+}
+
+// Columns safe to return to callers (auth-only token fields excluded).
+const HR_ONBOARDING_COLS = `
+  id, hr_employee_id, status, invited_email, payload,
+  created_by,
+  created_at::text  AS created_at,
+  updated_at::text  AS updated_at,
+  invited_at::text  AS invited_at,
+  submitted_at::text AS submitted_at,
+  finalized_at::text AS finalized_at
+`
+
+/**
+ * Issue (or re-issue) a tokenized HR-onboarding link. Signs a fresh
+ * token, stores sha256(token) + a 14-day expiry on the row, and returns
+ * the RAW token (to be emailed — NEVER logged or stored raw).
+ *
+ * ⚠️ Overwrites any prior token_hash → re-issuing INVALIDATES old links
+ * (the prior hash no longer matches). Returns null if the row is gone.
+ */
+export async function issueHrOnboardingToken(onboardingId: number): Promise<string | null> {
+  const db = getPool()
+
+  const token  = await signHrOnboardingToken(onboardingId)
+  const hash   = hashHrOnboardingToken(token)
+  const expIso = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+
+  const res = await db.query(
+    `UPDATE hr_onboarding
+        SET token_hash       = $1,
+            token_expires_at = $2::timestamptz,
+            updated_at       = NOW()
+      WHERE id = $3
+      RETURNING id`,
+    [hash, expIso, onboardingId],
+  )
+  if (!res.rows[0]) return null
+  return token
+}
+
+/**
+ * THE HR token gate (default-deny). Verifies, in order — ALL required:
+ *   1. JWT signature + expiry + purpose==='hr_onboarding'
+ *      (verifyHrOnboardingToken — also rejects rep tokens)
+ *   2. the hr_onboarding row exists
+ *   3. sha256(presentedToken) === stored token_hash
+ *   4. stored token_expires_at is in the future (authoritative,
+ *      revocable expiry — defense-in-depth beyond the JWT exp)
+ * Returns the record on all-valid, else null. Never throws.
+ */
+export async function resolveHrOnboardingByToken(token: string): Promise<HrOnboardingRecord | null> {
+  try {
+    const verified = await verifyHrOnboardingToken(token)
+    if (!verified) return null
+
+    const db = getPool()
+    const res = await db.query(
+      `SELECT ${HR_ONBOARDING_COLS},
+              token_hash,
+              token_expires_at::text AS token_expires_at
+         FROM hr_onboarding
+        WHERE id = $1
+        LIMIT 1`,
+      [verified.hr_onboarding_id],
+    )
+    const row = res.rows[0] as
+      (HrOnboardingRecord & { token_hash: string | null; token_expires_at: string | null })
+      | undefined
+    if (!row) return null
+
+    if (!row.token_hash || row.token_hash !== hashHrOnboardingToken(token)) return null
+    if (!row.token_expires_at || new Date(row.token_expires_at).getTime() <= Date.now()) return null
+
+    const { token_hash: _h, token_expires_at: _e, ...record } = row
+    void _h; void _e
+    return record as HrOnboardingRecord
+  } catch {
+    return null
+  }
+}
+
+// ── HR Onboarding — FINALIZE mapping DESIGN (4a; implemented in 4e) ──
+//
+// ⚠️ DESIGN ONLY — not executed here. This documents how a REVIEWED
+// hr_onboarding.payload (jsonb) maps into hr_employees when HR approves,
+// so 4e's live commit is groundable. 4e will wrap this in a transaction,
+// set finalized_at + status='finalized', and link hr_employee_id.
+//
+// PAYLOAD KEY → hr_employees COLUMN (direct, already-have-a-home):
+//   payload.first_name      → first_name      (required)
+//   payload.last_name       → last_name       (required)
+//   payload.full_legal_name → full_legal_name
+//   payload.email           → email           (required; normalized lower/trim, UNIQUE)
+//   payload.title           → title
+//   payload.department      → department
+//   payload.office          → office
+//   payload.mobile          → mobile
+//   payload.office_phone    → office_phone
+//   payload.birthday        → birthday        (DATE; the Phase-3 column)
+//   payload.start_date      → start_date      (DATE; the Phase-3 column)
+//   (active defaults true; employment_status optionally set by HR at review)
+//
+// CREATE-vs-UPDATE:
+//   - New hire (hr_onboarding.hr_employee_id IS NULL): INSERT a new
+//     hr_employees row (FKs vcard/staff NULL — a decoupled HR-only
+//     record, exactly like 2d's createHrEmployee), then set
+//     hr_onboarding.hr_employee_id to the new id.
+//   - Pre-linked shell (hr_employee_id IS NOT NULL): UPDATE that
+//     hr_employees row with the reviewed fields (via 2d/2b's
+//     updateHrEmployee), preserving anything HR didn't change.
+//
+// EMAIL-UNIQUE graceful path:
+//   Reuse 2d's 409 contract — createHrEmployee/updateHrEmployee already
+//   throw a friendly 'already exists' error on a duplicate email (and a
+//   23505 safety net); 4e's route maps that to 409, never a 500.
+//
+// DOCUMENTS:
+//   Uploaded files live in hr_onboarding_documents (R2 file_key +
+//   doc_type), attached to the onboarding_id during the employee flow
+//   (4d uploads). Finalize does NOT move files; the documents stay
+//   associated to the onboarding record (auditable trail). A later
+//   schema add could link key documents onto hr_employees if needed.
+//
+// ⚠️ PAYLOAD FIELDS WITH NO hr_employees HOME YET (need a schema add
+// before 4e can persist them — flagged for review):
+//   - emergency_contact_name / _phone / _relationship
+//   - home_address (street/city/state/zip)
+//   - t_shirt_size, dietary, pronouns, preferred_name (HR-soft fields)
+//   - tax/eligibility docs → belong in hr_onboarding_documents, NOT as
+//     hr_employees columns (PII — keep out of the roster table).
+//   These either get dedicated hr_employees columns in a follow-up
+//   migration, or remain in hr_onboarding.payload as the system of
+//   record. Decision deferred to 4e planning; NOT created here.
+//
+// (No runnable code in this block by design — see 4e for the live commit.)
 
 // ── Staff Members ────────────────────────────────────────────────
 
