@@ -2374,6 +2374,162 @@ export async function resolveHrOnboardingByToken(token: string): Promise<HrOnboa
   }
 }
 
+// ── HR Onboarding — admin-side create / list (4b) ──────────────────
+//
+// Writes ONLY hr_onboarding. Reads hr_employees for the existing-
+// employee path. Does NOT write hr_employees/vcard/staff (finalize, 4e,
+// creates/updates hr_employees — not here).
+
+// Onboarding statuses considered "in flight" for the dup-guard.
+const HR_ONBOARDING_ACTIVE_STATUSES = ['draft', 'invited', 'in_progress', 'submitted']
+
+export interface CreateHrOnboardingExisting {
+  hr_employee_id: number
+  created_by?:    string | null
+}
+export interface CreateHrOnboardingShell {
+  first_name:    string
+  last_name:     string
+  invited_email: string
+  created_by?:   string | null
+}
+
+/**
+ * Find an in-flight onboarding for an existing employee (by FK) or a
+ * shell (by invited_email). Used as the dup-guard so HR doesn't silently
+ * double-create. Returns the record or null.
+ */
+export async function findActiveHrOnboarding(opts: {
+  hrEmployeeId?: number | null
+  email?: string | null
+}): Promise<HrOnboardingRecord | null> {
+  const db = getPool()
+  if (opts.hrEmployeeId != null) {
+    const res = await db.query(
+      `SELECT ${HR_ONBOARDING_COLS}
+         FROM hr_onboarding
+        WHERE hr_employee_id = $1
+          AND status = ANY($2)
+        ORDER BY id DESC LIMIT 1`,
+      [opts.hrEmployeeId, HR_ONBOARDING_ACTIVE_STATUSES],
+    )
+    return res.rows[0] || null
+  }
+  const email = opts.email?.trim().toLowerCase()
+  if (email) {
+    const res = await db.query(
+      `SELECT ${HR_ONBOARDING_COLS}
+         FROM hr_onboarding
+        WHERE LOWER(invited_email) = $1
+          AND status = ANY($2)
+        ORDER BY id DESC LIMIT 1`,
+      [email, HR_ONBOARDING_ACTIVE_STATUSES],
+    )
+    return res.rows[0] || null
+  }
+  return null
+}
+
+/**
+ * Create an onboarding for an EXISTING employee. Sets hr_employee_id,
+ * defaults invited_email from the employee, status='draft'. Validates
+ * the employee exists. Writes only hr_onboarding.
+ */
+export async function createHrOnboardingForExisting(
+  input: CreateHrOnboardingExisting,
+): Promise<HrOnboardingRecord> {
+  const db = getPool()
+  const emp = await db.query(
+    `SELECT id, first_name, last_name, email FROM hr_employees WHERE id = $1 LIMIT 1`,
+    [input.hr_employee_id],
+  )
+  if (!emp.rows[0]) throw new Error('Employee not found.')
+  const e = emp.rows[0]
+
+  const payload = {
+    first_name: e.first_name,
+    last_name:  e.last_name,
+    email:      e.email,
+  }
+
+  const res = await db.query(
+    `INSERT INTO hr_onboarding (hr_employee_id, status, invited_email, payload, created_by)
+     VALUES ($1, 'draft', $2, $3::jsonb, $4)
+     RETURNING ${HR_ONBOARDING_COLS}`,
+    [input.hr_employee_id, e.email?.trim().toLowerCase() || null, JSON.stringify(payload), input.created_by?.trim() || null],
+  )
+  return res.rows[0]
+}
+
+/**
+ * Create an onboarding for a brand-NEW shell (no hr_employees row yet).
+ * hr_employee_id stays NULL; name/email staged in payload + invited_email
+ * for the invite + later finalize. Writes only hr_onboarding.
+ */
+export async function createHrOnboardingShell(
+  input: CreateHrOnboardingShell,
+): Promise<HrOnboardingRecord> {
+  const db = getPool()
+  const first = input.first_name.trim()
+  const last  = input.last_name.trim()
+  const email = input.invited_email.trim().toLowerCase()
+  if (!first || !last) throw new Error('First name and last name are required.')
+  if (!email) throw new Error('Invited email is required.')
+
+  const payload = { first_name: first, last_name: last, email }
+
+  const res = await db.query(
+    `INSERT INTO hr_onboarding (hr_employee_id, status, invited_email, payload, created_by)
+     VALUES (NULL, 'draft', $1, $2::jsonb, $3)
+     RETURNING ${HR_ONBOARDING_COLS}`,
+    [email, JSON.stringify(payload), input.created_by?.trim() || null],
+  )
+  return res.rows[0]
+}
+
+export interface HrOnboardingListRow extends HrOnboardingRecord {
+  employee_name: string | null
+}
+
+/** List all onboardings (most recent first) with a display name. */
+export async function getAllHrOnboardings(): Promise<HrOnboardingListRow[]> {
+  const db = getPool()
+  const res = await db.query(`
+    SELECT ${HR_ONBOARDING_COLS},
+           COALESCE(
+             he.first_name || ' ' || he.last_name,
+             NULLIF(TRIM(COALESCE(o.payload->>'first_name','') || ' ' || COALESCE(o.payload->>'last_name','')), '')
+           ) AS employee_name
+      FROM hr_onboarding o
+      LEFT JOIN hr_employees he ON he.id = o.hr_employee_id
+     ORDER BY o.id DESC
+  `)
+  return res.rows
+}
+
+/** One onboarding by id (auth-only token fields excluded). */
+export async function getHrOnboardingById(id: number): Promise<HrOnboardingRecord | null> {
+  const db = getPool()
+  const res = await db.query(
+    `SELECT ${HR_ONBOARDING_COLS} FROM hr_onboarding WHERE id = $1 LIMIT 1`,
+    [id],
+  )
+  return res.rows[0] || null
+}
+
+/** Stamp status='invited' + invited_at=NOW() after a successful send. */
+export async function markHrOnboardingInvited(id: number): Promise<HrOnboardingRecord | null> {
+  const db = getPool()
+  const res = await db.query(
+    `UPDATE hr_onboarding
+        SET status = 'invited', invited_at = NOW(), updated_at = NOW()
+      WHERE id = $1
+      RETURNING ${HR_ONBOARDING_COLS}`,
+    [id],
+  )
+  return res.rows[0] || null
+}
+
 // ── HR Onboarding — FINALIZE mapping DESIGN (4a; implemented in 4e) ──
 //
 // ⚠️ DESIGN ONLY — not executed here. This documents how a REVIEWED

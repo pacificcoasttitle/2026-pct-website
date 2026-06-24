@@ -21,6 +21,7 @@ import {
   Newspaper,
   CalendarDays,
   ClipboardCheck,
+  ClipboardList,
   Calculator,
   IdCard,
   type LucideIcon,
@@ -68,6 +69,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: '/admin/team/hr/dashboard',             label: 'HR Dashboard',     icon: LayoutDashboard, group: 'hr-tools' },
       { href: '/admin/team/hr',                       label: 'HR Roster',        icon: IdCard,          group: 'hr-tools' },
+      { href: '/admin/team/hr/onboarding',            label: 'Onboarding',       icon: ClipboardList,   group: 'hr-tools' },
     ],
   },
   {

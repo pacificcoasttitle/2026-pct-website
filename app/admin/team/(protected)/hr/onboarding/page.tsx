@@ -1,0 +1,40 @@
+/**
+ * /admin/team/hr/onboarding — HR onboarding (admin/issuing side, 4b)
+ *
+ * Server component, gated 'hr-tools' (also inherited from the hr/
+ * segment layout). Lists existing onboardings + supplies the active
+ * roster for the "invite existing employee" picker. Create + send are
+ * driven client-side via the 4b APIs. The public receive route
+ * (/hr-onboarding/[token]) is 4c — not built here.
+ */
+import { getAllHrOnboardings, getAllHrEmployees } from '@/lib/admin-db'
+import { requirePageRole } from '@/lib/auth/guards'
+import HrOnboardingClient from '@/components/admin/HrOnboardingClient'
+
+export const metadata = { title: 'HR Onboarding | PCT Team Admin' }
+export const dynamic = 'force-dynamic'
+
+export default async function HrOnboardingPage() {
+  await requirePageRole('hr-tools')
+
+  const [onboardings, roster] = await Promise.all([
+    getAllHrOnboardings(),
+    getAllHrEmployees(),
+  ])
+
+  const list = onboardings.map((o) => ({
+    id:            o.id,
+    name:          o.employee_name || o.invited_email || '(unnamed)',
+    invited_email: o.invited_email,
+    status:        o.status,
+    invited_at:    o.invited_at,
+    created_at:    o.created_at,
+  }))
+
+  // Only active employees are sensible invite targets.
+  const employees = roster
+    .filter((e) => e.active)
+    .map((e) => ({ id: e.id, name: `${e.first_name} ${e.last_name}`.trim(), email: e.email }))
+
+  return <HrOnboardingClient onboardings={list} employees={employees} />
+}
