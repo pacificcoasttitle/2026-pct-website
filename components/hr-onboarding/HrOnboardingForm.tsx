@@ -27,7 +27,17 @@ export interface HrOnboardingFormData {
   dietary_restrictions: string
 }
 
-const STEPS = ['Basics', 'Personal', 'Emergency', 'Review'] as const
+const STEPS = ['Basics', 'Personal', 'Emergency', 'Documents', 'Review'] as const
+
+// HR document types the employee uploads. Labels are display-only; the
+// keys match the upload route's doc_type allowlist.
+const DOC_TYPES: { key: string; label: string; hint: string }[] = [
+  { key: 'id', label: 'Government ID', hint: 'Driver’s license, passport, or state ID' },
+  { key: 'tax_form', label: 'Tax form (W-4)', hint: 'Signed W-4' },
+  { key: 'direct_deposit', label: 'Direct deposit', hint: 'Voided check or bank form' },
+  { key: 'signed_policy', label: 'Signed policy', hint: 'Signed handbook / policy acknowledgement' },
+]
+const ACCEPT = '.pdf,.png,.jpg,.jpeg,.webp'
 
 const inputStyle: React.CSSProperties = {
   width: '100%', height: 42, padding: '0 12px', boxSizing: 'border-box',
@@ -83,9 +93,32 @@ export default function HrOnboardingForm({
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savedNote, setSavedNote] = useState<string | null>(null)
+  // Uploaded doc display state (file name only — never a URL/key).
+  const [docs, setDocs] = useState<Record<string, string>>({})
+  const [uploadingDoc, setUploadingDoc] = useState<string | null>(null)
 
   function set<K extends keyof HrOnboardingFormData>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }))
+  }
+
+  async function uploadDoc(docType: string, file: File) {
+    setError(null)
+    setUploadingDoc(docType)
+    try {
+      const fd = new FormData()
+      fd.append('doc_type', docType)
+      fd.append('file', file)
+      const res = await fetch(`/api/hr-onboarding/${token}/upload`, { method: 'POST', body: fd })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data?.error || 'Upload failed. Please try again.')
+        return
+      }
+      // Show only the safe display name returned by the server.
+      setDocs((d) => ({ ...d, [docType]: data?.document?.file_name || file.name }))
+    } finally {
+      setUploadingDoc(null)
+    }
   }
 
   async function save(action: 'save' | 'submit'): Promise<boolean> {
@@ -212,6 +245,54 @@ export default function HrOnboardingForm({
 
       {step === 3 && (
         <Card>
+          <h2 style={{ margin: '0 0 6px 0', fontSize: 18, color: NAVY }}>Documents</h2>
+          <p style={{ margin: '0 0 16px 0', fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
+            Upload each document below (PDF or image, up to 20&nbsp;MB). Your files are
+            stored privately and viewed only by HR.
+          </p>
+          {DOC_TYPES.map((d) => (
+            <div key={d.key} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderTop: '1px solid #f3f4f6' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: NAVY }}>{d.label}</div>
+                <div style={{ fontSize: 12, color: '#9ca3af' }}>{d.hint}</div>
+                {docs[d.key] && (
+                  <div style={{ fontSize: 12, color: '#047857', marginTop: 4 }}>
+                    ✓ Uploaded: {docs[d.key]}
+                  </div>
+                )}
+              </div>
+              <label
+                style={{
+                  height: 38, display: 'inline-flex', alignItems: 'center', padding: '0 16px',
+                  borderRadius: 10, border: `1px solid ${ORANGE}`, color: ORANGE, fontSize: 13,
+                  fontWeight: 700, cursor: uploadingDoc ? 'default' : 'pointer', whiteSpace: 'nowrap',
+                  opacity: uploadingDoc && uploadingDoc !== d.key ? 0.5 : 1,
+                }}
+              >
+                {uploadingDoc === d.key ? 'Uploading…' : docs[d.key] ? 'Replace' : 'Upload'}
+                <input
+                  type="file"
+                  accept={ACCEPT}
+                  disabled={!!uploadingDoc}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    if (f) uploadDoc(d.key, f)
+                    e.target.value = ''
+                  }}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            </div>
+          ))}
+          <p style={{ margin: '14px 0 0 0', fontSize: 12, color: '#9ca3af' }}>
+            You can continue and submit even if you upload some documents later — HR will
+            follow up if anything is missing.
+          </p>
+        </Card>
+      )}
+
+      {step === 4 && (
+        <Card>
           <h2 style={{ margin: '0 0 16px 0', fontSize: 18, color: NAVY }}>Review &amp; submit</h2>
           <p style={{ margin: '0 0 16px 0', fontSize: 14, color: '#4b5563', lineHeight: 1.6 }}>
             Please review your details. You can go back to make changes. When you submit,
@@ -227,9 +308,11 @@ export default function HrOnboardingForm({
               <div><strong style={{ color: NAVY }}>Emergency:</strong> {form.emergency_contact_name} ({form.emergency_contact_relationship || 'contact'}) {form.emergency_contact_phone}</div>
             )}
           </div>
-          <p style={{ margin: '16px 0 0 0', fontSize: 12, color: '#9ca3af' }}>
-            Document uploads will be requested separately.
-          </p>
+          {Object.keys(docs).length > 0 && (
+            <div style={{ marginTop: 14, fontSize: 13, color: '#374151' }}>
+              <strong style={{ color: NAVY }}>Documents:</strong> {Object.keys(docs).length} uploaded
+            </div>
+          )}
         </Card>
       )}
 

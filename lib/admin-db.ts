@@ -2599,6 +2599,94 @@ export async function markHrOnboardingSubmitted(id: number): Promise<HrOnboardin
   return res.rows[0] || null
 }
 
+// ── HR Onboarding — DOCUMENTS (4d) ────────────────────────────────
+//
+// ⚠️ PII: these rows reference files in R2 by PRIVATE key only. The R2
+// object is NEVER public — file_key is the ONLY locator stored, and it
+// is NEVER returned to a public caller. HR reads bytes server-side via
+// downloadFromR2(file_key) through the hr-tools-gated retrieval route.
+
+export interface HrOnboardingDocument {
+  id:            number
+  onboarding_id: number
+  doc_type:      string
+  file_key:      string
+  file_name:     string | null
+  uploaded_by:   string | null
+  uploaded_at:   string
+}
+
+// ⚠️ file_key is selected here because HR retrieval needs it server-side,
+// but callers MUST NOT serialize file_key to any client. The list helper
+// below strips it; the single-doc helper keeps it for the server stream.
+const HR_DOC_COLS = `
+  id, onboarding_id, doc_type, file_key, file_name, uploaded_by,
+  uploaded_at::text AS uploaded_at
+`
+
+/**
+ * Insert a document row for an onboarding. Stores ONLY the R2 key (never
+ * a public URL). Also bumps hr_onboarding.updated_at. Scoped to the
+ * caller-resolved onboarding id.
+ */
+export async function insertHrOnboardingDocument(input: {
+  onboardingId: number
+  docType:      string
+  fileKey:      string
+  fileName:     string | null
+  uploadedBy:   string
+}): Promise<HrOnboardingDocument> {
+  const db = getPool()
+  const res = await db.query(
+    `INSERT INTO hr_onboarding_documents
+       (onboarding_id, doc_type, file_key, file_name, uploaded_by)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING ${HR_DOC_COLS}`,
+    [input.onboardingId, input.docType, input.fileKey, input.fileName, input.uploadedBy],
+  )
+  await db.query(`UPDATE hr_onboarding SET updated_at = NOW() WHERE id = $1`, [input.onboardingId])
+  return res.rows[0]
+}
+
+/**
+ * List a single onboarding's documents for HR. ⚠️ Strips file_key — the
+ * private R2 key is NEVER sent to any client. HR streams the bytes via
+ * the gated [docId] route, which looks up the key server-side.
+ */
+export async function getHrOnboardingDocuments(
+  onboardingId: number,
+): Promise<Omit<HrOnboardingDocument, 'file_key'>[]> {
+  const db = getPool()
+  const res = await db.query(
+    `SELECT id, onboarding_id, doc_type, file_name, uploaded_by,
+            uploaded_at::text AS uploaded_at
+       FROM hr_onboarding_documents
+      WHERE onboarding_id = $1
+      ORDER BY uploaded_at DESC, id DESC`,
+    [onboardingId],
+  )
+  return res.rows
+}
+
+/**
+ * Fetch ONE document, verifying it belongs to the given onboarding id
+ * (no cross-access). Returns null if not found or not owned. Includes
+ * file_key for the SERVER-SIDE stream only.
+ */
+export async function getHrOnboardingDocument(
+  onboardingId: number,
+  docId: number,
+): Promise<HrOnboardingDocument | null> {
+  const db = getPool()
+  const res = await db.query(
+    `SELECT ${HR_DOC_COLS}
+       FROM hr_onboarding_documents
+      WHERE id = $1 AND onboarding_id = $2`,
+    [docId, onboardingId],
+  )
+  return res.rows[0] || null
+}
+
 // ── HR Onboarding — FINALIZE mapping DESIGN (4a; implemented in 4e) ──
 //
 // ⚠️ DESIGN ONLY — not executed here. This documents how a REVIEWED
