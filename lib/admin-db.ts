@@ -1874,6 +1874,59 @@ export async function getSignatureTemplateById(id: number): Promise<SignatureTem
   return res.rows[0] || null
 }
 
+// ── HR Employees (canonical roster — hr_employees) ────────────────
+//
+// The canonical HR core: the ~109-person union of vcard_employees +
+// staff_members, populated by scripts/backfill-hr-employees.ts. This is
+// HR's source of truth (the /admin/team/hr roster reads it). READ-ONLY
+// from the app for now — create/deactivate tooling lands in a later
+// phase. Distinct from vcard_employees (marketing/sales reps) and
+// staff_members (signature center), both of which keep working as-is.
+
+export interface HrEmployee {
+  id:                 number
+  first_name:         string
+  last_name:          string
+  full_legal_name:    string | null
+  email:              string
+  mobile:             string | null
+  office_phone:       string | null
+  title:              string | null
+  department:         string | null
+  office:             string | null
+  photo_url:          string | null
+  active:             boolean
+  employment_status:  string | null
+  birthday:           string | null
+  start_date:         string | null
+  vcard_employee_id:  number | null
+  staff_member_id:    number | null
+  needs_dedup_review: boolean
+  dedup_review_note:  string | null
+  created_at:         string
+  updated_at:         string
+}
+
+/**
+ * Read the full HR roster. Order: active first, then alphabetical by
+ * last name — same convention as the Sales Reps (vcard) list. DB-light:
+ * a single indexed SELECT, no joins, no external calls.
+ */
+export async function getAllHrEmployees(): Promise<HrEmployee[]> {
+  const db = getPool()
+  const res = await db.query(`
+    SELECT id, first_name, last_name, full_legal_name, email,
+           mobile, office_phone, title, department, office, photo_url,
+           active, employment_status, birthday, start_date,
+           vcard_employee_id, staff_member_id,
+           needs_dedup_review, dedup_review_note,
+           created_at, updated_at
+      FROM hr_employees
+     ORDER BY active DESC, last_name ASC, first_name ASC
+  `)
+  return res.rows
+}
+
 // ── Staff Members ────────────────────────────────────────────────
 
 export interface StaffMember {

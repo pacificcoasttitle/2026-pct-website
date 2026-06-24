@@ -22,6 +22,7 @@ import {
   CalendarDays,
   ClipboardCheck,
   Calculator,
+  IdCard,
   type LucideIcon,
 } from 'lucide-react'
 import { roleCanAccess, type CapabilityGroup } from '@/lib/auth/permissions'
@@ -60,6 +61,12 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'People',
     items: [
       { href: '/admin/team/employees',                label: 'Sales Reps',       icon: Users,           group: 'employees' },
+    ],
+  },
+  {
+    label: 'HR',
+    items: [
+      { href: '/admin/team/hr',                       label: 'HR Roster',        icon: IdCard,          group: 'hr-tools' },
     ],
   },
   {
