@@ -2687,6 +2687,242 @@ export async function getHrOnboardingDocument(
   return res.rows[0] || null
 }
 
+// ── HR Onboarding — REVIEW + FINALIZE (4e) ────────────────────────
+
+/**
+ * HR requests changes on a submitted onboarding: status → 'in_progress'
+ * so the employee can edit again (and the link can be re-sent). Only
+ * advances from 'submitted'. Returns the record, or null if gone/not
+ * in submitted state.
+ */
+export async function requestHrOnboardingChanges(
+  id: number,
+  updatedBy?: string | null,
+): Promise<HrOnboardingRecord | null> {
+  const db = getPool()
+  await db.query(
+    `UPDATE hr_onboarding
+        SET status = 'in_progress', updated_at = NOW(),
+            created_by = COALESCE(created_by, $2)
+      WHERE id = $1 AND status = 'submitted'`,
+    [id, updatedBy?.trim() || null],
+  )
+  return getHrOnboardingById(id)
+}
+
+/** Thrown by finalizeHrOnboarding so the route can map it to a 409. */
+export class HrOnboardingFinalizeError extends Error {
+  status: number
+  constructor(message: string, status = 409) {
+    super(message)
+    this.name = 'HrOnboardingFinalizeError'
+    this.status = status
+  }
+}
+
+// Per-field caps for the finalize mapping (defense-in-depth: payload is
+// employee-entered, treated as untrusted even though HR reviewed it).
+const FINALIZE_MAX_LEN: Record<string, number> = {
+  first_name: 80, last_name: 80, full_legal_name: 160, email: 160,
+  title: 120, department: 120, office: 120, mobile: 40, office_phone: 40,
+}
+
+function payloadStr(payload: Record<string, unknown>, key: string): string {
+  const v = payload[key]
+  return typeof v === 'string' ? v.trim() : ''
+}
+
+/**
+ * FINALIZE — ⚠️ the ONLY place staged onboarding data crosses into the
+ * canonical hr_employees roster (4e).
+ *
+ * Guards status==='submitted', then in a SINGLE TRANSACTION (all-or-
+ * nothing) maps the reviewed payload → hr_employees (per the 4a design),
+ * creates (new hire, FKs NULL) OR updates (pre-linked shell) the row,
+ * links hr_onboarding.hr_employee_id, and stamps status='finalized' +
+ * finalized_at. If ANY step fails the whole thing rolls back.
+ *
+ * ⚠️ Reuses 2d's email-409 contract: the INSERT/UPDATE here mirror
+ * createHrEmployee/updateHrEmployee EXACTLY (same columns, same friendly
+ * 'already exists' message + 23505 net) — the SQL is inlined ONLY
+ * because 2d's helpers run on getPool() (auto-commit) and cannot enlist
+ * in this transaction; the contract is not forked.
+ *
+ * ⚠️ Writes ONLY hr_employees + hr_onboarding — never vcard_employees/
+ * staff_members (decoupled HR-only row). Unmapped payload fields
+ * (emergency_contact_*, home_address_*, pronouns, t_shirt_size,
+ * dietary_restrictions, preferred_name) are LEFT in payload untouched —
+ * preserved, never dropped, never invented into columns.
+ */
+export async function finalizeHrOnboarding(
+  id: number,
+  actor: string | null,
+): Promise<{ onboarding: HrOnboardingRecord; employeeId: number }> {
+  const db = getPool()
+
+  // Load + guard BEFORE opening the transaction.
+  const current = await getHrOnboardingById(id)
+  if (!current) throw new HrOnboardingFinalizeError('Onboarding not found.', 404)
+  if (current.status !== 'submitted') {
+    throw new HrOnboardingFinalizeError(
+      `Only a submitted onboarding can be finalized (current status: ${current.status}).`,
+      409,
+    )
+  }
+
+  const payload = (current.payload ?? {}) as Record<string, unknown>
+
+  // Map + validate the reviewed payload → hr_employees columns.
+  const first = payloadStr(payload, 'first_name')
+  const last  = payloadStr(payload, 'last_name')
+  if (!first || !last) {
+    throw new HrOnboardingFinalizeError('Submitted onboarding is missing a first or last name.', 422)
+  }
+
+  // Email: payload.email is the canonical email home; fall back to the
+  // invite address if the employee didn't restate it.
+  let email = payloadStr(payload, 'email').toLowerCase()
+  if (!email) email = (current.invited_email || '').trim().toLowerCase()
+  if (!email) {
+    throw new HrOnboardingFinalizeError('Submitted onboarding is missing an email.', 422)
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new HrOnboardingFinalizeError('Submitted onboarding has an invalid email.', 422)
+  }
+
+  // Optional mapped fields — sanitize + length-cap (untrusted input).
+  const fields: Record<string, string | null> = {
+    full_legal_name: payloadStr(payload, 'full_legal_name') || null,
+    title:           payloadStr(payload, 'title') || null,
+    department:      payloadStr(payload, 'department') || null,
+    office:          payloadStr(payload, 'office') || null,
+    mobile:          payloadStr(payload, 'mobile') || null,
+    office_phone:    payloadStr(payload, 'office_phone') || null,
+  }
+  const lenChecks: Array<[string, string | null]> = [
+    ['first_name', first], ['last_name', last], ['email', email],
+    ...Object.entries(fields),
+  ]
+  for (const [k, v] of lenChecks) {
+    const cap = FINALIZE_MAX_LEN[k]
+    if (cap && v && v.length > cap) {
+      throw new HrOnboardingFinalizeError(`Field "${k}" is too long to finalize.`, 422)
+    }
+  }
+
+  // Dates: validate ISO format if present (DATE columns).
+  for (const dk of ['birthday', 'start_date']) {
+    const dv = payloadStr(payload, dk)
+    if (dv && !/^\d{4}-\d{2}-\d{2}$/.test(dv)) {
+      throw new HrOnboardingFinalizeError(`Field "${dk}" must be a valid date to finalize.`, 422)
+    }
+  }
+  const birthday  = payloadStr(payload, 'birthday') || null
+  const startDate = payloadStr(payload, 'start_date') || null
+
+  const client = await db.connect()
+  try {
+    await client.query('BEGIN')
+
+    let employeeId: number
+
+    if (current.hr_employee_id == null) {
+      // ── NEW HIRE → INSERT (mirrors createHrEmployee: FKs NULL) ──
+      // Friendly pre-check (same as 2d) — turn the common dup into a
+      // clean 409 instead of a raw PG error.
+      const dup = await client.query(
+        `SELECT id FROM hr_employees WHERE email = $1 LIMIT 1`,
+        [email],
+      )
+      if (dup.rowCount && dup.rowCount > 0) {
+        throw new HrOnboardingFinalizeError(`An employee with email ${email} already exists.`, 409)
+      }
+
+      const ins = await client.query(
+        `INSERT INTO hr_employees (
+           first_name, last_name, full_legal_name, email,
+           mobile, office_phone, title, department, office,
+           birthday, start_date,
+           active, vcard_employee_id, staff_member_id,
+           created_by, updated_by
+         ) VALUES (
+           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,true,NULL,NULL,$12,$12
+         )
+         RETURNING id`,
+        [
+          first, last, fields.full_legal_name, email,
+          fields.mobile, fields.office_phone, fields.title, fields.department, fields.office,
+          birthday, startDate,
+          actor?.trim() || null,
+        ],
+      )
+      employeeId = ins.rows[0].id
+
+      await client.query(
+        `UPDATE hr_onboarding SET hr_employee_id = $2 WHERE id = $1`,
+        [id, employeeId],
+      )
+    } else {
+      // ── EXISTING SHELL → UPDATE (mirrors updateHrEmployee) ──
+      employeeId = current.hr_employee_id
+      const dup = await client.query(
+        `SELECT id FROM hr_employees WHERE email = $1 AND id <> $2 LIMIT 1`,
+        [email, employeeId],
+      )
+      if (dup.rowCount && dup.rowCount > 0) {
+        throw new HrOnboardingFinalizeError(`An employee with email ${email} already exists.`, 409)
+      }
+
+      const upd = await client.query(
+        `UPDATE hr_employees SET
+           first_name = $2, last_name = $3, full_legal_name = $4, email = $5,
+           mobile = $6, office_phone = $7, title = $8, department = $9, office = $10,
+           birthday = COALESCE($11, birthday), start_date = COALESCE($12, start_date),
+           updated_by = $13, updated_at = NOW()
+         WHERE id = $1
+         RETURNING id`,
+        [
+          employeeId, first, last, fields.full_legal_name, email,
+          fields.mobile, fields.office_phone, fields.title, fields.department, fields.office,
+          birthday, startDate,
+          actor?.trim() || null,
+        ],
+      )
+      if (upd.rowCount === 0) {
+        throw new HrOnboardingFinalizeError('Linked employee record no longer exists.', 409)
+      }
+    }
+
+    // Stamp the onboarding finalized (only from 'submitted' — re-guarded
+    // inside the TXN to defend against a concurrent finalize).
+    const fin = await client.query(
+      `UPDATE hr_onboarding
+          SET status = 'finalized', finalized_at = NOW(), updated_at = NOW(),
+              created_by = COALESCE(created_by, $2)
+        WHERE id = $1 AND status = 'submitted'
+        RETURNING ${HR_ONBOARDING_COLS}`,
+      [id, actor?.trim() || null],
+    )
+    if (fin.rowCount === 0) {
+      throw new HrOnboardingFinalizeError('Onboarding is no longer in a finalizable state.', 409)
+    }
+
+    await client.query('COMMIT')
+    return { onboarding: fin.rows[0], employeeId }
+  } catch (err) {
+    await client.query('ROLLBACK')
+    // Unique-violation safety net (race between pre-check + write) — same
+    // friendly 409 contract as 2d.
+    const code = (err as { code?: string })?.code
+    if (code === '23505') {
+      throw new HrOnboardingFinalizeError(`An employee with email ${email} already exists.`, 409)
+    }
+    throw err
+  } finally {
+    client.release()
+  }
+}
+
 // ── HR Onboarding — FINALIZE mapping DESIGN (4a; implemented in 4e) ──
 //
 // ⚠️ DESIGN ONLY — not executed here. This documents how a REVIEWED

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import {
   UserPlus,
   Send,
@@ -10,6 +11,7 @@ import {
   CheckCircle,
   Mail,
   ClipboardList,
+  Eye,
 } from 'lucide-react'
 
 interface OnboardingRow {
@@ -262,6 +264,15 @@ export default function HrOnboardingClient({
                 >
                   {o.status.replace('_', ' ')}
                 </span>
+
+                <Link
+                  href={`/admin/team/hr/onboarding/${o.id}`}
+                  title="Review onboarding"
+                  className="h-8 px-3 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 text-gray-500 text-xs font-medium hover:border-[#f26b2b]/40 hover:text-[#f26b2b] transition-colors flex-shrink-0"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  Review
+                </Link>
 
                 <button
                   type="button"
