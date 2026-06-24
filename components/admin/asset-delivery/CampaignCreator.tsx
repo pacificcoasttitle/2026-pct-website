@@ -390,9 +390,17 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
         method: 'POST',
         body:   form,
       })
-      const data = await res.json()
+      // ⚠️ Parse defensively. A Vercel 413 (file > ~4.5MB, rejected before
+      // our app code runs) returns PLAIN TEXT, so res.json() would crash
+      // with "Unexpected token 'R'". Read text first, then try JSON.
+      const raw = await res.text()
+      let data: { error?: string; details?: unknown; file_id?: number; file_size_bytes?: number } | null = null
+      try { data = raw ? JSON.parse(raw) : null } catch { data = null }
       if (!res.ok) {
-        throw new Error(apiErrorMessage(data))
+        const msg = res.status === 413
+          ? `${key} is too large to upload (files must be under ~4.5MB). Please compress it and try again.`
+          : (data ? apiErrorMessage(data) : `Upload failed (${res.status}). Please try again.`)
+        throw new Error(msg)
       }
       // Sync batchFiles before marking 'done' so the grid / Continue never
       // get ahead of server state.
@@ -400,8 +408,8 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
       setUploadState(key, {
         kind:     'done',
         filename: key,
-        fileId:   data.file_id,
-        bytes:    data.file_size_bytes,
+        fileId:   data?.file_id ?? 0,
+        bytes:    data?.file_size_bytes ?? 0,
       })
     } catch (e) {
       setUploadState(key, {
