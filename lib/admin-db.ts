@@ -2530,6 +2530,75 @@ export async function markHrOnboardingInvited(id: number): Promise<HrOnboardingR
   return res.rows[0] || null
 }
 
+// ── HR Onboarding — PUBLIC (employee-facing) writes (4c) ───────────
+//
+// ⚠️ These back the UNAUTHENTICATED public route. They write ONLY to
+// hr_onboarding (payload jsonb + status/timestamps) and are always
+// scoped to a SINGLE id resolved from the token by the caller. They
+// NEVER write hr_employees/vcard/staff and NEVER finalize (4e/HR only).
+
+/**
+ * Flip a draft/invited onboarding to 'in_progress' on first open. Idempotent:
+ * only advances from draft/invited (won't downgrade submitted/finalized/
+ * cancelled). Returns the (possibly unchanged) record.
+ */
+export async function markHrOnboardingInProgress(id: number): Promise<HrOnboardingRecord | null> {
+  const db = getPool()
+  await db.query(
+    `UPDATE hr_onboarding
+        SET status = 'in_progress', updated_at = NOW()
+      WHERE id = $1 AND status IN ('draft','invited')`,
+    [id],
+  )
+  return getHrOnboardingById(id)
+}
+
+/**
+ * Merge an ALREADY-ALLOWLISTED, ALREADY-VALIDATED set of fields into
+ * hr_onboarding.payload (jsonb) for the given id. The caller (the public
+ * route) is responsible for the allowlist + validation; this helper only
+ * performs the scoped jsonb merge + updated_at bump.
+ *
+ * ⚠️ Refuses to write once submitted/finalized/cancelled (the public
+ * caller can't edit a locked record). Returns the updated record, or
+ * null if the row is gone OR is locked.
+ */
+export async function mergeHrOnboardingPayload(
+  id: number,
+  fields: Record<string, string>,
+): Promise<HrOnboardingRecord | null> {
+  const db = getPool()
+  const res = await db.query(
+    `UPDATE hr_onboarding
+        SET payload = payload || $2::jsonb,
+            updated_at = NOW()
+      WHERE id = $1
+        AND status IN ('draft','invited','in_progress')
+      RETURNING ${HR_ONBOARDING_COLS}`,
+    [id, JSON.stringify(fields)],
+  )
+  return res.rows[0] || null
+}
+
+/**
+ * Employee marks their packet submitted → status='submitted' +
+ * submitted_at. Only from an editable state; a submitted/finalized
+ * record is not re-submitted. ⚠️ Does NOT write hr_employees (HR
+ * finalizes in 4e). Returns the record, or null if gone/locked.
+ */
+export async function markHrOnboardingSubmitted(id: number): Promise<HrOnboardingRecord | null> {
+  const db = getPool()
+  const res = await db.query(
+    `UPDATE hr_onboarding
+        SET status = 'submitted', submitted_at = NOW(), updated_at = NOW()
+      WHERE id = $1
+        AND status IN ('draft','invited','in_progress')
+      RETURNING ${HR_ONBOARDING_COLS}`,
+    [id],
+  )
+  return res.rows[0] || null
+}
+
 // ── HR Onboarding — FINALIZE mapping DESIGN (4a; implemented in 4e) ──
 //
 // ⚠️ DESIGN ONLY — not executed here. This documents how a REVIEWED
