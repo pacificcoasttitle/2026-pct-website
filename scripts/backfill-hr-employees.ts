@@ -109,6 +109,11 @@ const OFFICE_MAP: Record<string, string> = {
   'orange hq': 'Orange County Office',
   'livermore (tsg norcal)': 'Livermore (TSG)',
   'las vegas (tsg nv)': 'Las Vegas (TSG)',
+  // Already-canonical vcard display values → self-map so the
+  // unmapped-offices check stays meaningful (empty = truly all mapped).
+  'glendale office': 'Glendale Office',
+  'orange county office': 'Orange County Office',
+  'inland empire branch': 'Inland Empire Branch',
 }
 
 function mapOffice(raw: string | null | undefined): {
