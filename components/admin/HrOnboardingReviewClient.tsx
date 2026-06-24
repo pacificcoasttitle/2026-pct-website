@@ -23,6 +23,7 @@ interface Props {
   submittedAt: string | null
   finalizedAt: string | null
   createdAt: string
+  tokenExpiresAt: string | null
   documents: DocRow[]
 }
 
@@ -115,12 +116,19 @@ function FieldRow({ label, value }: { label: string; value: string }) {
 export default function HrOnboardingReviewClient(props: Props) {
   const router = useRouter()
   const [status, setStatus] = useState(props.status)
-  const [busy, setBusy] = useState<null | 'finalize' | 'changes'>(null)
+  const [busy, setBusy] = useState<null | 'finalize' | 'changes' | 'cancel'>(null)
   const [error, setError] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
 
   const isSubmitted = status === 'submitted'
   const isFinalized = status === 'finalized'
+  const isCancelled = status === 'cancelled'
+  const canCancel = !isFinalized && !isCancelled
+
+  const expired =
+    !!props.tokenExpiresAt &&
+    ['invited', 'in_progress'].includes(status) &&
+    new Date(props.tokenExpiresAt).getTime() <= Date.now()
 
   async function finalize() {
     if (!isSubmitted) return
@@ -136,6 +144,20 @@ export default function HrOnboardingReviewClient(props: Props) {
     } finally { setBusy(null) }
   }
 
+  async function cancel() {
+    if (!canCancel) return
+    if (!confirm('Cancel this onboarding? The employee’s link will stop working. (A finalized onboarding can’t be cancelled.)')) return
+    setError(null); setNote(null); setBusy('cancel')
+    try {
+      const res = await fetch(`/api/admin/hr/onboarding/${props.id}/cancel`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setError(data?.error || 'Could not cancel.'); return }
+      setStatus('cancelled')
+      setNote('Onboarding cancelled — the invite link no longer works.')
+      router.refresh()
+    } finally { setBusy(null) }
+  }
+
   async function requestChanges() {
     if (!isSubmitted) return
     setError(null); setNote(null); setBusy('changes')
@@ -144,7 +166,7 @@ export default function HrOnboardingReviewClient(props: Props) {
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setError(data?.error || 'Could not request changes.'); return }
       setStatus('in_progress')
-      setNote('Sent back to the employee. You can re-send the invite from the onboarding list.')
+      setNote('Sent back to the employee (status: in progress). Their existing onboarding link still works so they can edit and re-submit — or use “Resend” on the onboarding list to issue a fresh link (which invalidates the old one).')
       router.refresh()
     } finally { setBusy(null) }
   }
@@ -173,6 +195,16 @@ export default function HrOnboardingReviewClient(props: Props) {
         <FieldRow label="Invited" value={fmt(props.invitedAt)} />
         <FieldRow label="Submitted" value={fmt(props.submittedAt)} />
         <FieldRow label="Finalized" value={fmt(props.finalizedAt)} />
+        <FieldRow
+          label="Invite link"
+          value={
+            props.tokenExpiresAt
+              ? expired
+                ? `Expired ${fmt(props.tokenExpiresAt)} — resend to issue a fresh link`
+                : `Valid until ${fmt(props.tokenExpiresAt)}`
+              : '—'
+          }
+        />
         <FieldRow label="Linked employee" value={props.hrEmployeeId ? `#${props.hrEmployeeId} (existing — will update)` : 'None (new hire — will create)'} />
       </Card>
 
@@ -220,15 +252,33 @@ export default function HrOnboardingReviewClient(props: Props) {
         )}
       </Card>
 
-      {/* Actions — only a submitted onboarding is actionable. */}
-      <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 4 }}>
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 4 }}>
+        {/* Cancel — available for any non-finalized, non-cancelled record. */}
+        {canCancel && (
+          <button
+            type="button"
+            onClick={cancel}
+            disabled={busy !== null}
+            style={{ height: 42, padding: '0 16px', borderRadius: 10, border: '1px solid #fecaca', backgroundColor: '#fff', color: '#b91c1c', fontSize: 14, fontWeight: 600, cursor: 'pointer', opacity: busy ? 0.6 : 1 }}
+          >
+            {busy === 'cancel' ? 'Cancelling…' : 'Cancel onboarding'}
+          </button>
+        )}
+
+        <div style={{ flex: 1 }} />
+
         {isFinalized ? (
           <span style={{ fontSize: 14, color: '#047857', fontWeight: 600, alignSelf: 'center' }}>
-            ✓ Finalized — committed to the employee roster.
+            ✓ Finalized — committed to the employee roster (read-only).
+          </span>
+        ) : isCancelled ? (
+          <span style={{ fontSize: 14, color: '#9ca3af', alignSelf: 'center' }}>
+            This onboarding was cancelled — the invite link no longer works.
           </span>
         ) : !isSubmitted ? (
           <span style={{ fontSize: 14, color: '#9ca3af', alignSelf: 'center' }}>
-            This onboarding is <strong>{status.replace('_', ' ')}</strong> — only a submitted onboarding can be reviewed.
+            This onboarding is <strong>{status.replace('_', ' ')}</strong> — only a submitted onboarding can be reviewed &amp; finalized.
           </span>
         ) : (
           <>

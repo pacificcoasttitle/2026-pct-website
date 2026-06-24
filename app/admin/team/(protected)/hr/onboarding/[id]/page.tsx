@@ -45,6 +45,7 @@ export default async function HrOnboardingReviewPage({
       submittedAt={onboarding.submitted_at}
       finalizedAt={onboarding.finalized_at}
       createdAt={onboarding.created_at}
+      tokenExpiresAt={onboarding.token_expires_at}
       documents={documents.map((d) => ({
         id: d.id,
         doc_type: d.doc_type,

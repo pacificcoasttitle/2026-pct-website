@@ -20,8 +20,10 @@ import {
   AlertTriangle,
   ArrowRight,
   CalendarClock,
+  ClipboardList,
+  Inbox,
 } from 'lucide-react'
-import { getHrDashboardStats } from '@/lib/admin-db'
+import { getHrDashboardStats, getHrOnboardingPipelineStats } from '@/lib/admin-db'
 import { requirePageRole } from '@/lib/auth/guards'
 
 export const metadata = { title: 'HR Dashboard | PCT Team Admin' }
@@ -30,7 +32,10 @@ export const revalidate = 60
 export default async function HrDashboardPage() {
   await requirePageRole('hr-tools')
 
-  const stats = await getHrDashboardStats()
+  const [stats, pipeline] = await Promise.all([
+    getHrDashboardStats(),
+    getHrOnboardingPipelineStats(),
+  ])
   const maxDept = Math.max(1, ...stats.byDepartment.map((d) => d.count))
   const maxOffice = Math.max(1, ...stats.byOffice.map((o) => o.count))
 
@@ -98,6 +103,69 @@ export default async function HrDashboardPage() {
           </span>
         </Link>
       )}
+
+      {/* ── Onboarding pipeline (status visibility, 4f) ── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="w-4 h-4 text-[#f26b2b]" />
+            <h2 className="font-semibold text-[#03374f] text-sm">Onboarding pipeline</h2>
+          </div>
+          <Link
+            href="/admin/team/hr/onboarding"
+            className="text-xs font-semibold text-gray-500 inline-flex items-center gap-1 hover:text-[#f26b2b] transition-colors"
+          >
+            View all <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+          {[
+            { label: 'Invited',     value: pipeline.invited },
+            { label: 'In progress', value: pipeline.inProgress },
+            { label: 'Submitted',   value: pipeline.submitted, highlight: true },
+            { label: 'Finalized',   value: pipeline.finalized },
+            { label: 'Cancelled',   value: pipeline.cancelled },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className={`rounded-xl border p-3 text-center ${
+                s.highlight && s.value > 0
+                  ? 'border-[#f26b2b]/30 bg-[#f26b2b]/5'
+                  : 'border-gray-100 bg-gray-50/60'
+              }`}
+            >
+              <div className={`text-xl font-bold ${s.highlight && s.value > 0 ? 'text-[#f26b2b]' : 'text-[#03374f]'}`}>
+                {s.value}
+              </div>
+              <div className="text-[11px] text-gray-500 mt-0.5">{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* "N awaiting review" actionable CTA → submitted queue */}
+        {pipeline.submitted > 0 && (
+          <Link
+            href="/admin/team/hr/onboarding?status=submitted"
+            className="mt-4 flex items-center gap-3 rounded-xl border border-[#f26b2b]/30 bg-[#f26b2b]/5 px-4 py-3 hover:border-[#f26b2b]/50 transition-colors group"
+          >
+            <div className="w-9 h-9 rounded-lg bg-[#f26b2b]/15 text-[#f26b2b] flex items-center justify-center flex-shrink-0">
+              <Inbox className="w-4.5 h-4.5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-[#03374f]">
+                {pipeline.submitted} {pipeline.submitted === 1 ? 'onboarding is' : 'onboardings are'} awaiting review
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                A new hire submitted their packet — review &amp; finalize to add them to the roster.
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-[#f26b2b] inline-flex items-center gap-1 flex-shrink-0 group-hover:gap-2 transition-all">
+              Review <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </Link>
+        )}
+      </div>
 
       {/* ── Two-column: By Department + By Office ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

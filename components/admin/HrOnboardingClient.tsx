@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   UserPlus,
@@ -12,15 +12,28 @@ import {
   Mail,
   ClipboardList,
   Eye,
+  XCircle,
+  Clock,
 } from 'lucide-react'
 
 interface OnboardingRow {
-  id:            number
-  name:          string
-  invited_email: string | null
-  status:        string
-  invited_at:    string | null
-  created_at:    string
+  id:               number
+  name:             string
+  invited_email:    string | null
+  status:           string
+  invited_at:       string | null
+  created_at:       string
+  token_expires_at: string | null
+}
+
+// An invite is "expired" when its token window has passed AND it's still
+// in a pre-submission state (a submitted/finalized/cancelled row isn't
+// waiting on the link anymore). Display-only — resend is the remedy.
+function isExpired(o: OnboardingRow): boolean {
+  if (!o.token_expires_at) return false
+  if (!['invited', 'in_progress'].includes(o.status)) return false
+  const t = new Date(o.token_expires_at).getTime()
+  return Number.isFinite(t) && t <= Date.now()
 }
 interface EmployeeOption {
   id:    number
@@ -54,11 +67,20 @@ export default function HrOnboardingClient({
   employees:   EmployeeOption[]
 }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const statusFilter = searchParams.get('status')
   const [tab, setTab] = useState<'existing' | 'new'>('existing')
   const [busy, setBusy] = useState(false)
   const [resendingId, setResendingId] = useState<number | null>(null)
+  const [cancellingId, setCancellingId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
+
+  // Optional status filter (e.g. ?status=submitted from the dashboard CTA).
+  const visibleOnboardings = useMemo(
+    () => (statusFilter ? onboardings.filter((o) => o.status === statusFilter) : onboardings),
+    [onboardings, statusFilter],
+  )
 
   const [pickedEmployee, setPickedEmployee] = useState('')
   const [shell, setShell] = useState({ first_name: '', last_name: '', invited_email: '' })
@@ -143,6 +165,27 @@ export default function HrOnboardingClient({
       setError('Network error — please try again.')
     } finally {
       setResendingId(null)
+    }
+  }
+
+  async function handleCancel(id: number) {
+    if (!confirm('Cancel this onboarding? The employee’s link will stop working. (A finalized onboarding can’t be cancelled.)')) return
+    setError(null)
+    setOk(null)
+    setCancellingId(id)
+    try {
+      const res = await fetch(`/api/admin/hr/onboarding/${id}/cancel`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data?.error || 'Failed to cancel onboarding.')
+        return
+      }
+      setOk('Onboarding cancelled — the invite link no longer works.')
+      router.refresh()
+    } catch {
+      setError('Network error — please try again.')
+    } finally {
+      setCancellingId(null)
     }
   }
 
@@ -237,16 +280,26 @@ export default function HrOnboardingClient({
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-5 py-3.5 border-b border-gray-50 flex items-center gap-2">
           <ClipboardList className="w-4 h-4 text-[#f26b2b]" />
-          <h2 className="font-semibold text-[#03374f] text-sm">Onboardings ({onboardings.length})</h2>
+          <h2 className="font-semibold text-[#03374f] text-sm">Onboardings ({visibleOnboardings.length})</h2>
+          {statusFilter && (
+            <Link
+              href="/admin/team/hr/onboarding"
+              className="ml-auto text-xs font-medium text-gray-500 inline-flex items-center gap-1 hover:text-[#f26b2b] transition-colors"
+            >
+              Filtered: {statusFilter.replace('_', ' ')} · clear
+            </Link>
+          )}
         </div>
-        {onboardings.length === 0 ? (
+        {visibleOnboardings.length === 0 ? (
           <div className="py-16 text-center text-gray-400">
             <Mail className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">No onboardings yet. Invite an employee above.</p>
+            <p className="text-sm">
+              {statusFilter ? `No onboardings with status “${statusFilter.replace('_', ' ')}”.` : 'No onboardings yet. Invite an employee above.'}
+            </p>
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
-            {onboardings.map((o) => (
+            {visibleOnboardings.map((o) => (
               <div key={o.id} className="flex items-center gap-4 px-5 py-3.5">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[#03374f] truncate">{o.name}</p>
@@ -265,6 +318,16 @@ export default function HrOnboardingClient({
                   {o.status.replace('_', ' ')}
                 </span>
 
+                {isExpired(o) && (
+                  <span
+                    title="The invite link's 14-day window has passed — resend to issue a fresh link."
+                    className="text-[10px] px-2 py-0.5 rounded-full font-medium border border-red-100 bg-red-50 text-red-400 inline-flex items-center gap-1 flex-shrink-0"
+                  >
+                    <Clock className="w-3 h-3" />
+                    Expired
+                  </span>
+                )}
+
                 <Link
                   href={`/admin/team/hr/onboarding/${o.id}`}
                   title="Review onboarding"
@@ -277,13 +340,26 @@ export default function HrOnboardingClient({
                 <button
                   type="button"
                   onClick={() => handleResend(o.id)}
-                  disabled={resendingId === o.id}
+                  disabled={resendingId === o.id || o.status === 'finalized' || o.status === 'cancelled'}
                   title="Resend invite (invalidates the previous link)"
-                  className="h-8 px-3 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 text-gray-500 text-xs font-medium hover:border-[#f26b2b]/40 hover:text-[#f26b2b] transition-colors disabled:opacity-50 flex-shrink-0"
+                  className="h-8 px-3 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 text-gray-500 text-xs font-medium hover:border-[#f26b2b]/40 hover:text-[#f26b2b] transition-colors disabled:opacity-40 flex-shrink-0"
                 >
                   {resendingId === o.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                   Resend
                 </button>
+
+                {o.status !== 'finalized' && o.status !== 'cancelled' && (
+                  <button
+                    type="button"
+                    onClick={() => handleCancel(o.id)}
+                    disabled={cancellingId === o.id}
+                    title="Cancel onboarding (the invite link stops working)"
+                    className="h-8 px-3 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 text-gray-400 text-xs font-medium hover:border-red-300 hover:text-red-500 transition-colors disabled:opacity-50 flex-shrink-0"
+                  >
+                    {cancellingId === o.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
+                    Cancel
+                  </button>
+                )}
               </div>
             ))}
           </div>

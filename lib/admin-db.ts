@@ -2489,6 +2489,8 @@ export async function createHrOnboardingShell(
 
 export interface HrOnboardingListRow extends HrOnboardingRecord {
   employee_name: string | null
+  // Expiry timestamp for DISPLAY only (the token_hash is never exposed).
+  token_expires_at: string | null
 }
 
 /** List all onboardings (most recent first) with a display name. */
@@ -2496,6 +2498,7 @@ export async function getAllHrOnboardings(): Promise<HrOnboardingListRow[]> {
   const db = getPool()
   const res = await db.query(`
     SELECT ${HR_ONBOARDING_COLS},
+           o.token_expires_at::text AS token_expires_at,
            COALESCE(
              he.first_name || ' ' || he.last_name,
              NULLIF(TRIM(COALESCE(o.payload->>'first_name','') || ' ' || COALESCE(o.payload->>'last_name','')), '')
@@ -2507,12 +2510,82 @@ export async function getAllHrOnboardings(): Promise<HrOnboardingListRow[]> {
   return res.rows
 }
 
-/** One onboarding by id (auth-only token fields excluded). */
-export async function getHrOnboardingById(id: number): Promise<HrOnboardingRecord | null> {
+// HrOnboardingRecord + the expiry timestamp for DISPLAY (hash excluded).
+export interface HrOnboardingDetail extends HrOnboardingRecord {
+  token_expires_at: string | null
+}
+
+/** One onboarding by id (auth-only token HASH excluded; expiry exposed for display). */
+export async function getHrOnboardingById(id: number): Promise<HrOnboardingDetail | null> {
   const db = getPool()
   const res = await db.query(
-    `SELECT ${HR_ONBOARDING_COLS} FROM hr_onboarding WHERE id = $1 LIMIT 1`,
+    `SELECT ${HR_ONBOARDING_COLS}, token_expires_at::text AS token_expires_at
+       FROM hr_onboarding WHERE id = $1 LIMIT 1`,
     [id],
+  )
+  return res.rows[0] || null
+}
+
+export interface HrOnboardingPipelineStats {
+  draft:       number
+  invited:     number
+  inProgress:  number
+  submitted:   number   // ⚠️ "awaiting review" — the actionable bucket
+  finalized:   number
+  cancelled:   number
+  total:       number
+}
+
+/**
+ * Onboarding-pipeline counts by status for the HR dashboard. SQL
+ * aggregate (COUNT FILTER), read-only — never JS-counted. Mirrors the 2c
+ * getHrDashboardStats style; a separate query so the existing dashboard
+ * stats are untouched.
+ */
+export async function getHrOnboardingPipelineStats(): Promise<HrOnboardingPipelineStats> {
+  const db = getPool()
+  const res = await db.query(`
+    SELECT
+      COUNT(*) FILTER (WHERE status = 'draft')::int       AS draft,
+      COUNT(*) FILTER (WHERE status = 'invited')::int     AS invited,
+      COUNT(*) FILTER (WHERE status = 'in_progress')::int AS in_progress,
+      COUNT(*) FILTER (WHERE status = 'submitted')::int   AS submitted,
+      COUNT(*) FILTER (WHERE status = 'finalized')::int   AS finalized,
+      COUNT(*) FILTER (WHERE status = 'cancelled')::int   AS cancelled,
+      COUNT(*)::int                                       AS total
+    FROM hr_onboarding
+  `)
+  const r = res.rows[0]
+  return {
+    draft:      r.draft,
+    invited:    r.invited,
+    inProgress: r.in_progress,
+    submitted:  r.submitted,
+    finalized:  r.finalized,
+    cancelled:  r.cancelled,
+    total:      r.total,
+  }
+}
+
+/**
+ * Cancel an onboarding → status='cancelled'. ⚠️ Guard: a finalized
+ * onboarding CANNOT be cancelled (the canonical write already happened).
+ * Writes ONLY hr_onboarding.status. A cancelled invite's public link
+ * then dead-links (4c already locks cancelled). Returns the record, or
+ * null if gone / already finalized (the route maps that to 409).
+ */
+export async function cancelHrOnboarding(
+  id: number,
+  updatedBy?: string | null,
+): Promise<HrOnboardingRecord | null> {
+  const db = getPool()
+  const res = await db.query(
+    `UPDATE hr_onboarding
+        SET status = 'cancelled', updated_at = NOW(),
+            created_by = COALESCE(created_by, $2)
+      WHERE id = $1 AND status <> 'finalized'
+      RETURNING ${HR_ONBOARDING_COLS}`,
+    [id, updatedBy?.trim() || null],
   )
   return res.rows[0] || null
 }

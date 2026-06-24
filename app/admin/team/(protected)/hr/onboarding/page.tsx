@@ -23,12 +23,13 @@ export default async function HrOnboardingPage() {
   ])
 
   const list = onboardings.map((o) => ({
-    id:            o.id,
-    name:          o.employee_name || o.invited_email || '(unnamed)',
-    invited_email: o.invited_email,
-    status:        o.status,
-    invited_at:    o.invited_at,
-    created_at:    o.created_at,
+    id:               o.id,
+    name:             o.employee_name || o.invited_email || '(unnamed)',
+    invited_email:    o.invited_email,
+    status:           o.status,
+    invited_at:       o.invited_at,
+    created_at:       o.created_at,
+    token_expires_at: o.token_expires_at,
   }))
 
   // Only active employees are sensible invite targets.
