@@ -1903,8 +1903,111 @@ export interface HrEmployee {
   staff_member_id:    number | null
   needs_dedup_review: boolean
   dedup_review_note:  string | null
+  deactivated_at:     string | null
   created_at:         string
   updated_at:         string
+}
+
+export interface CreateHrEmployeeInput {
+  first_name:      string
+  last_name:       string
+  email:           string            // required on add (decision: 2d); normalized lower/trim
+  full_legal_name?: string | null
+  title?:          string | null
+  department?:     string | null
+  office?:         string | null
+  mobile?:         string | null
+  office_phone?:   string | null
+  active?:         boolean
+  created_by?:     string | null
+}
+
+/**
+ * Create a decoupled "HR-only" employee: writes ONLY the canonical
+ * hr_employees row with source FKs (vcard_employee_id, staff_member_id)
+ * left NULL. Does NOT create/modify vcard_employees or staff_members.
+ *
+ * email is required + normalized (lower/trim) and the UNIQUE constraint
+ * applies — a duplicate throws a friendly 'already' error (the route
+ * maps it to 409, never a 500).
+ */
+export async function createHrEmployee(input: CreateHrEmployeeInput): Promise<HrEmployee> {
+  const db = getPool()
+  const first = input.first_name.trim()
+  const last  = input.last_name.trim()
+  if (!first || !last) throw new Error('first_name and last_name are required')
+
+  const email = input.email.trim().toLowerCase()
+  if (!email) throw new Error('email is required')
+
+  // Friendly pre-check (the UNIQUE index is the real guard; this just
+  // turns the common case into a clean message instead of a PG error).
+  const dup = await db.query(`SELECT id FROM hr_employees WHERE email = $1 LIMIT 1`, [email])
+  if (dup.rowCount && dup.rowCount > 0) {
+    throw new Error(`An employee with email ${email} already exists.`)
+  }
+
+  try {
+    const res = await db.query(
+      `INSERT INTO hr_employees (
+         first_name, last_name, full_legal_name, email,
+         mobile, office_phone, title, department, office,
+         active, vcard_employee_id, staff_member_id,
+         created_by, updated_by
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NULL,NULL,$11,$11
+       )
+       RETURNING *`,
+      [
+        first,
+        last,
+        input.full_legal_name?.trim() || null,
+        email,
+        input.mobile?.trim() || null,
+        input.office_phone?.trim() || null,
+        input.title?.trim() || null,
+        input.department?.trim() || null,
+        input.office?.trim() || null,
+        input.active === false ? false : true,
+        input.created_by?.trim() || null,
+      ],
+    )
+    return res.rows[0]
+  } catch (err) {
+    // Unique-violation safety net (race between the pre-check + insert).
+    const code = (err as { code?: string })?.code
+    if (code === '23505') {
+      throw new Error(`An employee with email ${email} already exists.`)
+    }
+    throw err
+  }
+}
+
+/**
+ * Soft-deactivate or reactivate an HR employee. NEVER deletes.
+ *   active=false → sets active=false, deactivated_at=NOW()
+ *   active=true  → sets active=true,  deactivated_at=NULL (reactivate)
+ *
+ * Touches ONLY hr_employees — the linked vcard/staff facets are owned by
+ * their teams and are left untouched.
+ */
+export async function setHrEmployeeActive(
+  id: number,
+  active: boolean,
+  updatedBy?: string | null,
+): Promise<HrEmployee | null> {
+  const db = getPool()
+  const res = await db.query(
+    `UPDATE hr_employees
+        SET active = $2,
+            deactivated_at = CASE WHEN $2 = false THEN NOW() ELSE NULL END,
+            updated_by = $3,
+            updated_at = NOW()
+      WHERE id = $1
+      RETURNING *`,
+    [id, active, updatedBy?.trim() || null],
+  )
+  return res.rows[0] || null
 }
 
 export interface HrDashboardStats {
@@ -1986,7 +2089,7 @@ export async function getAllHrEmployees(): Promise<HrEmployee[]> {
            mobile, office_phone, title, department, office, photo_url,
            active, employment_status, birthday, start_date,
            vcard_employee_id, staff_member_id,
-           needs_dedup_review, dedup_review_note,
+           needs_dedup_review, dedup_review_note, deactivated_at,
            created_at, updated_at
       FROM hr_employees
      ORDER BY active DESC, last_name ASC, first_name ASC

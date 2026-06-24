@@ -2,7 +2,17 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Search, Users, AlertTriangle, LayoutDashboard } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import {
+  Search,
+  Users,
+  AlertTriangle,
+  LayoutDashboard,
+  UserPlus,
+  Loader2,
+  UserX,
+  RotateCcw,
+} from 'lucide-react'
 
 interface HrRosterRow {
   id:                 number
@@ -22,12 +32,46 @@ export default function HrRosterClient({
   employees: HrRosterRow[]
   dedupOnly?: boolean
 }) {
+  const router = useRouter()
   const [query,      setQuery]      = useState('')
   const [deptFilter, setDeptFilter] = useState('all')
   // When linked from the dashboard's dedup CTA (?dedup=1), default to
   // showing all statuses so flagged inactive rows aren't hidden.
   const [showActive, setShowActive] = useState<'all' | 'active' | 'inactive'>(dedupOnly ? 'all' : 'active')
   const [flaggedOnly, setFlaggedOnly] = useState(dedupOnly)
+  const [pendingId, setPendingId] = useState<number | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+
+  async function toggleActive(emp: HrRosterRow) {
+    const next = !emp.active
+    if (next === false) {
+      const ok = window.confirm(
+        `Deactivate ${emp.name}? They'll be marked inactive. This does not delete the ` +
+          `record or change their signature/marketing presence.`,
+      )
+      if (!ok) return
+    }
+    setActionError(null)
+    setPendingId(emp.id)
+    try {
+      const res = await fetch(`/api/admin/hr/employees/${emp.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: next }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setActionError(data?.error || 'Failed to update employee.')
+        setPendingId(null)
+        return
+      }
+      router.refresh()
+    } catch {
+      setActionError('Network error — please try again.')
+    } finally {
+      setPendingId(null)
+    }
+  }
 
   const depts = useMemo(() => {
     const names = [...new Set(employees.map((e) => e.department).filter(Boolean))] as string[]
@@ -64,14 +108,31 @@ export default function HrRosterClient({
             Showing {filtered.length} of {employees.length}
           </p>
         </div>
-        <Link
-          href="/admin/team/hr/dashboard"
-          className="h-10 px-4 inline-flex items-center gap-2 rounded-xl bg-white border border-gray-200 text-[#03374f] text-sm font-semibold hover:border-[#f26b2b]/40 hover:text-[#f26b2b] transition-colors flex-shrink-0"
-        >
-          <LayoutDashboard className="w-4 h-4" />
-          <span className="hidden sm:inline">Dashboard</span>
-        </Link>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Link
+            href="/admin/team/hr/dashboard"
+            className="h-10 px-4 inline-flex items-center gap-2 rounded-xl bg-white border border-gray-200 text-[#03374f] text-sm font-semibold hover:border-[#f26b2b]/40 hover:text-[#f26b2b] transition-colors"
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Link>
+          <Link
+            href="/admin/team/hr/new"
+            className="h-10 px-4 inline-flex items-center gap-2 rounded-xl bg-[#f26b2b] text-white text-sm font-semibold hover:bg-[#d85c1f] transition-colors"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span className="hidden sm:inline">Add Employee</span>
+            <span className="sm:hidden">Add</span>
+          </Link>
+        </div>
       </div>
+
+      {actionError && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <span>{actionError}</span>
+        </div>
+      )}
 
       {/* Dedup review notice — surfaces the flagged rows so HR can spot
           the same-person-different-email pairs (merge tooling comes later). */}
@@ -190,7 +251,7 @@ export default function HrRosterClient({
                 </span>
 
                 {/* Active status badge */}
-                <div className="flex items-center flex-shrink-0">
+                <div className="flex items-center w-16 justify-end flex-shrink-0">
                   {emp.active ? (
                     <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-medium">
                       Active
@@ -201,6 +262,27 @@ export default function HrRosterClient({
                     </span>
                   )}
                 </div>
+
+                {/* Deactivate / reactivate action */}
+                <button
+                  type="button"
+                  onClick={() => toggleActive(emp)}
+                  disabled={pendingId === emp.id}
+                  title={emp.active ? 'Deactivate' : 'Reactivate'}
+                  className={`w-8 h-8 inline-flex items-center justify-center rounded-lg border transition-colors flex-shrink-0 disabled:opacity-50 ${
+                    emp.active
+                      ? 'border-gray-200 text-gray-400 hover:border-red-200 hover:text-red-500 hover:bg-red-50'
+                      : 'border-gray-200 text-gray-400 hover:border-emerald-200 hover:text-emerald-600 hover:bg-emerald-50'
+                  }`}
+                >
+                  {pendingId === emp.id ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : emp.active ? (
+                    <UserX className="w-3.5 h-3.5" />
+                  ) : (
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  )}
+                </button>
               </div>
             ))}
           </div>
