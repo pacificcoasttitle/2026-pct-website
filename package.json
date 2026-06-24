@@ -9,7 +9,8 @@
     "start": "next start",
     "verify:marketing": "tsx scripts/verify-marketing.ts",
     "backfill:audiences": "tsx scripts/backfill-team-audiences.ts",
-    "backfill:individuals": "tsx scripts/backfill-individual-audiences.ts"
+    "backfill:individuals": "tsx scripts/backfill-individual-audiences.ts",
+    "backfill:hr": "tsx scripts/backfill-hr-employees.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
