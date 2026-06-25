@@ -24,6 +24,29 @@ import { roleCanAccess, type CapabilityGroup } from '@/lib/auth/permissions'
 /** Where a logged-in-but-unauthorized rep lands (safe, friendly). */
 const PAGE_DENIED_REDIRECT = '/admin/team'
 
+/** The default landing for a logged-in user with no explicit destination. */
+export const ADMIN_DEFAULT_LANDING = '/admin/team'
+const HR_DEFAULT_LANDING = '/admin/team/hr/dashboard'
+
+/**
+ * Role-aware default landing — the single source for "where does this
+ * user go when they have no explicit destination (deep-link/returnTo)?"
+ *
+ * - The scoped `hr` role → the HR dashboard (their workspace).
+ * - Everyone else (top_level / manager / unknown) → the existing
+ *   /admin/team default — UNCHANGED.
+ *
+ * ⚠️ Deliberately keys on the scoped `hr` ROLE, not the `hr-tools`
+ * capability: top_level + manager also HAVE hr-tools (via 'all'), but
+ * they're full-access admins whose home is the team dashboard — sending
+ * them to the HR dashboard would change non-HR behavior.
+ */
+export function getDefaultLandingForRole(
+  session: AdminSession | null,
+): string {
+  return session?.role === 'hr' ? HR_DEFAULT_LANDING : ADMIN_DEFAULT_LANDING
+}
+
 /**
  * Session-returning auth — the counterpart to isAuthenticated() (which
  * only returns a boolean; role checks need the session). Reads the

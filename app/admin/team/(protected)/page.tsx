@@ -11,8 +11,9 @@ import {
   ArrowRight,
   TrendingUp,
 } from 'lucide-react'
+import { redirect } from 'next/navigation'
 import { getDashboardStats } from '@/lib/admin-db'
-import { requirePageRole } from '@/lib/auth/guards'
+import { requirePageRole, getDefaultLandingForRole, ADMIN_DEFAULT_LANDING } from '@/lib/auth/guards'
 
 export const metadata = { title: 'Dashboard | PCT Team Admin' }
 export const revalidate = 60
@@ -20,7 +21,17 @@ export const revalidate = 60
 export default async function AdminDashboard() {
   // 'dashboard' is HR-allowed and the redirect target for denied users,
   // so this gate can never cause a redirect loop.
-  await requirePageRole('dashboard')
+  const session = await requirePageRole('dashboard')
+
+  // Role-aware landing: HR-scoped users belong on the HR dashboard, not
+  // the legacy sales dashboard. This single redirect covers both the
+  // post-login landing (login defaults to /admin/team) and any direct
+  // navigation to the bare index. Non-HR users fall through unchanged.
+  // (A deep-link login lands on its own `from` URL, never here, so an
+  // explicit returnTo is always respected.)
+  const landing = getDefaultLandingForRole(session)
+  if (landing !== ADMIN_DEFAULT_LANDING) redirect(landing)
+
   const stats = await getDashboardStats()
 
   return (
