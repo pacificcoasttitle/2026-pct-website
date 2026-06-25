@@ -189,6 +189,7 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
           specialties:              emp.specialties,
           linkedin:                 emp.linkedin,
           featured:                 emp.featured,
+          sales_manager:            emp.sales_manager,
           website_active:           emp.website_active,
           website_bio:              emp.website_bio,
           website_specialties:      emp.website_specialties,
