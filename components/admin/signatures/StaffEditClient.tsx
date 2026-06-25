@@ -14,7 +14,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  ArrowLeft, Loader2, Upload, Trash2, AlertCircle, Save, X, FileImage,
+  ArrowLeft, Loader2, Upload, Trash2, AlertCircle, Save, X, FileImage, Lock,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -54,8 +54,18 @@ interface FormState {
 
 const NO_OFFICE = '__none__'  // shadcn Select doesn't allow empty value
 
+// HR-sync Stage 7 (design §5): the SHARED identity fields managed in HR.
+// These are read-only in this form, stripped from the PATCH body, and
+// excluded from validation (a blank legacy shared value must not block a
+// section-only save). Section fields (fax, group_email, linkedin_url,
+// instagram_url, part_time) stay fully editable.
+const SHARED_FIELDS: ReadonlySet<keyof FormState> = new Set([
+  'first_name', 'last_name', 'full_legal_name', 'title', 'department',
+  'email', 'office_direct', 'cell_phone', 'office_location',
+  'license_number', 'active', 'photo_url',
+])
+
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024  // 5 MB
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function initialForm(s: StaffMember): FormState {
   return {
@@ -142,15 +152,15 @@ export function StaffEditClient({ staff, offices }: Props) {
 
   /* ── Save ─────────────────────────────────────────────────────── */
 
+  // HR-sync Stage 7: the previously-required fields (first_name, last_name,
+  // title, email) are now SHARED + read-only, so they're no longer
+  // validated here — a blank legacy shared value must NOT block a
+  // section-only save (HR owns those fields). There are no required
+  // EDITABLE section fields, so validation is a no-op pass; kept as a hook
+  // for any future section-field rules.
   function validate(): boolean {
-    const errs: Record<string, string> = {}
-    if (!form.first_name.trim()) errs.first_name = 'Required'
-    if (!form.last_name.trim())  errs.last_name  = 'Required'
-    if (!form.title.trim())      errs.title      = 'Required'
-    if (!form.email.trim())      errs.email      = 'Required'
-    else if (!EMAIL_RE.test(form.email.trim())) errs.email = 'Invalid email format'
-    setFieldErrors(errs)
-    return Object.keys(errs).length === 0
+    setFieldErrors({})
+    return true
   }
 
   // Build a Partial payload containing only fields that changed. This
@@ -160,12 +170,18 @@ export function StaffEditClient({ staff, offices }: Props) {
     const patch: Record<string, unknown> = {}
     const keys = Object.keys(form) as (keyof FormState)[]
     for (const k of keys) {
+      // ⚠️ HR-sync Stage 7: NEVER send a shared key, even if its state
+      // changed (e.g. via a photo upload that mutated photo_url, or a
+      // stale value). HR is the sole editor; the server PATCH allowlist
+      // also strips these, but we keep the wire clean here.
+      if (SHARED_FIELDS.has(k)) continue
       const cur = form[k]
       const old = original[k]
       if (cur === old) continue
-      // Normalize empty strings on nullable fields → null
-      if (k !== 'first_name' && k !== 'last_name' && k !== 'title' &&
-          k !== 'email' && k !== 'active' && k !== 'part_time') {
+      // Normalize empty strings on nullable section fields → null.
+      // (part_time is boolean; the rest of the editable section fields are
+      // nullable strings.)
+      if (k !== 'part_time') {
         patch[k] = typeof cur === 'string' && cur.trim() === '' ? null : cur
       } else {
         patch[k] = cur
@@ -262,35 +278,35 @@ export function StaffEditClient({ staff, offices }: Props) {
               ref={fileInputRef}
               type="file"
               accept="image/png,image/jpeg,image/webp"
+              disabled
               className="hidden"
               onChange={(e) => {
                 handleFile(e.target.files?.[0])
                 e.target.value = ''
               }}
             />
+            {/* HR-sync Stage 7: photo is a SHARED field managed in HR — the
+                whole control set (upload, remove, file input) is disabled
+                as a unit. The photo still displays for context. */}
             <div className="flex gap-2">
-              <Button type="button" variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}>
-                {uploading
-                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploading…</>
-                  : <><Upload className="w-4 h-4 mr-2" /> Upload New Photo</>}
+              <Button type="button" variant="outline" disabled title="Managed in HR">
+                <Upload className="w-4 h-4 mr-2" /> Upload New Photo
               </Button>
               {form.photo_url && (
-                <Button type="button" variant="outline"
-                        onClick={() => set('photo_url', '')}
-                        className="text-red-700 border-red-200 hover:bg-red-50 hover:text-red-700">
+                <Button type="button" variant="outline" disabled title="Managed in HR"
+                        className="text-gray-400 border-gray-200">
                   <Trash2 className="w-4 h-4 mr-2" /> Remove Photo
                 </Button>
               )}
             </div>
+            <ManagedInHr />
             <p className="text-xs text-gray-500 inline-flex items-center gap-1">
               <FileImage className="w-3 h-3" />
-              PNG, JPG, or WebP · Max 5 MB · Will be cropped to a circle
+              The headshot is managed in HR and syncs here automatically.
             </p>
             {!form.photo_url && (
               <p className="text-xs text-gray-500">
-                No photo uploaded — initials avatar will be used.
+                No photo set — initials avatar will be used.
               </p>
             )}
           </div>
@@ -306,17 +322,16 @@ export function StaffEditClient({ staff, offices }: Props) {
       {/* ── Identity ─────────────────────────────────────────── */}
       <Card className="p-5 space-y-3">
         <SectionHeader title="Identity" />
+        {/* HR-sync Stage 7: name + full legal name are SHARED → read-only. */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <FieldInput label="First name" required
+          <FieldInput label="First name" readOnly
                       value={form.first_name}
-                      onChange={(v) => set('first_name', v)}
-                      error={fieldErrors.first_name} />
-          <FieldInput label="Last name" required
+                      onChange={(v) => set('first_name', v)} />
+          <FieldInput label="Last name" readOnly
                       value={form.last_name}
-                      onChange={(v) => set('last_name', v)}
-                      error={fieldErrors.last_name} />
+                      onChange={(v) => set('last_name', v)} />
         </div>
-        <FieldInput label="Full legal name (optional)"
+        <FieldInput label="Full legal name" readOnly
                     value={form.full_legal_name}
                     onChange={(v) => set('full_legal_name', v)} />
       </Card>
@@ -324,11 +339,11 @@ export function StaffEditClient({ staff, offices }: Props) {
       {/* ── Role ─────────────────────────────────────────────── */}
       <Card className="p-5 space-y-3">
         <SectionHeader title="Role" />
-        <FieldInput label="Title" required
+        {/* HR-sync Stage 7: title + department are SHARED → read-only. */}
+        <FieldInput label="Title" readOnly
                     value={form.title}
-                    onChange={(v) => set('title', v)}
-                    error={fieldErrors.title} />
-        <FieldInput label="Department"
+                    onChange={(v) => set('title', v)} />
+        <FieldInput label="Department" readOnly
                     value={form.department}
                     onChange={(v) => set('department', v)} />
       </Card>
@@ -336,15 +351,16 @@ export function StaffEditClient({ staff, offices }: Props) {
       {/* ── Contact ──────────────────────────────────────────── */}
       <Card className="p-5 space-y-3">
         <SectionHeader title="Contact" />
-        <FieldInput label="Email" required type="email"
+        {/* HR-sync Stage 7: email + phones are SHARED → read-only.
+            Fax + group email are SECTION fields → stay editable. */}
+        <FieldInput label="Email" readOnly type="email"
                     value={form.email}
-                    onChange={(v) => set('email', v)}
-                    error={fieldErrors.email} />
+                    onChange={(v) => set('email', v)} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <FieldInput label="Office direct"
+          <FieldInput label="Office direct" readOnly
                       value={form.office_direct}
                       onChange={(v) => set('office_direct', v)} />
-          <FieldInput label="Cell phone"
+          <FieldInput label="Cell phone" readOnly
                       value={form.cell_phone}
                       onChange={(v) => set('cell_phone', v)} />
         </div>
@@ -365,10 +381,12 @@ export function StaffEditClient({ staff, offices }: Props) {
           <Label htmlFor="office_location" className="text-xs text-gray-600">
             Office location
           </Label>
+          {/* HR-sync Stage 7: office is a SHARED field → read-only. */}
           <Select
+            disabled
             value={form.office_location === '' ? NO_OFFICE : form.office_location}
             onValueChange={(v) => set('office_location', v === NO_OFFICE ? '' : v)}>
-            <SelectTrigger id="office_location">
+            <SelectTrigger id="office_location" title="Managed in HR" className="bg-gray-100 text-gray-500 cursor-not-allowed">
               <SelectValue placeholder="Select an office" />
             </SelectTrigger>
             <SelectContent>
@@ -380,16 +398,16 @@ export function StaffEditClient({ staff, offices }: Props) {
               ))}
             </SelectContent>
           </Select>
-          {fieldErrors.office_location && (
-            <p className="text-xs text-red-600">{fieldErrors.office_location}</p>
-          )}
+          <ManagedInHr />
         </div>
       </Card>
 
       {/* ── Compliance ───────────────────────────────────────── */}
       <Card className="p-5 space-y-3">
         <SectionHeader title="Compliance" />
-        <FieldInput label="License number (DRE / NMLS, optional)"
+        {/* HR-sync Stage 7: license number is SHARED → read-only.
+            LinkedIn + Instagram are SECTION fields → stay editable. */}
+        <FieldInput label="License number (DRE / NMLS)" readOnly
                     value={form.license_number}
                     onChange={(v) => set('license_number', v)} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -405,15 +423,15 @@ export function StaffEditClient({ staff, offices }: Props) {
       {/* ── Status ───────────────────────────────────────────── */}
       <Card className="p-5 space-y-3">
         <SectionHeader title="Status" />
-        <div className="flex items-center gap-2">
+        {/* HR-sync Stage 7: active is a SHARED field → read-only. */}
+        <div className="flex items-center gap-2" title="Managed in HR">
           <Checkbox id="active"
                     checked={form.active}
+                    disabled
                     onCheckedChange={(c) => set('active', c === true)} />
-          <Label htmlFor="active" className="cursor-pointer">
+          <Label htmlFor="active" className="cursor-not-allowed text-gray-500">
             Active
-            <span className="text-xs text-gray-500 font-normal ml-2">
-              (uncheck to hide from signature generation)
-            </span>
+            <span className="ml-2"><ManagedInHr /></span>
           </Label>
         </div>
         <div className="flex items-center gap-2">
@@ -454,7 +472,7 @@ function SectionHeader({ title }: { title: string }) {
 }
 
 function FieldInput({
-  label, value, onChange, required, type, error,
+  label, value, onChange, required, type, error, readOnly,
 }: {
   label:    string
   value:    string
@@ -462,18 +480,39 @@ function FieldInput({
   required?: boolean
   type?:     string
   error?:    string
+  /** HR-sync Stage 7: shared field managed in HR — disabled + hinted. */
+  readOnly?: boolean
 }) {
   const id = `f-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id} className="text-xs text-gray-600">
-        {label} {required && <span className="text-[#f26b2b]">*</span>}
+        {label} {required && !readOnly && <span className="text-[#f26b2b]">*</span>}
       </Label>
       <Input id={id} type={type || 'text'} value={value}
              onChange={(e) => onChange(e.target.value)}
+             disabled={readOnly}
+             readOnly={readOnly}
              aria-invalid={!!error}
-             className={error ? 'border-red-300 focus-visible:ring-red-200' : ''} />
-      {error && <p className="text-xs text-red-600">{error}</p>}
+             title={readOnly ? 'Managed in HR' : undefined}
+             className={
+               readOnly
+                 ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                 : error ? 'border-red-300 focus-visible:ring-red-200' : ''
+             } />
+      {readOnly
+        ? <ManagedInHr />
+        : error && <p className="text-xs text-red-600">{error}</p>}
     </div>
+  )
+}
+
+/** Small "Managed in HR" hint shown beneath each read-only shared field. */
+function ManagedInHr() {
+  return (
+    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#03374f]/60">
+      <Lock className="w-3 h-3" />
+      Managed in HR
+    </span>
   )
 }

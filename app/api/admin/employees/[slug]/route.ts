@@ -29,11 +29,17 @@ export async function PATCH(
   const { slug } = await params
   const body = await req.json()
 
-  // Whitelist of editable fields
+  // Whitelist of editable fields.
+  //
+  // ⚠️ HR-sync Stage 7 (design §5): the SHARED identity fields — first_name,
+  // last_name, title, email, phone, mobile, photo_url, office_id,
+  // department_id, active — are managed in HR and are deliberately NOT in
+  // this allowlist. Even a direct API call cannot mutate them here; HR is
+  // the sole editor. The values still flow DOWN from HR via the sync. Only
+  // the marketing SECTION fields below are editable on the vcard.
   const allowed = [
-    'first_name', 'last_name', 'title', 'email', 'phone', 'mobile',
-    'bio', 'photo_url', 'languages', 'specialties', 'linkedin',
-    'office_id', 'department_id', 'active', 'featured', 'sales_manager', 'website_active',
+    'bio', 'languages', 'specialties', 'linkedin',
+    'featured', 'sales_manager', 'website_active',
     'website_bio', 'website_specialties', 'website_custom_title',
     'website_meta_description', 'mailchimp_audience_id', 'mailchimp_form_code',
   ]

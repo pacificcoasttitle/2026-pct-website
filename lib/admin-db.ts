@@ -3094,12 +3094,20 @@ export interface StaffMemberInput {
 
 // Whitelist of columns the caller is allowed to set via updateStaffMember.
 // Prevents accidental updates to id / created_at / created_by via spread payloads.
+// ⚠️ HR-sync Stage 7 (design §5): the SHARED identity columns —
+// first_name, last_name, full_legal_name, title, department, email,
+// office_direct, cell_phone, office_location, photo_url, license_number,
+// active — are managed in HR and are REMOVED from this updatable set, so
+// updateStaffMember() (the signature-edit PATCH path) can never write them
+// even if a key slips past the route schema. HR is the sole editor; values
+// flow DOWN via the sync engine (which uses its own raw UPDATE, not this
+// helper). Only the signature SECTION columns remain updatable here.
+// NOTE: the HR sync-down engine and finalizeHrOnboarding write staff rows
+// via their OWN SQL, NOT through updateStaffMember — this set does not gate
+// them. The import (bulkCreateStaffMembers) is handled separately below.
 const STAFF_UPDATABLE_COLUMNS = new Set<keyof StaffMemberInput>([
-  'first_name', 'last_name', 'full_legal_name', 'title', 'department',
-  'email', 'office_direct', 'cell_phone', 'fax',
-  'office_location', 'photo_url', 'license_number',
-  'linkedin_url', 'instagram_url', 'group_email',
-  'signature_template_id', 'active', 'part_time',
+  'fax', 'linkedin_url', 'instagram_url', 'group_email',
+  'signature_template_id', 'part_time',
 ])
 
 export async function getAllStaffMembers(
@@ -3262,6 +3270,13 @@ export async function bulkCreateStaffMembers(
       try {
         await client.query(`SAVEPOINT ${savepointName}`)
 
+        // LAYER 2: import can still CREATE new staff with shared fields —
+        // create policy deferred. The INSERT column list below sets shared
+        // identity fields for a BRAND-NEW row; whether the import may mint
+        // new staff identities (and how those link to HR) is a Layer 2
+        // create-policy decision. Behavior on the INSERT branch is
+        // intentionally UNCHANGED this stage — only the ON CONFLICT
+        // (existing-row) update was narrowed to section fields above.
         await client.query(
           `INSERT INTO staff_members (
              first_name, last_name, full_legal_name, title, department,
@@ -3278,18 +3293,22 @@ export async function bulkCreateStaffMembers(
              $16, $17, $18,
              $19, $19
            )
+           -- ⚠️ HR-sync Stage 7 (design §5): the CSV-import BACKDOOR is
+           -- closed. On EMAIL-CONFLICT (an EXISTING staff row) we update
+           -- ONLY the signature SECTION fields (fax, group_email,
+           -- linkedin_url, instagram_url, part_time). The SHARED identity
+           -- fields (name, full_legal_name, title, department,
+           -- office_direct, cell_phone, office_location, license_number,
+           -- photo_url, active) are managed in HR and are NO LONGER
+           -- overwritten by a spreadsheet — otherwise the read-only edit
+           -- forms would be defeated by an import. (The INSERT branch above
+           -- is the create path — LAYER 2, left AS-IS; see comment below.)
            ON CONFLICT (email) DO UPDATE SET
-             first_name      = EXCLUDED.first_name,
-             last_name       = EXCLUDED.last_name,
-             full_legal_name = EXCLUDED.full_legal_name,
-             title           = EXCLUDED.title,
-             department      = EXCLUDED.department,
-             office_direct   = EXCLUDED.office_direct,
-             cell_phone      = EXCLUDED.cell_phone,
              fax             = EXCLUDED.fax,
-             office_location = EXCLUDED.office_location,
-             license_number  = EXCLUDED.license_number,
              group_email     = EXCLUDED.group_email,
+             linkedin_url    = EXCLUDED.linkedin_url,
+             instagram_url   = EXCLUDED.instagram_url,
+             part_time       = EXCLUDED.part_time,
              updated_at      = NOW(),
              updated_by      = $19`,
           [

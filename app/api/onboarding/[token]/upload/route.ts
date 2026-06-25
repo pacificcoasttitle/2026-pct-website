@@ -7,6 +7,14 @@
  *   - per-kind MIME allow-sets + 20 MB size cap
  *   - net-new rate limiter (per token + IP)
  *
+ * LAYER 2: public rep onboarding still writes shared fields (phone/mobile/
+ * photo) directly to vcard — onboarding→HR flow deferred to Layer 2. The
+ * headshot kind below writes vcard_employees.photo_url, a SHARED identity
+ * field (HR-sync Stage 7 made photo read-only in the ADMIN edit forms),
+ * but this public rep self-service flow still writes it straight to the
+ * vcard. Routing onboarding through HR is a Layer 2 decision. Behavior
+ * UNCHANGED this stage.
+ *
  * Kinds:
  *   - headshot    → R2 + asset row + write-through to vcard_employees.photo_url
  *                   (scrubbed { photo_url } only — same discipline as 2c)

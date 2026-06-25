@@ -13,8 +13,6 @@ import { z } from 'zod'
 import { requireApiRole } from '@/lib/auth/guards'
 import {
   getStaffMemberById,
-  getStaffMemberByEmail,
-  getAllOfficeLocations,
   updateStaffMember,
   deleteStaffMember,
   type StaffMemberInput,
@@ -23,27 +21,21 @@ import { normalizePhone } from '@/lib/phone-utils'
 
 export const runtime = 'nodejs'
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
 // Partial schema — every field optional, matching Partial<StaffMemberInput>.
 // Empty strings on optional fields are coerced to null at the DB layer.
+//
+// ⚠️ HR-sync Stage 7 (design §5): the SHARED identity fields — first_name,
+// last_name, full_legal_name, title, department, email, office_direct,
+// cell_phone, office_location, photo_url, license_number, active — are
+// managed in HR and are DELIBERATELY NOT in this schema. Zod silently
+// drops unknown keys, so even a direct API call carrying a shared field
+// cannot write it here; HR is the sole editor and the values flow down via
+// the sync. Only the signature SECTION fields below are accepted.
 const PatchSchema = z.object({
-  first_name:      z.string().trim().min(1).max(100).optional(),
-  last_name:       z.string().trim().min(1).max(100).optional(),
-  full_legal_name: z.string().trim().max(200).nullable().optional(),
-  title:           z.string().trim().min(1).max(200).optional(),
-  department:      z.string().trim().max(100).nullable().optional(),
-  email:           z.string().trim().min(1).max(200).optional(),
-  office_direct:   z.string().trim().max(50).nullable().optional(),
-  cell_phone:      z.string().trim().max(50).nullable().optional(),
   fax:             z.string().trim().max(50).nullable().optional(),
-  office_location: z.string().trim().max(100).nullable().optional(),
-  photo_url:       z.string().trim().max(1000).nullable().optional(),
-  license_number:  z.string().trim().max(100).nullable().optional(),
   linkedin_url:    z.string().trim().max(500).nullable().optional(),
   instagram_url:   z.string().trim().max(500).nullable().optional(),
   group_email:     z.string().trim().max(200).nullable().optional(),
-  active:          z.boolean().optional(),
   part_time:       z.boolean().optional(),
 })
 
@@ -94,44 +86,13 @@ export async function PATCH(
     return NextResponse.json({ error: 'Staff member not found' }, { status: 404 })
   }
 
-  // Email format + uniqueness check (only when changed).
-  if (input.email && input.email.trim().toLowerCase() !== existing.email.toLowerCase()) {
-    const normalized = input.email.trim().toLowerCase()
-    if (!EMAIL_RE.test(normalized)) {
-      return NextResponse.json(
-        { error: 'Invalid email format', field: 'email' },
-        { status: 400 },
-      )
-    }
-    const collision = await getStaffMemberByEmail(normalized)
-    if (collision && collision.id !== staffId) {
-      return NextResponse.json(
-        { error: `Another staff member already uses ${normalized}`, field: 'email' },
-        { status: 409 },
-      )
-    }
-    input.email = normalized
-  }
-
-  // Office slug validation (when set to a non-empty value).
-  if (input.office_location && input.office_location.trim() !== '') {
-    const offices = await getAllOfficeLocations()
-    const slugs = new Set(offices.map((o) => o.slug))
-    if (!slugs.has(input.office_location)) {
-      return NextResponse.json(
-        { error: `Office '${input.office_location}' not found`, field: 'office_location' },
-        { status: 400 },
-      )
-    }
-  }
-
-  // Convert empty strings on nullable fields to actual null so the DB
-  // stores nulls (UI checks for null to render "(not set)").
+  // Convert empty strings on nullable SECTION fields to actual null so the
+  // DB stores nulls (UI checks for null to render "(not set)"). Only the
+  // editable section fields survive PatchSchema now — shared fields are
+  // dropped by the schema (HR-sync Stage 7).
   const dbInput: Partial<StaffMemberInput> = { ...input }
   const nullableKeys: (keyof StaffMemberInput)[] = [
-    'full_legal_name', 'department', 'office_direct', 'cell_phone', 'fax',
-    'office_location', 'photo_url', 'license_number', 'linkedin_url',
-    'instagram_url', 'group_email',
+    'fax', 'linkedin_url', 'instagram_url', 'group_email',
   ]
   for (const k of nullableKeys) {
     if (k in dbInput) {
@@ -143,15 +104,8 @@ export async function PATCH(
     }
   }
 
-  // Normalize phone fields when present, matching the CSV import pipeline.
-  // Runs AFTER emptyToNull above, so we only touch non-null values and
-  // preserve the "user cleared the field → null" contract.
-  if (dbInput.office_direct !== undefined && dbInput.office_direct !== null) {
-    dbInput.office_direct = normalizePhone(dbInput.office_direct)
-  }
-  if (dbInput.cell_phone !== undefined && dbInput.cell_phone !== null) {
-    dbInput.cell_phone = normalizePhone(dbInput.cell_phone)
-  }
+  // Normalize the fax phone field when present (matching the import
+  // pipeline). office_direct / cell_phone are shared → no longer handled.
   if (dbInput.fax !== undefined && dbInput.fax !== null) {
     dbInput.fax = normalizePhone(dbInput.fax)
   }

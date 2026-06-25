@@ -486,6 +486,15 @@ function SelectStep(props: {
           <Download className="w-4 h-4 mr-2" />
           Download Template CSV
         </Button>
+
+        {/* HR-sync Stage 7: shared identity columns are ignored for EXISTING
+            staff on import (managed in HR). Server enforces this. */}
+        <p className="text-[11px] text-[#03374f]/60 leading-relaxed">
+          Note: for staff that already exist, identity columns (name, title,
+          department, email, phones, office, license number) are <strong>managed in HR</strong>{' '}
+          and are <strong>ignored</strong> on import — only signature fields
+          (fax, group email, LinkedIn, Instagram, part-time) are updated.
+        </p>
       </Card>
 
       <Card className="p-5 space-y-4 text-sm">

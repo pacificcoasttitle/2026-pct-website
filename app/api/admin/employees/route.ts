@@ -5,6 +5,12 @@ import { createEmployee } from '@/lib/admin-db'
 
 export const runtime = 'nodejs'
 
+// LAYER 2: marketing vcard create still accepts shared identity fields —
+// create-path policy deferred to the onboarding-orchestration design pass.
+// (HR-sync Stage 7 made shared fields read-only only on the EDIT path for
+// existing identities. Whether a marketing-created vcard may set shared
+// fields, and how it links to / creates an HR record, is a Layer 2
+// decision. Behavior here is intentionally UNCHANGED this stage.)
 export async function POST(req: Request) {
   const auth = await requireApiRole('employees')
   if ('error' in auth) return auth.error

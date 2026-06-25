@@ -21,6 +21,7 @@ import {
   Settings,
   Upload,
   X,
+  Lock,
 } from 'lucide-react'
 import type { AdminEmployee } from '@/lib/admin-db'
 
@@ -64,6 +65,20 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const INPUT = "w-full h-10 px-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 transition-all"
 const TEXTAREA = "w-full px-3.5 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#03374f]/15 focus:border-[#03374f]/40 transition-all resize-none"
+
+// HR-sync Stage 7: shared identity fields are read-only here (managed in
+// HR). Greyed, non-editable styling for the disabled shared inputs.
+const INPUT_RO = "w-full h-10 px-3.5 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-500 cursor-not-allowed"
+
+/** Small "Managed in HR" hint shown beneath each read-only shared field. */
+function ManagedInHr() {
+  return (
+    <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-[#03374f]/60">
+      <Lock className="w-3 h-3" />
+      Managed in HR
+    </span>
+  )
+}
 
 export default function EmployeeEditForm({ employee: initial, offices, depts }: Props) {
   // Rebuild the Mailchimp action URL from stored JSON for display
@@ -158,24 +173,21 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
         })
       }
 
+      // ⚠️ HR-sync Stage 7 (design §5): the SHARED identity fields
+      // (first_name, last_name, title, email, phone, mobile, office_id,
+      // department_id, active, photo_url) are managed in HR and are
+      // read-only here. They are deliberately EXCLUDED from this body so a
+      // stale/edited client state can never POST them — the section fields
+      // below are all that marketing edits. (Server PATCH allowlist is the
+      // real enforcement; this keeps the wire honest.)
       const res = await fetch(`/api/admin/employees/${emp.slug}`, {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
-          first_name:               emp.first_name,
-          last_name:                emp.last_name,
-          title:                    emp.title,
-          email:                    emp.email,
-          phone:                    emp.phone,
-          mobile:                   emp.mobile,
-          office_id:                emp.office_id,
-          department_id:            emp.department_id,
           bio:                      emp.bio,
-          photo_url:                emp.photo_url,
           languages:                emp.languages,
           specialties:              emp.specialties,
           linkedin:                 emp.linkedin,
-          active:                   emp.active,
           featured:                 emp.featured,
           website_active:           emp.website_active,
           website_bio:              emp.website_bio,
@@ -276,21 +288,27 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Profile photo
             </p>
+            {/* HR-sync Stage 7: photo is a SHARED field managed in HR — the
+                whole control set (upload, remove, file input, paste-URL) is
+                disabled as a unit. The photo still displays for context. */}
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="h-9 px-4 inline-flex items-center gap-2 rounded-xl bg-[#03374f] text-white text-xs font-semibold hover:bg-[#02263a] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                disabled
+                aria-disabled="true"
+                title="Managed in HR"
+                className="h-9 px-4 inline-flex items-center gap-2 rounded-xl bg-gray-200 text-gray-500 text-xs font-semibold cursor-not-allowed"
               >
-                {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                {uploading ? 'Uploading…' : emp.photo_url ? 'Replace photo' : 'Upload photo'}
+                <Upload className="w-3.5 h-3.5" />
+                {emp.photo_url ? 'Replace photo' : 'Upload photo'}
               </button>
               {emp.photo_url && (
                 <button
                   type="button"
-                  onClick={() => update('photo_url', '')}
-                  className="h-9 px-3 inline-flex items-center gap-1 rounded-xl border border-gray-200 text-xs text-gray-500 hover:bg-gray-50"
+                  disabled
+                  aria-disabled="true"
+                  title="Managed in HR"
+                  className="h-9 px-3 inline-flex items-center gap-1 rounded-xl border border-gray-200 text-xs text-gray-400 cursor-not-allowed"
                 >
                   <X className="w-3 h-3" /> Remove
                 </button>
@@ -299,6 +317,7 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
+                disabled
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0]
@@ -306,8 +325,9 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
                 }}
               />
             </div>
+            <ManagedInHr />
             <p className="text-[11px] text-gray-400">
-              JPG, PNG, or WebP up to 10 MB. Square headshot works best. Click <strong>Save</strong> below to keep the change.
+              The headshot is managed in HR and syncs here automatically.
             </p>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-gray-400 flex-shrink-0 self-start">
@@ -325,15 +345,17 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
 
         <div>
           <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
-            Or paste a photo URL
+            Photo URL
           </label>
           <input
             type="url"
             value={emp.photo_url ?? ''}
-            onChange={(e) => update('photo_url', e.target.value)}
+            disabled
+            readOnly
             placeholder="https://pub-xxx.r2.dev/sales-rep-photos/WebThumb/Name.png"
-            className={INPUT}
+            className={INPUT_RO}
           />
+          <ManagedInHr />
         </div>
       </div>
 
@@ -341,23 +363,27 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
       <Section title="Status & Visibility" icon={Settings}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {([
-            { field: 'active',         label: 'Active',           desc: 'Shows in directory' },
-            { field: 'website_active', label: 'Website Page Live', desc: 'pct.com/slug' },
-            { field: 'featured',       label: 'Featured',          desc: 'Shown at top' },
-            { field: 'sales_manager',  label: 'Sales Manager',     desc: 'Receives manager recaps' },
-          ] as const).map(({ field, label, desc }) => (
+            // `active` is a SHARED field (managed in HR) → read-only.
+            { field: 'active',         label: 'Active',           desc: 'Shows in directory', readOnly: true },
+            { field: 'website_active', label: 'Website Page Live', desc: 'pct.com/slug', readOnly: false },
+            { field: 'featured',       label: 'Featured',          desc: 'Shown at top', readOnly: false },
+            { field: 'sales_manager',  label: 'Sales Manager',     desc: 'Receives manager recaps', readOnly: false },
+          ] as const).map(({ field, label, desc, readOnly }) => (
             <label
               key={field}
-              className={`flex flex-col gap-1.5 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                emp[field]
-                  ? 'border-[#f26b2b] bg-[#f26b2b]/5'
-                  : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+              title={readOnly ? 'Managed in HR' : undefined}
+              className={`flex flex-col gap-1.5 p-4 rounded-xl border-2 transition-all ${
+                readOnly
+                  ? 'cursor-not-allowed border-gray-200 bg-gray-100'
+                  : emp[field]
+                    ? 'border-[#f26b2b] bg-[#f26b2b]/5 cursor-pointer'
+                    : 'border-gray-200 bg-gray-50 hover:border-gray-300 cursor-pointer'
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-[#03374f]">{label}</span>
+                <span className={`text-sm font-semibold ${readOnly ? 'text-gray-500' : 'text-[#03374f]'}`}>{label}</span>
                 <div className={`w-9 h-5 rounded-full transition-all flex-shrink-0 relative ${
-                  emp[field] ? 'bg-[#f26b2b]' : 'bg-gray-300'
+                  readOnly ? (emp[field] ? 'bg-gray-400' : 'bg-gray-300') : emp[field] ? 'bg-[#f26b2b]' : 'bg-gray-300'
                 }`}>
                   <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${
                     emp[field] ? 'left-[18px]' : 'left-0.5'
@@ -366,11 +392,12 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
                 <input
                   type="checkbox"
                   checked={emp[field] as boolean}
-                  onChange={(e) => update(field, e.target.checked)}
+                  disabled={readOnly}
+                  onChange={(e) => { if (!readOnly) update(field, e.target.checked) }}
                   className="sr-only"
                 />
               </div>
-              <span className="text-[11px] text-gray-400">{desc}</span>
+              <span className="text-[11px] text-gray-400">{readOnly ? 'Managed in HR' : desc}</span>
             </label>
           ))}
         </div>
@@ -378,92 +405,61 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
 
       {/* ── Basic Info ── */}
       <Section title="Basic Information" icon={User}>
+        {/* HR-sync Stage 7: name/title/department/office are SHARED →
+            read-only (managed in HR). Values display for context. */}
         <div className="grid grid-cols-2 gap-4">
           <Field label="First Name">
-            <input
-              type="text"
-              value={emp.first_name}
-              onChange={(e) => update('first_name', e.target.value)}
-              className={INPUT}
-            />
+            <input type="text" value={emp.first_name} disabled readOnly className={INPUT_RO} />
+            <ManagedInHr />
           </Field>
           <Field label="Last Name">
-            <input
-              type="text"
-              value={emp.last_name}
-              onChange={(e) => update('last_name', e.target.value)}
-              className={INPUT}
-            />
+            <input type="text" value={emp.last_name} disabled readOnly className={INPUT_RO} />
+            <ManagedInHr />
           </Field>
         </div>
 
         <Field label="Title / Position">
-          <input
-            type="text"
-            value={emp.title ?? ''}
-            onChange={(e) => update('title', e.target.value)}
-            placeholder="Senior Account Executive"
-            className={INPUT}
-          />
+          <input type="text" value={emp.title ?? ''} disabled readOnly placeholder="Senior Account Executive" className={INPUT_RO} />
+          <ManagedInHr />
         </Field>
 
         <div className="grid grid-cols-2 gap-4">
           <Field label="Department">
-            <select
-              value={emp.department_id ?? ''}
-              onChange={(e) => update('department_id', e.target.value ? Number(e.target.value) : null)}
-              className={INPUT}
-            >
+            <select value={emp.department_id ?? ''} disabled className={INPUT_RO}>
               <option value="">— None —</option>
               {depts.map((d) => (
                 <option key={d.id} value={d.id}>{d.name}</option>
               ))}
             </select>
+            <ManagedInHr />
           </Field>
           <Field label="Office">
-            <select
-              value={emp.office_id ?? ''}
-              onChange={(e) => update('office_id', e.target.value ? Number(e.target.value) : null)}
-              className={INPUT}
-            >
+            <select value={emp.office_id ?? ''} disabled className={INPUT_RO}>
               <option value="">— None —</option>
               {offices.map((o) => (
                 <option key={o.id} value={o.id}>{o.name}</option>
               ))}
             </select>
+            <ManagedInHr />
           </Field>
         </div>
       </Section>
 
       {/* ── Contact ── */}
       <Section title="Contact Information" icon={Mail}>
+        {/* HR-sync Stage 7: email + phones are SHARED → read-only. */}
         <Field label="Email">
-          <input
-            type="email"
-            value={emp.email ?? ''}
-            onChange={(e) => update('email', e.target.value)}
-            placeholder="name@pct.com"
-            className={INPUT}
-          />
+          <input type="email" value={emp.email ?? ''} disabled readOnly placeholder="name@pct.com" className={INPUT_RO} />
+          <ManagedInHr />
         </Field>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Mobile / Cell">
-            <input
-              type="tel"
-              value={emp.mobile ?? ''}
-              onChange={(e) => update('mobile', e.target.value)}
-              placeholder="(714) 555-0100"
-              className={INPUT}
-            />
+            <input type="tel" value={emp.mobile ?? ''} disabled readOnly placeholder="(714) 555-0100" className={INPUT_RO} />
+            <ManagedInHr />
           </Field>
           <Field label="Direct / Office Line">
-            <input
-              type="tel"
-              value={emp.phone ?? ''}
-              onChange={(e) => update('phone', e.target.value)}
-              placeholder="(818) 543-2130"
-              className={INPUT}
-            />
+            <input type="tel" value={emp.phone ?? ''} disabled readOnly placeholder="(818) 543-2130" className={INPUT_RO} />
+            <ManagedInHr />
           </Field>
         </div>
         <Field label="LinkedIn URL">

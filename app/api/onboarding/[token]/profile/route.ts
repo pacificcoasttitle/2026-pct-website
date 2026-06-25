@@ -31,6 +31,14 @@ export const dynamic = 'force-dynamic'
 
 // The ONLY fields a rep may write to their own profile. Anything else
 // in the body is dropped silently.
+//
+// LAYER 2: public rep onboarding still writes shared fields (phone/mobile/
+// photo) directly to vcard — onboarding→HR flow deferred to Layer 2. The
+// `phone` + `mobile` entries below are SHARED identity fields (HR-sync
+// Stage 7 made them read-only in the ADMIN edit forms), but the public
+// rep-onboarding self-service flow still writes them straight to the vcard
+// here. Routing rep onboarding through HR (so HR stays the master) is a
+// Layer 2 onboarding-orchestration decision. Behavior UNCHANGED this stage.
 const ALLOWED_FIELDS = [
   'phone', 'mobile', 'bio', 'specialties', 'languages',
   'linkedin', 'facebook', 'instagram', 'twitter', 'website',
