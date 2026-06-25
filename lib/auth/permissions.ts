@@ -49,7 +49,11 @@ export const ALL_GROUPS: CapabilityGroup[] = [
  * Role → capability groups. The single source of truth.
  * - `top_level` → `'all'` sentinel: access everything; new groups are
  *   auto-included (future-proof).
- * - `hr` → employee-related set (incl. signatures + hr-tools).
+ * - `hr` → the HR workspace (dashboard + hr-tools). HR is intentionally
+ *   NOT granted the marketing-owned 'employees' (Sales Reps vCard) or
+ *   'signatures' (Signature Center) capabilities — those are marketing
+ *   functions. The HR roster (gated 'hr-tools') already shows all
+ *   employees, incl. sales reps, so HR loses no employee visibility.
  * - `manager` → `'all'`: 3 active admin users (hugo, LAsales, neil)
  *   have role='manager'; full access preserves the status quo (today
  *   every logged-in admin has full access). Scoping the manager role
@@ -57,7 +61,7 @@ export const ALL_GROUPS: CapabilityGroup[] = [
  */
 const ROLE_GROUPS: Record<AdminRole, CapabilityGroup[] | 'all'> = {
   top_level: 'all',
-  hr: ['dashboard', 'employees', 'onboarding', 'signatures', 'hr-tools'],
+  hr: ['dashboard', 'onboarding', 'hr-tools'],
   manager: 'all', // 3 active admins are 'manager'; full access (status quo). Scope later if desired.
 }
 
