@@ -12,8 +12,14 @@
  */
 import { notFound } from 'next/navigation'
 import { requirePageRole } from '@/lib/auth/guards'
-import { getHrOnboardingById, getHrOnboardingDocuments } from '@/lib/admin-db'
+import {
+  getHrOnboardingById,
+  getHrOnboardingDocuments,
+  getHrOnboardingItems,
+  seedHrOnboardingItems,
+} from '@/lib/admin-db'
 import HrOnboardingReviewClient from '@/components/admin/HrOnboardingReviewClient'
+import HrOnboardingChecklist from '@/components/admin/HrOnboardingChecklist'
 
 export const metadata = { title: 'Review Onboarding | PCT Team Admin' }
 export const dynamic = 'force-dynamic'
@@ -34,24 +40,44 @@ export default async function HrOnboardingReviewPage({
 
   const documents = await getHrOnboardingDocuments(id)
 
+  // Seed-on-first-view backfill (idempotent): existing in-flight rows
+  // created before the checklist shipped get their items here. New rows
+  // are already seeded at create — this is a no-op for them.
+  await seedHrOnboardingItems(onboarding.id, (onboarding as { onboarding_type?: string }).onboarding_type)
+  const items = await getHrOnboardingItems(id)
+
   return (
-    <HrOnboardingReviewClient
-      id={onboarding.id}
-      status={onboarding.status}
-      invitedEmail={onboarding.invited_email}
-      hrEmployeeId={onboarding.hr_employee_id}
-      payload={onboarding.payload as Record<string, unknown>}
-      invitedAt={onboarding.invited_at}
-      submittedAt={onboarding.submitted_at}
-      finalizedAt={onboarding.finalized_at}
-      createdAt={onboarding.created_at}
-      tokenExpiresAt={onboarding.token_expires_at}
-      documents={documents.map((d) => ({
-        id: d.id,
-        doc_type: d.doc_type,
-        file_name: d.file_name,
-        uploaded_at: d.uploaded_at,
-      }))}
-    />
+    <>
+      <HrOnboardingReviewClient
+        id={onboarding.id}
+        status={onboarding.status}
+        invitedEmail={onboarding.invited_email}
+        hrEmployeeId={onboarding.hr_employee_id}
+        payload={onboarding.payload as Record<string, unknown>}
+        invitedAt={onboarding.invited_at}
+        submittedAt={onboarding.submitted_at}
+        finalizedAt={onboarding.finalized_at}
+        createdAt={onboarding.created_at}
+        tokenExpiresAt={onboarding.token_expires_at}
+        documents={documents.map((d) => ({
+          id: d.id,
+          doc_type: d.doc_type,
+          file_name: d.file_name,
+          uploaded_at: d.uploaded_at,
+        }))}
+      />
+      <HrOnboardingChecklist
+        onboardingId={onboarding.id}
+        items={items.map((it) => ({
+          id: it.id,
+          item_key: it.item_key,
+          label: it.label,
+          category: it.category,
+          status: it.status,
+          completed_at: it.completed_at,
+          completed_by: it.completed_by,
+        }))}
+      />
+    </>
   )
 }

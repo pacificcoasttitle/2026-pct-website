@@ -7,7 +7,7 @@
  * driven client-side via the 4b APIs. The public receive route
  * (/hr-onboarding/[token]) is 4c — not built here.
  */
-import { getAllHrOnboardings, getAllHrEmployees } from '@/lib/admin-db'
+import { getAllHrOnboardings, getAllHrEmployees, getHrOnboardingItemProgress } from '@/lib/admin-db'
 import { requirePageRole } from '@/lib/auth/guards'
 import HrOnboardingClient from '@/components/admin/HrOnboardingClient'
 
@@ -22,6 +22,8 @@ export default async function HrOnboardingPage() {
     getAllHrEmployees(),
   ])
 
+  const progress = await getHrOnboardingItemProgress(onboardings.map((o) => o.id))
+
   const list = onboardings.map((o) => ({
     id:               o.id,
     name:             o.employee_name || o.invited_email || '(unnamed)',
@@ -30,6 +32,7 @@ export default async function HrOnboardingPage() {
     invited_at:       o.invited_at,
     created_at:       o.created_at,
     token_expires_at: o.token_expires_at,
+    checklist:        progress[o.id] || null,
   }))
 
   // Only active employees are sensible invite targets.

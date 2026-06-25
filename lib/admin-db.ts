@@ -2412,10 +2412,13 @@ export async function createHrOnboardingForExisting(
   const res = await db.query(
     `INSERT INTO hr_onboarding (hr_employee_id, status, invited_email, payload, created_by)
      VALUES ($1, 'draft', $2, $3::jsonb, $4)
-     RETURNING ${HR_ONBOARDING_COLS}`,
+     RETURNING ${HR_ONBOARDING_COLS}, onboarding_type`,
     [input.hr_employee_id, e.email?.trim().toLowerCase() || null, JSON.stringify(payload), input.created_by?.trim() || null],
   )
-  return res.rows[0]
+  const row = res.rows[0] as HrOnboardingRecord & { onboarding_type?: string }
+  // Seed the checklist (idempotent). onboarding_type defaults to 'sales_rep'.
+  await seedHrOnboardingItems(row.id, row.onboarding_type)
+  return row
 }
 
 /**
@@ -2438,10 +2441,13 @@ export async function createHrOnboardingShell(
   const res = await db.query(
     `INSERT INTO hr_onboarding (hr_employee_id, status, invited_email, payload, created_by)
      VALUES (NULL, 'draft', $1, $2::jsonb, $3)
-     RETURNING ${HR_ONBOARDING_COLS}`,
+     RETURNING ${HR_ONBOARDING_COLS}, onboarding_type`,
     [email, JSON.stringify(payload), input.created_by?.trim() || null],
   )
-  return res.rows[0]
+  const row = res.rows[0] as HrOnboardingRecord & { onboarding_type?: string }
+  // Seed the checklist (idempotent). onboarding_type defaults to 'sales_rep'.
+  await seedHrOnboardingItems(row.id, row.onboarding_type)
+  return row
 }
 
 export interface HrOnboardingListRow extends HrOnboardingRecord {
@@ -2497,6 +2503,141 @@ export async function getHrOnboardingById(id: number): Promise<HrOnboardingDetai
     [id],
   )
   return res.rows[0] || null
+}
+
+// ── HR Onboarding CHECKLIST (hr_onboarding_items) ──────────────────
+//
+// Manual per-hire checklist on the Phase 4 spine. Writes ONLY
+// hr_onboarding_items — never payload / hr_employees / facets. Status
+// vocabulary matches the legacy rep flow (pending|in_progress|complete);
+// `source` is the dormant 'manual'|'auto' seam (v1 all manual).
+
+export interface HrOnboardingItem {
+  id:            number
+  onboarding_id: number
+  item_key:      string
+  label:         string
+  category:      string
+  status:        string   // 'pending' | 'in_progress' | 'complete'
+  source:        string   // 'manual' | 'auto'
+  sort_order:    number
+  completed_at:  string | null
+  completed_by:  string | null
+  created_at:    string
+  updated_at:    string
+}
+
+const HR_ONBOARDING_ITEM_COLS = `
+  id, onboarding_id, item_key, label, category, status, source, sort_order,
+  completed_at::text AS completed_at,
+  completed_by,
+  created_at::text   AS created_at,
+  updated_at::text   AS updated_at
+`
+
+/**
+ * Seed the checklist items for an onboarding from the canonical per-type
+ * seed list. IDEMPOTENT: a no-op if items already exist for this
+ * onboarding (so it's safe to call on every create AND as a backfill /
+ * seed-on-first-view). All items seed status='pending', source='manual'.
+ * Returns the number of items inserted (0 if already seeded).
+ */
+export async function seedHrOnboardingItems(
+  onboardingId: number,
+  type: string | null | undefined,
+): Promise<number> {
+  const { seedItemsForType } = await import('@/lib/hr-onboarding/seed-items')
+  const items = seedItemsForType(type)
+  const db = getPool()
+
+  // Idempotency guard — don't double-seed.
+  const existing = await db.query(
+    `SELECT 1 FROM hr_onboarding_items WHERE onboarding_id = $1 LIMIT 1`,
+    [onboardingId],
+  )
+  if (existing.rowCount && existing.rowCount > 0) return 0
+
+  // Single multi-row INSERT.
+  const values: unknown[] = []
+  const tuples: string[] = []
+  items.forEach((it, i) => {
+    const base = i * 5
+    tuples.push(`($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5})`)
+    values.push(onboardingId, it.item_key, it.label, it.category, i + 1)
+  })
+  await db.query(
+    `INSERT INTO hr_onboarding_items
+       (onboarding_id, item_key, label, category, sort_order)
+     VALUES ${tuples.join(', ')}`,
+    values,
+  )
+  return items.length
+}
+
+/** All checklist items for an onboarding, in display order. */
+export async function getHrOnboardingItems(onboardingId: number): Promise<HrOnboardingItem[]> {
+  const db = getPool()
+  const res = await db.query(
+    `SELECT ${HR_ONBOARDING_ITEM_COLS}
+       FROM hr_onboarding_items
+      WHERE onboarding_id = $1
+      ORDER BY sort_order ASC, id ASC`,
+    [onboardingId],
+  )
+  return res.rows
+}
+
+/**
+ * Manually set ONE item's status (HR tick). Sets completed_at/completed_by
+ * when → 'complete', clears them otherwise. ⚠️ Touches ONLY
+ * hr_onboarding_items — never payload / employee / facets. The item must
+ * belong to the given onboarding (scoping guard). Returns the row or null.
+ */
+export async function setHrOnboardingItemStatus(
+  onboardingId: number,
+  itemId: number,
+  status: 'pending' | 'in_progress' | 'complete',
+  actor: string | null,
+): Promise<HrOnboardingItem | null> {
+  const db = getPool()
+  const res = await db.query(
+    `UPDATE hr_onboarding_items
+        SET status       = $3,
+            completed_at  = CASE WHEN $3 = 'complete' THEN NOW() ELSE NULL END,
+            completed_by  = CASE WHEN $3 = 'complete' THEN $4 ELSE NULL END,
+            updated_at    = NOW()
+      WHERE id = $2 AND onboarding_id = $1
+      RETURNING ${HR_ONBOARDING_ITEM_COLS}`,
+    [onboardingId, itemId, status, actor?.trim() || null],
+  )
+  return res.rows[0] || null
+}
+
+export interface HrOnboardingItemProgress {
+  total:    number
+  complete: number
+}
+
+/** Per-onboarding {total, complete} progress, keyed by onboarding_id. */
+export async function getHrOnboardingItemProgress(
+  onboardingIds: number[],
+): Promise<Record<number, HrOnboardingItemProgress>> {
+  const out: Record<number, HrOnboardingItemProgress> = {}
+  if (onboardingIds.length === 0) return out
+  const db = getPool()
+  const res = await db.query(
+    `SELECT onboarding_id,
+            COUNT(*)::int                                   AS total,
+            COUNT(*) FILTER (WHERE status = 'complete')::int AS complete
+       FROM hr_onboarding_items
+      WHERE onboarding_id = ANY($1)
+      GROUP BY onboarding_id`,
+    [onboardingIds],
+  )
+  for (const r of res.rows) {
+    out[r.onboarding_id] = { total: r.total, complete: r.complete }
+  }
+  return out
 }
 
 export interface HrOnboardingPipelineStats {

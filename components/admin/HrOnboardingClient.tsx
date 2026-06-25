@@ -24,6 +24,7 @@ interface OnboardingRow {
   invited_at:       string | null
   created_at:       string
   token_expires_at: string | null
+  checklist:        { total: number; complete: number } | null
 }
 
 // An invite is "expired" when its token window has passed AND it's still
@@ -309,6 +310,15 @@ export default function HrOnboardingClient({
                 <span className="hidden sm:block text-xs text-gray-400 flex-shrink-0 w-28 truncate">
                   Invited {fmtDate(o.invited_at)}
                 </span>
+
+                {o.checklist && o.checklist.total > 0 && (
+                  <span
+                    title={`${o.checklist.complete} of ${o.checklist.total} checklist items complete`}
+                    className="hidden md:inline-flex text-[10px] px-2 py-0.5 rounded-full font-medium border border-gray-200 bg-gray-50 text-gray-500 flex-shrink-0"
+                  >
+                    {o.checklist.complete}/{o.checklist.total}
+                  </span>
+                )}
 
                 <span
                   className={`text-[10px] px-2 py-0.5 rounded-full font-medium border capitalize flex-shrink-0 ${
