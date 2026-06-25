@@ -2082,79 +2082,19 @@ export async function getHrDashboardStats(): Promise<HrDashboardStats> {
   }
 }
 
-// Light, read-only summaries of the linked facets — just enough to show
-// "has marketing page / has signature" + build a deep-link to the page
-// that OWNS each facet. We never edit the facets from the HR workspace.
-export interface HrFacetSummary {
-  vcard: {
-    id:     number
-    slug:   string | null
-    name:   string
-    active: boolean
-  } | null
-  staff: {
-    id:                    number
-    name:                  string
-    active:                boolean
-    has_signature_template: boolean
-  } | null
-}
-
-export interface HrEmployeeWithFacets {
-  employee: HrEmployee
-  facets:   HrFacetSummary
-}
-
 /**
- * Fetch one HR employee + light, READ-ONLY summaries of their linked
- * marketing (vcard) + signature (staff) facets. Returns null if no row.
+ * Fetch one canonical HR employee row. Returns null if no row.
  *
- * The facet sub-selects are display-only (slug/name/active + whether a
- * signature template is attached) — used to render presence badges and
- * deep-links to the pages that own those facets. Nothing here writes to
- * vcard_employees / staff_members.
+ * Intentionally HR-only: no marketing (vcard) / signature (staff) facet
+ * lookups. The HR detail page is fully decoupled from those marketing-
+ * owned tables in the UI, so there's nothing to join here. (Earlier this
+ * fetched light facet summaries for cross-link panels; those panels were
+ * removed, so the facet sub-selects went with them.)
  */
-export async function getHrEmployeeById(id: number): Promise<HrEmployeeWithFacets | null> {
+export async function getHrEmployeeById(id: number): Promise<HrEmployee | null> {
   const db = getPool()
   const res = await db.query(`SELECT * FROM hr_employees WHERE id = $1 LIMIT 1`, [id])
-  const employee: HrEmployee | undefined = res.rows[0]
-  if (!employee) return null
-
-  let vcard: HrFacetSummary['vcard'] = null
-  if (employee.vcard_employee_id != null) {
-    const v = await db.query(
-      `SELECT id, slug, first_name || ' ' || last_name AS name, active
-         FROM vcard_employees WHERE id = $1 LIMIT 1`,
-      [employee.vcard_employee_id],
-    )
-    if (v.rows[0]) {
-      vcard = {
-        id:     v.rows[0].id,
-        slug:   v.rows[0].slug ?? null,
-        name:   v.rows[0].name,
-        active: v.rows[0].active,
-      }
-    }
-  }
-
-  let staff: HrFacetSummary['staff'] = null
-  if (employee.staff_member_id != null) {
-    const s = await db.query(
-      `SELECT id, first_name || ' ' || last_name AS name, active, signature_template_id
-         FROM staff_members WHERE id = $1 LIMIT 1`,
-      [employee.staff_member_id],
-    )
-    if (s.rows[0]) {
-      staff = {
-        id:                     s.rows[0].id,
-        name:                   s.rows[0].name,
-        active:                 s.rows[0].active,
-        has_signature_template: s.rows[0].signature_template_id != null,
-      }
-    }
-  }
-
-  return { employee, facets: { vcard, staff } }
+  return res.rows[0] || null
 }
 
 export interface UpdateHrEmployeeInput {

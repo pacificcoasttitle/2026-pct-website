@@ -2,24 +2,18 @@
  * /admin/team/hr/[id] — HR employee detail / edit
  *
  * Server component, gated 'hr-tools' (also inherited from the hr/
- * segment layout). Fetches one canonical hr_employees row + LIGHT,
- * READ-ONLY summaries of the linked marketing (vcard) + signature
- * (staff) facets. The edit form (client) edits ONLY hr_employees core
- * fields via the 2d PATCH. The facet panels are display-only and
- * deep-link to the pages that OWN those facets:
- *   - marketing → /admin/team/employees/[slug]
- *   - signature → /admin/team/signatures/[staffId]
- * (both verified against the real routes).
+ * segment layout). Fetches one canonical hr_employees row and renders
+ * the core HR fields + the edit form (client) which edits ONLY
+ * hr_employees core fields via the 2d PATCH.
+ *
+ * Fully decoupled from marketing/signature: the page surfaces NO vcard /
+ * staff facet panels or cross-links — HR stays HR.
  */
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft,
-  Megaphone,
-  PenLine,
-  ExternalLink,
   AlertTriangle,
-  CircleSlash,
 } from 'lucide-react'
 import { getHrEmployeeById, getAllHrEmployees } from '@/lib/admin-db'
 import { requirePageRole } from '@/lib/auth/guards'
@@ -39,10 +33,8 @@ export default async function HrEmployeeDetailPage({
   const idNum = Number(id)
   if (!Number.isInteger(idNum) || idNum <= 0) notFound()
 
-  const result = await getHrEmployeeById(idNum)
-  if (!result) notFound()
-
-  const { employee, facets } = result
+  const employee = await getHrEmployeeById(idNum)
+  if (!employee) notFound()
 
   // Canonical dropdown options from the roster (same source as Add).
   const roster = await getAllHrEmployees()
@@ -111,68 +103,6 @@ export default async function HrEmployeeDetailPage({
         departments={departments}
         offices={offices}
       />
-
-      {/* Linked facets — READ-ONLY presence + deep-link */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Marketing (vCard) */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Megaphone className="w-4 h-4 text-[#f26b2b]" />
-            <h2 className="font-semibold text-[#03374f] text-sm">Marketing page</h2>
-          </div>
-          {facets.vcard ? (
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600">
-                Linked vCard: <span className="font-medium text-[#03374f]">{facets.vcard.name}</span>
-                {!facets.vcard.active && <span className="text-gray-400"> (inactive)</span>}
-              </p>
-              {facets.vcard.slug ? (
-                <Link
-                  href={`/admin/team/employees/${facets.vcard.slug}`}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-[#f26b2b] hover:underline"
-                >
-                  Edit marketing profile <ExternalLink className="w-3.5 h-3.5" />
-                </Link>
-              ) : (
-                <p className="text-xs text-gray-400">Linked, but no slug on the vCard record.</p>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-400 inline-flex items-center gap-1.5">
-              <CircleSlash className="w-3.5 h-3.5" /> No marketing page
-            </p>
-          )}
-        </div>
-
-        {/* Signature (staff) */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <PenLine className="w-4 h-4 text-[#f26b2b]" />
-            <h2 className="font-semibold text-[#03374f] text-sm">Email signature</h2>
-          </div>
-          {facets.staff ? (
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600">
-                Linked staff record: <span className="font-medium text-[#03374f]">{facets.staff.name}</span>
-                {!facets.staff.active && <span className="text-gray-400"> (inactive)</span>}
-              </p>
-              <p className="text-xs text-gray-400">
-                Signature template: {facets.staff.has_signature_template ? 'attached' : 'none yet'}
-              </p>
-              <Link
-                href={`/admin/team/signatures/${facets.staff.id}`}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#f26b2b] hover:underline"
-              >
-                Open in Signature Center <ExternalLink className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          ) : (
-            <p className="text-sm text-gray-400 inline-flex items-center gap-1.5">
-              <CircleSlash className="w-3.5 h-3.5" /> No signature record
-            </p>
-          )}
-        </div>
-      </div>
     </div>
   )
 }
