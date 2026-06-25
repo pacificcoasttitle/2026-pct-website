@@ -2493,11 +2493,27 @@ export interface HrOnboardingListRow extends HrOnboardingRecord {
   token_expires_at: string | null
 }
 
+// o.-qualified version of HR_ONBOARDING_COLS for the JOINed list query.
+// hr_employees (he) shares column names (id, created_at, created_by, …),
+// so the onboarding columns MUST be table-qualified or Postgres raises
+// 42702 "column reference 'id' is ambiguous" before reading any rows.
+// Defined locally so the shared HR_ONBOARDING_COLS const stays intact for
+// the single-table (non-join) callers. Field names/shape are identical.
+const HR_ONBOARDING_COLS_QUALIFIED = `
+  o.id, o.hr_employee_id, o.status, o.invited_email, o.payload,
+  o.created_by,
+  o.created_at::text  AS created_at,
+  o.updated_at::text  AS updated_at,
+  o.invited_at::text  AS invited_at,
+  o.submitted_at::text AS submitted_at,
+  o.finalized_at::text AS finalized_at
+`
+
 /** List all onboardings (most recent first) with a display name. */
 export async function getAllHrOnboardings(): Promise<HrOnboardingListRow[]> {
   const db = getPool()
   const res = await db.query(`
-    SELECT ${HR_ONBOARDING_COLS},
+    SELECT ${HR_ONBOARDING_COLS_QUALIFIED},
            o.token_expires_at::text AS token_expires_at,
            COALESCE(
              he.first_name || ' ' || he.last_name,
