@@ -13,6 +13,16 @@
  * drift report; a later stage wires the live path after Director review.
  * Live mode (dryRun:false) is implemented but invoked by NOTHING here.
  *
+ * ⚠️ NEVER THROWS UPWARD on a facet failure. Both the COMPUTE path
+ * (computeFacet → decideWrite → resolver DB SELECTs) and the EXECUTE
+ * path (the targeted UPDATE) are wrapped per-facet: any exception is
+ * recorded as a structured facet error (executed:false, no writes, an
+ * `error` message, reason:'compute-error' for compute failures) and the
+ * other facet is still processed. The ONLY allowed throw is a genuinely
+ * missing HR row at load time (a precondition/programmer error, before
+ * any facet work). This protects the eventual non-blocking contract
+ * (§4f): the sync must never break the HR write that triggers it.
+ *
  * Design references (hr-master-rearchitecture-design.md):
  *   §4   sync mechanism / declarative map driven
  *   §4c  FAIL-CLOSED — unresolved resolver = skip, never write a wrong id
@@ -56,6 +66,13 @@ export interface FieldSkip {
   reason: 'blank' | 'unresolved' | 'no-target'
 }
 
+/**
+ * Reason recorded on `FacetSyncResult.errorReason` when an exception is
+ * caught for a facet (kept distinct from the per-field skip reasons so
+ * Stage 4's report can render "couldn't compute/execute this facet").
+ */
+export type FacetErrorReason = 'compute-error' | 'execute-error'
+
 /** The outcome for one facet (vcard or staff). */
 export interface FacetSyncResult {
   facet: FacetName
@@ -71,8 +88,13 @@ export interface FacetSyncResult {
    * fields (no UPDATE is issued for an empty change set).
    */
   executed: boolean
-  /** Populated only if the live UPDATE failed (errors are caught, never thrown). */
+  /**
+   * Populated if this facet's compute OR live UPDATE failed (errors are
+   * caught, never thrown). The message + a coarse reason so Stage 4's
+   * report can show "couldn't compute/execute this facet: <error>".
+   */
   error?: string
+  errorReason?: FacetErrorReason
 }
 
 /** The full structured result Stage 4's report (and a future audit) consume. */
@@ -201,6 +223,7 @@ async function executeFacet(result: FacetSyncResult): Promise<void> {
     // §4f: never throw upward. Record + move on.
     result.executed = false
     result.error = err instanceof Error ? err.message : String(err)
+    result.errorReason = 'execute-error'
   }
 }
 
@@ -266,7 +289,26 @@ export async function syncHrEmployeeDown(
   }
 
   for (const linked of linkedFacets) {
-    const result = await computeFacet(hr, linked)
+    // ⚠️ Per-facet COMPUTE isolation (§4f review-F fix). computeFacet calls
+    // decideWrite → the resolvers, which do DB SELECTs and CAN throw on an
+    // infra failure. Catch it here so it becomes a recorded facet error
+    // (compute-error) instead of propagating UP out of the engine — in
+    // BOTH dry-run and live. The OTHER facet still gets its turn.
+    let result: FacetSyncResult
+    try {
+      result = await computeFacet(hr, linked)
+    } catch (err) {
+      facets.push({
+        facet: linked.facet,
+        facetId: linked.facetId,
+        writes: [],
+        skips: [],
+        executed: false,
+        error: err instanceof Error ? err.message : String(err),
+        errorReason: 'compute-error',
+      })
+      continue
+    }
 
     if (!dryRun) {
       await executeFacet(result)
