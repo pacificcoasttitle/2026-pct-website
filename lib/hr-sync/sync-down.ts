@@ -11,7 +11,9 @@
  * not updateHrEmployee, not setHrEmployeeActive, not finalizeHrOnboarding,
  * not any route/cron. Stage 4 exercises it READ-ONLY (dryRun:true) for a
  * drift report; a later stage wires the live path after Director review.
- * Live mode (dryRun:false) is implemented but invoked by NOTHING here.
+ * Live mode (dryRun:false) is invoked ONLY via maybeSyncHrEmployeeDown
+ * (below), which is itself gated behind the HR_SYNC_ENABLED flag (default
+ * OFF). With the flag off, nothing calls the engine in live mode.
  *
  * ⚠️ NEVER THROWS UPWARD on a facet failure. Both the COMPUTE path
  * (computeFacet → decideWrite → resolver DB SELECTs) and the EXECUTE
@@ -341,5 +343,72 @@ export async function syncHrEmployeeDown(
     dryRun,
     facets,
     skippedFacets,
+  }
+}
+
+/**
+ * Stage 5 — the NON-BLOCKING, FLAG-GATED sync trigger used at the HR
+ * write fire points (§4e). Call this AFTER an HR write has committed.
+ *
+ * ⚠️ Contract (design §4f — the HR write must never be broken by sync):
+ *   - If HR_SYNC_ENABLED !== 'true' → returns immediately, sync NOT run
+ *     (default OFF / fail-safe; zero behavior change in prod today).
+ *   - When ON → runs syncHrEmployeeDown(hr, { dryRun:false }) (LIVE).
+ *   - The whole thing is wrapped in try/catch as DEFENSE-IN-DEPTH on top
+ *     of the engine's own per-facet catches: a sync failure is LOGGED
+ *     and swallowed — it NEVER throws upward, so the caller's HR write
+ *     stays successful. This function returns void and never rejects.
+ *   - Audit (§4g): the structured result (or the failure) is logged so
+ *     there is a trail of every cross-table write.
+ *
+ * ⚠️ This must be called OUTSIDE the HR write's transaction (after the
+ * commit), so a sync failure cannot roll back the HR write.
+ */
+export async function maybeSyncHrEmployeeDown(
+  hr: HrEmployee,
+  context: string,
+): Promise<void> {
+  // Lazy import keeps the engine module free of the flag dependency cycle
+  // and makes the gate explicit at the call boundary.
+  const { isHrSyncEnabled } = await import('./config')
+  if (!isHrSyncEnabled()) return // flag OFF → never run (fail-safe default)
+
+  try {
+    const result = await syncHrEmployeeDown(hr, { dryRun: false })
+    // §4g audit: a trail of every sync run (employee, facets, what changed).
+    console.info(
+      '[hr-sync] sync ran',
+      JSON.stringify({ context, ...summarizeForAudit(result) }),
+    )
+  } catch (err) {
+    // Defense-in-depth: the engine already catches per-facet failures,
+    // but if anything unexpected throws (e.g. missing-HR-row precondition),
+    // we swallow it here so the HR write the caller just did still
+    // succeeds. Logged, never rethrown.
+    console.error(
+      '[hr-sync] sync FAILED (HR write unaffected)',
+      JSON.stringify({
+        context,
+        hrEmployeeId: hr.id,
+        error: err instanceof Error ? err.message : String(err),
+      }),
+    )
+  }
+}
+
+/** Compact, log-friendly view of a sync result for the audit trail. */
+function summarizeForAudit(result: SyncDownResult) {
+  return {
+    hrEmployeeId: result.hrEmployeeId,
+    facets: result.facets.map((f) => ({
+      facet: f.facet,
+      facetId: f.facetId,
+      executed: f.executed,
+      written: f.writes.map((w) => w.key),
+      skipped: f.skips.map((s) => `${s.key}:${s.reason}`),
+      error: f.error,
+      errorReason: f.errorReason,
+    })),
+    skippedFacets: result.skippedFacets,
   }
 }

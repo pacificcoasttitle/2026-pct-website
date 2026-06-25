@@ -17,6 +17,7 @@ import {
   verifyHrOnboardingToken,
   hashHrOnboardingToken,
 } from '@/lib/hr-onboarding-token'
+import { maybeSyncHrEmployeeDown } from '@/lib/hr-sync/sync-down'
 import {
   REP_WEEK_AHEAD_TEMPLATE,
   renderRepWeekAhead,
@@ -2012,7 +2013,14 @@ export async function setHrEmployeeActive(
       RETURNING *`,
     [id, active, updatedBy?.trim() || null],
   )
-  return res.rows[0] || null
+  const updated: HrEmployee | null = res.rows[0] || null
+
+  // §4e fire point — the active cascade (deactivate/reactivate). The HR
+  // write has COMMITTED above; fire the sync AFTER, non-blocking +
+  // flag-gated (OFF by default). A sync failure never affects this write.
+  if (updated) await maybeSyncHrEmployeeDown(updated, 'setHrEmployeeActive')
+
+  return updated
 }
 
 export interface HrDashboardStats {
@@ -2178,12 +2186,13 @@ export async function updateHrEmployee(
   }
 
   vals.push(id)
+  let updated: HrEmployee | null
   try {
     const res = await db.query(
       `UPDATE hr_employees SET ${sets.join(', ')} WHERE id = $${vals.length} RETURNING *`,
       vals,
     )
-    return res.rows[0] || null
+    updated = res.rows[0] || null
   } catch (err) {
     const code = (err as { code?: string })?.code
     if (code === '23505') {
@@ -2191,6 +2200,14 @@ export async function updateHrEmployee(
     }
     throw err
   }
+
+  // §4e fire point — the HR write has COMMITTED above. Fire the sync AFTER,
+  // non-blocking + flag-gated (OFF by default). A sync failure is logged
+  // and swallowed; it can never undo or fail this update (the row is
+  // already returned-ready). Skipped entirely if the row vanished.
+  if (updated) await maybeSyncHrEmployeeDown(updated, 'updateHrEmployee')
+
+  return updated
 }
 
 /**
@@ -2850,6 +2867,7 @@ export async function finalizeHrOnboarding(
   const startDate = payloadStr(payload, 'start_date') || null
 
   const client = await db.connect()
+  let result: { onboarding: HrOnboardingRecord; employeeId: number }
   try {
     await client.query('BEGIN')
 
@@ -2937,7 +2955,7 @@ export async function finalizeHrOnboarding(
     }
 
     await client.query('COMMIT')
-    return { onboarding: fin.rows[0], employeeId }
+    result = { onboarding: fin.rows[0] as HrOnboardingRecord, employeeId }
   } catch (err) {
     await client.query('ROLLBACK')
     // Unique-violation safety net (race between pre-check + write) — same
@@ -2950,6 +2968,24 @@ export async function finalizeHrOnboarding(
   } finally {
     client.release()
   }
+
+  // §4e fire point — fires ONLY after the transaction COMMITTED + the
+  // client was released (OUTSIDE the txn, so a sync failure can never roll
+  // back the finalize). Non-blocking + flag-gated (OFF by default). Only
+  // matters if the finalized employee has facets; null-FK = no-op anyway.
+  try {
+    const finalizedHr = await getHrEmployeeById(result.employeeId)
+    if (finalizedHr) await maybeSyncHrEmployeeDown(finalizedHr, 'finalizeHrOnboarding')
+  } catch (err) {
+    // Belt-and-suspenders: even loading the row for the sync must not
+    // surface as a finalize failure (the finalize already committed).
+    console.error(
+      '[hr-sync] post-finalize sync skipped (finalize unaffected)',
+      JSON.stringify({ employeeId: result.employeeId, error: err instanceof Error ? err.message : String(err) }),
+    )
+  }
+
+  return result
 }
 
 // ── HR Onboarding — FINALIZE mapping DESIGN (4a; implemented in 4e) ──
