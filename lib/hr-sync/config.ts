@@ -6,12 +6,12 @@
  * environment (Vercel, by the Director). Until then, the sync is never
  * called and HR writes behave exactly as they do today.
  *
- * ⚠️ FAIL-SAFE DEFAULT: OFF. Only the literal string 'true' enables it.
+ * ⚠️ FAIL-SAFE DEFAULT: OFF. Only a case-insensitive 'true' enables it.
  * A missing, empty, or garbage value → OFF. There is no way to
  * accidentally turn this on with a typo.
  */
 export function isHrSyncEnabled(): boolean {
-  return process.env.HR_SYNC_ENABLED === 'true'
+  return (process.env.HR_SYNC_ENABLED ?? '').trim().toLowerCase() === 'true'
 }
 
 /** The env var name, exported so call sites / docs reference one source. */
