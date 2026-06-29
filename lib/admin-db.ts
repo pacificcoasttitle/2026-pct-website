@@ -2571,19 +2571,65 @@ const HR_ONBOARDING_ITEM_COLS = `
   updated_at::text   AS updated_at
 `
 
+// A resolved checklist item to stamp (DB template row OR code fallback).
+interface ResolvedChecklistItem {
+  item_key: string
+  label:    string
+  category: string
+}
+
 /**
- * Seed the checklist items for an onboarding from the canonical per-type
- * seed list. IDEMPOTENT: a no-op if items already exist for this
- * onboarding (so it's safe to call on every create AND as a backfill /
- * seed-on-first-view). All items seed status='pending', source='manual'.
- * Returns the number of items inserted (0 if already seeded).
+ * Resolve the checklist items for a type, DB-FIRST with a code fallback.
+ *
+ * ⚠️ Reads the ACTIVE hr_onboarding_item_templates rows for the type
+ * (ordered by sort_order). If the DB returns ZERO active rows (table
+ * empty, all-deactivated, or — defensively — the table not yet migrated),
+ * it FALLS BACK to the hardcoded list in seed-items.ts and LOGS LOUDLY.
+ * This guarantees the caller always has a non-empty list (so the INSERT is
+ * never malformed) as long as the code constant is non-empty.
+ */
+async function resolveChecklistItems(
+  type: string | null | undefined,
+): Promise<ResolvedChecklistItem[]> {
+  const normalized = type === 'employee' ? 'employee' : 'sales_rep'
+  const db = getPool()
+
+  try {
+    const res = await db.query(
+      `SELECT item_key, label, category
+         FROM hr_onboarding_item_templates
+        WHERE onboarding_type = $1 AND active = true
+        ORDER BY sort_order ASC, id ASC`,
+      [normalized],
+    )
+    if (res.rows.length > 0) return res.rows as ResolvedChecklistItem[]
+    console.error(
+      `[hr-onboarding] checklist template empty for type ${normalized} — using code fallback`,
+    )
+  } catch (err) {
+    // Table missing / query error → fall back rather than fail the create.
+    console.error(
+      `[hr-onboarding] checklist template read failed for type ${normalized} — using code fallback:`,
+      err instanceof Error ? err.message : err,
+    )
+  }
+
+  const { seedItemsForType } = await import('@/lib/hr-onboarding/seed-items')
+  return seedItemsForType(normalized)
+}
+
+/**
+ * Seed the checklist items for an onboarding from the DB template (with a
+ * code fallback — see resolveChecklistItems). IDEMPOTENT: a no-op if items
+ * already exist for this onboarding (safe on every create AND as a
+ * backfill / seed-on-first-view). All items seed status='pending',
+ * source='manual'. Returns the number of items inserted (0 if already
+ * seeded or — defensively — if the resolved list is empty).
  */
 export async function seedHrOnboardingItems(
   onboardingId: number,
   type: string | null | undefined,
 ): Promise<number> {
-  const { seedItemsForType } = await import('@/lib/hr-onboarding/seed-items')
-  const items = seedItemsForType(type)
   const db = getPool()
 
   // Idempotency guard — don't double-seed.
@@ -2592,6 +2638,15 @@ export async function seedHrOnboardingItems(
     [onboardingId],
   )
   if (existing.rowCount && existing.rowCount > 0) return 0
+
+  const items = await resolveChecklistItems(type)
+  // ⚠️ Empty-guard: never emit a broken INSERT...VALUES on an empty list.
+  if (items.length === 0) {
+    console.error(
+      `[hr-onboarding] no checklist items resolved for onboarding ${onboardingId} (type=${type}) — skipping seed`,
+    )
+    return 0
+  }
 
   // Single multi-row INSERT.
   const values: unknown[] = []
