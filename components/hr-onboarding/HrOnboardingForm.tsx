@@ -579,7 +579,7 @@ function UploadTile({
           <span className="text-sm font-medium text-foreground">
             Drag &amp; drop or <span className="text-accent">browse</span>
           </span>
-          <span className="text-xs text-muted-foreground">Max 10MB</span>
+          <span className="text-xs text-muted-foreground">Max 20MB</span>
         </button>
       )}
     </div>
