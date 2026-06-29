@@ -27,15 +27,88 @@
  * No document upload (4d). No finalize (4e).
  */
 import { NextResponse } from 'next/server'
+import sgMail from '@sendgrid/mail'
 import {
   resolveHrOnboardingByToken,
   mergeHrOnboardingPayload,
   markHrOnboardingSubmitted,
+  type HrOnboardingRecord,
 } from '@/lib/admin-db'
 import { rateLimit } from '@/lib/rate-limit'
+import { renderHrOnboardingSubmittedNotify } from '@/lib/email-templates/hr-onboarding-submitted-notify'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+// Where the "onboarding submitted" notification goes. Single configurable
+// value: reads HR_ONBOARDING_NOTIFY_EMAIL, defaulting to ghernandez@pct.com
+// for the review period.
+// TODO: change to hr@pct.com once verified (one-line swap of the default).
+const ONBOARDING_NOTIFY_EMAIL =
+  process.env.HR_ONBOARDING_NOTIFY_EMAIL || 'ghernandez@pct.com'
+
+const SITE_BASE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pct.com').replace(/\/$/, '')
+
+let sgInitialized = false
+function getSg(): typeof sgMail | null {
+  const key = process.env.SENDGRID_API_KEY
+  if (!key) return null
+  if (!sgInitialized) {
+    sgMail.setApiKey(key)
+    sgInitialized = true
+  }
+  return sgMail
+}
+
+/**
+ * Fire the HR "onboarding submitted" notification. ⚠️ NON-BLOCKING +
+ * failure-tolerant: any error (no SendGrid key, send failure, render
+ * issue) is caught + logged and SWALLOWED — the caller's submit must
+ * still succeed. Same posture as the sync's non-blocking guarantee.
+ *
+ * ⚠️ NON-PII body: name + when + new/existing + a link to the gated HR
+ * review page only. Never SSN/DOB/bank/doc contents.
+ */
+async function notifyOnboardingSubmitted(record: HrOnboardingRecord): Promise<void> {
+  try {
+    const payload = (record.payload ?? {}) as Record<string, unknown>
+    const first = String(payload.first_name ?? '').trim()
+    const last = String(payload.last_name ?? '').trim()
+    const name = `${first} ${last}`.trim() || record.invited_email || `Onboarding #${record.id}`
+    const hireType = record.hr_employee_id != null ? 'Existing employee' : 'New hire'
+    const reviewUrl = `${SITE_BASE}/admin/team/hr/onboarding/${record.id}`
+    const submittedWhen = record.submitted_at
+      ? new Date(record.submitted_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+      : new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+    const subject = `Onboarding submitted: ${name}`
+
+    const sg = getSg()
+    if (!sg) {
+      console.warn('[hr-onboarding-notify] SENDGRID_API_KEY not configured — skipping notification')
+      return
+    }
+
+    const html = renderHrOnboardingSubmittedNotify({
+      subject,
+      employee_name:  name,
+      submitted_when: submittedWhen,
+      review_url:     reviewUrl,
+      hire_type:      hireType,
+    })
+
+    await sg.send({
+      to:      ONBOARDING_NOTIFY_EMAIL,
+      from:    { email: 'hr@pct.com', name: 'Pacific Coast Title HR' },
+      subject,
+      html,
+    })
+    console.log(`[hr-onboarding-notify] sent submit notification onboarding_id=${record.id} to=${ONBOARDING_NOTIFY_EMAIL}`)
+  } catch (err) {
+    // Non-blocking: log + swallow. The submission must still succeed.
+    console.error('[hr-onboarding-notify] notification failed (submit still succeeded):',
+      err instanceof Error ? err.message : err)
+  }
+}
 
 // The ONLY fields the public caller may write into payload. Anything
 // else in the body is dropped. (HR-packet fields per the spec.)
@@ -155,11 +228,18 @@ export async function PATCH(
     if (action === 'submit') {
       const submitted = await markHrOnboardingSubmitted(record.id)
       if (!submitted) {
+        // No status transition → already submitted/re-submit. Don't notify
+        // again (this is the once-per-submit guard: the notify only fires
+        // when markHrOnboardingSubmitted actually flipped the status).
         return NextResponse.json(
           { ok: false, error: 'This onboarding can no longer be edited.' },
           { status: 409 },
         )
       }
+      // ⚠️ Fire-and-await the HR notification AFTER the submit succeeded.
+      // notifyOnboardingSubmitted is fully try/catch-wrapped + swallows all
+      // errors — a notification failure can NEVER fail the submission.
+      await notifyOnboardingSubmitted(submitted)
       return NextResponse.json({ ok: true, status: submitted.status }, { status: 200 })
     }
 
