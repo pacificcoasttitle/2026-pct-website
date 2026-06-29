@@ -26,7 +26,8 @@ import { renderHrOnboardingInvite } from '@/lib/email-templates/hr-onboarding-in
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const SUBJECT = 'Welcome to Pacific Coast Title — start your onboarding'
+const SUBJECT_NEW      = 'Welcome to Pacific Coast Title — start your onboarding'
+const SUBJECT_EXISTING = 'Please confirm your information on file — Pacific Coast Title'
 const SITE_BASE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pct.com').replace(/\/$/, '')
 
 let sgInitialized = false
@@ -76,13 +77,20 @@ export async function POST(
     return NextResponse.json({ error: 'Failed to generate onboarding link.' }, { status: 500 })
   }
 
+  // Existing employee (linked FK) → maintenance/confirm copy; new shell
+  // (null FK) → welcome copy. Conditional copy + subject only; branding
+  // is identical in both cases (visual redesign is a later V0 ticket).
+  const isExisting = onboarding.hr_employee_id != null
+  const subject = isExisting ? SUBJECT_EXISTING : SUBJECT_NEW
+
   // Public route is /hr-onboarding/[token] (4c builds it).
   const onboardingUrl = `${SITE_BASE}/hr-onboarding/${token}`
   const html = renderHrOnboardingInvite({
-    subject:        SUBJECT,
-    first_name:     firstName,
-    onboarding_url: onboardingUrl,
-    expiry_label:   '14 days',
+    subject,
+    first_name:           firstName,
+    onboarding_url:       onboardingUrl,
+    expiry_label:         '14 days',
+    is_existing_employee: isExisting,
   })
 
   const sg = getSg()
@@ -98,7 +106,7 @@ export async function POST(
     await sg.send({
       to:      email,
       from:    { email: 'hr@pct.com', name: 'Pacific Coast Title HR' },
-      subject: SUBJECT,
+      subject,
       html,
     })
   } catch (err) {

@@ -28,6 +28,10 @@ export interface HrOnboardingInviteContext {
   first_name:        string
   onboarding_url:    string
   expiry_label:      string   // e.g. "14 days"
+  // When true → existing-employee "confirm your info on file" copy.
+  // When false → new-hire welcome/onboard copy. Branding is identical in
+  // both cases (this ticket swaps COPY only; visual redesign is later V0).
+  is_existing_employee?: boolean
 }
 
 export const HR_ONBOARDING_INVITE_TEMPLATE = `
@@ -49,10 +53,10 @@ export const HR_ONBOARDING_INVITE_TEMPLATE = `
             <td style="background-color: ${PCT_BRAND.navy}; padding: 28px 32px; text-align: center;">
               <img src="https://www.pct.com/logo2.png" alt="Pacific Coast Title Company" width="180" style="display: block; margin: 0 auto 12px;">
               <div style="color: ${PCT_BRAND.white}; font-size: 22px; font-weight: 600; letter-spacing: 0.3px;">
-                Welcome to Pacific Coast Title
+                {{#is_existing_employee}}Pacific Coast Title{{/is_existing_employee}}{{^is_existing_employee}}Welcome to Pacific Coast Title{{/is_existing_employee}}
               </div>
               <div style="color: rgba(255,255,255,0.85); font-size: 14px; margin-top: 4px;">
-                New Employee Onboarding
+                {{#is_existing_employee}}Please Confirm Your Information{{/is_existing_employee}}{{^is_existing_employee}}New Employee Onboarding{{/is_existing_employee}}
               </div>
             </td>
           </tr>
@@ -63,6 +67,17 @@ export const HR_ONBOARDING_INVITE_TEMPLATE = `
               <p style="margin: 0 0 12px 0; color: ${PCT_BRAND.textDark}; font-size: 16px; line-height: 1.6;">
                 Hi {{first_name}},
               </p>
+              {{#is_existing_employee}}
+              <p style="margin: 0 0 12px 0; color: ${PCT_BRAND.textDark}; font-size: 15px; line-height: 1.6;">
+                We&rsquo;re updating our records and want to make sure we have your current
+                information on file. Please take a moment to review and confirm your details.
+              </p>
+              <p style="margin: 0; color: ${PCT_BRAND.textDark}; font-size: 15px; line-height: 1.6;">
+                Use your personal link below. It only takes a few minutes, and any changes
+                you make are reviewed by HR before they&rsquo;re finalized.
+              </p>
+              {{/is_existing_employee}}
+              {{^is_existing_employee}}
               <p style="margin: 0 0 12px 0; color: ${PCT_BRAND.textDark}; font-size: 15px; line-height: 1.6;">
                 Welcome aboard! Our HR team has started your onboarding. To get you set up,
                 we need you to confirm a few details and upload some documents.
@@ -71,6 +86,7 @@ export const HR_ONBOARDING_INVITE_TEMPLATE = `
                 Use your personal onboarding link below. It only takes a few minutes, and
                 your information is reviewed by HR before anything is finalized.
               </p>
+              {{/is_existing_employee}}
             </td>
           </tr>
 
@@ -81,7 +97,7 @@ export const HR_ONBOARDING_INVITE_TEMPLATE = `
                 <tr>
                   <td style="background-color: ${PCT_BRAND.orange}; border-radius: 8px;">
                     <a href="{{onboarding_url}}" target="_blank" style="display: inline-block; padding: 14px 32px; color: ${PCT_BRAND.white}; font-size: 16px; font-weight: 700; text-decoration: none; letter-spacing: 0.3px;">
-                      Start Onboarding &rarr;
+                      {{#is_existing_employee}}Confirm My Information &rarr;{{/is_existing_employee}}{{^is_existing_employee}}Start Onboarding &rarr;{{/is_existing_employee}}
                     </a>
                   </td>
                 </tr>
