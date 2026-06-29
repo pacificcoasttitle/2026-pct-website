@@ -74,7 +74,7 @@ async function notifyOnboardingSubmitted(record: HrOnboardingRecord): Promise<vo
     const payload = (record.payload ?? {}) as Record<string, unknown>
     const first = String(payload.first_name ?? '').trim()
     const last = String(payload.last_name ?? '').trim()
-    const name = `${first} ${last}`.trim() || record.invited_email || `Onboarding #${record.id}`
+    const name = `${first} ${last}`.trim() || `Onboarding #${record.id}`
     const hireType = record.hr_employee_id != null ? 'Existing employee' : 'New hire'
     const reviewUrl = `${SITE_BASE}/admin/team/hr/onboarding/${record.id}`
     const submittedWhen = record.submitted_at
