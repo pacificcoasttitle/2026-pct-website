@@ -45,7 +45,6 @@ const MAPPED_FIELDS: { key: string; label: string }[] = [
 // Fields preserved in payload (no hr_employees column — 4a flagged).
 const UNMAPPED_FIELDS: { key: string; label: string }[] = [
   { key: 'preferred_name', label: 'Preferred name' },
-  { key: 'pronouns', label: 'Pronouns' },
   { key: 'personal_email', label: 'Personal email' },
   { key: 'emergency_contact_name', label: 'Emergency contact' },
   { key: 'emergency_contact_phone', label: 'Emergency phone' },
@@ -55,8 +54,7 @@ const UNMAPPED_FIELDS: { key: string; label: string }[] = [
   { key: 'home_city', label: 'City' },
   { key: 'home_state', label: 'State' },
   { key: 'home_zip', label: 'ZIP' },
-  { key: 't_shirt_size', label: 'T-shirt size' },
-  { key: 'dietary_restrictions', label: 'Dietary restrictions' },
+  { key: 't_shirt_size', label: 'PCT Swag T-Shirt Size' },
 ]
 
 const DOC_TYPE_LABEL: Record<string, string> = {
