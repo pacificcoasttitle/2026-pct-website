@@ -5,10 +5,11 @@
  * legacy rep onboarding flow (labels only — none of that system's code is
  * touched). They are seeded onto an hr_onboarding when it is created.
  *
- * ⚠️ v1 DECISION: BOTH onboarding types ('employee' + 'sales_rep') seed the
- * SAME full 16-item set. The per-type map structure below makes future
- * divergence trivial (HR will trim the employee set later) — but for now
- * both keys point at the same canonical list.
+ * ⚠️ The two onboarding types DIVERGE:
+ *   - sales_rep → the full 16-item CANONICAL_ITEMS (unchanged).
+ *   - employee  → a trimmed 2-item list: HR Packet + a headshot-only
+ *     'Headshot' item (distinct from the rep's 'Headshot, Bio, and
+ *     Client List'). No sales items.
  *
  * ⚠️ All items seed as status='pending', source='manual'. The `source`
  * field is a DORMANT seam: a future auto-checker can flip specific items to
@@ -45,12 +46,25 @@ const CANONICAL_ITEMS: HrOnboardingSeedItem[] = [
   { item_key: 'nationwide-order',         category: 'customer-service', label: 'Nationwide Order Protocol' },
 ]
 
+/** The new headshot-only item for the regular-employee list. ⚠️ DISTINCT
+ * from the rep's 'headshot-bio-client-list' — this is a plain headshot. */
+const HEADSHOT_EMPLOYEE_ITEM: HrOnboardingSeedItem = {
+  item_key: 'headshot-employee', category: 'marketing', label: 'Headshot',
+}
+
+/** Regular-employee list: just the HR packet + a headshot. Reuses the
+ * canonical hr-packet definition; carries NO sales items. */
+const EMPLOYEE_ITEMS: HrOnboardingSeedItem[] = [
+  CANONICAL_ITEMS.find((i) => i.item_key === 'hr-packet')!,
+  HEADSHOT_EMPLOYEE_ITEM,
+]
+
 /**
- * Per-type seed map. v1: both types → the full canonical 16. Diverge later
- * by pointing a type at a different (e.g. trimmed) array.
+ * Per-type seed map. sales_rep = the full canonical 16 (unchanged);
+ * employee = the trimmed 2-item list. Array order = sort_order.
  */
 export const HR_ONBOARDING_SEED_ITEMS: Record<HrOnboardingType, HrOnboardingSeedItem[]> = {
-  employee:  CANONICAL_ITEMS,
+  employee:  EMPLOYEE_ITEMS,
   sales_rep: CANONICAL_ITEMS,
 }
 

@@ -102,7 +102,7 @@ export const HR_ONBOARDING_INVITE_TEMPLATE = `
           <!-- Header / Logo -->
           <tr>
             <td align="center" class="px" style="padding:36px 40px 8px 40px;">
-              <img src="https://www.pct.com/logo2.png" width="160" alt="Pacific Coast Title" style="display:block; width:160px; max-width:160px; height:auto;">
+              <img src="https://www.pct.com/logo2-dark.png" width="160" alt="Pacific Coast Title" style="display:block; width:160px; max-width:160px; height:auto;">
             </td>
           </tr>
 

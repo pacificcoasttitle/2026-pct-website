@@ -85,6 +85,10 @@ export default function HrOnboardingClient({
 
   const [pickedEmployee, setPickedEmployee] = useState('')
   const [shell, setShell] = useState({ first_name: '', last_name: '', invited_email: '' })
+  // HR-selected onboarding type — shared across both tabs. Defaults to
+  // 'sales_rep' (the current implicit default → least surprise). Drives
+  // which checklist the new onboarding seeds.
+  const [onboardingType, setOnboardingType] = useState<'sales_rep' | 'employee'>('sales_rep')
 
   const sortedEmployees = useMemo(
     () => [...employees].sort((a, b) => a.name.localeCompare(b.name)),
@@ -134,7 +138,7 @@ export default function HrOnboardingClient({
       setError('Pick an employee to invite.')
       return
     }
-    createAndSend({ hr_employee_id: Number(pickedEmployee) })
+    createAndSend({ hr_employee_id: Number(pickedEmployee), onboarding_type: onboardingType })
   }
 
   function handleStartNew() {
@@ -146,7 +150,7 @@ export default function HrOnboardingClient({
       setError('Email is required.')
       return
     }
-    createAndSend(shell)
+    createAndSend({ ...shell, onboarding_type: onboardingType })
   }
 
   async function handleResend(id: number) {
@@ -228,6 +232,25 @@ export default function HrOnboardingClient({
               {t === 'existing' ? 'Invite existing employee' : 'Start new onboarding'}
             </button>
           ))}
+        </div>
+
+        {/* Onboarding type — shared across both tabs; drives the checklist. */}
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 mb-1.5">Onboarding type</label>
+          <div className="flex rounded-xl border border-gray-200 overflow-hidden bg-gray-50 w-fit">
+            {([['sales_rep', 'Sales Rep'], ['employee', 'Regular Employee']] as const).map(([val, lbl]) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => setOnboardingType(val)}
+                className={`px-4 h-9 text-sm font-medium transition-all ${
+                  onboardingType === val ? 'bg-[#03374f] text-white' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {lbl}
+              </button>
+            ))}
+          </div>
         </div>
 
         {tab === 'existing' ? (

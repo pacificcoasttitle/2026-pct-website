@@ -36,6 +36,12 @@ export async function POST(req: Request) {
 
   const createdBy = auth.session.username
 
+  // HR-selected onboarding type (Sales Rep / Regular Employee). Validate
+  // to the known vocabulary; anything missing/invalid → 'sales_rep' (the
+  // safe, current-behavior default). The create fns also re-normalize.
+  const onboarding_type =
+    body.onboarding_type === 'employee' ? 'employee' : 'sales_rep'
+
   try {
     // Path 1 — existing employee
     if (body.hr_employee_id != null) {
@@ -55,6 +61,7 @@ export async function POST(req: Request) {
       const onboarding = await createHrOnboardingForExisting({
         hr_employee_id: hrEmployeeId,
         created_by:     createdBy,
+        onboarding_type,
       })
       revalidatePath('/admin/team/hr/onboarding')
       return NextResponse.json({ success: true, onboarding }, { status: 201 })
@@ -88,6 +95,7 @@ export async function POST(req: Request) {
       last_name,
       invited_email,
       created_by: createdBy,
+      onboarding_type,
     })
     revalidatePath('/admin/team/hr/onboarding')
     return NextResponse.json({ success: true, onboarding }, { status: 201 })

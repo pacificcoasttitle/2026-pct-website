@@ -2264,6 +2264,7 @@ export interface HrOnboardingRecord {
   id:               number
   hr_employee_id:   number | null
   status:           string
+  onboarding_type:  string   // 'employee' | 'sales_rep'
   invited_email:    string | null
   payload:          Record<string, unknown>
   created_by:       string | null
@@ -2276,7 +2277,7 @@ export interface HrOnboardingRecord {
 
 // Columns safe to return to callers (auth-only token fields excluded).
 const HR_ONBOARDING_COLS = `
-  id, hr_employee_id, status, invited_email, payload,
+  id, hr_employee_id, status, onboarding_type, invited_email, payload,
   created_by,
   created_at::text  AS created_at,
   updated_at::text  AS updated_at,
@@ -2364,14 +2365,22 @@ export async function resolveHrOnboardingByToken(token: string): Promise<HrOnboa
 const HR_ONBOARDING_ACTIVE_STATUSES = ['draft', 'invited', 'in_progress', 'submitted']
 
 export interface CreateHrOnboardingExisting {
-  hr_employee_id: number
-  created_by?:    string | null
+  hr_employee_id:   number
+  created_by?:      string | null
+  onboarding_type?: string | null
 }
 export interface CreateHrOnboardingShell {
-  first_name:    string
-  last_name:     string
-  invited_email: string
-  created_by?:   string | null
+  first_name:       string
+  last_name:        string
+  invited_email:    string
+  created_by?:      string | null
+  onboarding_type?: string | null
+}
+
+// Normalize an onboarding_type to a valid value, defaulting to 'sales_rep'
+// (the safe, current-behavior fallback) on anything missing/invalid.
+function normalizeOnboardingType(t: string | null | undefined): 'employee' | 'sales_rep' {
+  return t === 'employee' ? 'employee' : 'sales_rep'
 }
 
 /**
@@ -2432,14 +2441,16 @@ export async function createHrOnboardingForExisting(
     email:      e.email,
   }
 
+  const onboardingType = normalizeOnboardingType(input.onboarding_type)
+
   const res = await db.query(
-    `INSERT INTO hr_onboarding (hr_employee_id, status, invited_email, payload, created_by)
-     VALUES ($1, 'draft', $2, $3::jsonb, $4)
-     RETURNING ${HR_ONBOARDING_COLS}, onboarding_type`,
-    [input.hr_employee_id, e.email?.trim().toLowerCase() || null, JSON.stringify(payload), input.created_by?.trim() || null],
+    `INSERT INTO hr_onboarding (hr_employee_id, status, onboarding_type, invited_email, payload, created_by)
+     VALUES ($1, 'draft', $2, $3, $4::jsonb, $5)
+     RETURNING ${HR_ONBOARDING_COLS}`,
+    [input.hr_employee_id, onboardingType, e.email?.trim().toLowerCase() || null, JSON.stringify(payload), input.created_by?.trim() || null],
   )
-  const row = res.rows[0] as HrOnboardingRecord & { onboarding_type?: string }
-  // Seed the checklist (idempotent). onboarding_type defaults to 'sales_rep'.
+  const row = res.rows[0] as HrOnboardingRecord
+  // Seed the checklist (idempotent) from the explicitly-written type.
   await seedHrOnboardingItems(row.id, row.onboarding_type)
   return row
 }
@@ -2461,14 +2472,16 @@ export async function createHrOnboardingShell(
 
   const payload = { first_name: first, last_name: last, email }
 
+  const onboardingType = normalizeOnboardingType(input.onboarding_type)
+
   const res = await db.query(
-    `INSERT INTO hr_onboarding (hr_employee_id, status, invited_email, payload, created_by)
-     VALUES (NULL, 'draft', $1, $2::jsonb, $3)
-     RETURNING ${HR_ONBOARDING_COLS}, onboarding_type`,
-    [email, JSON.stringify(payload), input.created_by?.trim() || null],
+    `INSERT INTO hr_onboarding (hr_employee_id, status, onboarding_type, invited_email, payload, created_by)
+     VALUES (NULL, 'draft', $1, $2, $3::jsonb, $4)
+     RETURNING ${HR_ONBOARDING_COLS}`,
+    [onboardingType, email, JSON.stringify(payload), input.created_by?.trim() || null],
   )
-  const row = res.rows[0] as HrOnboardingRecord & { onboarding_type?: string }
-  // Seed the checklist (idempotent). onboarding_type defaults to 'sales_rep'.
+  const row = res.rows[0] as HrOnboardingRecord
+  // Seed the checklist (idempotent) from the explicitly-written type.
   await seedHrOnboardingItems(row.id, row.onboarding_type)
   return row
 }
@@ -2486,7 +2499,7 @@ export interface HrOnboardingListRow extends HrOnboardingRecord {
 // Defined locally so the shared HR_ONBOARDING_COLS const stays intact for
 // the single-table (non-join) callers. Field names/shape are identical.
 const HR_ONBOARDING_COLS_QUALIFIED = `
-  o.id, o.hr_employee_id, o.status, o.invited_email, o.payload,
+  o.id, o.hr_employee_id, o.status, o.onboarding_type, o.invited_email, o.payload,
   o.created_by,
   o.created_at::text  AS created_at,
   o.updated_at::text  AS updated_at,

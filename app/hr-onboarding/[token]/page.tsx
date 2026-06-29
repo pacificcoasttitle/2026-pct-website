@@ -43,7 +43,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
     <div className="pct-wizard min-h-screen bg-background font-sans">
       <header className="bg-primary px-6 py-5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://www.pct.com/logo2.png" alt="Pacific Coast Title Company" width={150} className="block border-0" />
+        <img src="https://www.pct.com/logo2-dark.png" alt="Pacific Coast Title Company" width={150} className="block border-0" />
       </header>
       <main className="mx-auto flex max-w-3xl flex-col items-center px-5 py-10">
         {children}
