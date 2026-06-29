@@ -35,20 +35,19 @@ export const metadata: Metadata = {
   referrer: 'no-referrer',
 }
 
-const NAVY = '#03374f'
-const ORANGE = '#f26b2b'
-const WARM = '#f0ede9'
-
+// PageShell renders the V0 wizard's beige palette via the `.pct-wizard`
+// scope (see globals.css) and forces light mode for every visitor — the
+// app's global theme tokens are untouched.
 function PageShell({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: WARM, fontFamily: 'Arial, Helvetica, sans-serif' }}>
-      <div style={{ backgroundColor: NAVY, padding: '20px 24px' }}>
+    <div className="pct-wizard min-h-screen bg-background font-sans">
+      <header className="bg-primary px-6 py-5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://www.pct.com/logo2.png" alt="Pacific Coast Title Company" width={150} style={{ display: 'block', border: 0 }} />
-      </div>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 20px' }}>
+        <img src="https://www.pct.com/logo2.png" alt="Pacific Coast Title Company" width={150} className="block border-0" />
+      </header>
+      <main className="mx-auto flex max-w-3xl flex-col items-center px-5 py-10">
         {children}
-      </div>
+      </main>
     </div>
   )
 }
@@ -56,13 +55,15 @@ function PageShell({ children }: { children: React.ReactNode }) {
 function InvalidLink() {
   return (
     <PageShell>
-      <div style={{ backgroundColor: '#ffffff', borderRadius: 16, padding: '40px 32px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-        <h1 style={{ color: NAVY, fontSize: 24, margin: '0 0 12px 0' }}>This link has expired or is invalid</h1>
-        <p style={{ color: '#4b5563', fontSize: 15, lineHeight: 1.6, margin: '0 0 8px 0' }}>
+      <div className="w-full max-w-[480px] rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+        <h1 className="text-balance text-xl font-semibold text-foreground">
+          This link has expired or is invalid
+        </h1>
+        <p className="mt-3 text-pretty text-sm leading-relaxed text-muted-foreground">
           The onboarding link you used is no longer valid. This can happen if the link
           expired or a newer link was sent.
         </p>
-        <p style={{ color: '#4b5563', fontSize: 15, lineHeight: 1.6, margin: 0 }}>
+        <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
           Please contact HR to request a fresh onboarding link.
         </p>
       </div>
@@ -73,12 +74,14 @@ function InvalidLink() {
 function AlreadySubmitted({ first }: { first: string }) {
   return (
     <PageShell>
-      <div style={{ backgroundColor: '#ffffff', borderRadius: 16, padding: '40px 32px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-        <p style={{ margin: '0 0 4px 0', fontSize: 13, fontWeight: 700, color: ORANGE, textTransform: 'uppercase', letterSpacing: 1 }}>
+      <div className="w-full max-w-[480px] rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-wide text-accent">
           Thank you{first ? `, ${first}` : ''}
         </p>
-        <h1 style={{ color: NAVY, fontSize: 24, margin: '0 0 12px 0' }}>Your onboarding is submitted</h1>
-        <p style={{ color: '#4b5563', fontSize: 15, lineHeight: 1.6, margin: 0 }}>
+        <h1 className="mt-1 text-balance text-xl font-semibold text-foreground">
+          Your onboarding is submitted
+        </h1>
+        <p className="mt-3 text-pretty text-sm leading-relaxed text-muted-foreground">
           We&apos;ve received your information and HR is reviewing it. There&apos;s nothing
           more you need to do right now. If anything else is needed, HR will reach out.
         </p>
@@ -186,26 +189,27 @@ export default async function HrOnboardingTokenPage({
 
   return (
     <PageShell>
-      <div style={{ backgroundColor: '#fff', borderRadius: 16, padding: '28px 28px', marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-        <p style={{ margin: '0 0 4px 0', fontSize: 13, fontWeight: 700, color: ORANGE, textTransform: 'uppercase', letterSpacing: 1 }}>
+      <div className="mb-6 w-full max-w-[660px] text-center">
+        <p className="text-xs font-semibold uppercase tracking-wide text-accent">
           {isExisting ? 'Pacific Coast Title' : 'Welcome to Pacific Coast Title'}
         </p>
-        <h1 style={{ margin: '0 0 10px 0', fontSize: 26, color: NAVY }}>
+        <h1 className="mt-1 text-balance text-2xl font-semibold text-foreground">
           {isExisting
             ? (firstName ? `Hi ${firstName}, please confirm your information` : 'Please confirm your information')
             : (firstName ? `Hi ${firstName}, let’s get you set up` : 'Let’s get you set up')}
         </h1>
-        <p style={{ margin: 0, fontSize: 15, color: '#4b5563', lineHeight: 1.6 }}>
+        <p className="mx-auto mt-2 max-w-[560px] text-pretty text-sm leading-relaxed text-muted-foreground">
           {isExisting
             ? 'We’re updating our records. Please review the details below, make any corrections, and submit. Your changes are reviewed by HR before anything is finalized.'
             : 'Please confirm your details below. Your information is reviewed by HR before anything is finalized — you can save as you go and submit when you’re done.'}
         </p>
       </div>
 
-      <HrOnboardingForm token={token} initial={initial} />
+      <HrOnboardingForm token={token} initial={initial} mode={isExisting ? 'existing' : 'new'} />
 
-      <p style={{ textAlign: 'center', fontSize: 12, color: '#9ca3af', margin: '24px 0 8px 0' }}>
-        Questions? Contact Pacific Coast Title HR.
+      <p className="mt-6 text-center text-xs text-muted-foreground">
+        Questions? Contact Pacific Coast Title HR at{' '}
+        <a href="mailto:hr@pct.com" className="font-medium text-accent hover:underline">hr@pct.com</a>.
       </p>
     </PageShell>
   )

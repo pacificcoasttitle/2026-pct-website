@@ -118,6 +118,62 @@
   }
 }
 
+/* ───────────────────────────────────────────────────────────────
+ * HR onboarding wizard (V0 design) — LOCALLY SCOPED theme.
+ *
+ * The V0 wizard expects navy=primary, orange=accent, a green success,
+ * and a light-beige secondary. The APP globals use different semantics
+ * (primary=orange, secondary=solid-navy, no success token). To adopt
+ * V0's palette WITHOUT repainting the rest of the app, we override the
+ * brand CSS vars ONLY inside .pct-wizard. Tailwind utilities resolve the
+ * var at use-site, so this scoping is safe — nothing outside .pct-wizard
+ * is affected.
+ *
+ * color-scheme:light + a .dark no-op force the wizard to render in its
+ * designed light palette for every visitor (no dark-mode inversion).
+ * ─────────────────────────────────────────────────────────────── */
+.pct-wizard {
+  color-scheme: light;
+  --background: #f0ede9;
+  --foreground: #03374f;
+  --card: #ffffff;
+  --card-foreground: #03374f;
+  --primary: #03374f;
+  --primary-foreground: #ffffff;
+  --secondary: #e7e1d8;
+  --secondary-foreground: #03374f;
+  --muted: #e9e4dc;
+  --muted-foreground: #6a7782;
+  --accent: #f26b2b;
+  --accent-foreground: #ffffff;
+  --destructive: #c0392b;
+  --border: #ded7cc;
+  --input: #d6cec2;
+  --ring: #f26b2b;
+  /* success has no app token — used via arbitrary value text-[var(--success)] */
+  --success: #2f8a5b;
+}
+/* Force the wizard's light palette even under the app's .dark theme. */
+.dark .pct-wizard {
+  --background: #f0ede9;
+  --foreground: #03374f;
+  --card: #ffffff;
+  --card-foreground: #03374f;
+  --primary: #03374f;
+  --primary-foreground: #ffffff;
+  --secondary: #e7e1d8;
+  --secondary-foreground: #03374f;
+  --muted: #e9e4dc;
+  --muted-foreground: #6a7782;
+  --accent: #f26b2b;
+  --accent-foreground: #ffffff;
+  --destructive: #c0392b;
+  --border: #ded7cc;
+  --input: #d6cec2;
+  --ring: #f26b2b;
+  --success: #2f8a5b;
+}
+
 @keyframes float {
   0%,
   100% {
