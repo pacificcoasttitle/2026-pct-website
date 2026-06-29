@@ -60,6 +60,30 @@ export async function PATCH(
   if ('office_phone' in body)    update.office_phone = body.office_phone == null ? null : str(body.office_phone)
   if ('email' in body)           update.email = str(body.email)
 
+  // T6 — photo_url (shared sync field; cascades) + birthday/start_date
+  // (HR-only DATE columns; no cascade). Dates accept 'YYYY-MM-DD' or null.
+  if ('photo_url' in body)       update.photo_url = body.photo_url == null ? null : str(body.photo_url)
+
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+  const isValidDate = (s: string) => DATE_RE.test(s) && !Number.isNaN(Date.parse(s))
+  for (const key of ['birthday', 'start_date'] as const) {
+    if (key in body) {
+      const raw = body[key]
+      if (raw == null || str(raw) === '') {
+        update[key] = null
+      } else {
+        const s = str(raw)
+        if (!isValidDate(s)) {
+          return NextResponse.json(
+            { error: `${key} must be a valid date (YYYY-MM-DD) or null.` },
+            { status: 400 },
+          )
+        }
+        update[key] = s
+      }
+    }
+  }
+
   if ('active' in body) {
     if (typeof body.active !== 'boolean') {
       return NextResponse.json({ error: 'active must be a boolean.' }, { status: 400 })

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Save,
@@ -9,6 +9,8 @@ import {
   CheckCircle,
   UserX,
   RotateCcw,
+  Upload,
+  User as UserIcon,
 } from 'lucide-react'
 
 interface CoreFields {
@@ -23,6 +25,41 @@ interface CoreFields {
   mobile:          string | null
   office_phone:    string | null
   active:          boolean
+  birthday:        string | null
+  start_date:      string | null
+  photo_url:       string | null
+}
+
+/**
+ * Derive a display-only work anniversary from start_date. Returns null for
+ * a missing/invalid date. Shows completed years of service + the next
+ * anniversary date. NOT a stored field.
+ */
+function deriveAnniversary(startDate: string | null): { years: number; next: string } | null {
+  if (!startDate) return null
+  const start = new Date(`${startDate}T00:00:00`)
+  if (Number.isNaN(start.getTime())) return null
+  const now = new Date()
+  let years = now.getFullYear() - start.getFullYear()
+  // The next anniversary in the current/next year.
+  const next = new Date(start)
+  next.setFullYear(now.getFullYear())
+  if (next < now) {
+    next.setFullYear(now.getFullYear() + 1)
+  } else {
+    // Anniversary hasn't occurred yet this year → completed years is one fewer.
+    years -= 1
+  }
+  if (years < 0) years = 0
+  const nextStr = next.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+  return { years, next: nextStr }
+}
+
+// 'YYYY-MM-DD' for a date input value (DATE columns may arrive as a longer
+// ISO string depending on the driver; slice to the date part).
+function toDateInput(v: string | null): string {
+  if (!v) return ''
+  return v.slice(0, 10)
 }
 
 interface Props {
@@ -39,8 +76,14 @@ export default function HrEmployeeEditForm({ employee, departments, offices }: P
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [toggling, setToggling] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [error,  setError]  = useState<string | null>(null)
   const [ok,     setOk]     = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  // Headshot URL is managed by its own upload route + clear action (kept
+  // out of the core form state so the dedicated photo flow owns it).
+  const [photoUrl, setPhotoUrl] = useState<string | null>(employee.photo_url)
 
   const [form, setForm] = useState({
     first_name:      employee.first_name,
@@ -52,7 +95,11 @@ export default function HrEmployeeEditForm({ employee, departments, offices }: P
     email:           employee.email,
     mobile:          employee.mobile ?? '',
     office_phone:    employee.office_phone ?? '',
+    birthday:        toDateInput(employee.birthday),
+    start_date:      toDateInput(employee.start_date),
   })
+
+  const anniversary = deriveAnniversary(form.start_date || null)
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -105,6 +152,52 @@ export default function HrEmployeeEditForm({ employee, departments, offices }: P
     setToggling(false)
   }
 
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setError(null)
+    setOk(null)
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file.')
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch(`/api/admin/hr/employees/${employee.id}/photo`, {
+        method: 'POST',
+        body: fd,
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data?.error || 'Upload failed.')
+        return
+      }
+      setPhotoUrl(data.url as string)
+      setOk('Headshot updated.')
+      router.refresh()
+    } catch {
+      setError('Network error during upload.')
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  async function handlePhotoClear() {
+    if (!window.confirm('Remove this headshot? The linked marketing/signature photo is not overwritten by a blank.')) {
+      return
+    }
+    setError(null)
+    setOk(null)
+    // Clearing routes through the SAME update path. photo_url='' is a blank;
+    // the sync's blank-guard means it will NOT overwrite a good facet photo.
+    const okDone = await patch({ photo_url: '' }, 'Headshot removed.')
+    if (okDone) setPhotoUrl(null)
+  }
+
   return (
     <div className="space-y-4">
       {error && (
@@ -124,6 +217,50 @@ export default function HrEmployeeEditForm({ employee, departments, offices }: P
         onSubmit={handleSave}
         className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5"
       >
+        {/* Headshot */}
+        <div className="flex items-center gap-4 pb-1">
+          <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0">
+            {photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={photoUrl} alt="Headshot" className="w-full h-full object-cover" />
+            ) : (
+              <UserIcon className="w-8 h-8 text-gray-300" />
+            )}
+          </div>
+          <div className="space-y-2">
+            <label className={LABEL}>Headshot</label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="h-9 px-3.5 inline-flex items-center gap-2 rounded-xl border border-gray-200 text-sm font-medium text-[#03374f] hover:border-[#03374f]/40 hover:bg-[#03374f]/[0.03] transition-colors disabled:opacity-50"
+              >
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                {uploading ? 'Uploading…' : photoUrl ? 'Replace' : 'Upload'}
+              </button>
+              {photoUrl && (
+                <button
+                  type="button"
+                  onClick={handlePhotoClear}
+                  disabled={uploading}
+                  className="h-9 px-3 inline-flex items-center rounded-xl border border-gray-200 text-sm font-medium text-gray-500 hover:border-red-200 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                >
+                  Remove
+                </button>
+              )}
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoUpload}
+              />
+            </div>
+            <p className="text-[11px] text-gray-400">JPG/PNG, up to 10 MB. Syncs to linked marketing/signature.</p>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={LABEL}>First name *</label>
@@ -185,6 +322,32 @@ export default function HrEmployeeEditForm({ employee, departments, offices }: P
           <div>
             <label className={LABEL}>Office phone</label>
             <input className={INPUT} value={form.office_phone} onChange={(e) => set('office_phone', e.target.value)} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={LABEL}>Birthday</label>
+            <input
+              type="date"
+              className={INPUT}
+              value={form.birthday}
+              onChange={(e) => set('birthday', e.target.value)}
+            />
+          </div>
+          <div>
+            <label className={LABEL}>Start date</label>
+            <input
+              type="date"
+              className={INPUT}
+              value={form.start_date}
+              onChange={(e) => set('start_date', e.target.value)}
+            />
+            <p className="mt-1.5 text-[11px] text-gray-400">
+              {anniversary
+                ? `${anniversary.years} ${anniversary.years === 1 ? 'year' : 'years'} of service · next anniversary ${anniversary.next}`
+                : 'Work anniversary appears once a start date is set.'}
+            </p>
           </div>
         </div>
 

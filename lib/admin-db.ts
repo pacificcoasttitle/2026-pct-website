@@ -2116,6 +2116,13 @@ export interface UpdateHrEmployeeInput {
   mobile?:       string | null
   office_phone?: string | null
   active?:       boolean
+  // T6 profile fields. birthday/start_date are DATE columns (not
+  // timestamptz): pass a 'YYYY-MM-DD' string or null — never a raw JS Date.
+  // photo_url is a LIVE shared sync field (in ACTIVE_SHARED_FIELDS), so
+  // editing it here cascades to linked facets via maybeSyncHrEmployeeDown.
+  birthday?:     string | null
+  start_date?:   string | null
+  photo_url?:    string | null
   updated_by?:   string | null
 }
 
@@ -2151,6 +2158,22 @@ export async function updateHrEmployee(
   if (input.office !== undefined)          add('office', input.office?.trim() || null)
   if (input.mobile !== undefined)          add('mobile', input.mobile?.trim() || null)
   if (input.office_phone !== undefined)    add('office_phone', input.office_phone?.trim() || null)
+
+  // T6 — DATE columns. The value is a 'YYYY-MM-DD' string (validated at the
+  // route) or null; bound as a normal param + cast so PG parses it as DATE.
+  // ⚠️ No raw JS Date into SQL (drizzle-timestamp-coercion). photo_url is a
+  // plain text col but a SHARED sync field — its edit cascades post-commit.
+  if (input.birthday !== undefined) {
+    const v = input.birthday?.trim() || null
+    vals.push(v)
+    sets.push(`birthday = $${vals.length}::date`)
+  }
+  if (input.start_date !== undefined) {
+    const v = input.start_date?.trim() || null
+    vals.push(v)
+    sets.push(`start_date = $${vals.length}::date`)
+  }
+  if (input.photo_url !== undefined)       add('photo_url', input.photo_url?.trim() || null)
 
   if (input.email !== undefined) {
     const email = input.email.trim().toLowerCase()

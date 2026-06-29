@@ -99,6 +99,9 @@ export default async function HrEmployeeDetailPage({
           mobile:          employee.mobile,
           office_phone:    employee.office_phone,
           active:          employee.active,
+          birthday:        employee.birthday,
+          start_date:      employee.start_date,
+          photo_url:       employee.photo_url,
         }}
         departments={departments}
         offices={offices}
