@@ -35,7 +35,7 @@ export const dynamic = 'force-dynamic'
 const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20 MB
 
 // HR document types the public caller may upload.
-const DOC_TYPES = new Set(['id', 'tax_form', 'direct_deposit', 'signed_policy', 'headshot'])
+const DOC_TYPES = new Set(['id', 'tax_form', 'direct_deposit', 'headshot'])
 
 // Logical file categories → permitted MIME types.
 const DOC_MIME = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp'])

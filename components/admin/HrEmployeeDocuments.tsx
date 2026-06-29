@@ -23,8 +23,9 @@ const DOC_TYPE_LABEL: Record<string, string> = {
   id: 'Government ID',
   tax_form: 'Tax form (W-4)',
   direct_deposit: 'Direct deposit',
-  signed_policy: 'Signed policy',
   headshot: 'Headshot',
+  // signed_policy was retired (upload prompt removed). Any legacy row of
+  // that type falls back to its raw doc_type via the `|| d.doc_type` below.
 }
 
 export interface EmployeeDocRow {

@@ -22,9 +22,7 @@ export interface HrOnboardingFormData {
   home_city: string
   home_state: string
   home_zip: string
-  pronouns: string
   t_shirt_size: string
-  dietary_restrictions: string
 }
 
 const STEPS = ['Basics', 'Personal', 'Emergency', 'Documents', 'Review'] as const
@@ -35,7 +33,6 @@ const DOC_TYPES: { key: string; label: string; hint: string }[] = [
   { key: 'id', label: 'Government ID', hint: 'Driver’s license, passport, or state ID' },
   { key: 'tax_form', label: 'Tax form (W-4)', hint: 'Signed W-4' },
   { key: 'direct_deposit', label: 'Direct deposit', hint: 'Voided check or bank form' },
-  { key: 'signed_policy', label: 'Signed policy', hint: 'Signed handbook / policy acknowledgement' },
 ]
 const ACCEPT = '.pdf,.png,.jpg,.jpeg,.webp'
 
@@ -211,7 +208,6 @@ export default function HrOnboardingForm({
           <Field label="Last name" value={form.last_name} onChange={(v) => set('last_name', v)} />
           <Field label="Full legal name" value={form.full_legal_name} onChange={(v) => set('full_legal_name', v)} placeholder="If different from above" />
           <Field label="Preferred name" value={form.preferred_name} onChange={(v) => set('preferred_name', v)} />
-          <Field label="Pronouns" value={form.pronouns} onChange={(v) => set('pronouns', v)} />
         </Card>
       )}
 
@@ -229,8 +225,7 @@ export default function HrOnboardingForm({
             <div style={{ flex: 1 }}><Field label="State" value={form.home_state} onChange={(v) => set('home_state', v)} /></div>
             <div style={{ flex: 1 }}><Field label="ZIP" value={form.home_zip} onChange={(v) => set('home_zip', v)} /></div>
           </div>
-          <Field label="T-shirt size" value={form.t_shirt_size} onChange={(v) => set('t_shirt_size', v)} placeholder="S / M / L / XL" />
-          <Field label="Dietary restrictions" value={form.dietary_restrictions} onChange={(v) => set('dietary_restrictions', v)} />
+          <Field label="PCT Swag T-Shirt Size" value={form.t_shirt_size} onChange={(v) => set('t_shirt_size', v)} placeholder="S / M / L / XL — for your Pacific Coast Title swag" />
         </Card>
       )}
 

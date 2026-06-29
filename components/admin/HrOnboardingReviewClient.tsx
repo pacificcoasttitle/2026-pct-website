@@ -63,8 +63,9 @@ const DOC_TYPE_LABEL: Record<string, string> = {
   id: 'Government ID',
   tax_form: 'Tax form (W-4)',
   direct_deposit: 'Direct deposit',
-  signed_policy: 'Signed policy',
   headshot: 'Headshot',
+  // signed_policy retired (upload prompt removed); legacy rows fall back
+  // to the raw doc_type via `|| d.doc_type` at the render site.
 }
 
 function str(payload: Record<string, unknown>, key: string): string {

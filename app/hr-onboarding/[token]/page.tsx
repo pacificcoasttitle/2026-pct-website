@@ -177,9 +177,7 @@ export default async function HrOnboardingTokenPage({
     home_city:                      val('home_city'),
     home_state:                     val('home_state'),
     home_zip:                       val('home_zip'),
-    pronouns:                       val('pronouns'),
     t_shirt_size:                   val('t_shirt_size'),
-    dietary_restrictions:           val('dietary_restrictions'),
   }
 
   // Heading greeting uses the resolved first name (draft or HR seed).
