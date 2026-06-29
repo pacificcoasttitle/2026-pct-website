@@ -65,7 +65,12 @@ export async function PATCH(
   if ('photo_url' in body)       update.photo_url = body.photo_url == null ? null : str(body.photo_url)
 
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
-  const isValidDate = (s: string) => DATE_RE.test(s) && !Number.isNaN(Date.parse(s))
+  function isValidDateStr(s: string): boolean {
+    if (!DATE_RE.test(s)) return false
+    const d = new Date(`${s}T00:00:00Z`)
+    if (Number.isNaN(d.getTime())) return false
+    return d.toISOString().slice(0, 10) === s
+  }
   for (const key of ['birthday', 'start_date'] as const) {
     if (key in body) {
       const raw = body[key]
@@ -73,9 +78,9 @@ export async function PATCH(
         update[key] = null
       } else {
         const s = str(raw)
-        if (!isValidDate(s)) {
+        if (!isValidDateStr(s)) {
           return NextResponse.json(
-            { error: `${key} must be a valid date (YYYY-MM-DD) or null.` },
+            { error: `Invalid ${key}` },
             { status: 400 },
           )
         }
