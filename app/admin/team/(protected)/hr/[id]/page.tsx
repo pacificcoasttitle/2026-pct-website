@@ -15,9 +15,10 @@ import {
   ArrowLeft,
   AlertTriangle,
 } from 'lucide-react'
-import { getHrEmployeeById, getAllHrEmployees } from '@/lib/admin-db'
+import { getHrEmployeeById, getAllHrEmployees, getHrEmployeeDocuments } from '@/lib/admin-db'
 import { requirePageRole } from '@/lib/auth/guards'
 import HrEmployeeEditForm from '@/components/admin/HrEmployeeEditForm'
+import HrEmployeeDocuments from '@/components/admin/HrEmployeeDocuments'
 
 export const metadata = { title: 'Employee Detail | PCT Team Admin' }
 export const dynamic = 'force-dynamic'
@@ -35,6 +36,9 @@ export default async function HrEmployeeDetailPage({
 
   const employee = await getHrEmployeeById(idNum)
   if (!employee) notFound()
+
+  // T7 — onboarding documents (metadata + ids only; bytes via gated route).
+  const documents = await getHrEmployeeDocuments(idNum)
 
   // Canonical dropdown options from the roster (same source as Add).
   const roster = await getAllHrEmployees()
@@ -106,6 +110,9 @@ export default async function HrEmployeeDetailPage({
         departments={departments}
         offices={offices}
       />
+
+      {/* T7 — onboarding documents (read-only; view via gated 4d route) */}
+      <HrEmployeeDocuments documents={documents} />
     </div>
   )
 }

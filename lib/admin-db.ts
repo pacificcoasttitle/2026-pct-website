@@ -2897,6 +2897,47 @@ export async function getHrOnboardingDocument(
   return res.rows[0] || null
 }
 
+// T7 — a single document's listing shape for the HR employee profile.
+// ⚠️ onboarding_id is included because the gated retrieval route is keyed
+// by it (GET .../onboarding/[onboarding_id]/documents/[id]). file_key is
+// NEVER included — the bytes flow only through the authenticated route.
+export interface HrEmployeeDocument {
+  id:            number
+  onboarding_id: number
+  doc_type:      string
+  file_name:     string | null
+  uploaded_at:   string
+}
+
+/**
+ * T7 — list ALL onboarding documents for an hr_employees row by following
+ * the chain hr_employees.id → hr_onboarding.hr_employee_id →
+ * hr_onboarding_documents.onboarding_id.
+ *
+ * An employee may have multiple onboardings (e.g. re-invited): this returns
+ * the flat list of their docs across ALL linked onboardings, most-recent
+ * first. Returns [] when the employee was never onboarded / has no docs.
+ *
+ * ⚠️ Returns metadata + ids ONLY — NO file_key / R2 path ever reaches the
+ * client. Viewing a doc goes through the gated [docId] retrieval route,
+ * which resolves the key server-side.
+ */
+export async function getHrEmployeeDocuments(
+  hrEmployeeId: number,
+): Promise<HrEmployeeDocument[]> {
+  const db = getPool()
+  const res = await db.query(
+    `SELECT d.id, d.onboarding_id, d.doc_type, d.file_name,
+            d.uploaded_at::text AS uploaded_at
+       FROM hr_onboarding_documents d
+       JOIN hr_onboarding o ON o.id = d.onboarding_id
+      WHERE o.hr_employee_id = $1
+      ORDER BY d.uploaded_at DESC, d.id DESC`,
+    [hrEmployeeId],
+  )
+  return res.rows
+}
+
 // ── HR Onboarding — REVIEW + FINALIZE (4e) ────────────────────────
 
 /**
