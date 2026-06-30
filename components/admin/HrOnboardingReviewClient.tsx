@@ -198,8 +198,10 @@ export default function HrOnboardingReviewClient(props: Props) {
 
   async function kickoffDepartments() {
     if (!canKickoffDepartments) return
-    const verb = hasKickedOffDepartments ? 'Re-send department kickoff emails?' : 'Kick off department checklist emails?'
-    if (!confirm(`${verb} This sends one email to each department that has checklist items.`)) return
+    const message = hasKickedOffDepartments
+      ? 'Re-send department kickoff emails? This generates new department links and invalidates the previous ones — any old department link will stop working, so teams must use the new email.'
+      : 'Kick off department checklist emails? This sends one email to each department that has checklist items.'
+    if (!confirm(message)) return
     setError(null); setNote(null); setKickoffResult(null); setBusy('kickoff')
     try {
       const res = await fetch(`/api/admin/hr/onboarding/${props.id}/kickoff`, { method: 'POST' })
@@ -210,7 +212,7 @@ export default function HrOnboardingReviewClient(props: Props) {
       const sent = Array.isArray(data.sent) ? data.sent.length : 0
       const failed = Array.isArray(data.failed) ? data.failed.length : 0
       const skipped = Array.isArray(data.skipped) ? data.skipped.length : 0
-      setNote(`Department kickoff complete — sent ${sent}, skipped ${skipped}, failed ${failed}. Re-sends refresh department links.`)
+      setNote(`Department kickoff complete — sent ${sent}, skipped ${skipped}, failed ${failed}. Re-sends replace department links and the previous links stop working.`)
       router.refresh()
     } finally { setBusy(null) }
   }
@@ -254,7 +256,7 @@ export default function HrOnboardingReviewClient(props: Props) {
 
       <Card title="Department kickoff">
         <p style={{ margin: '0 0 10px 0', fontSize: 12, color: '#9ca3af' }}>
-          Sends one task-only checklist link to each department with items. Re-send refreshes the department links.
+          Sends one task-only checklist link to each department with items. Re-send replaces the department links and the previous links stop working, so teams must use the new email.
         </p>
         {departmentKickoff.map((row) => (
           <div key={row.category} style={{ display: 'flex', gap: 12, padding: '8px 0', borderTop: '1px solid #f3f4f6', fontSize: 14, alignItems: 'center' }}>
