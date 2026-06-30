@@ -2373,7 +2373,8 @@ const HR_ONBOARDING_ACTIVE_STATUSES = ['draft', 'invited', 'in_progress', 'submi
 export interface CreateHrOnboardingExisting {
   hr_employee_id:   number
   created_by?:      string | null
-  onboarding_type?: string | null
+  // No onboarding_type: the existing-employee path ALWAYS derives the type
+  // from the employee record (enforced in createHrOnboardingForExisting).
 }
 export interface CreateHrOnboardingShell {
   first_name:       string
@@ -2447,10 +2448,11 @@ export async function createHrOnboardingForExisting(
     email:      e.email,
   }
 
-  // Type is INHERITED from the employee record (set on Add Employee). An
-  // explicit override is honored if passed, but the screen no longer sends
-  // one — the employee's stored type is the source of truth.
-  const onboardingType = normalizeOnboardingType(input.onboarding_type ?? e.onboarding_type)
+  // Type is ALWAYS INHERITED from the employee record (set on Add
+  // Employee) — never from a caller-supplied override. The employee's
+  // stored type is the single source of truth, so inheritance is enforced
+  // here, not merely a UI convention.
+  const onboardingType = normalizeOnboardingType(e.onboarding_type)
 
   const res = await db.query(
     `INSERT INTO hr_onboarding (hr_employee_id, status, onboarding_type, invited_email, payload, created_by)

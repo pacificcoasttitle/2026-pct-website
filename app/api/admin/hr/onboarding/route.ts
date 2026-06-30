@@ -59,13 +59,12 @@ export async function POST(req: Request) {
         )
       }
 
+      // Type is ALWAYS inherited from the employee record — the body's
+      // onboarding_type is intentionally NOT forwarded here, so inheritance
+      // is enforced server-side (not just a UI convention).
       const onboarding = await createHrOnboardingForExisting({
         hr_employee_id: hrEmployeeId,
         created_by:     createdBy,
-        // Inherit from the employee — only forward an explicit override.
-        onboarding_type: body.onboarding_type === 'employee' || body.onboarding_type === 'sales_rep'
-          ? body.onboarding_type
-          : undefined,
       })
       revalidatePath('/admin/team/hr/onboarding')
       return NextResponse.json({ success: true, onboarding }, { status: 201 })
