@@ -63,9 +63,11 @@ function fmtDate(s: string | null): string {
 export default function HrOnboardingClient({
   onboardings,
   employees,
+  initialEmployeeId = '',
 }: {
   onboardings: OnboardingRow[]
   employees:   EmployeeOption[]
+  initialEmployeeId?: string
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -83,7 +85,7 @@ export default function HrOnboardingClient({
     [onboardings, statusFilter],
   )
 
-  const [pickedEmployee, setPickedEmployee] = useState('')
+  const [pickedEmployee, setPickedEmployee] = useState(initialEmployeeId)
   const [shell, setShell] = useState({ first_name: '', last_name: '', invited_email: '' })
   // HR-selected onboarding type — shared across both tabs. Defaults to
   // 'sales_rep' (the current implicit default → least surprise). Drives

@@ -14,9 +14,14 @@ import HrOnboardingClient from '@/components/admin/HrOnboardingClient'
 export const metadata = { title: 'HR Onboarding | PCT Team Admin' }
 export const dynamic = 'force-dynamic'
 
-export default async function HrOnboardingPage() {
+export default async function HrOnboardingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ employee?: string; status?: string }>
+}) {
   await requirePageRole('hr-tools')
 
+  const { employee } = await searchParams
   const [onboardings, roster] = await Promise.all([
     getAllHrOnboardings(),
     getAllHrEmployees(),
@@ -40,5 +45,11 @@ export default async function HrOnboardingPage() {
     .filter((e) => e.active)
     .map((e) => ({ id: e.id, name: `${e.first_name} ${e.last_name}`.trim(), email: e.email }))
 
-  return <HrOnboardingClient onboardings={list} employees={employees} />
+  const preselectedEmployeeId = Number(employee)
+  const initialEmployeeId = Number.isInteger(preselectedEmployeeId) &&
+    employees.some((e) => e.id === preselectedEmployeeId)
+      ? String(preselectedEmployeeId)
+      : ''
+
+  return <HrOnboardingClient onboardings={list} employees={employees} initialEmployeeId={initialEmployeeId} />
 }

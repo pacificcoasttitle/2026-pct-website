@@ -19,6 +19,7 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState<string | null>(null)
   const [ok,     setOk]     = useState<string | null>(null)
+  const [createdEmployee, setCreatedEmployee] = useState<{ id: number } | null>(null)
 
   const [form, setForm] = useState({
     first_name:      '',
@@ -41,6 +42,7 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
     e.preventDefault()
     setError(null)
     setOk(null)
+    setCreatedEmployee(null)
 
     if (!form.first_name.trim() || !form.last_name.trim()) {
       setError('First name and last name are required.')
@@ -64,11 +66,13 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
         setSaving(false)
         return
       }
-      setOk('Employee added.')
-      router.push('/admin/team/hr')
+      const employeeId = Number(data?.employee?.id)
+      setOk('Added to roster.')
+      setCreatedEmployee(Number.isInteger(employeeId) && employeeId > 0 ? { id: employeeId } : null)
       router.refresh()
     } catch {
       setError('Network error — please try again.')
+    } finally {
       setSaving(false)
     }
   }
@@ -84,8 +88,9 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
         </Link>
         <h1 className="text-2xl font-bold text-[#03374f]">Add Employee</h1>
         <p className="text-gray-500 text-sm mt-1">
-          Creates a canonical HR record only — it does not change anyone&apos;s
-          marketing or signature presence.
+          Creates a canonical HR roster record only. It does not start onboarding,
+          send an invite, or change anyone&apos;s marketing or signature presence.
+          To onboard someone, use the Onboarding screen.
         </p>
       </div>
 
@@ -96,9 +101,32 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
         </div>
       )}
       {ok && (
-        <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-          <span>{ok}</span>
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <div className="flex items-start gap-2.5">
+            <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <div>
+              <div className="font-semibold">{ok}</div>
+              <div className="mt-0.5 text-emerald-700/80">
+                This created a roster record only. Start onboarding from the Onboarding screen when you&apos;re ready.
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2 pl-6">
+            {createdEmployee && (
+              <Link
+                href={`/admin/team/hr/onboarding?employee=${createdEmployee.id}`}
+                className="inline-flex h-9 items-center rounded-lg bg-[#03374f] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#02283a]"
+              >
+                Start onboarding →
+              </Link>
+            )}
+            <Link
+              href="/admin/team/hr"
+              className="inline-flex h-9 items-center rounded-lg border border-emerald-200 bg-white px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-50"
+            >
+              Done / back to roster
+            </Link>
+          </div>
         </div>
       )}
 
