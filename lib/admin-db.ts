@@ -2018,6 +2018,23 @@ export async function setHrEmployeeActive(
   )
   const updated: HrEmployee | null = res.rows[0] || null
 
+  // Live dedup recompute: active just changed, so recompute the flag for
+  // this row's normalized-name group (active-duplicate rule). Deactivating
+  // a duplicate clears the other row's stale badge; reactivating restores
+  // it. Best-effort — never fails the active toggle.
+  if (updated) {
+    try {
+      await recomputeHrDedupReview([normHrName(updated.first_name, updated.last_name)])
+      const refreshed = (await db.query<HrEmployee>(
+        `SELECT needs_dedup_review FROM hr_employees WHERE id = $1 LIMIT 1`,
+        [id],
+      )).rows[0]
+      if (refreshed) updated.needs_dedup_review = refreshed.needs_dedup_review
+    } catch (e) {
+      console.error('recomputeHrDedupReview failed (setHrEmployeeActive):', e instanceof Error ? e.message : e)
+    }
+  }
+
   // §4e fire point — the active cascade (deactivate/reactivate). The HR
   // write has COMMITTED above; fire the sync AFTER, non-blocking +
   // flag-gated (OFF by default). A sync failure never affects this write.
@@ -2146,6 +2163,10 @@ export async function updateHrEmployee(
 ): Promise<HrEmployee | null> {
   const db = getPool()
 
+  // Capture the row BEFORE the edit so a rename can also clear the OLD
+  // name-group (and so we know whether name/email/active actually changed).
+  const before = (await db.query<HrEmployee>(`SELECT * FROM hr_employees WHERE id = $1 LIMIT 1`, [id])).rows[0] || null
+
   const sets: string[] = []
   const vals: unknown[] = []
   function add(col: string, value: unknown) {
@@ -2225,6 +2246,36 @@ export async function updateHrEmployee(
       throw new Error('An employee with that email already exists.')
     }
     throw err
+  }
+
+  // Live dedup recompute: if name / email / active changed, recompute the
+  // needs_dedup_review flag for the affected normalized-name group(s) —
+  // both the OLD name (so a rename empties the prior group) and the NEW
+  // name. Active-duplicate rule, reusing the backfill normalization. This
+  // is the real fix: deactivating a duplicate now clears the other's flag.
+  if (updated) {
+    const nameOrEmailOrActiveChanged =
+      input.first_name !== undefined ||
+      input.last_name !== undefined ||
+      input.email !== undefined ||
+      input.active !== undefined
+    if (nameOrEmailOrActiveChanged) {
+      try {
+        const names: string[] = []
+        if (before) names.push(normHrName(before.first_name, before.last_name))
+        names.push(normHrName(updated.first_name, updated.last_name))
+        await recomputeHrDedupReview(names)
+        // Reflect the recomputed flag on the returned row.
+        const refreshed = (await db.query<HrEmployee>(
+          `SELECT needs_dedup_review FROM hr_employees WHERE id = $1 LIMIT 1`,
+          [id],
+        )).rows[0]
+        if (refreshed) updated.needs_dedup_review = refreshed.needs_dedup_review
+      } catch (e) {
+        // Recompute is best-effort; never fail the user's edit over it.
+        console.error('recomputeHrDedupReview failed (updateHrEmployee):', e instanceof Error ? e.message : e)
+      }
+    }
   }
 
   // §4e fire point — the HR write has COMMITTED above. Fire the sync AFTER,
@@ -2388,6 +2439,87 @@ export interface CreateHrOnboardingShell {
 // (the safe, current-behavior fallback) on anything missing/invalid.
 function normalizeOnboardingType(t: string | null | undefined): 'employee' | 'sales_rep' {
   return t === 'employee' ? 'employee' : 'sales_rep'
+}
+
+/**
+ * Normalized full-name key for dedup — IDENTICAL rule to the backfill's
+ * normName (scripts/backfill-hr-employees.ts): lower/trim first + last,
+ * collapse internal whitespace. Keep these in lockstep so the live
+ * recompute matches the original flagging logic.
+ */
+function normHrName(first: string | null | undefined, last: string | null | undefined): string {
+  return `${(first ?? '').trim().toLowerCase()} ${(last ?? '').trim().toLowerCase()}`
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/**
+ * Live recompute of needs_dedup_review for the normalized-name group(s)
+ * touched by an employee mutation (active / name / email change).
+ *
+ * The backfill set the flag ONCE: a row needs review if it shares a
+ * normalized full name with another row at a DIFFERENT email. That flag
+ * was never recomputed, so deactivating a duplicate left a stale badge +
+ * an inflated banner count.
+ *
+ * This recomputes the flag among ACTIVE employees only (the intent is
+ * "active duplicates need review"). For every employee whose normalized
+ * name matches one of `names`, set needs_dedup_review = true iff there is
+ * another ACTIVE employee with the same normalized name but a different
+ * email; false otherwise. Inactive rows are always cleared (they can't be
+ * an active duplicate). Runs in one statement per group, no row-loading
+ * in JS for the decision.
+ *
+ * `names` is the set of normalized names to recompute — typically the
+ * row's name BEFORE and AFTER the edit (a rename can empty out the old
+ * group and create/extend a new one).
+ */
+async function recomputeHrDedupReview(names: string[]): Promise<void> {
+  const targets = [...new Set(names.map((n) => n.trim()).filter((n) => n.length > 0))]
+  if (targets.length === 0) return
+  const db = getPool()
+  // Normalized name is computed inline with the SAME rule as normHrName:
+  // lower(trim(first) || ' ' || trim(last)) with collapsed whitespace via
+  // regexp_replace. Active-duplicate = another ACTIVE row, same normalized
+  // name, different (lower/trimmed) email.
+  await db.query(
+    `
+    WITH norm AS (
+      SELECT
+        id,
+        active,
+        regexp_replace(
+          trim(lower(coalesce(first_name, '')) || ' ' || lower(coalesce(last_name, ''))),
+          '\\s+', ' ', 'g'
+        )                              AS name_key,
+        lower(trim(coalesce(email, ''))) AS email_key
+      FROM hr_employees
+    ),
+    flagged AS (
+      SELECT
+        n.id,
+        (
+          n.active = true
+          AND EXISTS (
+            SELECT 1 FROM norm o
+             WHERE o.id <> n.id
+               AND o.active = true
+               AND o.name_key = n.name_key
+               AND o.email_key <> n.email_key
+          )
+        ) AS should_flag
+      FROM norm n
+      WHERE n.name_key = ANY($1::text[])
+    )
+    UPDATE hr_employees e
+       SET needs_dedup_review = f.should_flag,
+           updated_at = e.updated_at
+      FROM flagged f
+     WHERE e.id = f.id
+       AND e.needs_dedup_review IS DISTINCT FROM f.should_flag
+    `,
+    [targets],
+  )
 }
 
 /**

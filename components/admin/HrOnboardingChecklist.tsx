@@ -10,9 +10,9 @@
  * hr_onboarding_items.
  */
 
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, Circle } from 'lucide-react'
+import { Check, Circle, RefreshCw } from 'lucide-react'
 
 const NAVY = '#03374f'
 
@@ -44,9 +44,53 @@ export default function HrOnboardingChecklist({
   const [items, setItems] = useState<ChecklistItem[]>(initialItems)
   const [busyId, setBusyId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+
+  // Track an in-progress HR toggle so a focus-refetch never clobbers it.
+  const busyIdRef = useRef<number | null>(null)
+  busyIdRef.current = busyId
 
   const total = items.length
   const complete = items.filter((i) => i.status === 'complete').length
+
+  // Refetch current items from the server (truth) and merge in. Department
+  // completions are written from a SEPARATE session, so the open HR page
+  // can be stale; refetching on focus picks them up. Skipped while an HR
+  // toggle is mid-flight so we don't overwrite an optimistic local change.
+  const refetch = useCallback(async () => {
+    if (busyIdRef.current !== null) return
+    try {
+      setRefreshing(true)
+      const res = await fetch(`/api/admin/hr/onboarding/${onboardingId}/items`, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      })
+      if (!res.ok) return
+      const data = await res.json().catch(() => null)
+      if (!data?.items || busyIdRef.current !== null) return
+      setItems(data.items as ChecklistItem[])
+    } catch {
+      // Silent — focus-refetch is a freshness convenience, not critical.
+    } finally {
+      setRefreshing(false)
+    }
+  }, [onboardingId])
+
+  // Refetch on window focus / tab becoming visible. Lightweight — event
+  // driven, NOT polling.
+  useEffect(() => {
+    const onFocus = () => { void refetch() }
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') void refetch()
+    }
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [refetch])
 
   async function toggle(item: ChecklistItem) {
     const next = item.status === 'complete' ? 'pending' : 'complete'
@@ -98,11 +142,23 @@ export default function HrOnboardingChecklist({
             Manual checklist — mark items as you complete them.
           </p>
         </div>
-        <div className="text-right">
-          <div className="text-2xl font-bold" style={{ color: NAVY }}>
-            {complete}/{total}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => void refetch()}
+            disabled={refreshing || busyId !== null}
+            title="Refresh from server"
+            aria-label="Refresh checklist"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-400 transition hover:text-[#03374f] hover:border-gray-300 disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+          </button>
+          <div className="text-right">
+            <div className="text-2xl font-bold" style={{ color: NAVY }}>
+              {complete}/{total}
+            </div>
+            <div className="text-xs text-gray-500">complete</div>
           </div>
-          <div className="text-xs text-gray-500">complete</div>
         </div>
       </div>
 

@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { formatPhoneDisplay } from '@/components/ui/PhoneInput'
 import {
   Save,
   Loader2,
@@ -455,11 +456,11 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
         </Field>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Mobile / Cell">
-            <input type="tel" value={emp.mobile ?? ''} disabled readOnly placeholder="(714) 555-0100" className={INPUT_RO} />
+            <input type="tel" value={formatPhoneDisplay(emp.mobile) || (emp.mobile ?? '')} disabled readOnly placeholder="(714) 555-0100" className={INPUT_RO} />
             <ManagedInHr />
           </Field>
           <Field label="Direct / Office Line">
-            <input type="tel" value={emp.phone ?? ''} disabled readOnly placeholder="(818) 543-2130" className={INPUT_RO} />
+            <input type="tel" value={formatPhoneDisplay(emp.phone) || (emp.phone ?? '')} disabled readOnly placeholder="(818) 543-2130" className={INPUT_RO} />
             <ManagedInHr />
           </Field>
         </div>

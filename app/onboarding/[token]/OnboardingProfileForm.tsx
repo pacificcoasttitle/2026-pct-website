@@ -13,6 +13,7 @@
  */
 
 import { useState } from 'react'
+import PhoneInput from '@/components/ui/PhoneInput'
 
 const NAVY   = '#03374f'
 const ORANGE = '#f26b2b'
@@ -37,9 +38,9 @@ interface Props {
   initialVerifiedAt: string | null
 }
 
-const FIELDS: { key: keyof EditableValues; label: string; type: 'text' | 'textarea' }[] = [
-  { key: 'phone',       label: 'Phone',                       type: 'text' },
-  { key: 'mobile',      label: 'Mobile',                      type: 'text' },
+const FIELDS: { key: keyof EditableValues; label: string; type: 'text' | 'textarea' | 'phone' }[] = [
+  { key: 'phone',       label: 'Phone',                       type: 'phone' },
+  { key: 'mobile',      label: 'Mobile',                      type: 'phone' },
   { key: 'bio',         label: 'Bio',                         type: 'textarea' },
   { key: 'specialties', label: 'Specialties',                 type: 'text' },
   { key: 'languages',   label: 'Languages',                   type: 'text' },
@@ -141,6 +142,12 @@ export function OnboardingProfileForm({ token, locked, initial, initialVerifiedA
                 onChange={(e) => set(f.key, e.target.value)}
                 rows={4}
                 style={{ ...inputStyle, resize: 'vertical' }}
+              />
+            ) : f.type === 'phone' ? (
+              <PhoneInput
+                value={values[f.key]}
+                onChange={(v) => set(f.key, v)}
+                style={inputStyle}
               />
             ) : (
               <input

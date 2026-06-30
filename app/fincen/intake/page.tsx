@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import Link from "next/link"
+import SharedPhoneInput, { formatPhoneDisplay } from "@/components/ui/PhoneInput"
 import {
   CheckCircle,
   ChevronLeft,
@@ -233,24 +234,18 @@ function TextInput({
 }
 
 // ── Phone masking ─────────────────────────────────────────────────────────────
-function formatPhone(raw: string): string {
-  const digits = raw.replace(/\D/g, "").slice(0, 10)
-  if (digits.length === 0) return ""
-  if (digits.length <= 3) return `(${digits}`
-  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
-}
+// Consolidated to the shared formatted phone input (components/ui/PhoneInput).
+// formatPhone kept as a thin alias for the prefill paths below.
+const formatPhone = formatPhoneDisplay
 
 function PhoneInput({ value, onChange, placeholder = "(714) 000-0000" }: {
   value: string; onChange: (v: string) => void; placeholder?: string
 }) {
   return (
-    <input
-      type="tel"
+    <SharedPhoneInput
       value={value}
-      onChange={e => onChange(formatPhone(e.target.value))}
+      onChange={onChange}
       placeholder={placeholder}
-      maxLength={14}
       className="w-full h-11 px-4 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
     />
   )

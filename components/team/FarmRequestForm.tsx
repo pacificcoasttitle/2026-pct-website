@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { CheckCircle, AlertCircle, Loader2, MapPin, List } from 'lucide-react'
+import PhoneInput from '@/components/ui/PhoneInput'
 
 const LIST_TYPES = [
   { value: 'OUT_OF_STATE', label: 'Out-of-State Owners' },
@@ -258,7 +259,7 @@ export function FarmRequestForm({ repSlug, repName, repEmail }: Props) {
           </div>
           <div>
             <label className={labelClass}>Phone</label>
-            <input type="tel" value={form.contact_phone} onChange={(e) => set('contact_phone', e.target.value)} placeholder="(714) 555-0100" className={fieldClass} />
+            <PhoneInput value={form.contact_phone} onChange={(v) => set('contact_phone', v)} placeholder="(714) 555-0100" className={fieldClass} />
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
+import PhoneInput from '@/components/ui/PhoneInput'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -280,18 +281,18 @@ export default function EmployeeNewForm({ offices, depts }: Props) {
               />
             </Field>
             <Field label="Mobile">
-              <input
+              <PhoneInput
                 className={INPUT}
                 value={form.mobile}
-                onChange={(e) => update('mobile', e.target.value)}
+                onChange={(v) => update('mobile', v)}
                 placeholder="(555) 555-1212"
               />
             </Field>
             <Field label="Office phone">
-              <input
+              <PhoneInput
                 className={INPUT}
                 value={form.phone}
-                onChange={(e) => update('phone', e.target.value)}
+                onChange={(v) => update('phone', v)}
                 placeholder="(555) 555-2000"
               />
             </Field>

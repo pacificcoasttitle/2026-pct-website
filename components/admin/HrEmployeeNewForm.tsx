@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, UserPlus, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
+import PhoneInput from '@/components/ui/PhoneInput'
 
 interface Props {
   departments: string[]
@@ -214,11 +215,11 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={LABEL}>Mobile</label>
-            <input className={INPUT} value={form.mobile} onChange={(e) => set('mobile', e.target.value)} />
+            <PhoneInput className={INPUT} value={form.mobile} onChange={(v) => set('mobile', v)} />
           </div>
           <div>
             <label className={LABEL}>Office phone</label>
-            <input className={INPUT} value={form.office_phone} onChange={(e) => set('office_phone', e.target.value)} />
+            <PhoneInput className={INPUT} value={form.office_phone} onChange={(v) => set('office_phone', v)} />
           </div>
         </div>
 

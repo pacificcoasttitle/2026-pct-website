@@ -6,6 +6,7 @@ import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
 import { CTABox } from "@/components/fincen/cta-box"
 import { CheckCircle, Mail, Send } from "lucide-react"
+import PhoneInput from "@/components/ui/PhoneInput"
 
 const steps = [
   { num: 1, text: "We confirm whether the scenario is likely reportable." },
@@ -173,12 +174,11 @@ export default function FinCENContactPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-secondary mb-1.5">Phone</label>
-                    <input
+                    <PhoneInput
                       name="phone"
-                      type="tel"
                       placeholder="(714) 555-0100"
                       value={formData.phone}
-                      onChange={handleChange}
+                      onChange={(v) => setFormData((prev) => ({ ...prev, phone: v }))}
                       className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
                     />
                   </div>

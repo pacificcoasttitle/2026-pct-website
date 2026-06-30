@@ -30,6 +30,7 @@ import {
   ArrowLeft, Loader2, AlertTriangle, Check, ShieldCheck, Lock,
   ChevronDown, UploadCloud, CheckCircle2, FileText, RefreshCw, Pencil,
 } from 'lucide-react'
+import PhoneInput from '@/components/ui/PhoneInput'
 
 export interface HrOnboardingFormData {
   first_name: string
@@ -425,7 +426,7 @@ function PersonalStep({ form, set }: StepProps) {
         <TextInput type="email" value={form.personal_email} onChange={(e) => set('personal_email', e.target.value)} autoComplete="email" placeholder="jane@example.com" />
       </FieldShell>
       <FieldShell label="Mobile Phone" required>
-        <TextInput type="tel" value={form.mobile} onChange={(e) => set('mobile', e.target.value)} autoComplete="tel" placeholder="(555) 123-4567" />
+        <PhoneInput className={CONTROL} value={form.mobile} onChange={(v) => set('mobile', v)} placeholder="(555) 123-4567" />
       </FieldShell>
       <FieldShell label="Date of Birth">
         <TextInput type="date" value={form.birthday} onChange={(e) => set('birthday', e.target.value)} />
@@ -475,7 +476,7 @@ function EmergencyStep({ form, set }: StepProps) {
         <TextInput value={form.emergency_contact_name} onChange={(e) => set('emergency_contact_name', e.target.value)} placeholder="John Doe" />
       </FieldShell>
       <FieldShell label="Contact Phone">
-        <TextInput type="tel" value={form.emergency_contact_phone} onChange={(e) => set('emergency_contact_phone', e.target.value)} placeholder="(555) 987-6543" />
+        <PhoneInput className={CONTROL} value={form.emergency_contact_phone} onChange={(v) => set('emergency_contact_phone', v)} placeholder="(555) 987-6543" />
       </FieldShell>
       <FieldShell label="Relationship">
         <TextInput value={form.emergency_contact_relationship} onChange={(e) => set('emergency_contact_relationship', e.target.value)} placeholder="Spouse" />

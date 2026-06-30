@@ -12,6 +12,7 @@ import {
   Upload,
   User as UserIcon,
 } from 'lucide-react'
+import PhoneInput from '@/components/ui/PhoneInput'
 
 interface CoreFields {
   id:              number
@@ -317,11 +318,11 @@ export default function HrEmployeeEditForm({ employee, departments, offices }: P
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={LABEL}>Mobile</label>
-            <input className={INPUT} value={form.mobile} onChange={(e) => set('mobile', e.target.value)} />
+            <PhoneInput className={INPUT} value={form.mobile} onChange={(v) => set('mobile', v)} />
           </div>
           <div>
             <label className={LABEL}>Office phone</label>
-            <input className={INPUT} value={form.office_phone} onChange={(e) => set('office_phone', e.target.value)} />
+            <PhoneInput className={INPUT} value={form.office_phone} onChange={(v) => set('office_phone', v)} />
           </div>
         </div>
 

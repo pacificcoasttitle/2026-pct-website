@@ -219,28 +219,20 @@ export default async function HrDashboardPage() {
         </div>
       </div>
 
-      {/* ── Phase-3 placeholder + recent-additions caveat ── */}
-      <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-6">
-        <div className="flex items-center gap-2 mb-2">
-          <CalendarClock className="w-4 h-4 text-gray-400" />
-          <h2 className="font-semibold text-gray-500 text-sm">Birthdays &amp; anniversaries</h2>
+      {/* ── Recent-additions caveat ── */}
+      {stats.recentAdditions > 0 && (
+        <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-6">
+          <div className="flex items-center gap-2 mb-2">
+            <CalendarClock className="w-4 h-4 text-gray-400" />
+            <h2 className="font-semibold text-gray-500 text-sm">Recent additions</h2>
+          </div>
+          <p className="text-xs text-gray-400 leading-relaxed">
+            Note: {stats.recentAdditions} of {stats.total} rows were created in the last 30 days —
+            expected right after the initial roster backfill (every row was created the same day),
+            so this isn&apos;t a meaningful &ldquo;new hires&rdquo; signal yet.
+          </p>
         </div>
-        <p className="text-xs text-gray-400 leading-relaxed">
-          Coming in Phase 3, once start dates and birthdays are collected — there&apos;s no data
-          to show yet, so we&apos;re not faking it.
-          {' '}
-          {stats.recentAdditions > 0 && (
-            <>
-              <br />
-              <span className="text-gray-400">
-                Note: {stats.recentAdditions} of {stats.total} rows were created in the last 30 days —
-                expected right after the initial roster backfill (every row was created the same day),
-                so this isn&apos;t a meaningful &ldquo;new hires&rdquo; signal yet.
-              </span>
-            </>
-          )}
-        </p>
-      </div>
+      )}
     </div>
   )
 }
