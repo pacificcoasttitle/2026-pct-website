@@ -3033,6 +3033,99 @@ export async function getHrOnboardingItems(onboardingId: number): Promise<HrOnbo
   return res.rows
 }
 
+export interface HrDepartmentChecklistItem {
+  id:           number
+  item_key:     string
+  label:        string
+  category:     HrOnboardingChecklistCategory
+  status:       string
+  sort_order:   number
+  completed_at: string | null
+  completed_by: string | null
+}
+
+export interface HrDepartmentChecklistView {
+  onboarding_id: number
+  category:      HrOnboardingChecklistCategory
+  hire_name:     string
+  status:        string
+  items:         HrDepartmentChecklistItem[]
+}
+
+/**
+ * Token-facing department view. PII boundary: returns only a display name
+ * and checklist item task fields for the token's category; never payload,
+ * documents, upload keys, or HR review data.
+ */
+export async function getHrDepartmentChecklistView(
+  onboardingId: number,
+  category: HrOnboardingChecklistCategory,
+): Promise<HrDepartmentChecklistView | null> {
+  const db = getPool()
+  const header = await db.query(
+    `SELECT o.id,
+            o.status,
+            COALESCE(
+              NULLIF(TRIM(COALESCE(he.first_name, '') || ' ' || COALESCE(he.last_name, '')), ''),
+              NULLIF(TRIM(COALESCE(o.payload->>'first_name', '') || ' ' || COALESCE(o.payload->>'last_name', '')), ''),
+              'New hire'
+            ) AS hire_name
+       FROM hr_onboarding o
+       LEFT JOIN hr_employees he ON he.id = o.hr_employee_id
+      WHERE o.id = $1
+      LIMIT 1`,
+    [onboardingId],
+  )
+  const row = header.rows[0] as { id: number; status: string; hire_name: string } | undefined
+  if (!row || row.status === 'cancelled') return null
+
+  const items = await db.query(
+    `SELECT id, item_key, label, category, status, sort_order,
+            completed_at::text AS completed_at,
+            completed_by
+       FROM hr_onboarding_items
+      WHERE onboarding_id = $1 AND category = $2
+      ORDER BY sort_order ASC, id ASC`,
+    [onboardingId, category],
+  )
+
+  return {
+    onboarding_id: row.id,
+    category,
+    hire_name: row.hire_name || 'New hire',
+    status: row.status,
+    items: items.rows as HrDepartmentChecklistItem[],
+  }
+}
+
+export async function setHrDepartmentChecklistItemStatus(
+  onboardingId: number,
+  category: HrOnboardingChecklistCategory,
+  itemId: number,
+  status: 'pending' | 'in_progress' | 'complete',
+): Promise<HrDepartmentChecklistItem | null> {
+  const db = getPool()
+  const actor = `department:${category}`
+  const res = await db.query(
+    `UPDATE hr_onboarding_items i
+        SET status       = $4,
+            completed_at = CASE WHEN $4 = 'complete' THEN NOW() ELSE NULL END,
+            completed_by = CASE WHEN $4 = 'complete' THEN $5 ELSE NULL END,
+            updated_at   = NOW()
+       FROM hr_onboarding o
+      WHERE i.id = $3
+        AND i.onboarding_id = $1
+        AND i.category = $2
+        AND o.id = i.onboarding_id
+        AND o.status IN ('submitted','finalized')
+      RETURNING i.id, i.item_key, i.label, i.category, i.status, i.sort_order,
+                i.completed_at::text AS completed_at,
+                i.completed_by`,
+    [onboardingId, category, itemId, status, actor],
+  )
+  return (res.rows[0] as HrDepartmentChecklistItem | undefined) || null
+}
+
 /**
  * Manually set ONE item's status (HR tick). Sets completed_at/completed_by
  * when → 'complete', clears them otherwise. ⚠️ Touches ONLY

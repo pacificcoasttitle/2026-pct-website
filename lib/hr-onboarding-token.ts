@@ -26,9 +26,26 @@
 
 import { SignJWT, jwtVerify } from 'jose'
 import { createHash } from 'crypto'
+import { Pool } from 'pg'
 
 const PURPOSE = 'hr_onboarding'
+const DEPARTMENT_PURPOSE = 'hr_onboarding_department'
 const EXPIRES = '14d'
+
+const DEPARTMENT_CATEGORIES = ['administrative', 'marketing', 'customer-service'] as const
+export type HrOnboardingDepartmentCategory = (typeof DEPARTMENT_CATEGORIES)[number]
+
+let _deptTokenPool: Pool | null = null
+function getDeptTokenPool(): Pool {
+  if (!_deptTokenPool) {
+    _deptTokenPool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+      max: 5,
+    })
+  }
+  return _deptTokenPool
+}
 
 /**
  * Secret for HR-onboarding tokens. MUST be distinct from the admin
@@ -84,4 +101,77 @@ export async function verifyHrOnboardingToken(
 /** Stable sha256 hex of a token — this (never the raw token) is stored. */
 export function hashHrOnboardingToken(token: string): string {
   return createHash('sha256').update(token).digest('hex')
+}
+
+function isDepartmentCategory(value: unknown): value is HrOnboardingDepartmentCategory {
+  return DEPARTMENT_CATEGORIES.includes(value as HrOnboardingDepartmentCategory)
+}
+
+/** Sign + store a fresh per-(onboarding, category) department token. */
+export async function issueDepartmentToken(
+  onboardingId: number,
+  category: HrOnboardingDepartmentCategory,
+): Promise<string | null> {
+  if (!Number.isInteger(onboardingId) || onboardingId <= 0) return null
+  if (!isDepartmentCategory(category)) return null
+
+  const token = await new SignJWT({
+    hr_onboarding_id: onboardingId,
+    category,
+    purpose: DEPARTMENT_PURPOSE,
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime(EXPIRES)
+    .sign(hrOnboardingSecret())
+
+  const hash = hashHrOnboardingToken(token)
+  const expIso = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+  const db = getDeptTokenPool()
+  const res = await db.query(
+    `INSERT INTO hr_onboarding_department_tokens
+       (onboarding_id, category, token_hash, token_expires_at)
+     VALUES ($1, $2, $3, $4::timestamptz)
+     ON CONFLICT (onboarding_id, category)
+     DO UPDATE SET token_hash = EXCLUDED.token_hash,
+                   token_expires_at = EXCLUDED.token_expires_at,
+                   updated_at = NOW()
+     RETURNING id`,
+    [onboardingId, category, hash, expIso],
+  )
+  return res.rows[0] ? token : null
+}
+
+/**
+ * Default-deny department token resolver. Verifies JWT purpose/category,
+ * stored hash, stored expiry, and the separate department-token row.
+ */
+export async function resolveDepartmentToken(
+  token: string,
+): Promise<{ onboarding_id: number; category: HrOnboardingDepartmentCategory } | null> {
+  try {
+    const { payload } = await jwtVerify(token, hrOnboardingSecret())
+    if (payload.purpose !== DEPARTMENT_PURPOSE) return null
+
+    const id = payload.hr_onboarding_id
+    if (typeof id !== 'number' || !Number.isInteger(id) || id <= 0) return null
+    if (!isDepartmentCategory(payload.category)) return null
+
+    const db = getDeptTokenPool()
+    const res = await db.query(
+      `SELECT token_hash, token_expires_at::text AS token_expires_at
+         FROM hr_onboarding_department_tokens
+        WHERE onboarding_id = $1 AND category = $2
+        LIMIT 1`,
+      [id, payload.category],
+    )
+    const row = res.rows[0] as { token_hash: string | null; token_expires_at: string | null } | undefined
+    if (!row) return null
+    if (!row.token_hash || row.token_hash !== hashHrOnboardingToken(token)) return null
+    if (!row.token_expires_at || new Date(row.token_expires_at).getTime() <= Date.now()) return null
+
+    return { onboarding_id: id, category: payload.category }
+  } catch {
+    return null
+  }
 }
