@@ -43,7 +43,12 @@ export default async function HrOnboardingPage({
   // Only active employees are sensible invite targets.
   const employees = roster
     .filter((e) => e.active)
-    .map((e) => ({ id: e.id, name: `${e.first_name} ${e.last_name}`.trim(), email: e.email }))
+    .map((e) => ({
+      id: e.id,
+      name: `${e.first_name} ${e.last_name}`.trim(),
+      email: e.email,
+      onboarding_type: e.onboarding_type,
+    }))
 
   const preselectedEmployeeId = Number(employee)
   const initialEmployeeId = Number.isInteger(preselectedEmployeeId) &&

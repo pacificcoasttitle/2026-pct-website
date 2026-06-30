@@ -30,6 +30,10 @@ export async function POST(req: Request) {
   const first_name = String(body.first_name || '').trim()
   const last_name  = String(body.last_name  || '').trim()
   const email      = String(body.email      || '').trim()
+  // Onboarding type lives on the employee now (onboarding inherits it).
+  // Validate to the known vocabulary; anything else → 'sales_rep' default.
+  const onboarding_type =
+    body.onboarding_type === 'employee' ? 'employee' : 'sales_rep'
 
   if (!first_name || !last_name) {
     return NextResponse.json({ error: 'First name and last name are required.' }, { status: 400 })
@@ -54,6 +58,7 @@ export async function POST(req: Request) {
       mobile:          body.mobile          ? String(body.mobile)          : undefined,
       office_phone:    body.office_phone    ? String(body.office_phone)    : undefined,
       active:          body.active === false ? false : true,
+      onboarding_type,
       created_by:      auth.session.username,
     })
 

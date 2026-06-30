@@ -36,14 +36,15 @@ export async function POST(req: Request) {
 
   const createdBy = auth.session.username
 
-  // HR-selected onboarding type (Sales Rep / Regular Employee). Validate
-  // to the known vocabulary; anything missing/invalid → 'sales_rep' (the
-  // safe, current-behavior default). The create fns also re-normalize.
+  // Onboarding type for the NEW-shell path (Sales Rep / Regular Employee).
+  // For the EXISTING-employee path the type is INHERITED from the employee
+  // record (see createHrOnboardingForExisting) — the screen no longer sends
+  // one. Validate to the known vocabulary; missing/invalid → 'sales_rep'.
   const onboarding_type =
     body.onboarding_type === 'employee' ? 'employee' : 'sales_rep'
 
   try {
-    // Path 1 — existing employee
+    // Path 1 — existing employee (type inherited from the employee record)
     if (body.hr_employee_id != null) {
       const hrEmployeeId = Number(body.hr_employee_id)
       if (!Number.isInteger(hrEmployeeId) || hrEmployeeId <= 0) {
@@ -61,7 +62,10 @@ export async function POST(req: Request) {
       const onboarding = await createHrOnboardingForExisting({
         hr_employee_id: hrEmployeeId,
         created_by:     createdBy,
-        onboarding_type,
+        // Inherit from the employee — only forward an explicit override.
+        onboarding_type: body.onboarding_type === 'employee' || body.onboarding_type === 'sales_rep'
+          ? body.onboarding_type
+          : undefined,
       })
       revalidatePath('/admin/team/hr/onboarding')
       return NextResponse.json({ success: true, onboarding }, { status: 201 })

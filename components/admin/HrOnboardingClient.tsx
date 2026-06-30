@@ -4,7 +4,6 @@ import { useState, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
-  UserPlus,
   Send,
   Loader2,
   AlertCircle,
@@ -40,6 +39,12 @@ interface EmployeeOption {
   id:    number
   name:  string
   email: string | null
+  onboarding_type: string  // 'sales_rep' | 'employee' — inherited by the onboarding
+}
+
+const TYPE_LABEL: Record<string, string> = {
+  sales_rep: 'Sales Rep',
+  employee:  'Regular Employee',
 }
 
 const STATUS_STYLE: Record<string, string> = {
@@ -72,7 +77,6 @@ export default function HrOnboardingClient({
   const router = useRouter()
   const searchParams = useSearchParams()
   const statusFilter = searchParams.get('status')
-  const [tab, setTab] = useState<'existing' | 'new'>('existing')
   const [busy, setBusy] = useState(false)
   const [resendingId, setResendingId] = useState<number | null>(null)
   const [cancellingId, setCancellingId] = useState<number | null>(null)
@@ -86,19 +90,27 @@ export default function HrOnboardingClient({
   )
 
   const [pickedEmployee, setPickedEmployee] = useState(initialEmployeeId)
-  const [shell, setShell] = useState({ first_name: '', last_name: '', invited_email: '' })
-  // HR-selected onboarding type — shared across both tabs. Defaults to
-  // 'sales_rep' (the current implicit default → least surprise). Drives
-  // which checklist the new onboarding seeds.
-  const [onboardingType, setOnboardingType] = useState<'sales_rep' | 'employee'>('sales_rep')
+
+  // Personal-email modal (shown at send). The new hire's PCT email isn't
+  // live until IT provisions it during onboarding, so the invite goes to a
+  // PERSONAL address entered here — that address becomes the recipient.
+  const [modalOpen, setModalOpen] = useState(false)
+  const [personalEmail, setPersonalEmail] = useState('')
 
   const sortedEmployees = useMemo(
     () => [...employees].sort((a, b) => a.name.localeCompare(b.name)),
     [employees],
   )
 
-  // Create then immediately send (the common HR flow).
-  async function createAndSend(payload: Record<string, unknown>) {
+  const selectedEmployee = useMemo(
+    () => sortedEmployees.find((e) => String(e.id) === String(pickedEmployee)) || null,
+    [sortedEmployees, pickedEmployee],
+  )
+
+  // Create the onboarding for the selected employee (type INHERITED from
+  // the employee record), then immediately send the invite to the entered
+  // personal email. The single HR flow.
+  async function createAndSend(hrEmployeeId: number, recipientEmail: string) {
     setError(null)
     setOk(null)
     setBusy(true)
@@ -106,7 +118,7 @@ export default function HrOnboardingClient({
       const createRes = await fetch('/api/admin/hr/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ hr_employee_id: hrEmployeeId }),
       })
       const created = await createRes.json().catch(() => ({}))
       if (!createRes.ok) {
@@ -118,15 +130,20 @@ export default function HrOnboardingClient({
         setError('Onboarding created but no id returned.')
         return
       }
-      const sendRes = await fetch(`/api/admin/hr/onboarding/${id}/send`, { method: 'POST' })
+      const sendRes = await fetch(`/api/admin/hr/onboarding/${id}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipient_email: recipientEmail }),
+      })
       const sent = await sendRes.json().catch(() => ({}))
       if (!sendRes.ok) {
         setError(sent?.error || 'Onboarding created, but the invite failed to send.')
         return
       }
-      setOk(`Invite sent to ${sent?.sent_to || 'the employee'}.`)
+      setOk(`Invite sent to ${sent?.sent_to || recipientEmail}.`)
       setPickedEmployee('')
-      setShell({ first_name: '', last_name: '', invited_email: '' })
+      setModalOpen(false)
+      setPersonalEmail('')
       router.refresh()
     } catch {
       setError('Network error — please try again.')
@@ -135,24 +152,25 @@ export default function HrOnboardingClient({
     }
   }
 
-  function handleInviteExisting() {
+  // Step 1: open the personal-email modal for the picked employee.
+  function handleOpenSendModal() {
     if (!pickedEmployee) {
       setError('Pick an employee to invite.')
       return
     }
-    createAndSend({ hr_employee_id: Number(pickedEmployee), onboarding_type: onboardingType })
+    setError(null)
+    setPersonalEmail('')
+    setModalOpen(true)
   }
 
-  function handleStartNew() {
-    if (!shell.first_name.trim() || !shell.last_name.trim()) {
-      setError('First and last name are required.')
+  // Step 2: validate the personal email, then create + send.
+  function handleConfirmSend() {
+    const email = personalEmail.trim()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Enter a valid personal email address.')
       return
     }
-    if (!shell.invited_email.trim()) {
-      setError('Email is required.')
-      return
-    }
-    createAndSend({ ...shell, onboarding_type: onboardingType })
+    createAndSend(Number(pickedEmployee), email)
   }
 
   async function handleResend(id: number) {
@@ -228,88 +246,105 @@ export default function HrOnboardingClient({
         </div>
       )}
 
-      {/* Initiate */}
+      {/* Initiate — single path: pick an existing employee → send invite.
+          Type is inherited from the employee (set on Add Employee). */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-        <div className="flex rounded-xl border border-gray-200 overflow-hidden bg-gray-50 w-fit">
-          {(['existing', 'new'] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => { setTab(t); setError(null); setOk(null) }}
-              className={`px-4 h-9 text-sm font-medium transition-all ${
-                tab === t ? 'bg-[#03374f] text-white' : 'text-gray-500 hover:text-gray-700'
-              }`}
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+          <div className="flex-1">
+            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Employee</label>
+            <select
+              value={pickedEmployee}
+              onChange={(e) => setPickedEmployee(e.target.value)}
+              className={INPUT}
             >
-              {t === 'existing' ? 'Invite existing employee' : 'Start new onboarding'}
-            </button>
-          ))}
+              <option value="">Select an employee…</option>
+              {sortedEmployees.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}{e.email ? ` — ${e.email}` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={handleOpenSendModal}
+            disabled={busy}
+            className="h-10 px-5 inline-flex items-center gap-2 rounded-xl bg-[#f26b2b] text-white text-sm font-semibold hover:bg-[#d85c1f] transition-colors disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            Send invite
+          </button>
         </div>
 
-        {/* Onboarding type — shared across both tabs; drives the checklist. */}
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5">Onboarding type</label>
-          <div className="flex rounded-xl border border-gray-200 overflow-hidden bg-gray-50 w-fit">
-            {([['sales_rep', 'Sales Rep'], ['employee', 'Regular Employee']] as const).map(([val, lbl]) => (
-              <button
-                key={val}
-                type="button"
-                onClick={() => setOnboardingType(val)}
-                className={`px-4 h-9 text-sm font-medium transition-all ${
-                  onboardingType === val ? 'bg-[#03374f] text-white' : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {lbl}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {tab === 'existing' ? (
-          <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
-            <div className="flex-1">
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Employee</label>
-              <select
-                value={pickedEmployee}
-                onChange={(e) => setPickedEmployee(e.target.value)}
-                className={INPUT}
-              >
-                <option value="">Select an employee…</option>
-                {sortedEmployees.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.name}{e.email ? ` — ${e.email}` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button
-              type="button"
-              onClick={handleInviteExisting}
-              disabled={busy}
-              className="h-10 px-5 inline-flex items-center gap-2 rounded-xl bg-[#f26b2b] text-white text-sm font-semibold hover:bg-[#d85c1f] transition-colors disabled:opacity-50"
-            >
-              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              Send invite
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input className={INPUT} placeholder="First name" value={shell.first_name} onChange={(e) => setShell((s) => ({ ...s, first_name: e.target.value }))} />
-              <input className={INPUT} placeholder="Last name" value={shell.last_name} onChange={(e) => setShell((s) => ({ ...s, last_name: e.target.value }))} />
-            </div>
-            <input className={INPUT} type="email" placeholder="Email" value={shell.invited_email} onChange={(e) => setShell((s) => ({ ...s, invited_email: e.target.value }))} />
-            <button
-              type="button"
-              onClick={handleStartNew}
-              disabled={busy}
-              className="h-10 px-5 inline-flex items-center gap-2 rounded-xl bg-[#f26b2b] text-white text-sm font-semibold hover:bg-[#d85c1f] transition-colors disabled:opacity-50"
-            >
-              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
-              Create &amp; send invite
-            </button>
+        {/* Inherited onboarding type — read-only, from the selected employee. */}
+        {selectedEmployee && (
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span className="font-semibold">Onboarding type:</span>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium border border-gray-200 bg-gray-50 text-gray-600">
+              {TYPE_LABEL[selectedEmployee.onboarding_type] || 'Sales Rep'}
+            </span>
+            <span className="text-gray-400">— inherited from the employee record; drives the checklist.</span>
           </div>
         )}
       </div>
+
+      {/* Personal-email modal (at send). The invite goes to THIS address. */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-black/40" onClick={() => !busy && setModalOpen(false)} />
+          <div className="relative w-full max-w-md bg-white rounded-2xl border border-gray-100 shadow-xl p-6 space-y-4">
+            <div className="flex items-start gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#03374f]/8 text-[#03374f] flex items-center justify-center flex-shrink-0">
+                <Mail className="w-4.5 h-4.5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-[#03374f]">Send onboarding invite</h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {selectedEmployee?.name ? `For ${selectedEmployee.name}. ` : ''}
+                  Their PCT email isn&apos;t live yet (IT provisions it during onboarding),
+                  so the invite goes to a personal email.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Personal email *</label>
+              <input
+                type="email"
+                autoFocus
+                className={INPUT}
+                value={personalEmail}
+                placeholder="name@gmail.com"
+                onChange={(e) => setPersonalEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmSend() }}
+              />
+              <p className="text-xs text-gray-400 mt-1.5">
+                The invite link is sent to this address — not the employee&apos;s PCT email.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                disabled={busy}
+                className="h-10 px-4 inline-flex items-center rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSend}
+                disabled={busy}
+                className="h-10 px-5 inline-flex items-center gap-2 rounded-xl bg-[#f26b2b] text-white text-sm font-semibold hover:bg-[#d85c1f] transition-colors disabled:opacity-50"
+              >
+                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                Send invite
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* List */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

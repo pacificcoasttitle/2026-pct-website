@@ -42,7 +42,7 @@ function getSg(): typeof sgMail | null {
 }
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const auth = await requireApiRole('hr-tools')
@@ -55,12 +55,30 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid onboarding id' }, { status: 400 })
   }
 
+  // Optional send-time recipient (the personal-email modal). The new hire's
+  // PCT email isn't live until IT provisions it during onboarding, so the
+  // invite goes to a PERSONAL address entered at send-time. When provided,
+  // it overrides (and is persisted as) the invite recipient. Resends with
+  // no body fall back to the stored invited_email.
+  let body: Record<string, unknown> = {}
+  try {
+    body = await request.json()
+  } catch {
+    // No body (e.g. resend) — fine; fall back to the stored recipient.
+  }
+  const recipientOverride = String(body.recipient_email || '').trim().toLowerCase()
+  if (recipientOverride && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientOverride)) {
+    return NextResponse.json({ error: 'Please enter a valid personal email address.' }, { status: 400 })
+  }
+
   const onboarding = await getHrOnboardingById(id)
   if (!onboarding) {
     return NextResponse.json({ error: 'Onboarding record not found.' }, { status: 404 })
   }
 
-  const email = (onboarding.invited_email || String(onboarding.payload?.email || '')).trim().toLowerCase()
+  const email =
+    recipientOverride ||
+    (onboarding.invited_email || String(onboarding.payload?.email || '')).trim().toLowerCase()
   if (!email) {
     return NextResponse.json(
       { error: 'No invite email on this onboarding record.' },
@@ -114,7 +132,9 @@ export async function POST(
     return NextResponse.json({ error: 'Failed to send email. Please try again.' }, { status: 500 })
   }
 
-  const updated = await markHrOnboardingInvited(id)
+  // Persist the personal-email override so the record reflects the actual
+  // recipient. With no override, invited_email is left as-is.
+  const updated = await markHrOnboardingInvited(id, recipientOverride || null)
 
   // Log the actor + recipient + record — NEVER the token.
   console.log(`[hr-onboarding-send] actor=${actor} onboarding_id=${id} sent_to=${email}`)

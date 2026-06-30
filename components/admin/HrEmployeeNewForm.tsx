@@ -31,6 +31,7 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
     office:          '',
     mobile:          '',
     office_phone:    '',
+    onboarding_type: 'sales_rep' as 'sales_rep' | 'employee',
     active:          true,
   })
 
@@ -187,6 +188,27 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
               {offices.map((o) => <option key={o} value={o} />)}
             </datalist>
           </div>
+        </div>
+
+        <div>
+          <label className={LABEL}>Onboarding type</label>
+          <div className="flex rounded-xl border border-gray-200 overflow-hidden bg-gray-50 w-fit">
+            {([['sales_rep', 'Sales Rep'], ['employee', 'Regular Employee']] as const).map(([val, lbl]) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => set('onboarding_type', val)}
+                className={`px-4 h-10 text-sm font-medium transition-all ${
+                  form.onboarding_type === val ? 'bg-[#03374f] text-white' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {lbl}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 mt-1.5">
+            Determines which onboarding checklist this person inherits when you invite them.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

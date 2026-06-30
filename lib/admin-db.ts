@@ -1902,6 +1902,7 @@ export interface HrEmployee {
   office:             string | null
   photo_url:          string | null
   active:             boolean
+  onboarding_type:    string   // 'sales_rep' | 'employee' — drives the onboarding checklist (inherited at onboarding time)
   employment_status:  string | null
   birthday:           string | null
   start_date:         string | null
@@ -1925,6 +1926,7 @@ export interface CreateHrEmployeeInput {
   mobile?:         string | null
   office_phone?:   string | null
   active?:         boolean
+  onboarding_type?: string | null   // 'sales_rep' | 'employee'; defaults 'sales_rep'
   created_by?:     string | null
 }
 
@@ -1958,10 +1960,10 @@ export async function createHrEmployee(input: CreateHrEmployeeInput): Promise<Hr
       `INSERT INTO hr_employees (
          first_name, last_name, full_legal_name, email,
          mobile, office_phone, title, department, office,
-         active, vcard_employee_id, staff_member_id,
+         active, onboarding_type, vcard_employee_id, staff_member_id,
          created_by, updated_by
        ) VALUES (
-         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NULL,NULL,$11,$11
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NULL,NULL,$12,$12
        )
        RETURNING *`,
       [
@@ -1975,6 +1977,7 @@ export async function createHrEmployee(input: CreateHrEmployeeInput): Promise<Hr
         input.department?.trim() || null,
         input.office?.trim() || null,
         input.active === false ? false : true,
+        normalizeOnboardingType(input.onboarding_type),
         input.created_by?.trim() || null,
       ],
     )
@@ -2243,7 +2246,7 @@ export async function getAllHrEmployees(): Promise<HrEmployee[]> {
   const res = await db.query(`
     SELECT id, first_name, last_name, full_legal_name, email,
            mobile, office_phone, title, department, office, photo_url,
-           active, employment_status, birthday, start_date,
+           active, onboarding_type, employment_status, birthday, start_date,
            vcard_employee_id, staff_member_id,
            needs_dedup_review, dedup_review_note, deactivated_at,
            created_at, updated_at
@@ -2432,7 +2435,7 @@ export async function createHrOnboardingForExisting(
 ): Promise<HrOnboardingRecord> {
   const db = getPool()
   const emp = await db.query(
-    `SELECT id, first_name, last_name, email FROM hr_employees WHERE id = $1 LIMIT 1`,
+    `SELECT id, first_name, last_name, email, onboarding_type FROM hr_employees WHERE id = $1 LIMIT 1`,
     [input.hr_employee_id],
   )
   if (!emp.rows[0]) throw new Error('Employee not found.')
@@ -2444,7 +2447,10 @@ export async function createHrOnboardingForExisting(
     email:      e.email,
   }
 
-  const onboardingType = normalizeOnboardingType(input.onboarding_type)
+  // Type is INHERITED from the employee record (set on Add Employee). An
+  // explicit override is honored if passed, but the screen no longer sends
+  // one — the employee's stored type is the source of truth.
+  const onboardingType = normalizeOnboardingType(input.onboarding_type ?? e.onboarding_type)
 
   const res = await db.query(
     `INSERT INTO hr_onboarding (hr_employee_id, status, onboarding_type, invited_email, payload, created_by)
@@ -3308,14 +3314,24 @@ export async function cancelHrOnboarding(
 }
 
 /** Stamp status='invited' + invited_at=NOW() after a successful send. */
-export async function markHrOnboardingInvited(id: number): Promise<HrOnboardingRecord | null> {
+export async function markHrOnboardingInvited(
+  id: number,
+  invitedEmail?: string | null,
+): Promise<HrOnboardingRecord | null> {
   const db = getPool()
+  // When an explicit recipient is provided (the send-time personal-email
+  // modal), persist it as invited_email so the record reflects who the
+  // invite actually went to. Otherwise leave invited_email untouched.
+  const email = invitedEmail?.trim().toLowerCase() || null
   const res = await db.query(
     `UPDATE hr_onboarding
-        SET status = 'invited', invited_at = NOW(), updated_at = NOW()
+        SET status = 'invited',
+            invited_at = NOW(),
+            updated_at = NOW(),
+            invited_email = COALESCE($2, invited_email)
       WHERE id = $1
       RETURNING ${HR_ONBOARDING_COLS}`,
-    [id],
+    [id, email],
   )
   return res.rows[0] || null
 }

@@ -48,14 +48,18 @@ import { roleCanAccess, type CapabilityGroup } from '@/lib/auth/permissions'
  * Upcoming remain cross-linked from the Recap hub — they're
  * configuration surfaces, not daily destinations.
  */
-type NavItem = { href: string; label: string; icon: LucideIcon; group: CapabilityGroup }
+type NavItem = { href: string; label: string; icon: LucideIcon; group: CapabilityGroup; hideForRoles?: string[] }
 type NavGroup = { label: string | null; items: NavItem[] }
 
 const NAV_GROUPS: NavGroup[] = [
   {
     label: null,
     items: [
-      { href: '/admin/team',                          label: 'Dashboard',        icon: LayoutDashboard, group: 'dashboard' },
+      // The generic team Dashboard. Hidden for the scoped `hr` role: HR's
+      // /admin/team lands on /admin/team/hr/dashboard (getDefaultLandingForRole),
+      // so for them this entry and "HR Dashboard" point at the SAME place —
+      // a duplicate. Full-access admins (top_level/manager) keep it.
+      { href: '/admin/team',                          label: 'Dashboard',        icon: LayoutDashboard, group: 'dashboard', hideForRoles: ['hr'] },
     ],
   },
   {
@@ -157,7 +161,9 @@ export default function AdminSidebar({
   const visibleGroups = NAV_GROUPS
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => roleCanAccess(role, item.group)),
+      items: group.items.filter(
+        (item) => roleCanAccess(role, item.group) && !item.hideForRoles?.includes(role),
+      ),
     }))
     .filter((group) => group.items.length > 0)
 
