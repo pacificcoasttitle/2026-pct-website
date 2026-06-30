@@ -197,11 +197,20 @@ export default function HrOnboardingClient({
   return (
     <div className="max-w-4xl mx-auto space-y-6 pt-2 lg:pt-0">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-[#03374f]">Onboarding</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          Invite an employee to complete their onboarding. They receive a secure link by email.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[#03374f]">Onboarding</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Invite an employee to complete their onboarding. They receive a secure link by email.
+          </p>
+        </div>
+        <Link
+          href="/admin/team/hr/onboarding/templates"
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold text-[#03374f] shadow-sm transition-colors hover:border-[#f26b2b]/40 hover:text-[#f26b2b]"
+        >
+          <ClipboardList className="h-3.5 w-3.5" />
+          Manage Checklists
+        </Link>
       </div>
 
       {error && (

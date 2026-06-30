@@ -2571,6 +2571,361 @@ const HR_ONBOARDING_ITEM_COLS = `
   updated_at::text   AS updated_at
 `
 
+export const HR_ONBOARDING_TEMPLATE_TYPES = ['sales_rep', 'employee'] as const
+export type HrOnboardingTemplateType = (typeof HR_ONBOARDING_TEMPLATE_TYPES)[number]
+
+export const HR_ONBOARDING_CHECKLIST_CATEGORIES = [
+  'administrative',
+  'marketing',
+  'customer-service',
+] as const
+export type HrOnboardingChecklistCategory = (typeof HR_ONBOARDING_CHECKLIST_CATEGORIES)[number]
+
+const HR_ONBOARDING_TEMPLATE_COLS = `
+  id,
+  onboarding_type,
+  item_key,
+  label,
+  category,
+  sort_order,
+  active,
+  created_at::text     AS created_at,
+  updated_at::text     AS updated_at,
+  created_by,
+  updated_by,
+  deactivated_at::text AS deactivated_at
+`
+
+export interface HrOnboardingChecklistTemplate {
+  id:              number
+  onboarding_type: HrOnboardingTemplateType
+  item_key:        string
+  label:           string
+  category:        HrOnboardingChecklistCategory
+  sort_order:      number
+  active:          boolean
+  created_at:      string
+  updated_at:      string
+  created_by:      string | null
+  updated_by:      string | null
+  deactivated_at:  string | null
+}
+
+export class HrChecklistTemplateError extends Error {
+  status: number
+
+  constructor(message: string, status = 400) {
+    super(message)
+    this.name = 'HrChecklistTemplateError'
+    this.status = status
+  }
+}
+
+function normalizeTemplateTypeForWrite(type: string | null | undefined): HrOnboardingTemplateType {
+  if (type === 'sales_rep' || type === 'employee') return type
+  throw new HrChecklistTemplateError('onboarding_type must be one of: sales_rep, employee')
+}
+
+function normalizeChecklistCategory(category: string | null | undefined): HrOnboardingChecklistCategory {
+  if (HR_ONBOARDING_CHECKLIST_CATEGORIES.includes(category as HrOnboardingChecklistCategory)) {
+    return category as HrOnboardingChecklistCategory
+  }
+  throw new HrChecklistTemplateError(
+    `category must be one of: ${HR_ONBOARDING_CHECKLIST_CATEGORIES.join(', ')}`,
+  )
+}
+
+function isUniqueTemplateKeyConflict(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code?: string }).code === '23505'
+  )
+}
+
+function cleanActor(actor: string | null | undefined): string | null {
+  return actor?.trim() || null
+}
+
+async function resequenceChecklistTemplateIds(
+  queryable: { query: (text: string, params?: unknown[]) => Promise<unknown> },
+  ids: number[],
+) {
+  for (let i = 0; i < ids.length; i++) {
+    await queryable.query(
+      `UPDATE hr_onboarding_item_templates
+          SET sort_order = $2,
+              updated_at = NOW()
+        WHERE id = $1`,
+      [ids[i], i + 1],
+    )
+  }
+}
+
+/** All template rows for a type (active + inactive), in editor/display order. */
+export async function getChecklistTemplates(
+  onboarding_type: string,
+): Promise<HrOnboardingChecklistTemplate[]> {
+  const type = normalizeTemplateTypeForWrite(onboarding_type)
+  const db = getPool()
+  const res = await db.query(
+    `SELECT ${HR_ONBOARDING_TEMPLATE_COLS}
+       FROM hr_onboarding_item_templates
+      WHERE onboarding_type = $1
+      ORDER BY sort_order ASC, id ASC`,
+    [type],
+  )
+  return res.rows as HrOnboardingChecklistTemplate[]
+}
+
+export async function addChecklistTemplateItem(
+  onboarding_type: string,
+  input: {
+    item_key:    string
+    label:       string
+    category:    string
+    sort_order?: number | null
+  },
+  actor?: string | null,
+): Promise<HrOnboardingChecklistTemplate> {
+  const type = normalizeTemplateTypeForWrite(onboarding_type)
+  const itemKey = input.item_key.trim()
+  const label = input.label.trim()
+  const category = normalizeChecklistCategory(input.category)
+  if (!itemKey) throw new HrChecklistTemplateError('item_key is required.')
+  if (!label) throw new HrChecklistTemplateError('label is required.')
+
+  const db = getPool()
+  const client = await db.connect()
+  try {
+    await client.query('BEGIN')
+    const existing = await client.query(
+      `SELECT id
+         FROM hr_onboarding_item_templates
+        WHERE onboarding_type = $1
+        ORDER BY sort_order ASC, id ASC
+        FOR UPDATE`,
+      [type],
+    )
+    const targetOrder = Number.isInteger(input.sort_order)
+      ? Math.max(1, Math.min(Number(input.sort_order), existing.rows.length + 1))
+      : existing.rows.length + 1
+
+    if (targetOrder <= existing.rows.length) {
+      await client.query(
+        `UPDATE hr_onboarding_item_templates
+            SET sort_order = sort_order + 1,
+                updated_at = NOW()
+          WHERE onboarding_type = $1
+            AND sort_order >= $2`,
+        [type, targetOrder],
+      )
+    }
+
+    const res = await client.query(
+      `INSERT INTO hr_onboarding_item_templates
+         (onboarding_type, item_key, label, category, sort_order, active, created_by, updated_by)
+       VALUES ($1, $2, $3, $4, $5, true, $6, $6)
+       RETURNING ${HR_ONBOARDING_TEMPLATE_COLS}`,
+      [type, itemKey, label, category, targetOrder, cleanActor(actor)],
+    )
+    await client.query('COMMIT')
+    return res.rows[0] as HrOnboardingChecklistTemplate
+  } catch (err) {
+    await client.query('ROLLBACK')
+    if (isUniqueTemplateKeyConflict(err)) {
+      throw new HrChecklistTemplateError(
+        `item_key "${itemKey}" already exists for ${type}. Choose a unique key.`,
+        409,
+      )
+    }
+    throw err
+  } finally {
+    client.release()
+  }
+}
+
+export async function updateChecklistTemplateItem(
+  id: number,
+  input: {
+    label?:      string
+    category?:   string
+    active?:     boolean
+    sort_order?: number | null
+  },
+  actor?: string | null,
+): Promise<HrOnboardingChecklistTemplate | null> {
+  const db = getPool()
+  const client = await db.connect()
+  try {
+    await client.query('BEGIN')
+    const current = await client.query(
+      `SELECT id, onboarding_type, sort_order
+         FROM hr_onboarding_item_templates
+        WHERE id = $1
+        FOR UPDATE`,
+      [id],
+    )
+    const row = current.rows[0] as { id: number; onboarding_type: HrOnboardingTemplateType; sort_order: number } | undefined
+    if (!row) {
+      await client.query('COMMIT')
+      return null
+    }
+
+    const sets = ['updated_at = NOW()', 'updated_by = $2']
+    const values: unknown[] = [id, cleanActor(actor)]
+    let idx = 3
+
+    if (input.label !== undefined) {
+      const label = input.label.trim()
+      if (!label) throw new HrChecklistTemplateError('label is required.')
+      sets.push(`label = $${idx++}`)
+      values.push(label)
+    }
+    if (input.category !== undefined) {
+      sets.push(`category = $${idx++}`)
+      values.push(normalizeChecklistCategory(input.category))
+    }
+    if (input.active !== undefined) {
+      sets.push(`active = $${idx++}`)
+      values.push(input.active)
+      sets.push(`deactivated_at = CASE WHEN $${idx - 1} = false THEN COALESCE(deactivated_at, NOW()) ELSE NULL END`)
+    }
+
+    const updated = await client.query(
+      `UPDATE hr_onboarding_item_templates
+          SET ${sets.join(', ')}
+        WHERE id = $1
+        RETURNING ${HR_ONBOARDING_TEMPLATE_COLS}`,
+      values,
+    )
+
+    let result = updated.rows[0] as HrOnboardingChecklistTemplate
+    if (Number.isInteger(input.sort_order)) {
+      const idsRes = await client.query(
+        `SELECT id
+           FROM hr_onboarding_item_templates
+          WHERE onboarding_type = $1
+          ORDER BY sort_order ASC, id ASC
+          FOR UPDATE`,
+        [row.onboarding_type],
+      )
+      const ids = idsRes.rows.map((r: { id: number }) => r.id).filter((templateId: number) => templateId !== id)
+      const targetIndex = Math.max(0, Math.min(Number(input.sort_order) - 1, ids.length))
+      ids.splice(targetIndex, 0, id)
+      await resequenceChecklistTemplateIds(client, ids)
+      const afterMove = await client.query(
+        `SELECT ${HR_ONBOARDING_TEMPLATE_COLS}
+           FROM hr_onboarding_item_templates
+          WHERE id = $1`,
+        [id],
+      )
+      result = afterMove.rows[0] as HrOnboardingChecklistTemplate
+    }
+
+    await client.query('COMMIT')
+    return result
+  } catch (err) {
+    await client.query('ROLLBACK')
+    throw err
+  } finally {
+    client.release()
+  }
+}
+
+/** Hard-delete a template row only; stamped hr_onboarding_items are never touched. */
+export async function deleteChecklistTemplateItem(id: number): Promise<boolean> {
+  const db = getPool()
+  const client = await db.connect()
+  try {
+    await client.query('BEGIN')
+    const deleted = await client.query(
+      `DELETE FROM hr_onboarding_item_templates
+        WHERE id = $1
+        RETURNING onboarding_type`,
+      [id],
+    )
+    const row = deleted.rows[0] as { onboarding_type: HrOnboardingTemplateType } | undefined
+    if (!row) {
+      await client.query('COMMIT')
+      return false
+    }
+    const idsRes = await client.query(
+      `SELECT id
+         FROM hr_onboarding_item_templates
+        WHERE onboarding_type = $1
+        ORDER BY sort_order ASC, id ASC
+        FOR UPDATE`,
+      [row.onboarding_type],
+    )
+    await resequenceChecklistTemplateIds(client, idsRes.rows.map((r: { id: number }) => r.id))
+    await client.query('COMMIT')
+    return true
+  } catch (err) {
+    await client.query('ROLLBACK')
+    throw err
+  } finally {
+    client.release()
+  }
+}
+
+export async function reorderChecklistTemplateItems(
+  onboarding_type: string,
+  orderedIds: number[],
+  actor?: string | null,
+): Promise<HrOnboardingChecklistTemplate[]> {
+  const type = normalizeTemplateTypeForWrite(onboarding_type)
+  if (orderedIds.length === 0) throw new HrChecklistTemplateError('orderedIds is required.')
+  if (new Set(orderedIds).size !== orderedIds.length || orderedIds.some((id) => !Number.isInteger(id) || id <= 0)) {
+    throw new HrChecklistTemplateError('orderedIds must contain unique positive integer ids.')
+  }
+
+  const db = getPool()
+  const client = await db.connect()
+  try {
+    await client.query('BEGIN')
+    const current = await client.query(
+      `SELECT id
+         FROM hr_onboarding_item_templates
+        WHERE onboarding_type = $1
+        ORDER BY sort_order ASC, id ASC
+        FOR UPDATE`,
+      [type],
+    )
+    const currentIds = current.rows.map((r: { id: number }) => r.id)
+    const currentSet = new Set(currentIds)
+    if (currentIds.length !== orderedIds.length || orderedIds.some((id) => !currentSet.has(id))) {
+      throw new HrChecklistTemplateError('orderedIds must include every template item for the selected type exactly once.')
+    }
+
+    for (let i = 0; i < orderedIds.length; i++) {
+      await client.query(
+        `UPDATE hr_onboarding_item_templates
+            SET sort_order = $2,
+                updated_by = $3,
+                updated_at = NOW()
+          WHERE id = $1`,
+        [orderedIds[i], i + 1, cleanActor(actor)],
+      )
+    }
+    const res = await client.query(
+      `SELECT ${HR_ONBOARDING_TEMPLATE_COLS}
+         FROM hr_onboarding_item_templates
+        WHERE onboarding_type = $1
+        ORDER BY sort_order ASC, id ASC`,
+      [type],
+    )
+    await client.query('COMMIT')
+    return res.rows as HrOnboardingChecklistTemplate[]
+  } catch (err) {
+    await client.query('ROLLBACK')
+    throw err
+  } finally {
+    client.release()
+  }
+}
+
 // A resolved checklist item to stamp (DB template row OR code fallback).
 interface ResolvedChecklistItem {
   item_key: string
