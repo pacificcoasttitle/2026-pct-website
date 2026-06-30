@@ -2248,7 +2248,8 @@ export async function getAllHrEmployees(): Promise<HrEmployee[]> {
            needs_dedup_review, dedup_review_note, deactivated_at,
            created_at, updated_at
       FROM hr_employees
-     ORDER BY LOWER(COALESCE(first_name, '')) ASC,
+     ORDER BY active DESC,
+              LOWER(COALESCE(first_name, '')) ASC,
               LOWER(COALESCE(last_name,  '')) ASC,
               id ASC
   `)
