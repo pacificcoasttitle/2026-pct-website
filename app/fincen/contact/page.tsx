@@ -6,7 +6,7 @@ import { Footer } from "@/components/footer"
 import { FinCENHero } from "@/components/fincen/fincen-hero"
 import { CTABox } from "@/components/fincen/cta-box"
 import { CheckCircle, Mail, Send } from "lucide-react"
-import PhoneInput from "@/components/ui/PhoneInput"
+import PhoneInput, { isValidUsPhone } from "@/components/ui/PhoneInput"
 
 const steps = [
   { num: 1, text: "We confirm whether the scenario is likely reportable." },
@@ -62,8 +62,14 @@ export default function FinCENContactPage() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
+  const [phoneInvalid, setPhoneInvalid] = useState(false)
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!isValidUsPhone(formData.phone)) {
+      setPhoneInvalid(true)
+      return
+    }
     setLoading(true)
     await new Promise((res) => setTimeout(res, 1200))
     setLoading(false)
@@ -178,7 +184,8 @@ export default function FinCENContactPage() {
                       name="phone"
                       placeholder="(714) 555-0100"
                       value={formData.phone}
-                      onChange={(v) => setFormData((prev) => ({ ...prev, phone: v }))}
+                      onChange={(v) => { setFormData((prev) => ({ ...prev, phone: v })); setPhoneInvalid(false) }}
+                      showInvalid={phoneInvalid}
                       className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
                     />
                   </div>

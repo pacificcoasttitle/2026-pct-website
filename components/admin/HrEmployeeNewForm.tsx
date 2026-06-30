@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, UserPlus, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
-import PhoneInput from '@/components/ui/PhoneInput'
+import PhoneInput, { isValidUsPhone } from '@/components/ui/PhoneInput'
 
 interface Props {
   departments: string[]
@@ -52,6 +52,10 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
     }
     if (!form.email.trim()) {
       setError('Email is required.')
+      return
+    }
+    if (!isValidUsPhone(form.mobile) || !isValidUsPhone(form.office_phone)) {
+      setError('Phone numbers must be US 10-digit (e.g. (714) 555-1234).')
       return
     }
 

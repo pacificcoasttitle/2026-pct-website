@@ -30,7 +30,7 @@ import {
   ArrowLeft, Loader2, AlertTriangle, Check, ShieldCheck, Lock,
   ChevronDown, UploadCloud, CheckCircle2, FileText, RefreshCw, Pencil,
 } from 'lucide-react'
-import PhoneInput from '@/components/ui/PhoneInput'
+import PhoneInput, { isValidUsPhone } from '@/components/ui/PhoneInput'
 
 export interface HrOnboardingFormData {
   first_name: string
@@ -210,6 +210,15 @@ export default function HrOnboardingForm({
     // allowlist is the source of truth; "save for later" stays permissive.
     if (!form.first_name.trim() || !form.last_name.trim()) {
       setError('Please provide your first and last name.')
+      setStep(0)
+      focusCard()
+      return
+    }
+    // Phones are US 10-digit. Mobile is required; emergency phone optional
+    // (empty is valid). Block submit on non-conforming input rather than
+    // silently truncating.
+    if (!isValidUsPhone(form.mobile) || !isValidUsPhone(form.emergency_contact_phone)) {
+      setError('Phone numbers must be US 10-digit (e.g. (555) 123-4567).')
       setStep(0)
       focusCard()
       return

@@ -12,7 +12,7 @@ import {
   Upload,
   User as UserIcon,
 } from 'lucide-react'
-import PhoneInput from '@/components/ui/PhoneInput'
+import PhoneInput, { isValidUsPhone } from '@/components/ui/PhoneInput'
 
 interface CoreFields {
   id:              number
@@ -132,6 +132,15 @@ export default function HrEmployeeEditForm({ employee, departments, offices }: P
     }
     if (!form.email.trim()) {
       setError('Email is required.')
+      return
+    }
+    // Only validate a phone field the user actually CHANGED — a legacy
+    // non-conforming value left untouched must round-trip unchanged.
+    const mobileChanged = (form.mobile ?? '') !== (employee.mobile ?? '')
+    const officeChanged = (form.office_phone ?? '') !== (employee.office_phone ?? '')
+    if ((mobileChanged && !isValidUsPhone(form.mobile)) ||
+        (officeChanged && !isValidUsPhone(form.office_phone))) {
+      setError('Phone numbers must be US 10-digit (e.g. (714) 555-1234).')
       return
     }
     setSaving(true)

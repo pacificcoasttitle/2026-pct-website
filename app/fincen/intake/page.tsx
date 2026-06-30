@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation"
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import Link from "next/link"
-import SharedPhoneInput, { formatPhoneDisplay } from "@/components/ui/PhoneInput"
+import SharedPhoneInput, { formatPhoneDisplay, isValidUsPhone } from "@/components/ui/PhoneInput"
 import {
   CheckCircle,
   ChevronLeft,
@@ -423,6 +423,9 @@ function IntakeFormContent() {
       if (!data.propertyType)          e.propertyType   = "Required"
       if (!data.closingDate)           e.closingDate    = "Required"
       if (!data.purchasePrice || parseFloat(data.purchasePrice.replace(/[,$]/g, "")) <= 0) e.purchasePrice = "Valid amount required"
+      // Phones are US 10-digit (optional). Flag non-conforming input rather
+      // than silently truncating it.
+      if (!isValidUsPhone(data.officerPhone)) e.officerPhone = "Enter a US 10-digit phone number"
     }
 
     if (step === 2) {
@@ -434,12 +437,14 @@ function IntakeFormContent() {
         if (!data.buyerStreet.trim())    e.buyerStreet    = "Required"
         if (!data.buyerCity.trim())      e.buyerCity      = "Required"
         if (!data.buyerZip.trim())       e.buyerZip       = "Required"
+        if (!isValidUsPhone(data.buyerPhone)) e.buyerPhone = "Enter a US 10-digit phone number"
       } else if (data.buyerType === "trust") {
         if (!data.trustName.trim())     e.trustName     = "Required"
         if (!data.trusteeName.trim())   e.trusteeName   = "Required"
         if (!data.trustStreet.trim())   e.trustStreet   = "Required"
         if (!data.trustCity.trim())     e.trustCity     = "Required"
         if (!data.trustZip.trim())      e.trustZip      = "Required"
+        if (!isValidUsPhone(data.trusteePhone)) e.trusteePhone = "Enter a US 10-digit phone number"
       } else {
         if (!data.entityName.trim())        e.entityName           = "Required"
         if (!data.entityFormationState)     e.entityFormationState = "Required"
@@ -447,6 +452,7 @@ function IntakeFormContent() {
         if (!data.entityStreet.trim())      e.entityStreet      = "Required"
         if (!data.entityCity.trim())        e.entityCity        = "Required"
         if (!data.entityZip.trim())         e.entityZip         = "Required"
+        if (!isValidUsPhone(data.entityContactPhone)) e.entityContactPhone = "Enter a US 10-digit phone number"
       }
     }
 
@@ -454,6 +460,7 @@ function IntakeFormContent() {
       data.sellers.forEach((s, i) => {
         if (!s.name.trim()) e[`seller_${i}_name`] = "Required"
         if (!s.sellerType)  e[`seller_${i}_type`] = "Required"
+        if (!isValidUsPhone(s.phone)) e[`seller_${i}_phone`] = "Enter a US 10-digit phone number"
       })
     }
 
@@ -819,7 +826,7 @@ function IntakeFormContent() {
                     />
                   </Field>
                   <div className="grid md:grid-cols-2 gap-4">
-                    <Field label="Phone">
+                    <Field label="Phone" error={errors.buyerPhone}>
                       <PhoneInput value={data.buyerPhone} onChange={setStr("buyerPhone")} placeholder="(555) 000-0000" />
                     </Field>
                     <Field label="Email">
@@ -865,7 +872,7 @@ function IntakeFormContent() {
                     <TextInput value={data.entityContactName} onChange={setStr("entityContactName")} placeholder="Full name" />
                   </Field>
                   <div className="grid md:grid-cols-2 gap-4">
-                    <Field label="Contact Phone">
+                    <Field label="Contact Phone" error={errors.entityContactPhone}>
                       <PhoneInput value={data.entityContactPhone} onChange={setStr("entityContactPhone")} />
                     </Field>
                     <Field label="Contact Email">
@@ -920,7 +927,7 @@ function IntakeFormContent() {
                     <TextInput value={data.trusteeName} onChange={setStr("trusteeName")} placeholder="Full name" />
                   </Field>
                   <div className="grid md:grid-cols-2 gap-4">
-                    <Field label="Trustee Phone">
+                    <Field label="Trustee Phone" error={errors.trusteePhone}>
                       <PhoneInput value={data.trusteePhone} onChange={setStr("trusteePhone")} />
                     </Field>
                     <Field label="Trustee Email">
@@ -1005,7 +1012,7 @@ function IntakeFormContent() {
                   )}
 
                   <div className="grid md:grid-cols-2 gap-4">
-                    <Field label="Phone">
+                    <Field label="Phone" error={errors[`seller_${i}_phone`]}>
                       <PhoneInput value={seller.phone} onChange={v => { const u = [...data.sellers]; u[i] = { ...u[i], phone: v }; set("sellers", u) }} />
                     </Field>
                     <Field label="Email">

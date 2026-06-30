@@ -13,7 +13,7 @@
  */
 
 import { useState } from 'react'
-import PhoneInput from '@/components/ui/PhoneInput'
+import PhoneInput, { isValidUsPhone } from '@/components/ui/PhoneInput'
 
 const NAVY   = '#03374f'
 const ORANGE = '#f26b2b'
@@ -83,6 +83,15 @@ export function OnboardingProfileForm({ token, locked, initial, initialVerifiedA
   }
 
   async function save() {
+    // Only validate a phone the user actually CHANGED — a legacy
+    // non-conforming value left untouched must round-trip unchanged.
+    const phoneChanged = values.phone !== initial.phone
+    const mobileChanged = values.mobile !== initial.mobile
+    if ((phoneChanged && !isValidUsPhone(values.phone)) ||
+        (mobileChanged && !isValidUsPhone(values.mobile))) {
+      setError('Phone and Mobile must be US 10-digit numbers (e.g. (714) 555-1234).')
+      return
+    }
     setSaving(true); setError(''); setJustSaved(false)
     try {
       const res = await fetch(`/api/onboarding/${encodeURIComponent(token)}/profile`, {

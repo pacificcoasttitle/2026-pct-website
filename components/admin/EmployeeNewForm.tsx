@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
-import PhoneInput from '@/components/ui/PhoneInput'
+import PhoneInput, { isValidUsPhone } from '@/components/ui/PhoneInput'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -110,6 +110,10 @@ export default function EmployeeNewForm({ offices, depts }: Props) {
     e.preventDefault()
     if (!form.first_name.trim() || !form.last_name.trim()) {
       setError('First name and last name are required.')
+      return
+    }
+    if (!isValidUsPhone(form.mobile) || !isValidUsPhone(form.phone)) {
+      setError('Phone numbers must be US 10-digit (e.g. (555) 555-1212).')
       return
     }
     setSaving(true)

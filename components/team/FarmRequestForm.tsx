@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { CheckCircle, AlertCircle, Loader2, MapPin, List } from 'lucide-react'
-import PhoneInput from '@/components/ui/PhoneInput'
+import PhoneInput, { isValidUsPhone } from '@/components/ui/PhoneInput'
 
 const LIST_TYPES = [
   { value: 'OUT_OF_STATE', label: 'Out-of-State Owners' },
@@ -69,6 +69,11 @@ export function FarmRequestForm({ repSlug, repName, repEmail }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.list_type || !form.city_area || !form.list_size || !form.contact_name || !form.contact_email) return
+    if (!isValidUsPhone(form.contact_phone)) {
+      setStatus('error')
+      setErrorMsg('Phone must be a US 10-digit number (e.g. (714) 555-0100).')
+      return
+    }
 
     setStatus('loading')
     setErrorMsg('')
