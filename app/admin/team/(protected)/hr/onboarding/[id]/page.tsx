@@ -15,6 +15,7 @@ import { requirePageRole } from '@/lib/auth/guards'
 import {
   getHrOnboardingById,
   getHrOnboardingDocuments,
+  getHrDepartmentKickoffState,
   getHrOnboardingItems,
   seedHrOnboardingItems,
 } from '@/lib/admin-db'
@@ -44,7 +45,10 @@ export default async function HrOnboardingReviewPage({
   // created before the checklist shipped get their items here. New rows
   // are already seeded at create — this is a no-op for them.
   await seedHrOnboardingItems(onboarding.id, (onboarding as { onboarding_type?: string }).onboarding_type)
-  const items = await getHrOnboardingItems(id)
+  const [items, departmentKickoff] = await Promise.all([
+    getHrOnboardingItems(id),
+    getHrDepartmentKickoffState(id),
+  ])
 
   return (
     <>
@@ -65,6 +69,7 @@ export default async function HrOnboardingReviewPage({
           file_name: d.file_name,
           uploaded_at: d.uploaded_at,
         }))}
+        departmentKickoff={departmentKickoff}
       />
       <HrOnboardingChecklist
         onboardingId={onboarding.id}

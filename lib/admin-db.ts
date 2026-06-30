@@ -3052,6 +3052,67 @@ export interface HrDepartmentChecklistView {
   items:         HrDepartmentChecklistItem[]
 }
 
+export interface HrDepartmentKickoffState {
+  category:   HrOnboardingChecklistCategory
+  item_count: number
+  sent_to:    string | null
+  sent_at:    string | null
+  sent_by:    string | null
+}
+
+/** HR-facing visibility into which departments have tasks and prior sends. */
+export async function getHrDepartmentKickoffState(
+  onboardingId: number,
+): Promise<HrDepartmentKickoffState[]> {
+  const db = getPool()
+  const res = await db.query(
+    `WITH categories(category) AS (
+       VALUES ('administrative'), ('marketing'), ('customer-service')
+     ),
+     item_counts AS (
+       SELECT category, COUNT(*)::int AS item_count
+         FROM hr_onboarding_items
+        WHERE onboarding_id = $1
+        GROUP BY category
+     )
+     SELECT c.category,
+            COALESCE(ic.item_count, 0)::int AS item_count,
+            t.sent_to,
+            t.sent_at::text AS sent_at,
+            t.sent_by
+       FROM categories c
+       LEFT JOIN item_counts ic ON ic.category = c.category
+       LEFT JOIN hr_onboarding_department_tokens t
+         ON t.onboarding_id = $1 AND t.category = c.category
+      ORDER BY CASE c.category
+        WHEN 'administrative' THEN 1
+        WHEN 'marketing' THEN 2
+        WHEN 'customer-service' THEN 3
+        ELSE 99
+      END`,
+    [onboardingId],
+  )
+  return res.rows as HrDepartmentKickoffState[]
+}
+
+export async function markHrDepartmentTokenSent(
+  onboardingId: number,
+  category: HrOnboardingChecklistCategory,
+  sentTo: string,
+  actor: string | null,
+): Promise<void> {
+  const db = getPool()
+  await db.query(
+    `UPDATE hr_onboarding_department_tokens
+        SET sent_to = $3,
+            sent_at = NOW(),
+            sent_by = $4,
+            updated_at = NOW()
+      WHERE onboarding_id = $1 AND category = $2`,
+    [onboardingId, category, sentTo.trim(), actor?.trim() || null],
+  )
+}
+
 /**
  * Token-facing department view. PII boundary: returns only a display name
  * and checklist item task fields for the token's category; never payload,

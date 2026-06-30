@@ -13,6 +13,21 @@ interface DocRow {
   uploaded_at: string
 }
 
+interface DepartmentKickoffRow {
+  category: string
+  item_count: number
+  sent_to: string | null
+  sent_at: string | null
+  sent_by: string | null
+}
+
+interface DepartmentKickoffResult {
+  sent?: Array<{ category: string; department: string; sent_to: string; item_count: number }>
+  skipped?: Array<{ category: string; department: string; reason: string }>
+  failed?: Array<{ category: string; department: string; sent_to: string; item_count: number; error: string }>
+  tracking?: DepartmentKickoffRow[]
+}
+
 interface Props {
   id: number
   status: string
@@ -25,6 +40,7 @@ interface Props {
   createdAt: string
   tokenExpiresAt: string | null
   documents: DocRow[]
+  departmentKickoff: DepartmentKickoffRow[]
 }
 
 // Fields that map to hr_employees on finalize (4a design).
@@ -64,6 +80,12 @@ const DOC_TYPE_LABEL: Record<string, string> = {
   headshot: 'Headshot',
   // signed_policy retired (upload prompt removed); legacy rows fall back
   // to the raw doc_type via `|| d.doc_type` at the render site.
+}
+
+const DEPARTMENT_LABEL: Record<string, string> = {
+  administrative: 'Administrative',
+  marketing: 'Marketing',
+  'customer-service': 'Customer Service',
 }
 
 function str(payload: Record<string, unknown>, key: string): string {
@@ -115,14 +137,18 @@ function FieldRow({ label, value }: { label: string; value: string }) {
 export default function HrOnboardingReviewClient(props: Props) {
   const router = useRouter()
   const [status, setStatus] = useState(props.status)
-  const [busy, setBusy] = useState<null | 'finalize' | 'changes' | 'cancel'>(null)
+  const [busy, setBusy] = useState<null | 'finalize' | 'changes' | 'cancel' | 'kickoff'>(null)
   const [error, setError] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
+  const [departmentKickoff, setDepartmentKickoff] = useState(props.departmentKickoff)
+  const [kickoffResult, setKickoffResult] = useState<DepartmentKickoffResult | null>(null)
 
   const isSubmitted = status === 'submitted'
   const isFinalized = status === 'finalized'
   const isCancelled = status === 'cancelled'
   const canCancel = !isFinalized && !isCancelled
+  const canKickoffDepartments = isSubmitted || isFinalized
+  const hasKickedOffDepartments = departmentKickoff.some((row) => row.sent_at)
 
   const expired =
     !!props.tokenExpiresAt &&
@@ -170,6 +196,25 @@ export default function HrOnboardingReviewClient(props: Props) {
     } finally { setBusy(null) }
   }
 
+  async function kickoffDepartments() {
+    if (!canKickoffDepartments) return
+    const verb = hasKickedOffDepartments ? 'Re-send department kickoff emails?' : 'Kick off department checklist emails?'
+    if (!confirm(`${verb} This sends one email to each department that has checklist items.`)) return
+    setError(null); setNote(null); setKickoffResult(null); setBusy('kickoff')
+    try {
+      const res = await fetch(`/api/admin/hr/onboarding/${props.id}/kickoff`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setError(data?.error || 'Could not kick off departments.'); return }
+      setKickoffResult(data)
+      if (Array.isArray(data.tracking)) setDepartmentKickoff(data.tracking)
+      const sent = Array.isArray(data.sent) ? data.sent.length : 0
+      const failed = Array.isArray(data.failed) ? data.failed.length : 0
+      const skipped = Array.isArray(data.skipped) ? data.skipped.length : 0
+      setNote(`Department kickoff complete — sent ${sent}, skipped ${skipped}, failed ${failed}. Re-sends refresh department links.`)
+      router.refresh()
+    } finally { setBusy(null) }
+  }
+
   return (
     <div style={{ maxWidth: 820, margin: '0 auto', padding: '8px 0 40px 0' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
@@ -205,6 +250,54 @@ export default function HrOnboardingReviewClient(props: Props) {
           }
         />
         <FieldRow label="Linked employee" value={props.hrEmployeeId ? `#${props.hrEmployeeId} (existing — will update)` : 'None (new hire — will create)'} />
+      </Card>
+
+      <Card title="Department kickoff">
+        <p style={{ margin: '0 0 10px 0', fontSize: 12, color: '#9ca3af' }}>
+          Sends one task-only checklist link to each department with items. Re-send refreshes the department links.
+        </p>
+        {departmentKickoff.map((row) => (
+          <div key={row.category} style={{ display: 'flex', gap: 12, padding: '8px 0', borderTop: '1px solid #f3f4f6', fontSize: 14, alignItems: 'center' }}>
+            <div style={{ width: 150, color: NAVY, fontWeight: 700 }}>{DEPARTMENT_LABEL[row.category] || row.category}</div>
+            <div style={{ width: 80, color: '#6b7280' }}>{row.item_count} item{row.item_count === 1 ? '' : 's'}</div>
+            <div style={{ flex: 1, color: row.sent_at ? '#047857' : '#9ca3af' }}>
+              {row.sent_at
+                ? `Sent ${fmt(row.sent_at)} to ${row.sent_to || '—'}${row.sent_by ? ` by ${row.sent_by}` : ''}`
+                : row.item_count > 0 ? 'Not sent yet' : 'Skipped — no items'}
+            </div>
+          </div>
+        ))}
+        {kickoffResult && (
+          <div style={{ marginTop: 12, padding: 12, borderRadius: 10, backgroundColor: '#f9fafb', border: '1px solid #eef0f2', fontSize: 13 }}>
+            {(kickoffResult.sent || []).length > 0 && (
+              <div style={{ color: '#047857', marginBottom: 6 }}>
+                Sent: {(kickoffResult.sent || []).map((r) => `${r.department} → ${r.sent_to}`).join(', ')}
+              </div>
+            )}
+            {(kickoffResult.skipped || []).length > 0 && (
+              <div style={{ color: '#6b7280', marginBottom: 6 }}>
+                Skipped: {(kickoffResult.skipped || []).map((r) => `${r.department} (${r.reason})`).join(', ')}
+              </div>
+            )}
+            {(kickoffResult.failed || []).length > 0 && (
+              <div style={{ color: '#b91c1c' }}>
+                Failed: {(kickoffResult.failed || []).map((r) => `${r.department} (${r.error})`).join(', ')}
+              </div>
+            )}
+          </div>
+        )}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
+          <button
+            type="button"
+            onClick={kickoffDepartments}
+            disabled={!canKickoffDepartments || busy !== null}
+            style={{ height: 40, padding: '0 16px', borderRadius: 10, border: 'none', backgroundColor: NAVY, color: '#fff', fontSize: 14, fontWeight: 700, cursor: canKickoffDepartments ? 'pointer' : 'not-allowed', opacity: !canKickoffDepartments || busy ? 0.6 : 1 }}
+          >
+            {busy === 'kickoff'
+              ? 'Sending…'
+              : hasKickedOffDepartments ? 'Re-send departments' : 'Kick off departments'}
+          </button>
+        </div>
       </Card>
 
       <Card title="Will be saved to the employee record">
