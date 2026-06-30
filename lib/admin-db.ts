@@ -2234,9 +2234,9 @@ export async function updateHrEmployee(
 }
 
 /**
- * Read the full HR roster. Order: active first, then alphabetical by
- * last name — same convention as the Sales Reps (vcard) list. DB-light:
- * a single indexed SELECT, no joins, no external calls.
+ * Read the full HR roster. Order: first name A-Z, case-insensitive,
+ * then last name for ties. DB-light: a single indexed SELECT, no joins,
+ * no external calls.
  */
 export async function getAllHrEmployees(): Promise<HrEmployee[]> {
   const db = getPool()
@@ -2248,7 +2248,9 @@ export async function getAllHrEmployees(): Promise<HrEmployee[]> {
            needs_dedup_review, dedup_review_note, deactivated_at,
            created_at, updated_at
       FROM hr_employees
-     ORDER BY active DESC, last_name ASC, first_name ASC
+     ORDER BY LOWER(COALESCE(first_name, '')) ASC,
+              LOWER(COALESCE(last_name,  '')) ASC,
+              id ASC
   `)
   return res.rows
 }
