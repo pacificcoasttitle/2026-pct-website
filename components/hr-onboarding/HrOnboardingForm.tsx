@@ -57,14 +57,11 @@ type FieldKey = keyof HrOnboardingFormData
 
 const STEPS = ['Basics', 'Personal', 'Emergency', 'Documents', 'Review'] as const
 
-// HR document types the employee uploads. ⚠️ Keys MATCH the upload route's
-// doc_type allowlist (id/tax_form/direct_deposit) — display labels only.
-const DOC_TYPES: { key: string; label: string }[] = [
-  { key: 'id', label: 'Government ID' },
-  { key: 'tax_form', label: 'Tax Form (W-4)' },
-  { key: 'direct_deposit', label: 'Direct Deposit Form' },
-]
-const ACCEPT = '.pdf,.png,.jpg,.jpeg,.webp'
+// Standard document uploads (government ID, tax form, direct deposit) were
+// removed from onboarding — HR collects those separately. Only sales-rep
+// materials remain, gated by onboarding_type === 'sales_rep'. Retrieval +
+// labels for any already-uploaded standard docs live in the HR-side views
+// and the upload route allowlist (kept intact so old docs stay viewable).
 // Sales-rep-only extras (shown only when onboarding_type === 'sales_rep').
 const HEADSHOT_ACCEPT = '.png,.jpg,.jpeg,.webp'
 const CLIENT_LIST_ACCEPT =
@@ -521,20 +518,20 @@ function DocumentsStep({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-4">
-        {DOC_TYPES.map((d) => (
-          <UploadTile
-            key={d.key}
-            label={d.label}
-            accept={ACCEPT}
-            hint="PDF · PNG · JPG"
-            fileName={docs[d.key]}
-            uploading={uploadingDoc === d.key}
-            disabled={!!uploadingDoc && uploadingDoc !== d.key}
-            onSelect={(file) => onSelect(d.key, file)}
-          />
-        ))}
-      </div>
+      {/* Standard document uploads (government ID, tax form, direct deposit)
+          are no longer collected via onboarding — HR handles those
+          separately. Regular employees therefore have no uploads here and
+          see a friendly note; sales reps still upload their materials. */}
+      {!isSalesRep && (
+        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-input bg-muted/30 px-4 py-8 text-center">
+          <ShieldCheck className="size-6 text-[var(--success)]" aria-hidden="true" />
+          <h3 className="text-sm font-semibold text-foreground">No documents needed</h3>
+          <p className="max-w-[380px] text-xs text-muted-foreground">
+            There&rsquo;s nothing to upload here — just continue to review and submit.
+            HR will reach out directly if any paperwork is required.
+          </p>
+        </div>
+      )}
 
       {/* Sales-rep-only extras: headshot, bio, client list. Regular
           employees never see these (type-gated). Collect + store only. */}
@@ -574,13 +571,17 @@ function DocumentsStep({
         </div>
       )}
 
-      <p className="flex items-center justify-center gap-2 rounded-lg bg-secondary/60 px-4 py-3 text-center text-xs font-medium text-muted-foreground">
-        <ShieldCheck className="size-4 shrink-0 text-[var(--success)]" aria-hidden="true" />
-        Your documents are encrypted and only visible to HR.
-      </p>
-      <p className="text-center text-xs text-muted-foreground">
-        You can submit even if you upload some documents later — HR will follow up if anything is missing.
-      </p>
+      {isSalesRep && (
+        <>
+          <p className="flex items-center justify-center gap-2 rounded-lg bg-secondary/60 px-4 py-3 text-center text-xs font-medium text-muted-foreground">
+            <ShieldCheck className="size-4 shrink-0 text-[var(--success)]" aria-hidden="true" />
+            Your documents are encrypted and only visible to HR.
+          </p>
+          <p className="text-center text-xs text-muted-foreground">
+            You can submit even if you upload some documents later — HR will follow up if anything is missing.
+          </p>
+        </>
+      )}
     </div>
   )
 }

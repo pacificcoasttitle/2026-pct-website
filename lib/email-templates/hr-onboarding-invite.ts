@@ -135,18 +135,18 @@ export const HR_ONBOARDING_INVITE_TEMPLATE = `
               </p>
               {{#is_existing_employee}}
               <p style="margin:0 0 16px 0; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:16px; line-height:25px; color:${PCT_BRAND.navy};">
-                We&rsquo;re updating our records and want to make sure we have your current information on file.
+                Hope you&rsquo;re doing well! It&rsquo;s time to complete a quick onboarding update so we can keep your information current.
               </p>
               <p style="margin:0; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:16px; line-height:25px; color:${PCT_BRAND.navy};">
-                Please take a few minutes to review and confirm your details. It only takes a moment, and keeps everything accurate for payroll, benefits, and emergencies.
+                Please take a few minutes to review and confirm your details &mdash; it only takes a moment, and keeps everything accurate for payroll, benefits, and emergencies. Thanks for helping us stay up to date!
               </p>
               {{/is_existing_employee}}
               {{^is_existing_employee}}
               <p style="margin:0 0 16px 0; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:16px; line-height:25px; color:${PCT_BRAND.navy};">
-                We&rsquo;re excited to have you on the team. To get started, please complete your onboarding.
+                Welcome to Pacific Coast Title &mdash; we&rsquo;re genuinely excited to have you joining the team!
               </p>
               <p style="margin:0; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:16px; line-height:25px; color:${PCT_BRAND.navy};">
-                It takes about 10 minutes and collects the information we need to set you up &mdash; your details, emergency contact, and a few required documents.
+                To get you set up for a great first day, please take a few minutes to complete your onboarding. It&rsquo;s quick &mdash; about 10 minutes &mdash; and just gathers a few details and your emergency contact so everything&rsquo;s ready when you arrive.
               </p>
               {{/is_existing_employee}}
             </td>

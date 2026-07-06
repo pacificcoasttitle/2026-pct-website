@@ -95,10 +95,20 @@ export async function POST(
     return NextResponse.json({ error: 'Failed to generate onboarding link.' }, { status: 500 })
   }
 
-  // Existing employee (linked FK) → maintenance/confirm copy; new shell
-  // (null FK) → welcome copy. Conditional copy + subject only; branding
-  // is identical in both cases (visual redesign is a later V0 ticket).
-  const isExisting = onboarding.hr_employee_id != null
+  // ⚠️ FLAG FOR DIRECTOR — new-vs-existing signal is no longer derivable.
+  // The prior check `hr_employee_id != null` is now ALWAYS true: the
+  // single-path flow adds EVERY hire (new or existing) via Add Employee
+  // first, so every onboarding has a linked hr_employees row. That made
+  // new hires wrongly receive the "confirm your info on file" existing-
+  // employee copy. There is no reliable tenure signal on the data model
+  // today (onboarding_type is sales_rep/employee — a checklist driver,
+  // not new-vs-existing). Rather than guess, we DEFAULT to the warm,
+  // welcoming NEW-hire copy for everyone (the common + safer case). If HR
+  // wants a distinct "existing employee, confirm info" path, the Director
+  // should decide the signal (e.g. an explicit "new hire" flag captured at
+  // Add Employee time) — then flip this default accordingly. The template's
+  // two-branch mechanism is left intact so wiring a real flag is a one-liner.
+  const isExisting = false
   const subject = isExisting ? SUBJECT_EXISTING : SUBJECT_NEW
 
   // Public route is /hr-onboarding/[token] (4c builds it).

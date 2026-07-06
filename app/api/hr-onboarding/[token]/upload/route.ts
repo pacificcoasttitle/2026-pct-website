@@ -37,6 +37,12 @@ const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20 MB
 // HR document types the public caller may upload. 'client_list' is the
 // sales-rep contact/client list (spreadsheet or PDF); the wizard shows it
 // only for sales_rep onboardings, but the allowlist is enforced here.
+// ⚠️ id/tax_form/direct_deposit are RETAINED in the allowlist even though
+// the wizard no longer offers those upload tiles. This is intentional: it
+// keeps already-uploaded standard docs (from earlier testing) retrievable
+// and their labels intact. No new standard uploads happen because the UI
+// tiles were removed — the allowlist is a retrieval/back-compat safety net,
+// not a new-upload surface.
 const DOC_TYPES = new Set(['id', 'tax_form', 'direct_deposit', 'headshot', 'client_list'])
 
 // Doc types valid ONLY on a sales_rep onboarding (server-enforced gate).
