@@ -181,7 +181,14 @@ export default async function HrOnboardingTokenPage({
     home_state:                     val('home_state'),
     home_zip:                       val('home_zip'),
     t_shirt_size:                   val('t_shirt_size'),
+    bio:                            val('bio'),
   }
+
+  // Onboarding type drives the sales-rep-only document collection in the
+  // wizard. It's on the resolved record (stamped from the employee). Any
+  // non-'employee' value falls back to 'sales_rep'.
+  const onboardingType: 'sales_rep' | 'employee' =
+    record.onboarding_type === 'employee' ? 'employee' : 'sales_rep'
 
   // Heading greeting uses the resolved first name (draft or HR seed).
   const firstName = initial.first_name.trim()
@@ -205,7 +212,7 @@ export default async function HrOnboardingTokenPage({
         </p>
       </div>
 
-      <HrOnboardingForm token={token} initial={initial} mode={isExisting ? 'existing' : 'new'} />
+      <HrOnboardingForm token={token} initial={initial} mode={isExisting ? 'existing' : 'new'} onboardingType={onboardingType} />
 
       <p className="mt-6 text-center text-xs text-muted-foreground">
         Questions? Contact Pacific Coast Title HR at{' '}

@@ -50,6 +50,7 @@ export interface HrOnboardingFormData {
   home_state: string
   home_zip: string
   t_shirt_size: string
+  bio: string
 }
 
 type FieldKey = keyof HrOnboardingFormData
@@ -64,6 +65,10 @@ const DOC_TYPES: { key: string; label: string }[] = [
   { key: 'direct_deposit', label: 'Direct Deposit Form' },
 ]
 const ACCEPT = '.pdf,.png,.jpg,.jpeg,.webp'
+// Sales-rep-only extras (shown only when onboarding_type === 'sales_rep').
+const HEADSHOT_ACCEPT = '.png,.jpg,.jpeg,.webp'
+const CLIENT_LIST_ACCEPT =
+  '.csv,.xlsx,.xls,.pdf,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf'
 
 const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
 
@@ -112,11 +117,14 @@ export default function HrOnboardingForm({
   token,
   initial,
   mode = 'new',
+  onboardingType = 'sales_rep',
 }: {
   token: string
   initial: HrOnboardingFormData
   mode?: 'new' | 'existing'
+  onboardingType?: 'sales_rep' | 'employee'
 }) {
+  const isSalesRep = onboardingType === 'sales_rep'
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<HrOnboardingFormData>(initial)
   const [saving, setSaving] = useState(false)
@@ -319,7 +327,14 @@ export default function HrOnboardingForm({
             {step === 1 && <PersonalStep form={form} set={set} />}
             {step === 2 && <EmergencyStep form={form} set={set} />}
             {step === 3 && (
-              <DocumentsStep docs={docs} uploadingDoc={uploadingDoc} onSelect={uploadDoc} />
+              <DocumentsStep
+                docs={docs}
+                uploadingDoc={uploadingDoc}
+                onSelect={uploadDoc}
+                isSalesRep={isSalesRep}
+                bio={form.bio}
+                onBioChange={(v) => set('bio', v)}
+              />
             )}
             {step === 4 && (
               <div className="flex flex-col gap-5">
@@ -495,11 +510,14 @@ function EmergencyStep({ form, set }: StepProps) {
 }
 
 function DocumentsStep({
-  docs, uploadingDoc, onSelect,
+  docs, uploadingDoc, onSelect, isSalesRep, bio, onBioChange,
 }: {
   docs: Record<string, string>
   uploadingDoc: string | null
   onSelect: (docType: string, file: File) => void
+  isSalesRep: boolean
+  bio: string
+  onBioChange: (v: string) => void
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -508,6 +526,8 @@ function DocumentsStep({
           <UploadTile
             key={d.key}
             label={d.label}
+            accept={ACCEPT}
+            hint="PDF · PNG · JPG"
             fileName={docs[d.key]}
             uploading={uploadingDoc === d.key}
             disabled={!!uploadingDoc && uploadingDoc !== d.key}
@@ -515,6 +535,45 @@ function DocumentsStep({
           />
         ))}
       </div>
+
+      {/* Sales-rep-only extras: headshot, bio, client list. Regular
+          employees never see these (type-gated). Collect + store only. */}
+      {isSalesRep && (
+        <div className="flex flex-col gap-4 rounded-xl border border-dashed border-input bg-muted/30 p-4">
+          <h3 className="text-sm font-semibold text-foreground">Sales rep materials</h3>
+          <UploadTile
+            label="Headshot"
+            accept={HEADSHOT_ACCEPT}
+            hint="PNG · JPG · WEBP"
+            fileName={docs['headshot']}
+            uploading={uploadingDoc === 'headshot'}
+            disabled={!!uploadingDoc && uploadingDoc !== 'headshot'}
+            onSelect={(file) => onSelect('headshot', file)}
+          />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-foreground">Bio</label>
+            <textarea
+              value={bio}
+              onChange={(e) => onBioChange(e.target.value)}
+              rows={5}
+              maxLength={2000}
+              placeholder="A short professional bio for your marketing profile…"
+              className="w-full rounded-lg border border-input bg-card px-3.5 py-2.5 text-sm text-foreground transition-colors outline-none placeholder:text-muted-foreground/70 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/25"
+            />
+            <p className="text-xs text-muted-foreground">{bio.length}/2000</p>
+          </div>
+          <UploadTile
+            label="Contact / client list"
+            accept={CLIENT_LIST_ACCEPT}
+            hint="CSV · XLSX · XLS · PDF"
+            fileName={docs['client_list']}
+            uploading={uploadingDoc === 'client_list'}
+            disabled={!!uploadingDoc && uploadingDoc !== 'client_list'}
+            onSelect={(file) => onSelect('client_list', file)}
+          />
+        </div>
+      )}
+
       <p className="flex items-center justify-center gap-2 rounded-lg bg-secondary/60 px-4 py-3 text-center text-xs font-medium text-muted-foreground">
         <ShieldCheck className="size-4 shrink-0 text-[var(--success)]" aria-hidden="true" />
         Your documents are encrypted and only visible to HR.
@@ -527,9 +586,11 @@ function DocumentsStep({
 }
 
 function UploadTile({
-  label, fileName, uploading, disabled, onSelect,
+  label, accept, hint, fileName, uploading, disabled, onSelect,
 }: {
   label: string
+  accept: string
+  hint: string
   fileName?: string
   uploading: boolean
   disabled: boolean
@@ -541,12 +602,12 @@ function UploadTile({
     <div className="flex flex-col rounded-xl border border-border bg-card p-4 transition-colors">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-foreground">{label}</h3>
-        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">PDF · PNG · JPG</span>
+        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{hint}</span>
       </div>
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPT}
+        accept={accept}
         className="sr-only"
         aria-label={`Upload ${label}`}
         disabled={uploading || disabled}

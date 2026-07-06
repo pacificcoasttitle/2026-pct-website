@@ -71,6 +71,7 @@ const UNMAPPED_FIELDS: { key: string; label: string }[] = [
   { key: 'home_state', label: 'State' },
   { key: 'home_zip', label: 'ZIP' },
   { key: 't_shirt_size', label: 'PCT Swag T-Shirt Size' },
+  { key: 'bio', label: 'Bio (sales rep)' },
 ]
 
 const DOC_TYPE_LABEL: Record<string, string> = {
@@ -78,6 +79,7 @@ const DOC_TYPE_LABEL: Record<string, string> = {
   tax_form: 'Tax form (W-4)',
   direct_deposit: 'Direct deposit',
   headshot: 'Headshot',
+  client_list: 'Contact / client list',
   // signed_policy retired (upload prompt removed); legacy rows fall back
   // to the raw doc_type via `|| d.doc_type` at the render site.
 }

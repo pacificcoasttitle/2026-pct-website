@@ -34,16 +34,28 @@ export const dynamic = 'force-dynamic'
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20 MB
 
-// HR document types the public caller may upload.
-const DOC_TYPES = new Set(['id', 'tax_form', 'direct_deposit', 'headshot'])
+// HR document types the public caller may upload. 'client_list' is the
+// sales-rep contact/client list (spreadsheet or PDF); the wizard shows it
+// only for sales_rep onboardings, but the allowlist is enforced here.
+const DOC_TYPES = new Set(['id', 'tax_form', 'direct_deposit', 'headshot', 'client_list'])
 
 // Logical file categories → permitted MIME types.
 const DOC_MIME = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp'])
 const IMAGE_ONLY_MIME = new Set(['image/png', 'image/jpeg', 'image/webp'])
+// A client list is a spreadsheet (CSV/XLSX/XLS) or a PDF. NOT an image.
+const CLIENT_LIST_MIME = new Set([
+  'application/pdf',
+  'text/csv',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+])
 
 function allowedMimeFor(docType: string): Set<string> {
-  // headshot is image-only; everything else may also be a PDF.
-  return docType === 'headshot' ? IMAGE_ONLY_MIME : DOC_MIME
+  // headshot is image-only; client_list is spreadsheet/PDF; everything
+  // else may be a PDF or an image.
+  if (docType === 'headshot') return IMAGE_ONLY_MIME
+  if (docType === 'client_list') return CLIENT_LIST_MIME
+  return DOC_MIME
 }
 
 // Extensions that legitimately pair with each MIME type.
@@ -52,6 +64,9 @@ const MIME_EXT: Record<string, string[]> = {
   'image/png': ['png'],
   'image/jpeg': ['jpg', 'jpeg'],
   'image/webp': ['webp'],
+  'text/csv': ['csv'],
+  'application/vnd.ms-excel': ['xls', 'csv'],
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['xlsx'],
 }
 
 // Rate limit: 10 uploads / minute per (token + IP).
@@ -102,6 +117,23 @@ function magicMatches(mime: string, buf: Buffer): boolean {
         buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
         buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50
       )
+    case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+      // XLSX is a ZIP container: PK\x03\x04 (or the empty/spanned variants).
+      return buf[0] === 0x50 && buf[1] === 0x4b &&
+        (buf[2] === 0x03 || buf[2] === 0x05 || buf[2] === 0x07)
+    case 'application/vnd.ms-excel':
+      // Legacy .xls is an OLE2 compound file: D0 CF 11 E0 A1 B1 1A E1.
+      // A .csv may also be sent with this MIME by some browsers → accept
+      // it as text (no reliable signature; extension + MIME already gate).
+      if (
+        buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0 &&
+        buf[4] === 0xa1 && buf[5] === 0xb1 && buf[6] === 0x1a && buf[7] === 0xe1
+      ) return true
+      return true
+    case 'text/csv':
+      // Plain text — no reliable magic signature. The MIME + extension
+      // checks already gated it; don't reject legitimate CSVs.
+      return true
     default:
       return false
   }

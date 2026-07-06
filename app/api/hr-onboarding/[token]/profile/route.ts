@@ -119,6 +119,9 @@ const ALLOWED_FIELDS = [
   'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship',
   'home_address_line1', 'home_address_line2', 'home_city', 'home_state', 'home_zip',
   't_shirt_size',
+  // Sales-rep bio (free text). The wizard only shows it for sales_rep
+  // onboardings, but the allowlist is enforced here regardless.
+  'bio',
 ] as const
 type AllowedField = (typeof ALLOWED_FIELDS)[number]
 
@@ -130,6 +133,7 @@ const MAX_LEN: Record<AllowedField, number> = {
   emergency_contact_name: 120, emergency_contact_phone: 40, emergency_contact_relationship: 60,
   home_address_line1: 160, home_address_line2: 160, home_city: 100, home_state: 40, home_zip: 20,
   t_shirt_size: 12,
+  bio: 2000,
 }
 
 // Fields that must be an ISO date (YYYY-MM-DD) if present.

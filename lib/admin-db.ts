@@ -1925,6 +1925,7 @@ export interface CreateHrEmployeeInput {
   office?:         string | null
   mobile?:         string | null
   office_phone?:   string | null
+  start_date?:     string | null    // 'YYYY-MM-DD' or null; DATE column
   active?:         boolean
   onboarding_type?: string | null   // 'sales_rep' | 'employee'; defaults 'sales_rep'
   created_by?:     string | null
@@ -1960,10 +1961,10 @@ export async function createHrEmployee(input: CreateHrEmployeeInput): Promise<Hr
       `INSERT INTO hr_employees (
          first_name, last_name, full_legal_name, email,
          mobile, office_phone, title, department, office,
-         active, onboarding_type, vcard_employee_id, staff_member_id,
+         start_date, active, onboarding_type, vcard_employee_id, staff_member_id,
          created_by, updated_by
        ) VALUES (
-         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NULL,NULL,$12,$12
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10::date,$11,$12,NULL,NULL,$13,$13
        )
        RETURNING *`,
       [
@@ -1976,6 +1977,7 @@ export async function createHrEmployee(input: CreateHrEmployeeInput): Promise<Hr
         input.title?.trim() || null,
         input.department?.trim() || null,
         input.office?.trim() || null,
+        input.start_date?.trim() || null,
         input.active === false ? false : true,
         normalizeOnboardingType(input.onboarding_type),
         input.created_by?.trim() || null,

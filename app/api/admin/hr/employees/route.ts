@@ -46,6 +46,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
 
+  // start_date is optional; when present it must be a real 'YYYY-MM-DD'
+  // (strict round-trip — reject impossible dates like 2026-02-31). Stored
+  // on hr_employees so the onboarding prefill carries it forward.
+  let start_date: string | null | undefined = undefined
+  if ('start_date' in body) {
+    const raw = body.start_date
+    if (raw == null || String(raw).trim() === '') {
+      start_date = null
+    } else {
+      const s = String(raw).trim()
+      const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+      const d = new Date(`${s}T00:00:00Z`)
+      if (!DATE_RE.test(s) || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== s) {
+        return NextResponse.json({ error: 'Please enter a valid start date.' }, { status: 400 })
+      }
+      start_date = s
+    }
+  }
+
   try {
     const created = await createHrEmployee({
       first_name,
@@ -57,6 +76,7 @@ export async function POST(req: Request) {
       office:          body.office          ? String(body.office)          : undefined,
       mobile:          body.mobile          ? String(body.mobile)          : undefined,
       office_phone:    body.office_phone    ? String(body.office_phone)    : undefined,
+      start_date,
       active:          body.active === false ? false : true,
       onboarding_type,
       created_by:      auth.session.username,

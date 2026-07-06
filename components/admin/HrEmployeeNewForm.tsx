@@ -32,6 +32,7 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
     office:          '',
     mobile:          '',
     office_phone:    '',
+    start_date:      '',
     onboarding_type: 'sales_rep' as 'sales_rep' | 'employee',
     active:          true,
   })
@@ -224,6 +225,16 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
           <div>
             <label className={LABEL}>Office phone</label>
             <PhoneInput className={INPUT} value={form.office_phone} onChange={(v) => set('office_phone', v)} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={LABEL}>Start date</label>
+            <input type="date" className={INPUT} value={form.start_date} onChange={(e) => set('start_date', e.target.value)} />
+            <p className="text-xs text-gray-400 mt-1.5">
+              Optional. Carries into the onboarding wizard when you invite this person.
+            </p>
           </div>
         </div>
 

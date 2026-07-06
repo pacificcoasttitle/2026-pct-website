@@ -24,6 +24,7 @@ const DOC_TYPE_LABEL: Record<string, string> = {
   tax_form: 'Tax form (W-4)',
   direct_deposit: 'Direct deposit',
   headshot: 'Headshot',
+  client_list: 'Contact / client list',
   // signed_policy was retired (upload prompt removed). Any legacy row of
   // that type falls back to its raw doc_type via the `|| d.doc_type` below.
 }
