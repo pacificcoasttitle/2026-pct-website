@@ -335,7 +335,7 @@ export default function HrOnboardingForm({
             )}
             {step === 4 && (
               <div className="flex flex-col gap-5">
-                <ReviewStep form={form} docs={docs} onEdit={jumpTo} />
+                <ReviewStep form={form} docs={docs} onEdit={jumpTo} isSalesRep={isSalesRep} />
                 <p className="text-center text-xs text-muted-foreground">
                   By submitting, you confirm this information is accurate.
                 </p>
@@ -689,14 +689,24 @@ function SummarySection({
   )
 }
 
+// Sales-rep upload doc types shown in the wizard (bio is a text field, not
+// an upload — summarized separately). Standard docs were removed, so a
+// regular employee has no documents here.
+const SALES_REP_DOC_TYPES: { key: string; label: string }[] = [
+  { key: 'headshot', label: 'Headshot' },
+  { key: 'client_list', label: 'Contact / client list' },
+]
+
 function ReviewStep({
-  form, docs, onEdit,
+  form, docs, onEdit, isSalesRep,
 }: {
   form: HrOnboardingFormData
   docs: Record<string, string>
   onEdit: (s: number) => void
+  isSalesRep: boolean
 }) {
-  const uploaded = Object.keys(docs).length
+  const salesRepUploaded = SALES_REP_DOC_TYPES.filter((d) => docs[d.key]).length
+  const hasBio = !!form.bio?.trim()
   return (
     <div className="flex flex-col gap-4">
       <SummarySection title="Basics" step={0} onEdit={onEdit}>
@@ -720,7 +730,17 @@ function ReviewStep({
         <SummaryRow label="Relationship" value={form.emergency_contact_relationship} />
       </SummarySection>
       <SummarySection title="Documents" step={3} onEdit={onEdit}>
-        <SummaryRow label="Uploaded" value={`${uploaded} of ${DOC_TYPES.length} documents`} />
+        {isSalesRep ? (
+          <>
+            <SummaryRow
+              label="Uploaded"
+              value={`${salesRepUploaded} of ${SALES_REP_DOC_TYPES.length} documents`}
+            />
+            <SummaryRow label="Bio" value={hasBio ? 'Provided' : 'Not provided'} />
+          </>
+        ) : (
+          <SummaryRow label="Documents" value="No documents needed" />
+        )}
       </SummarySection>
     </div>
   )
