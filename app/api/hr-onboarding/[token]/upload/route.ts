@@ -39,6 +39,9 @@ const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20 MB
 // only for sales_rep onboardings, but the allowlist is enforced here.
 const DOC_TYPES = new Set(['id', 'tax_form', 'direct_deposit', 'headshot', 'client_list'])
 
+// Doc types valid ONLY on a sales_rep onboarding (server-enforced gate).
+const SALES_REP_ONLY_DOC_TYPES = new Set(['headshot', 'client_list'])
+
 // Logical file categories → permitted MIME types.
 const DOC_MIME = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp'])
 const IMAGE_ONLY_MIME = new Set(['image/png', 'image/jpeg', 'image/webp'])
@@ -96,8 +99,13 @@ function extOf(name: string): string {
  * PII-hardening over the rep flow's MIME-only check — a file whose
  * declared type doesn't match its actual signature is rejected.
  */
-function magicMatches(mime: string, buf: Buffer): boolean {
+function magicMatches(mime: string, buf: Buffer, ext: string): boolean {
   if (buf.length < 12) return false
+  // A genuine CSV has no binary signature. The no-magic PASS is scoped
+  // STRICTLY to a real .csv (by extension) — never granted just because a
+  // binary check failed. So a fake .xls (Excel MIME, non-OLE2 bytes) is
+  // rejected below rather than slipping through.
+  if (ext === 'csv') return true
   switch (mime) {
     case 'application/pdf':
       // %PDF
@@ -122,18 +130,17 @@ function magicMatches(mime: string, buf: Buffer): boolean {
       return buf[0] === 0x50 && buf[1] === 0x4b &&
         (buf[2] === 0x03 || buf[2] === 0x05 || buf[2] === 0x07)
     case 'application/vnd.ms-excel':
-      // Legacy .xls is an OLE2 compound file: D0 CF 11 E0 A1 B1 1A E1.
-      // A .csv may also be sent with this MIME by some browsers → accept
-      // it as text (no reliable signature; extension + MIME already gate).
-      if (
+      // With ext !== 'csv' (handled above), a .xls under this MIME MUST be
+      // a genuine OLE2 compound file: D0 CF 11 E0 A1 B1 1A E1. A failed
+      // check rejects (a fake .xls no longer passes).
+      return (
         buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0 &&
         buf[4] === 0xa1 && buf[5] === 0xb1 && buf[6] === 0x1a && buf[7] === 0xe1
-      ) return true
-      return true
+      )
     case 'text/csv':
-      // Plain text — no reliable magic signature. The MIME + extension
-      // checks already gated it; don't reject legitimate CSVs.
-      return true
+      // A genuine .csv is handled by the ext==='csv' pass above. Any
+      // text/csv MIME reaching here without a .csv extension is rejected.
+      return false
     default:
       return false
   }
@@ -181,6 +188,17 @@ export async function POST(
     return NextResponse.json({ ok: false, error: 'Unknown document type.' }, { status: 400 })
   }
 
+  // 4a. Sales-rep-only doc gating — SERVER-ENFORCED (not just UI). headshot
+  // + client_list are only valid on a sales_rep onboarding; standard docs
+  // (id/tax_form/direct_deposit) are allowed for any type. The type comes
+  // from the token-resolved record, never the body.
+  if (SALES_REP_ONLY_DOC_TYPES.has(docType) && record.onboarding_type !== 'sales_rep') {
+    return NextResponse.json(
+      { ok: false, error: 'This document type is not part of this onboarding.' },
+      { status: 403 },
+    )
+  }
+
   const file = form.get('file')
   if (!(file instanceof File)) {
     return NextResponse.json({ ok: false, error: 'File required.' }, { status: 400 })
@@ -216,7 +234,7 @@ export async function POST(
 
   // Read bytes once; magic-byte sniff before any storage.
   const buffer = Buffer.from(await file.arrayBuffer())
-  if (!magicMatches(mime, buffer)) {
+  if (!magicMatches(mime, buffer, ext)) {
     return NextResponse.json(
       { ok: false, error: 'File contents do not match the declared type.' },
       { status: 400 },
