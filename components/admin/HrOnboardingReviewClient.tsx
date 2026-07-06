@@ -41,6 +41,7 @@ interface Props {
   tokenExpiresAt: string | null
   documents: DocRow[]
   departmentKickoff: DepartmentKickoffRow[]
+  introEmailSentAt: string | null
 }
 
 // Fields that map to hr_employees on finalize (4a design).
@@ -144,6 +145,7 @@ export default function HrOnboardingReviewClient(props: Props) {
   const [note, setNote] = useState<string | null>(null)
   const [departmentKickoff, setDepartmentKickoff] = useState(props.departmentKickoff)
   const [kickoffResult, setKickoffResult] = useState<DepartmentKickoffResult | null>(null)
+  const [introEmailSentAt, setIntroEmailSentAt] = useState<string | null>(props.introEmailSentAt)
 
   const isSubmitted = status === 'submitted'
   const isFinalized = status === 'finalized'
@@ -211,6 +213,11 @@ export default function HrOnboardingReviewClient(props: Props) {
       if (!res.ok) { setError(data?.error || 'Could not kick off departments.'); return }
       setKickoffResult(data)
       if (Array.isArray(data.tracking)) setDepartmentKickoff(data.tracking)
+      // Intro email is a system action; reflect it once sent (router.refresh
+      // below reloads the authoritative timestamp).
+      if ((data.intro_email === 'sent' || data.intro_email === 'skipped') && !introEmailSentAt) {
+        setIntroEmailSentAt(new Date().toISOString())
+      }
       const sent = Array.isArray(data.sent) ? data.sent.length : 0
       const failed = Array.isArray(data.failed) ? data.failed.length : 0
       const skipped = Array.isArray(data.skipped) ? data.skipped.length : 0
@@ -290,6 +297,17 @@ export default function HrOnboardingReviewClient(props: Props) {
             )}
           </div>
         )}
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #f3f4f6' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>
+            System actions
+          </div>
+          <div style={{ fontSize: 14, color: introEmailSentAt ? '#047857' : '#9ca3af' }}>
+            {introEmailSentAt
+              ? `Intro email sent ✓ ${fmt(introEmailSentAt)}`
+              : 'Intro email not sent yet — sent to the new hire on department kickoff.'}
+          </div>
+        </div>
+
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
           <button
             type="button"

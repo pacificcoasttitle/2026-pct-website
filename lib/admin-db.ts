@@ -2332,6 +2332,7 @@ export interface HrOnboardingRecord {
   invited_at:       string | null
   submitted_at:     string | null
   finalized_at:     string | null
+  intro_email_sent_at: string | null
 }
 
 // Columns safe to return to callers (auth-only token fields excluded).
@@ -2342,7 +2343,8 @@ const HR_ONBOARDING_COLS = `
   updated_at::text  AS updated_at,
   invited_at::text  AS invited_at,
   submitted_at::text AS submitted_at,
-  finalized_at::text AS finalized_at
+  finalized_at::text AS finalized_at,
+  intro_email_sent_at::text AS intro_email_sent_at
 `
 
 /**
@@ -3330,6 +3332,109 @@ export async function setHrDepartmentChecklistItemStatus(
     [onboardingId, category, itemId, status, actor],
   )
   return (res.rows[0] as HrDepartmentChecklistItem | undefined) || null
+}
+
+export interface HrDepartmentCategoryProgress {
+  total:    number
+  complete: number
+  allDone:  boolean
+}
+
+/**
+ * Progress for ONE department category on an onboarding. allDone is true
+ * only when the category has at least one item AND every item is complete.
+ */
+export async function getHrDepartmentCategoryProgress(
+  onboardingId: number,
+  category: HrOnboardingChecklistCategory,
+): Promise<HrDepartmentCategoryProgress> {
+  const db = getPool()
+  const res = await db.query(
+    `SELECT COUNT(*)::int AS total,
+            COUNT(*) FILTER (WHERE status = 'complete')::int AS complete
+       FROM hr_onboarding_items
+      WHERE onboarding_id = $1 AND category = $2`,
+    [onboardingId, category],
+  )
+  const total = Number(res.rows[0]?.total ?? 0)
+  const complete = Number(res.rows[0]?.complete ?? 0)
+  return { total, complete, allDone: total > 0 && complete === total }
+}
+
+/**
+ * Notify-once claim for a department completing all its items.
+ *
+ * Atomically stamps completed_notified_at = NOW() for (onboarding,
+ * category) ONLY IF it is currently NULL. Returns true if THIS call won
+ * the claim (caller should send the HR email); false if already stamped
+ * (someone already notified — do NOT re-send). This makes notify-once safe
+ * even under concurrent completions and prevents toggle-back-and-forth
+ * spam (the stamp is never cleared).
+ *
+ * ⚠️ The caller must first confirm the department is actually all-complete
+ * (getHrDepartmentCategoryProgress) — this only guards the once-ness.
+ */
+export async function claimHrDepartmentCompletedNotification(
+  onboardingId: number,
+  category: HrOnboardingChecklistCategory,
+): Promise<boolean> {
+  const db = getPool()
+  const res = await db.query(
+    `UPDATE hr_onboarding_department_tokens
+        SET completed_notified_at = NOW(),
+            updated_at = NOW()
+      WHERE onboarding_id = $1
+        AND category = $2
+        AND completed_notified_at IS NULL
+      RETURNING id`,
+    [onboardingId, category],
+  )
+  return (res.rowCount ?? 0) > 0
+}
+
+/**
+ * Send-once claim for the new-hire intro email (system action). Atomically
+ * stamps hr_onboarding.intro_email_sent_at = NOW() ONLY IF currently NULL.
+ * Returns true if THIS call won the claim (caller should send). A
+ * re-kickoff finds it already stamped → returns false → no re-send.
+ */
+export async function claimHrOnboardingIntroEmail(
+  onboardingId: number,
+): Promise<boolean> {
+  const db = getPool()
+  const res = await db.query(
+    `UPDATE hr_onboarding
+        SET intro_email_sent_at = NOW(),
+            updated_at = NOW()
+      WHERE id = $1
+        AND intro_email_sent_at IS NULL
+      RETURNING id`,
+    [onboardingId],
+  )
+  return (res.rowCount ?? 0) > 0
+}
+
+/** Clear the intro-email claim (used only to roll back a failed send). */
+export async function clearHrOnboardingIntroEmail(onboardingId: number): Promise<void> {
+  const db = getPool()
+  await db.query(
+    `UPDATE hr_onboarding SET intro_email_sent_at = NULL, updated_at = NOW() WHERE id = $1`,
+    [onboardingId],
+  )
+}
+
+/** Clear a department completed-notification claim (rollback on send fail). */
+export async function clearHrDepartmentCompletedNotification(
+  onboardingId: number,
+  category: HrOnboardingChecklistCategory,
+): Promise<void> {
+  const db = getPool()
+  await db.query(
+    `UPDATE hr_onboarding_department_tokens
+        SET completed_notified_at = NULL, updated_at = NOW()
+      WHERE onboarding_id = $1 AND category = $2`,
+    [onboardingId, category],
+  )
 }
 
 /**

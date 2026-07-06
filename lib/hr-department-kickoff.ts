@@ -9,6 +9,8 @@ import {
   getHrDepartmentKickoffState,
   getHrOnboardingById,
   markHrDepartmentTokenSent,
+  claimHrOnboardingIntroEmail,
+  clearHrOnboardingIntroEmail,
   type HrDepartmentKickoffState,
   type HrOnboardingChecklistCategory,
 } from '@/lib/admin-db'
@@ -17,6 +19,7 @@ import {
   type HrOnboardingDepartmentCategory,
 } from '@/lib/hr-onboarding-token'
 import { renderHrDepartmentKickoffEmail } from '@/lib/email-templates/hr-department-kickoff'
+import { renderHrNewHireIntro } from '@/lib/email-templates/hr-new-hire-intro'
 
 const SITE_BASE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pct.com').replace(/\/$/, '')
 const TEST_FALLBACK_EMAIL = 'ghernandez@pct.com'
@@ -83,6 +86,10 @@ export interface HrDepartmentKickoffSummary {
   skipped:  HrDepartmentKickoffSkipped[]
   failed:   HrDepartmentKickoffFailed[]
   tracking: HrDepartmentKickoffState[]
+  // New-hire intro email (system action). 'sent' this call, 'skipped' if
+  // already sent on a prior kickoff, 'no_recipient' if no personal email,
+  // or 'failed' if the send errored (non-blocking).
+  intro_email: 'sent' | 'skipped' | 'no_recipient' | 'failed'
 }
 
 export interface DepartmentKickoffEmailPayload {
@@ -121,6 +128,56 @@ function hireNameFromPayload(payload: Record<string, unknown>, fallback: string)
   return `${first} ${last}`.trim() || fallback
 }
 
+/**
+ * Send the new-hire intro/welcome email ONCE, as a SYSTEM action (not a
+ * department checklist item). Goes to the hire's PERSONAL email (the
+ * onboarding's invited_email — their PCT email isn't live yet). Send-once
+ * is enforced by claimHrOnboardingIntroEmail (atomic stamp of
+ * intro_email_sent_at); a re-kickoff finds it already stamped and skips.
+ * Fully non-blocking — any failure rolls the claim back + is swallowed so
+ * kickoff succeeds regardless.
+ */
+async function sendNewHireIntroOnce(
+  onboardingId: number,
+  invitedEmail: string | null,
+  firstName: string,
+): Promise<HrDepartmentKickoffSummary['intro_email']> {
+  const to = invitedEmail?.trim()
+  if (!to) {
+    console.warn(`[hr-intro-email] no personal email on onboarding_id=${onboardingId} — skipping intro`)
+    return 'no_recipient'
+  }
+
+  // Atomic send-once claim. Not won → already sent on a prior kickoff.
+  const won = await claimHrOnboardingIntroEmail(onboardingId)
+  if (!won) return 'skipped'
+
+  try {
+    const sg = getSg()
+    if (!sg) {
+      // No mailer configured — roll back so a later kickoff can retry.
+      await clearHrOnboardingIntroEmail(onboardingId).catch(() => {})
+      console.warn('[hr-intro-email] SENDGRID_API_KEY not configured — skipping intro')
+      return 'failed'
+    }
+    const subject = 'Welcome to Pacific Coast Title'
+    const html = renderHrNewHireIntro({ subject, first_name: firstName })
+    await sg.send({
+      to,
+      from:    { email: 'hr@pct.com', name: 'Pacific Coast Title HR' },
+      subject,
+      html,
+    })
+    console.log(`[hr-intro-email] sent onboarding_id=${onboardingId} to=${to}`)
+    return 'sent'
+  } catch (err) {
+    await clearHrOnboardingIntroEmail(onboardingId).catch(() => {})
+    console.error('[hr-intro-email] send failed (kickoff unaffected):',
+      err instanceof Error ? err.message : err)
+    return 'failed'
+  }
+}
+
 export async function kickOffHrDepartments({
   onboardingId,
   actor,
@@ -141,6 +198,7 @@ export async function kickOffHrDepartments({
 
   const payload = (onboarding.payload ?? {}) as Record<string, unknown>
   const hireName = hireNameFromPayload(payload, `Onboarding #${onboarding.id}`)
+  const firstName = String(payload.first_name ?? '').trim()
   const state = await getHrDepartmentKickoffState(onboardingId)
   const sent: HrDepartmentKickoffSent[] = []
   const skipped: HrDepartmentKickoffSkipped[] = []
@@ -194,6 +252,10 @@ export async function kickOffHrDepartments({
     }
   }
 
+  // System action: new-hire intro email to the personal email, sent once.
+  // Independent of the department fan-out (non-blocking either way).
+  const introEmail = await sendNewHireIntroOnce(onboardingId, onboarding.invited_email, firstName)
+
   return {
     ok: true,
     behavior: 'reissued_tokens',
@@ -201,5 +263,6 @@ export async function kickOffHrDepartments({
     skipped,
     failed,
     tracking: await getHrDepartmentKickoffState(onboardingId),
+    intro_email: introEmail,
   }
 }

@@ -7,7 +7,11 @@
  */
 import { NextResponse } from 'next/server'
 import { resolveDepartmentToken } from '@/lib/hr-onboarding-token'
-import { setHrDepartmentChecklistItemStatus } from '@/lib/admin-db'
+import {
+  setHrDepartmentChecklistItemStatus,
+  getHrDepartmentCategoryProgress,
+} from '@/lib/admin-db'
+import { maybeNotifyDepartmentComplete } from '@/lib/hr-department-complete-notify'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -57,5 +61,24 @@ export async function PATCH(
     )
   }
 
-  return NextResponse.json({ ok: true, item })
+  // Recompute this department's progress (category-scoped). When the last
+  // item flips complete, notify HR ONCE (non-blocking; the notify-once gate
+  // + rollback live in maybeNotifyDepartmentComplete). all_done drives the
+  // dept "you're done" screen.
+  const progress = await getHrDepartmentCategoryProgress(
+    resolved.onboarding_id,
+    resolved.category,
+  )
+  if (progress.allDone) {
+    // Fire-and-await, but it's fully error-swallowing internally so a send
+    // failure can never fail this completion.
+    await maybeNotifyDepartmentComplete(resolved.onboarding_id, resolved.category)
+  }
+
+  return NextResponse.json({
+    ok: true,
+    item,
+    all_done: progress.allDone,
+    progress: { total: progress.total, complete: progress.complete },
+  })
 }

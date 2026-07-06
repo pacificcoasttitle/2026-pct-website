@@ -70,6 +70,7 @@ export default async function HrOnboardingReviewPage({
           uploaded_at: d.uploaded_at,
         }))}
         departmentKickoff={departmentKickoff}
+        introEmailSentAt={onboarding.intro_email_sent_at}
       />
       <HrOnboardingChecklist
         onboardingId={onboarding.id}

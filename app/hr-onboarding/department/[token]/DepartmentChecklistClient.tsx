@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { Check, Circle, Loader2 } from 'lucide-react'
+import { Check, Circle, Loader2, CheckCircle2 } from 'lucide-react'
 
 interface DepartmentItem {
   id:           number
@@ -67,11 +67,31 @@ export default function DepartmentChecklistClient({
     )
   }
 
+  // DB-backed done-state: every item complete. Reflects the current DB
+  // truth on load and updates live after each toggle. Reopening the link
+  // later while still all-complete shows the done screen again.
+  const allDone = items.every((row) => row.status === 'complete')
+
   return (
     <div className="space-y-4">
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
+        </div>
+      )}
+
+      {allDone && (
+        <div className="rounded-2xl border border-[var(--success)]/40 bg-[var(--success)]/5 p-6 text-center shadow-sm">
+          <div className="mx-auto mb-3 flex size-14 items-center justify-center rounded-full bg-[var(--success)]/15">
+            <CheckCircle2 className="size-8 text-[var(--success)]" aria-hidden="true" />
+          </div>
+          <h2 className="text-balance text-lg font-semibold" style={{ color: NAVY }}>
+            You&apos;re all done — HR has been notified
+          </h2>
+          <p className="mx-auto mt-1.5 max-w-[440px] text-pretty text-sm text-muted-foreground">
+            Every task for your department is complete. There&apos;s nothing more to do here.
+            You can still review the tasks below, and this page will keep showing your progress.
+          </p>
         </div>
       )}
 
