@@ -86,7 +86,7 @@ export default function DepartmentChecklistClient({
             <CheckCircle2 className="size-8 text-[var(--success)]" aria-hidden="true" />
           </div>
           <h2 className="text-balance text-lg font-semibold" style={{ color: NAVY }}>
-            You&apos;re all done — HR has been notified
+            You&apos;re all done — HR will be notified
           </h2>
           <p className="mx-auto mt-1.5 max-w-[440px] text-pretty text-sm text-muted-foreground">
             Every task for your department is complete. There&apos;s nothing more to do here.

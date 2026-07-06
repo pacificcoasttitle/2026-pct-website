@@ -76,7 +76,11 @@ export async function maybeNotifyDepartmentComplete(
 
       const sg = getSg()
       if (!sg) {
-        console.warn('[hr-dept-complete-notify] SENDGRID_API_KEY not configured — skipping (claim kept to avoid retries)')
+        // No mailer configured — roll the claim back so a later completion
+        // can retry (matches the intro-email path). No email was sent, so
+        // we must NOT keep the stamp (it would permanently suppress retry).
+        await clearHrDepartmentCompletedNotification(onboardingId, category).catch(() => {})
+        console.warn('[hr-dept-complete-notify] SENDGRID_API_KEY not configured — rolled back stamp (retryable)')
         return false
       }
 
