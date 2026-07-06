@@ -18,6 +18,7 @@ import sgMail from '@sendgrid/mail'
 import { requireApiRole } from '@/lib/auth/guards'
 import {
   getHrOnboardingById,
+  getHrEmployeeById,
   issueHrOnboardingToken,
   markHrOnboardingInvited,
 } from '@/lib/admin-db'
@@ -95,20 +96,17 @@ export async function POST(
     return NextResponse.json({ error: 'Failed to generate onboarding link.' }, { status: 500 })
   }
 
-  // ⚠️ FLAG FOR DIRECTOR — new-vs-existing signal is no longer derivable.
-  // The prior check `hr_employee_id != null` is now ALWAYS true: the
-  // single-path flow adds EVERY hire (new or existing) via Add Employee
-  // first, so every onboarding has a linked hr_employees row. That made
-  // new hires wrongly receive the "confirm your info on file" existing-
-  // employee copy. There is no reliable tenure signal on the data model
-  // today (onboarding_type is sales_rep/employee — a checklist driver,
-  // not new-vs-existing). Rather than guess, we DEFAULT to the warm,
-  // welcoming NEW-hire copy for everyone (the common + safer case). If HR
-  // wants a distinct "existing employee, confirm info" path, the Director
-  // should decide the signal (e.g. an explicit "new hire" flag captured at
-  // Add Employee time) — then flip this default accordingly. The template's
-  // two-branch mechanism is left intact so wiring a real flag is a one-liner.
-  const isExisting = false
+  // New-vs-existing invite tone is driven by the linked employee's explicit
+  // is_new_hire flag (set via the "New hire" checkbox at Add Employee). This
+  // replaces the old `hr_employee_id != null` proxy, which became useless
+  // post single-path-flow (every hire is added via Add Employee first, so
+  // hr_employee_id is always set). Default to new-hire/welcoming when there's
+  // no linked employee or the flag is somehow absent (safe warm default).
+  const employee = onboarding.hr_employee_id != null
+    ? await getHrEmployeeById(onboarding.hr_employee_id)
+    : null
+  const isNewHire = employee ? employee.is_new_hire !== false : true
+  const isExisting = !isNewHire
   const subject = isExisting ? SUBJECT_EXISTING : SUBJECT_NEW
 
   // Public route is /hr-onboarding/[token] (4c builds it).

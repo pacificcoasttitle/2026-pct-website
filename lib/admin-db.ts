@@ -1903,6 +1903,7 @@ export interface HrEmployee {
   photo_url:          string | null
   active:             boolean
   onboarding_type:    string   // 'sales_rep' | 'employee' — drives the onboarding checklist (inherited at onboarding time)
+  is_new_hire:        boolean  // explicit new-hire flag; drives invite email tone
   employment_status:  string | null
   birthday:           string | null
   start_date:         string | null
@@ -1928,6 +1929,7 @@ export interface CreateHrEmployeeInput {
   start_date?:     string | null    // 'YYYY-MM-DD' or null; DATE column
   active?:         boolean
   onboarding_type?: string | null   // 'sales_rep' | 'employee'; defaults 'sales_rep'
+  is_new_hire?:    boolean          // explicit new-hire flag; defaults true
   created_by?:     string | null
 }
 
@@ -1961,10 +1963,10 @@ export async function createHrEmployee(input: CreateHrEmployeeInput): Promise<Hr
       `INSERT INTO hr_employees (
          first_name, last_name, full_legal_name, email,
          mobile, office_phone, title, department, office,
-         start_date, active, onboarding_type, vcard_employee_id, staff_member_id,
+         start_date, active, onboarding_type, is_new_hire, vcard_employee_id, staff_member_id,
          created_by, updated_by
        ) VALUES (
-         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10::date,$11,$12,NULL,NULL,$13,$13
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10::date,$11,$12,$13,NULL,NULL,$14,$14
        )
        RETURNING *`,
       [
@@ -1980,6 +1982,7 @@ export async function createHrEmployee(input: CreateHrEmployeeInput): Promise<Hr
         input.start_date?.trim() || null,
         input.active === false ? false : true,
         normalizeOnboardingType(input.onboarding_type),
+        input.is_new_hire === false ? false : true,
         input.created_by?.trim() || null,
       ],
     )

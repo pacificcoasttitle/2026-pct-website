@@ -34,6 +34,9 @@ export async function POST(req: Request) {
   // Validate to the known vocabulary; anything else → 'sales_rep' default.
   const onboarding_type =
     body.onboarding_type === 'employee' ? 'employee' : 'sales_rep'
+  // Explicit new-hire flag (drives the invite email tone). Default TRUE —
+  // most Add-Employee cases are new hires; only an explicit false opts out.
+  const is_new_hire = body.is_new_hire === false ? false : true
 
   if (!first_name || !last_name) {
     return NextResponse.json({ error: 'First name and last name are required.' }, { status: 400 })
@@ -79,6 +82,7 @@ export async function POST(req: Request) {
       start_date,
       active:          body.active === false ? false : true,
       onboarding_type,
+      is_new_hire,
       created_by:      auth.session.username,
     })
 

@@ -35,6 +35,7 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
     start_date:      '',
     onboarding_type: 'sales_rep' as 'sales_rep' | 'employee',
     active:          true,
+    is_new_hire:     true,
   })
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
@@ -247,6 +248,23 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
           />
           Active
         </label>
+
+        <div>
+          <label className="flex items-center gap-2.5 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={form.is_new_hire}
+              onChange={(e) => set('is_new_hire', e.target.checked)}
+              className="w-4 h-4 rounded border-gray-300 text-[#f26b2b] focus:ring-[#f26b2b]/30"
+            />
+            This is a new hire (sends a welcome email)
+          </label>
+          <p className="text-xs text-gray-400 mt-1.5 ml-[26px]">
+            Controls the onboarding invite tone: checked sends a warm welcome to
+            Pacific Coast Title; unchecked sends a “please confirm your info”
+            update for an existing employee.
+          </p>
+        </div>
 
         <div className="flex items-center gap-3 pt-2">
           <button
