@@ -2673,10 +2673,11 @@ export interface BulkInviteEligibleRow {
 }
 
 export interface BulkInviteEligibleResult {
-  /** Send candidates: active existing staff w/ a work email. Each is
-   *  either 'new' (no open onboarding → create) or 'existing_open'
-   *  (reuse + send). Excludes anyone whose only onboarding is
-   *  submitted/finalized/cancelled (nothing to send). */
+  /** Send candidates: active existing staff w/ a work email, classified by
+   *  their LATEST onboarding — 'new' (none, or a cancelled/unknown latest →
+   *  create) or 'existing_open' (latest is draft/invited/in_progress →
+   *  reuse + send). Anyone whose LATEST onboarding is submitted/finalized
+   *  is EXCLUDED (done / mid-review). */
   eligible: BulkInviteEligibleRow[]
   /** Excluded because they have no (blank) work email — REPORTED, not dropped. */
   skippedNoEmail: Array<{ id: number; name: string }>
@@ -2691,15 +2692,32 @@ export interface BulkInviteEligibleResult {
  *   - is_new_hire = false            (true existing staff)
  *   - has a non-blank work email     (NULLIF(TRIM(email),'') IS NOT NULL)
  *
- * and they are NOT already done — i.e. they either have NO onboarding, or
- * their latest open onboarding is in a SENDABLE status (draft/invited/
- * in_progress). Employees whose latest onboarding is submitted/finalized/
- * cancelled are EXCLUDED (nothing to (re)send).
+ * ⚠️ State is derived from the employee's SINGLE LATEST onboarding row —
+ * NOT from independent "latest open" / "latest done" lookups (that older
+ * shape mis-classified someone with an OLDER open row + a NEWER finalized
+ * row as 'existing_open' and would have re-invited a completed employee;
+ * the atomic index can't prevent it since finalized isn't an open status).
  *
- * Each candidate is categorized:
- *   - 'new'           → no open onboarding → CREATE + send.
- *   - 'existing_open' → has a sendable open onboarding → REUSE + send
- *                       (the atomic index still prevents any duplicate).
+ * Classification by latest_ob.status:
+ *   - latest_ob IS NULL                          → 'new'          (create + send)
+ *   - draft | invited | in_progress              → 'existing_open' (reuse + send)
+ *   - submitted | finalized                      → EXCLUDED       (done / mid-review; never re-invite)
+ *   - cancelled (or any other/unknown status)    → 'new'          (re-invitable — see below)
+ *
+ * ⚠️ CANCELLED-LATEST → 'new' (documented choice): a cancelled latest
+ * onboarding means the prior link was voided and the employee has no
+ * active/completed onboarding, so they are legitimately re-invitable. We
+ * treat them as 'new' (create a fresh onboarding + send). The atomic
+ * partial unique index only constrains OPEN statuses, so a new row
+ * alongside a cancelled one is allowed. Any unexpected/unknown status
+ * falls into this same re-invitable bucket (fail-open to re-invite is
+ * safe — a duplicate OPEN row is still structurally impossible).
+ *
+ * ⚠️ ORDERING: "latest" = ORDER BY o.id DESC. hr_onboarding.id is a
+ * monotonic SERIAL PK, so the highest id is unambiguously the most-recently
+ * created row. This is preferred over created_at, which can tie to the
+ * same timestamp for rows created in the same transaction/batch (id breaks
+ * ties deterministically).
  *
  * Blank-work-email employees are returned in `skippedNoEmail` (reported).
  */
@@ -2709,30 +2727,27 @@ export async function getEmployeesEligibleForBulkInvite(): Promise<BulkInviteEli
     `SELECT e.id,
             TRIM(COALESCE(e.first_name,'') || ' ' || COALESCE(e.last_name,'')) AS name,
             NULLIF(TRIM(e.email), '') AS email,
-            open_ob.id AS open_onboarding_id,
-            done_ob.id AS done_onboarding_id
+            latest_ob.id     AS latest_onboarding_id,
+            latest_ob.status AS latest_onboarding_status
        FROM hr_employees e
        LEFT JOIN LATERAL (
-         SELECT o.id FROM hr_onboarding o
+         SELECT o.id, o.status FROM hr_onboarding o
           WHERE o.hr_employee_id = e.id
-            AND o.status = ANY($1)
           ORDER BY o.id DESC LIMIT 1
-       ) open_ob ON true
-       LEFT JOIN LATERAL (
-         SELECT o.id FROM hr_onboarding o
-          WHERE o.hr_employee_id = e.id
-            AND o.status IN ('submitted','finalized')
-          ORDER BY o.id DESC LIMIT 1
-       ) done_ob ON true
+       ) latest_ob ON true
       WHERE e.active = true
         AND e.is_new_hire = false
-        -- Exclude anyone already submitted/finalized with no still-open
-        -- onboarding (nothing to (re)send — they're done / mid-review).
-        AND NOT (done_ob.id IS NOT NULL AND open_ob.id IS NULL)
+        -- Exclude when the LATEST onboarding is done / mid-review — never
+        -- re-invite, regardless of any older rows. ⚠️ Use IS DISTINCT FROM
+        -- so a NULL latest status (NO onboarding at all) is NOT excluded
+        -- (NULL IN (...) is NULL → NOT NULL is NULL → would wrongly drop
+        -- brand-new employees).
+        AND latest_ob.status IS DISTINCT FROM 'submitted'
+        AND latest_ob.status IS DISTINCT FROM 'finalized'
       ORDER BY e.first_name ASC, e.last_name ASC, e.id ASC`,
-    [HR_ONBOARDING_SENDABLE_STATUSES],
   )
 
+  const sendable = new Set<string>(HR_ONBOARDING_SENDABLE_STATUSES)
   const eligible: BulkInviteEligibleRow[] = []
   const skippedNoEmail: Array<{ id: number; name: string }> = []
   for (const r of res.rows) {
@@ -2741,13 +2756,18 @@ export async function getEmployeesEligibleForBulkInvite(): Promise<BulkInviteEli
       skippedNoEmail.push({ id: r.id, name })
       continue
     }
-    const openId = r.open_onboarding_id != null ? Number(r.open_onboarding_id) : null
+    const latestStatus = r.latest_onboarding_status as string | null
+    const latestId = r.latest_onboarding_id != null ? Number(r.latest_onboarding_id) : null
+    // 'existing_open' ONLY when the LATEST row is a sendable open status;
+    // everything else that survived the SQL exclusion (no onboarding, or a
+    // cancelled/unknown latest) is re-invitable → 'new'.
+    const isExistingOpen = latestStatus != null && sendable.has(latestStatus)
     eligible.push({
       id: r.id,
       name,
       email: String(r.email).trim(),
-      category: openId != null ? 'existing_open' : 'new',
-      open_onboarding_id: openId,
+      category: isExistingOpen ? 'existing_open' : 'new',
+      open_onboarding_id: isExistingOpen ? latestId : null,
     })
   }
   const newCount = eligible.filter((e) => e.category === 'new').length
