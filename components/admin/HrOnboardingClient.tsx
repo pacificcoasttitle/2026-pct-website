@@ -13,7 +13,12 @@ import {
   Eye,
   XCircle,
   Clock,
+  Users,
 } from 'lucide-react'
+
+// ⚠️ Test recipient (display only — the server holds the authoritative
+// override HR_BULK_INVITE_TEST_EMAIL || ghernandez@pct.com).
+const BULK_TEST_RECIPIENT = 'ghernandez@pct.com'
 
 interface OnboardingRow {
   id:               number
@@ -69,10 +74,12 @@ export default function HrOnboardingClient({
   onboardings,
   employees,
   initialEmployeeId = '',
+  bulkEligibleCount = 0,
 }: {
   onboardings: OnboardingRow[]
   employees:   EmployeeOption[]
   initialEmployeeId?: string
+  bulkEligibleCount?: number
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -82,6 +89,44 @@ export default function HrOnboardingClient({
   const [cancellingId, setCancellingId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkSummary, setBulkSummary] = useState<string | null>(null)
+
+  // ⚠️ Bulk update-invite — DEFAULT test mode: creates onboardings for all
+  // eligible existing employees, but sends ONE representative invite to the
+  // override (never the real employee emails). Real all-staff send is a
+  // separate deliberate step (not wired to this button).
+  async function handleBulkInvite() {
+    const ok = window.confirm(
+      `This will create onboardings for ${bulkEligibleCount} existing ` +
+        `employee${bulkEligibleCount === 1 ? '' : 's'} and send ONE test ` +
+        `invite to ${BULK_TEST_RECIPIENT}.\n\n` +
+        `This is the TEST send — it does NOT email all staff. (A real ` +
+        `all-staff send is a separate, deliberate step.)`,
+    )
+    if (!ok) return
+    setError(null)
+    setBulkSummary(null)
+    setBulkBusy(true)
+    try {
+      // No mode → server defaults to test mode (the safe default).
+      const res = await fetch('/api/admin/hr/onboarding/bulk-invite', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        setError(data?.error || 'Bulk invite failed.')
+        return
+      }
+      setBulkSummary(
+        `Bulk update (test mode): ${data.total} eligible · ${data.sent} test email sent to ${data.test_recipient} · ` +
+          `${data.created_no_email} onboardings created (no email) · ${data.skipped} skipped · ${data.failed} failed.`,
+      )
+      router.refresh()
+    } catch {
+      setError('Network error — please try again.')
+    } finally {
+      setBulkBusy(false)
+    }
+  }
 
   // Optional status filter (e.g. ?status=submitted from the dashboard CTA).
   const visibleOnboardings = useMemo(
@@ -219,9 +264,9 @@ export default function HrOnboardingClient({
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#03374f]">Onboarding</h1>
+          <h1 className="text-2xl font-bold text-[#03374f]">Onboarding &amp; Updates</h1>
           <p className="text-gray-500 text-sm mt-1">
-            Invite an employee to complete their onboarding. They receive a secure link by email.
+            Onboard new hires and send update invites to existing staff. Each employee receives a secure link by email to complete or confirm their information.
           </p>
         </div>
         <Link
@@ -284,6 +329,44 @@ export default function HrOnboardingClient({
               {TYPE_LABEL[selectedEmployee.onboarding_type] || 'Sales Rep'}
             </span>
             <span className="text-gray-400">— inherited from the employee record; drives the checklist.</span>
+          </div>
+        )}
+      </div>
+
+      {/* Bulk update-invite — a SEPARATE control below the single picker.
+          Test mode by default: creates onboardings + sends ONE test email
+          to the override. Does NOT replace the single-invite flow. */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#03374f]/8 text-[#03374f] flex items-center justify-center flex-shrink-0">
+              <Users className="w-4.5 h-4.5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-[#03374f]">Send update invite to all existing employees</h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {bulkEligibleCount} eligible (active existing staff with a work email and no open onboarding).
+                Creates each onboarding and sends the “confirm your info” invite.
+              </p>
+              <p className="text-[11px] text-gray-400 mt-1">
+                Testing: sends ONE representative email to {BULK_TEST_RECIPIENT} — not all staff.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleBulkInvite}
+            disabled={bulkBusy || bulkEligibleCount === 0}
+            className="h-10 px-5 inline-flex items-center gap-2 rounded-xl border border-[#03374f]/20 bg-white text-[#03374f] text-sm font-semibold hover:border-[#f26b2b]/40 hover:text-[#f26b2b] transition-colors disabled:opacity-50 flex-shrink-0"
+          >
+            {bulkBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
+            Send update invites
+          </button>
+        </div>
+        {bulkSummary && (
+          <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>{bulkSummary}</span>
           </div>
         )}
       </div>

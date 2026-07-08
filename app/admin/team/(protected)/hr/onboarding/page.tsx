@@ -7,7 +7,7 @@
  * driven client-side via the 4b APIs. The public receive route
  * (/hr-onboarding/[token]) is 4c — not built here.
  */
-import { getAllHrOnboardings, getAllHrEmployees, getHrOnboardingItemProgress } from '@/lib/admin-db'
+import { getAllHrOnboardings, getAllHrEmployees, getHrOnboardingItemProgress, getEmployeesEligibleForBulkInvite } from '@/lib/admin-db'
 import { requirePageRole } from '@/lib/auth/guards'
 import HrOnboardingClient from '@/components/admin/HrOnboardingClient'
 
@@ -22,9 +22,10 @@ export default async function HrOnboardingPage({
   await requirePageRole('hr-tools')
 
   const { employee } = await searchParams
-  const [onboardings, roster] = await Promise.all([
+  const [onboardings, roster, bulkEligible] = await Promise.all([
     getAllHrOnboardings(),
     getAllHrEmployees(),
+    getEmployeesEligibleForBulkInvite(),
   ])
 
   const progress = await getHrOnboardingItemProgress(onboardings.map((o) => o.id))
@@ -56,5 +57,12 @@ export default async function HrOnboardingPage({
       ? String(preselectedEmployeeId)
       : ''
 
-  return <HrOnboardingClient onboardings={list} employees={employees} initialEmployeeId={initialEmployeeId} />
+  return (
+    <HrOnboardingClient
+      onboardings={list}
+      employees={employees}
+      initialEmployeeId={initialEmployeeId}
+      bulkEligibleCount={bulkEligible.eligible.length}
+    />
+  )
 }

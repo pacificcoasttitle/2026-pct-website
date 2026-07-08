@@ -2615,6 +2615,64 @@ export async function createHrOnboardingForExisting(
   return row
 }
 
+export interface BulkInviteEligibleRow {
+  id:    number
+  name:  string
+  email: string
+}
+
+export interface BulkInviteEligibleResult {
+  /** True existing staff with a work email + no open onboarding. */
+  eligible: BulkInviteEligibleRow[]
+  /** Excluded because they have no (blank) work email — REPORTED, not dropped. */
+  skippedNoEmail: Array<{ id: number; name: string }>
+}
+
+/**
+ * Eligible set for the bulk "send update invite to existing employees"
+ * action. An employee is ELIGIBLE when ALL of:
+ *   - active = true
+ *   - is_new_hire = false            (true existing staff; new hires stay
+ *                                      on the single flow / personal-email)
+ *   - has a non-blank work email     (NULLIF(TRIM(email),'') IS NOT NULL)
+ *   - has NO open onboarding         (no hr_onboarding in an active status)
+ *
+ * Employees who pass everything EXCEPT the work-email check are returned
+ * separately in `skippedNoEmail` so the caller can REPORT them (never
+ * silently dropped). Employees with an open onboarding are simply not
+ * returned (the fired-once guard also re-checks per employee at send).
+ */
+export async function getEmployeesEligibleForBulkInvite(): Promise<BulkInviteEligibleResult> {
+  const db = getPool()
+  const res = await db.query(
+    `SELECT e.id,
+            TRIM(COALESCE(e.first_name,'') || ' ' || COALESCE(e.last_name,'')) AS name,
+            NULLIF(TRIM(e.email), '') AS email
+       FROM hr_employees e
+      WHERE e.active = true
+        AND e.is_new_hire = false
+        AND NOT EXISTS (
+          SELECT 1 FROM hr_onboarding o
+           WHERE o.hr_employee_id = e.id
+             AND o.status = ANY($1)
+        )
+      ORDER BY e.first_name ASC, e.last_name ASC, e.id ASC`,
+    [HR_ONBOARDING_ACTIVE_STATUSES],
+  )
+
+  const eligible: BulkInviteEligibleRow[] = []
+  const skippedNoEmail: Array<{ id: number; name: string }> = []
+  for (const r of res.rows) {
+    const name = String(r.name || '').trim() || `Employee #${r.id}`
+    if (r.email == null) {
+      skippedNoEmail.push({ id: r.id, name })
+    } else {
+      eligible.push({ id: r.id, name, email: String(r.email).trim() })
+    }
+  }
+  return { eligible, skippedNoEmail }
+}
+
 /**
  * Create an onboarding for a brand-NEW shell (no hr_employees row yet).
  * hr_employee_id stays NULL; name/email staged in payload + invited_email
