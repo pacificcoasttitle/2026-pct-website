@@ -62,7 +62,9 @@ export default async function HrOnboardingPage({
       onboardings={list}
       employees={employees}
       initialEmployeeId={initialEmployeeId}
-      bulkEligibleCount={bulkEligible.eligible.length}
+      bulkEligibleCount={bulkEligible.counts.total}
+      bulkNewCount={bulkEligible.counts.new}
+      bulkExistingOpenCount={bulkEligible.counts.existingOpen}
     />
   )
 }

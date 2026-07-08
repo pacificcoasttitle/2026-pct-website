@@ -2653,49 +2653,84 @@ export async function createHrOnboardingForExisting(
   return row
 }
 
+// Statuses of an open onboarding for which a (re)send is still meaningful —
+// the employee HASN'T completed. submitted/finalized/cancelled are NOT
+// re-sendable (submitted/finalized = done/mid-review; cancelled = dead).
+export const HR_ONBOARDING_SENDABLE_STATUSES = ['draft', 'invited', 'in_progress'] as const
+
 export interface BulkInviteEligibleRow {
   id:    number
   name:  string
   email: string
+  /**
+   * 'new'           → no open onboarding; bulk should CREATE + send.
+   * 'existing_open' → already has a sendable open onboarding; bulk should
+   *                   REUSE it + send (never create a duplicate).
+   */
+  category:            'new' | 'existing_open'
+  /** Set for 'existing_open' — the onboarding to reuse for the send. */
+  open_onboarding_id:  number | null
 }
 
 export interface BulkInviteEligibleResult {
-  /** True existing staff with a work email + no open onboarding. */
+  /** Send candidates: active existing staff w/ a work email. Each is
+   *  either 'new' (no open onboarding → create) or 'existing_open'
+   *  (reuse + send). Excludes anyone whose only onboarding is
+   *  submitted/finalized/cancelled (nothing to send). */
   eligible: BulkInviteEligibleRow[]
   /** Excluded because they have no (blank) work email — REPORTED, not dropped. */
   skippedNoEmail: Array<{ id: number; name: string }>
+  /** Convenience counts for the UI breakdown. */
+  counts: { total: number; new: number; existingOpen: number }
 }
 
 /**
- * Eligible set for the bulk "send update invite to existing employees"
- * action. An employee is ELIGIBLE when ALL of:
+ * Eligible SEND set for the bulk invite. An employee is a send candidate
+ * when ALL of:
  *   - active = true
- *   - is_new_hire = false            (true existing staff; new hires stay
- *                                      on the single flow / personal-email)
+ *   - is_new_hire = false            (true existing staff)
  *   - has a non-blank work email     (NULLIF(TRIM(email),'') IS NOT NULL)
- *   - has NO open onboarding         (no hr_onboarding in an active status)
  *
- * Employees who pass everything EXCEPT the work-email check are returned
- * separately in `skippedNoEmail` so the caller can REPORT them (never
- * silently dropped). Employees with an open onboarding are simply not
- * returned (the fired-once guard also re-checks per employee at send).
+ * and they are NOT already done — i.e. they either have NO onboarding, or
+ * their latest open onboarding is in a SENDABLE status (draft/invited/
+ * in_progress). Employees whose latest onboarding is submitted/finalized/
+ * cancelled are EXCLUDED (nothing to (re)send).
+ *
+ * Each candidate is categorized:
+ *   - 'new'           → no open onboarding → CREATE + send.
+ *   - 'existing_open' → has a sendable open onboarding → REUSE + send
+ *                       (the atomic index still prevents any duplicate).
+ *
+ * Blank-work-email employees are returned in `skippedNoEmail` (reported).
  */
 export async function getEmployeesEligibleForBulkInvite(): Promise<BulkInviteEligibleResult> {
   const db = getPool()
   const res = await db.query(
     `SELECT e.id,
             TRIM(COALESCE(e.first_name,'') || ' ' || COALESCE(e.last_name,'')) AS name,
-            NULLIF(TRIM(e.email), '') AS email
+            NULLIF(TRIM(e.email), '') AS email,
+            open_ob.id AS open_onboarding_id,
+            done_ob.id AS done_onboarding_id
        FROM hr_employees e
+       LEFT JOIN LATERAL (
+         SELECT o.id FROM hr_onboarding o
+          WHERE o.hr_employee_id = e.id
+            AND o.status = ANY($1)
+          ORDER BY o.id DESC LIMIT 1
+       ) open_ob ON true
+       LEFT JOIN LATERAL (
+         SELECT o.id FROM hr_onboarding o
+          WHERE o.hr_employee_id = e.id
+            AND o.status IN ('submitted','finalized')
+          ORDER BY o.id DESC LIMIT 1
+       ) done_ob ON true
       WHERE e.active = true
         AND e.is_new_hire = false
-        AND NOT EXISTS (
-          SELECT 1 FROM hr_onboarding o
-           WHERE o.hr_employee_id = e.id
-             AND o.status = ANY($1)
-        )
+        -- Exclude anyone already submitted/finalized with no still-open
+        -- onboarding (nothing to (re)send — they're done / mid-review).
+        AND NOT (done_ob.id IS NOT NULL AND open_ob.id IS NULL)
       ORDER BY e.first_name ASC, e.last_name ASC, e.id ASC`,
-    [HR_ONBOARDING_ACTIVE_STATUSES],
+    [HR_ONBOARDING_SENDABLE_STATUSES],
   )
 
   const eligible: BulkInviteEligibleRow[] = []
@@ -2704,11 +2739,23 @@ export async function getEmployeesEligibleForBulkInvite(): Promise<BulkInviteEli
     const name = String(r.name || '').trim() || `Employee #${r.id}`
     if (r.email == null) {
       skippedNoEmail.push({ id: r.id, name })
-    } else {
-      eligible.push({ id: r.id, name, email: String(r.email).trim() })
+      continue
     }
+    const openId = r.open_onboarding_id != null ? Number(r.open_onboarding_id) : null
+    eligible.push({
+      id: r.id,
+      name,
+      email: String(r.email).trim(),
+      category: openId != null ? 'existing_open' : 'new',
+      open_onboarding_id: openId,
+    })
   }
-  return { eligible, skippedNoEmail }
+  const newCount = eligible.filter((e) => e.category === 'new').length
+  return {
+    eligible,
+    skippedNoEmail,
+    counts: { total: eligible.length, new: newCount, existingOpen: eligible.length - newCount },
+  }
 }
 
 /**

@@ -75,11 +75,15 @@ export default function HrOnboardingClient({
   employees,
   initialEmployeeId = '',
   bulkEligibleCount = 0,
+  bulkNewCount = 0,
+  bulkExistingOpenCount = 0,
 }: {
   onboardings: OnboardingRow[]
   employees:   EmployeeOption[]
   initialEmployeeId?: string
   bulkEligibleCount?: number
+  bulkNewCount?: number
+  bulkExistingOpenCount?: number
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -89,42 +93,74 @@ export default function HrOnboardingClient({
   const [cancellingId, setCancellingId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
-  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkBusy, setBulkBusy] = useState<null | 'dry_run' | 'real'>(null)
   const [bulkSummary, setBulkSummary] = useState<string | null>(null)
 
-  // ⚠️ Bulk update-invite — DEFAULT test mode: creates onboardings for all
-  // eligible existing employees, but sends ONE representative invite to the
-  // override (never the real employee emails). Real all-staff send is a
-  // separate deliberate step (not wired to this button).
-  async function handleBulkInvite() {
+  // ⚠️ Preview (dry run) — the DEFAULT, side-effect-free action: computes
+  // the eligible set, writes NOTHING, sends one inert sample preview to
+  // the override. Repeatable.
+  async function handleDryRun() {
+    setError(null)
+    setBulkSummary(null)
+    setBulkBusy('dry_run')
+    try {
+      const res = await fetch('/api/admin/hr/onboarding/bulk-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'dry_run' }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        setError(data?.error || 'Preview failed.')
+        return
+      }
+      setBulkSummary(
+        `Preview (dry run — nothing created): ${data.total_eligible} eligible ` +
+          `(${data.would_create} new, ${data.existing_open} existing open). ` +
+          `${data.sample_sent_to ? `One sample preview sent to ${data.sample_sent_to}.` : 'Sample preview could not be sent.'}`,
+      )
+    } catch {
+      setError('Network error — please try again.')
+    } finally {
+      setBulkBusy(null)
+    }
+  }
+
+  // ⚠️ REAL SEND — explicit, distinct action behind its own confirm naming
+  // the count + destination. Emails each eligible employee at their WORK
+  // address (creating or reusing their open onboarding). Never the default.
+  async function handleRealSend() {
     const ok = window.confirm(
-      `This will create onboardings for ${bulkEligibleCount} existing ` +
-        `employee${bulkEligibleCount === 1 ? '' : 's'} and send ONE test ` +
-        `invite to ${BULK_TEST_RECIPIENT}.\n\n` +
-        `This is the TEST send — it does NOT email all staff. (A real ` +
-        `all-staff send is a separate, deliberate step.)`,
+      `⚠️ REAL SEND\n\n` +
+        `This will email ${bulkEligibleCount} existing employee` +
+        `${bulkEligibleCount === 1 ? '' : 's'} at their WORK email addresses ` +
+        `(${bulkNewCount} new onboardings created, ${bulkExistingOpenCount} existing reused).\n\n` +
+        `This is NOT a test — real employees will receive the invite. Continue?`,
     )
     if (!ok) return
     setError(null)
     setBulkSummary(null)
-    setBulkBusy(true)
+    setBulkBusy('real')
     try {
-      // No mode → server defaults to test mode (the safe default).
-      const res = await fetch('/api/admin/hr/onboarding/bulk-invite', { method: 'POST' })
+      const res = await fetch('/api/admin/hr/onboarding/bulk-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'real' }),
+      })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data?.ok) {
-        setError(data?.error || 'Bulk invite failed.')
+        setError(data?.error || 'Real send failed.')
         return
       }
       setBulkSummary(
-        `Bulk update (test mode): ${data.total} eligible · ${data.sent} test email sent to ${data.test_recipient} · ` +
-          `${data.created_no_email} onboardings created (no email) · ${data.skipped} skipped · ${data.failed} failed.`,
+        `Real send: ${data.sent} sent (${data.sent_created} new, ${data.sent_existing} existing) · ` +
+          `${data.skipped} skipped · ${data.failed} failed of ${data.total} eligible.`,
       )
       router.refresh()
     } catch {
       setError('Network error — please try again.')
     } finally {
-      setBulkBusy(false)
+      setBulkBusy(null)
     }
   }
 
@@ -334,35 +370,55 @@ export default function HrOnboardingClient({
       </div>
 
       {/* Bulk update-invite — a SEPARATE control below the single picker.
-          Test mode by default: creates onboardings + sends ONE test email
-          to the override. Does NOT replace the single-invite flow. */}
+          DEFAULT action is a side-effect-free PREVIEW (dry run). The real
+          send is a distinct, explicit action behind its own confirm. Does
+          NOT replace the single-invite flow. */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#03374f]/8 text-[#03374f] flex items-center justify-center flex-shrink-0">
-              <Users className="w-4.5 h-4.5" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-[#03374f]">Send update invite to all existing employees</h2>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {bulkEligibleCount} eligible (active existing staff with a work email and no open onboarding).
-                Creates each onboarding and sends the “confirm your info” invite.
-              </p>
-              <p className="text-[11px] text-gray-400 mt-1">
-                Testing: sends ONE representative email to {BULK_TEST_RECIPIENT} — not all staff.
-              </p>
-            </div>
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#03374f]/8 text-[#03374f] flex items-center justify-center flex-shrink-0">
+            <Users className="w-4.5 h-4.5" />
           </div>
+          <div>
+            <h2 className="text-sm font-bold text-[#03374f]">Send update invites to existing employees</h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              <span className="font-semibold text-[#03374f]">{bulkEligibleCount} eligible</span>
+              {' '}({bulkNewCount} new, {bulkExistingOpenCount} existing open). Active existing staff
+              with a work email; already-submitted onboardings are excluded.
+            </p>
+            <p className="text-[11px] text-gray-400 mt-1">
+              Preview sends one inert sample to {BULK_TEST_RECIPIENT} and creates nothing.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          {/* DEFAULT: preview / dry run — creates nothing. */}
           <button
             type="button"
-            onClick={handleBulkInvite}
-            disabled={bulkBusy || bulkEligibleCount === 0}
-            className="h-10 px-5 inline-flex items-center gap-2 rounded-xl border border-[#03374f]/20 bg-white text-[#03374f] text-sm font-semibold hover:border-[#f26b2b]/40 hover:text-[#f26b2b] transition-colors disabled:opacity-50 flex-shrink-0"
+            onClick={handleDryRun}
+            disabled={bulkBusy !== null}
+            className="h-10 px-5 inline-flex items-center justify-center gap-2 rounded-xl border border-[#03374f]/20 bg-white text-[#03374f] text-sm font-semibold hover:border-[#f26b2b]/40 hover:text-[#f26b2b] transition-colors disabled:opacity-50"
           >
-            {bulkBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
-            Send update invites
+            {bulkBusy === 'dry_run' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
+            Preview (dry run)
+          </button>
+
+          {/* DISTINCT, explicit real send — its own confirm names count + destination. */}
+          <button
+            type="button"
+            onClick={handleRealSend}
+            disabled={bulkBusy !== null || bulkEligibleCount === 0}
+            className="h-10 px-5 inline-flex items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition-colors disabled:opacity-50"
+          >
+            {bulkBusy === 'real' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            Send for real to {bulkEligibleCount} employees
           </button>
         </div>
+
+        <p className="text-[11px] text-gray-400">
+          Preview is safe and repeatable (no records, one sample email). “Send for real” emails employees at their work addresses — it asks for confirmation first.
+        </p>
+
         {bulkSummary && (
           <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
             <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />

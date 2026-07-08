@@ -1,25 +1,28 @@
 /**
  * POST /api/admin/hr/onboarding/bulk-invite
  *
- * Bulk "send update invite to all existing employees". For each eligible
- * employee (active, is_new_hire=false, has a work email, no open
- * onboarding) this REUSES the single-flow internals to:
- *   1. findActiveHrOnboarding (fired-once guard — skip if one exists),
- *   2. createHrOnboardingForExisting (create + seed the checklist by type),
- *   3. render + send the warm "confirm your info" invite (SendGrid).
+ * Bulk "send update invite to existing employees" — THREE explicit modes.
+ * Gated requireApiRole('hr-tools'). Non-blocking per employee, concurrency
+ * pool of 5, extended maxDuration.
  *
- * Gated requireApiRole('hr-tools'). Non-blocking per employee (one failure
- * records `failed` + the batch continues), concurrency-pooled (5), with an
- * extended maxDuration.
+ * ⚠️⚠️ SAFETY — the DEFAULT must be side-effect-free:
+ *   - mode='dry_run' (DEFAULT — also the fallback for missing/unknown
+ *     mode): computes the eligible set, writes NOTHING to the DB, and
+ *     sends ONE clearly-marked SAMPLE preview to the override
+ *     (HR_BULK_INVITE_TEST_EMAIL || 'ghernandez@pct.com'). Fully
+ *     repeatable. ⚠️ NO real token is minted (no onboarding exists) — the
+ *     preview link is inert.
+ *   - mode='test': CREATES onboardings for real (or reuses existing open
+ *     ones) but sends exactly ONE representative invite to the override.
+ *   - mode='real' (EXPLICIT opt-in): sends each employee their invite at
+ *     their own work email. NEVER the default — requires { mode: 'real' }.
  *
- * ⚠️⚠️ TESTING SAFETY — the default MUST NOT blast real employees:
- *   - mode='test' (DEFAULT): still CREATES onboardings for real (proves
- *     the DB/checklist mechanism), but sends exactly ONE representative
- *     invite to HR_BULK_INVITE_TEST_EMAIL || 'ghernandez@pct.com'. No
- *     employee's real email is ever a recipient.
- *   - mode='real' (EXPLICIT, deliberate): sends each invite to the
- *     employee's own work email. This is NEVER the default — the request
- *     must explicitly set { mode: 'real' }.
+ * ⚠️ Existing open onboardings: for test/real, an employee who already has
+ * a sendable open onboarding (draft/invited/in_progress) is REUSED and
+ * sent — NOT skipped (so a real go-live after a test run actually
+ * delivers). The atomic unique index still guarantees no duplicate is
+ * created. submitted/finalized/cancelled are never re-sent (excluded by
+ * the eligible-set query).
  */
 import { NextResponse } from 'next/server'
 import sgMail from '@sendgrid/mail'
@@ -110,10 +113,41 @@ async function sendInviteForOnboarding(
   })
 }
 
+/**
+ * DRY-RUN preview: render the REAL invite template for a representative
+ * employee and send ONE sample to the override. ⚠️ NO token is minted (no
+ * onboarding exists) — the link is inert and the subject/body are clearly
+ * marked as a preview. Writes nothing.
+ */
+async function sendPreviewSample(
+  sample: BulkInviteEligibleRow | null,
+  sg: typeof sgMail,
+): Promise<void> {
+  const firstName = (sample?.name.split(' ')[0] || 'there').trim()
+  const subject = `[PREVIEW] Bulk invite sample — Pacific Coast Title`
+  const html = renderHrOnboardingInvite({
+    subject,
+    first_name:           firstName,
+    // ⚠️ Inert link — dry-run mints NO real token for a non-existent
+    // onboarding. This is a preview of the layout/copy only.
+    onboarding_url:       `${SITE_BASE}/hr-onboarding/preview-only-inert-link`,
+    expiry_label:         '14 days',
+    is_existing_employee: true,
+  })
+  await sg.send({
+    to:      TEST_RECIPIENT,
+    from:    { email: 'hr@pct.com', name: 'Pacific Coast Title HR' },
+    subject,
+    html,
+  })
+}
+
+type BulkMode = 'dry_run' | 'test' | 'real'
+
 interface PerEmployeeResult {
   employee_id: number
   name:        string
-  status:      'sent' | 'created_no_email' | 'skipped' | 'failed'
+  status:      'sent_created' | 'sent_existing' | 'created_no_email' | 'skipped' | 'failed'
   detail?:     string
   sent_to?:    string
 }
@@ -123,16 +157,18 @@ export async function POST(request: Request) {
   if ('error' in auth) return auth.error
   const actor = auth.session.username || 'unknown'
 
-  // ⚠️ DEFAULT to test mode. Real mode requires an EXPLICIT { mode: 'real' }.
+  // ⚠️ DEFAULT to dry_run (missing/unknown mode → dry_run). test creates;
+  // real requires the EXPLICIT { mode: 'real' } — never reachable by default.
   let body: Record<string, unknown> = {}
   try {
     body = await request.json()
   } catch {
-    // no body → test mode (the safe default)
+    // no body → dry_run (the safe, side-effect-free default)
   }
-  const isRealMode = body.mode === 'real'
+  const mode: BulkMode =
+    body.mode === 'real' ? 'real' : body.mode === 'test' ? 'test' : 'dry_run'
 
-  const { eligible, skippedNoEmail } = await getEmployeesEligibleForBulkInvite()
+  const { eligible, skippedNoEmail, counts } = await getEmployeesEligibleForBulkInvite()
 
   const sg = getSg()
   if (!sg) {
@@ -142,55 +178,111 @@ export async function POST(request: Request) {
     )
   }
 
-  // In test mode we send exactly ONE representative email (the Director
-  // wants one delivery, not 100). We still CREATE every onboarding. Track
-  // whether the representative email has been sent so only the first
-  // successfully-created onboarding triggers it.
-  let testEmailSent = false
+  // ── DRY RUN (default): NO DB writes. Report the eligible set + send ONE
+  // inert sample preview to the override. Fully repeatable. ──
+  if (mode === 'dry_run') {
+    let sampleSentTo: string | null = null
+    let sampleError: string | null = null
+    try {
+      await sendPreviewSample(eligible[0] ?? null, sg)
+      sampleSentTo = TEST_RECIPIENT
+    } catch (err) {
+      // A preview failure must not imply anything was created (nothing was).
+      sampleError = err instanceof Error ? err.message : 'Failed to send preview.'
+      console.error('[hr-bulk-invite] dry_run preview send failed:', err)
+    }
+    console.log(`[hr-bulk-invite] actor=${actor} mode=dry_run would_create=${counts.new} would_send=${counts.total} (no DB writes)`)
+    return NextResponse.json({
+      ok: true,
+      mode: 'dry_run',
+      total_eligible: counts.total,
+      would_create: counts.new,        // 'new' → would be created
+      would_send: counts.total,         // every eligible would be sent in real mode
+      existing_open: counts.existingOpen,
+      sample_sent_to: sampleSentTo,
+      sample_error: sampleError,
+      skipped_no_email: skippedNoEmail.length,
+      // Full eligible breakdown (no records touched).
+      eligible: eligible.map((e) => ({ employee_id: e.id, name: e.name, category: e.category })),
+    })
+  }
+
+  // ── TEST / REAL: create-or-reuse + send. ──
+  const isRealMode = mode === 'real'
+  let testEmailSent = false // test mode sends exactly ONE representative email
 
   const perEmployee: PerEmployeeResult[] = await runWithConcurrency(
     eligible,
     5,
     async (emp: BulkInviteEligibleRow): Promise<PerEmployeeResult> => {
       try {
-        // Fired-once guard: never double-create for an open onboarding.
-        const existing = await findActiveHrOnboarding({ hrEmployeeId: emp.id })
-        if (existing) {
-          return { employee_id: emp.id, name: emp.name, status: 'skipped', detail: 'Already has an open onboarding.' }
+        // Resolve the onboarding to send for: REUSE an existing open one
+        // (never create a duplicate), else CREATE a fresh one. The atomic
+        // unique index still guarantees no double-create under a race.
+        let onboardingId: number
+        let wasExisting: boolean
+        if (emp.category === 'existing_open' && emp.open_onboarding_id != null) {
+          onboardingId = emp.open_onboarding_id
+          wasExisting = true
+        } else {
+          const existing = await findActiveHrOnboarding({ hrEmployeeId: emp.id })
+          if (existing) {
+            // Race/stale-eligibility: an open one appeared — reuse it.
+            onboardingId = existing.id
+            wasExisting = true
+          } else {
+            const created = await createHrOnboardingForExisting({
+              hr_employee_id: emp.id,
+              created_by:     actor,
+            })
+            onboardingId = created.id
+            wasExisting = false
+          }
         }
 
-        // Create the onboarding + seed the checklist (REAL in both modes).
-        const onboarding = await createHrOnboardingForExisting({
-          hr_employee_id: emp.id,
-          created_by:     actor,
-        })
-
-        const firstName = String(onboarding.payload?.first_name || emp.name.split(' ')[0] || '').trim()
+        const firstName = emp.name.split(' ')[0] || ''
+        const sentStatus = wasExisting ? 'sent_existing' as const : 'sent_created' as const
 
         if (isRealMode) {
           // ⚠️ REAL MODE (explicit): send to the employee's own work email.
-          await sendInviteForOnboarding(onboarding.id, emp.id, firstName, emp.email, sg)
-          await markHrOnboardingInvited(onboarding.id, null)
-          return { employee_id: emp.id, name: emp.name, status: 'sent', sent_to: emp.email }
+          await sendInviteForOnboarding(onboardingId, emp.id, firstName, emp.email, sg)
+          await markHrOnboardingInvited(onboardingId, null)
+          return { employee_id: emp.id, name: emp.name, status: sentStatus, sent_to: emp.email }
         }
 
-        // ⚠️ TEST MODE (default): onboarding created; send ONE
-        // representative email to the override, not to this employee.
+        // ⚠️ TEST MODE: send ONE representative email to the override.
         if (!testEmailSent) {
-          // Claim the single representative send (first creator wins).
           testEmailSent = true
-          await sendInviteForOnboarding(onboarding.id, emp.id, firstName, TEST_RECIPIENT, sg)
-          await markHrOnboardingInvited(onboarding.id, TEST_RECIPIENT)
-          return { employee_id: emp.id, name: emp.name, status: 'sent', sent_to: TEST_RECIPIENT, detail: 'Representative test email.' }
+          await sendInviteForOnboarding(onboardingId, emp.id, firstName, TEST_RECIPIENT, sg)
+          await markHrOnboardingInvited(onboardingId, TEST_RECIPIENT)
+          return { employee_id: emp.id, name: emp.name, status: sentStatus, sent_to: TEST_RECIPIENT, detail: 'Representative test email.' }
         }
-        // Onboarding created, but no email sent (test mode, one already sent).
-        return { employee_id: emp.id, name: emp.name, status: 'created_no_email', detail: 'Onboarding created (test mode — no email sent).' }
+        // Onboarding created/exists, but no email sent (test mode, one already sent).
+        return { employee_id: emp.id, name: emp.name, status: 'created_no_email', detail: wasExisting ? 'Existing onboarding (test mode — no email sent).' : 'Onboarding created (test mode — no email sent).' }
       } catch (err) {
-        // Concurrent-race: the partial unique index rejected a 2nd open
-        // onboarding. Funnel to `skipped` (same as the check-guard), NOT
-        // `failed` — the employee already has an open onboarding.
+        // Concurrent-race create: the atomic index rejected a 2nd open
+        // onboarding. Reuse the winner + send (don't skip, don't fail).
         if (err instanceof HrOnboardingOpenConflictError) {
-          return { employee_id: emp.id, name: emp.name, status: 'skipped', detail: 'Already has an open onboarding (race).' }
+          try {
+            const raced = await findActiveHrOnboarding({ hrEmployeeId: emp.id })
+            if (raced) {
+              const firstName = emp.name.split(' ')[0] || ''
+              if (isRealMode) {
+                await sendInviteForOnboarding(raced.id, emp.id, firstName, emp.email, sg)
+                await markHrOnboardingInvited(raced.id, null)
+                return { employee_id: emp.id, name: emp.name, status: 'sent_existing', sent_to: emp.email, detail: 'Reused after create race.' }
+              }
+              if (!testEmailSent) {
+                testEmailSent = true
+                await sendInviteForOnboarding(raced.id, emp.id, firstName, TEST_RECIPIENT, sg)
+                await markHrOnboardingInvited(raced.id, TEST_RECIPIENT)
+                return { employee_id: emp.id, name: emp.name, status: 'sent_existing', sent_to: TEST_RECIPIENT, detail: 'Reused after create race (representative).' }
+              }
+              return { employee_id: emp.id, name: emp.name, status: 'created_no_email', detail: 'Existing onboarding (race; test mode — no email sent).' }
+            }
+          } catch (inner) {
+            console.error(`[hr-bulk-invite] employee ${emp.id} reuse-after-race failed:`, inner)
+          }
         }
         console.error(`[hr-bulk-invite] employee ${emp.id} failed:`, err)
         return {
@@ -214,18 +306,21 @@ export async function POST(request: Request) {
     })),
   ]
 
-  const sent    = results.filter((r) => r.status === 'sent').length
-  const created = results.filter((r) => r.status === 'created_no_email').length
-  const skipped = results.filter((r) => r.status === 'skipped').length
-  const failed  = results.filter((r) => r.status === 'failed').length
+  const sentCreated  = results.filter((r) => r.status === 'sent_created').length
+  const sentExisting = results.filter((r) => r.status === 'sent_existing').length
+  const created      = results.filter((r) => r.status === 'created_no_email').length
+  const skipped      = results.filter((r) => r.status === 'skipped').length
+  const failed       = results.filter((r) => r.status === 'failed').length
 
-  console.log(`[hr-bulk-invite] actor=${actor} mode=${isRealMode ? 'real' : 'test'} total=${results.length} sent=${sent} created_no_email=${created} skipped=${skipped} failed=${failed}`)
+  console.log(`[hr-bulk-invite] actor=${actor} mode=${mode} total=${results.length} sent_created=${sentCreated} sent_existing=${sentExisting} created_no_email=${created} skipped=${skipped} failed=${failed}`)
 
   return NextResponse.json({
     ok: true,
-    mode: isRealMode ? 'real' : 'test',
+    mode,
     total: results.length,
-    sent,
+    sent: sentCreated + sentExisting,
+    sent_created: sentCreated,
+    sent_existing: sentExisting,
     created_no_email: created,
     skipped,
     failed,
