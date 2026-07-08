@@ -56,11 +56,16 @@ function deriveAnniversary(startDate: string | null): { years: number; next: str
   return { years, next: nextStr }
 }
 
-// 'YYYY-MM-DD' for a date input value (DATE columns may arrive as a longer
-// ISO string depending on the driver; slice to the date part).
-function toDateInput(v: string | null): string {
+// 'YYYY-MM-DD' for a date input value. DATE columns may arrive as a longer
+// ISO string OR (depending on the pg driver / SELECT) a raw JS Date — guard
+// the type so we never call string ops on a Date (was crashing the detail
+// page with "v.slice is not a function").
+function toDateInput(v: string | Date | null | undefined): string {
   if (!v) return ''
-  return v.slice(0, 10)
+  if (v instanceof Date) {
+    return Number.isNaN(v.getTime()) ? '' : v.toISOString().slice(0, 10)
+  }
+  return String(v).slice(0, 10)
 }
 
 interface Props {

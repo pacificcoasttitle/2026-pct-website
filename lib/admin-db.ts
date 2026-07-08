@@ -2126,7 +2126,17 @@ export async function getHrDashboardStats(): Promise<HrDashboardStats> {
  */
 export async function getHrEmployeeById(id: number): Promise<HrEmployee | null> {
   const db = getPool()
-  const res = await db.query(`SELECT * FROM hr_employees WHERE id = $1 LIMIT 1`, [id])
+  // ⚠️ DATE columns as ::text so birthday/start_date are ALWAYS strings
+  // ('YYYY-MM-DD' | null), never JS Date objects. Consumers (e.g. the HR
+  // detail page's toDateInput) call string ops like .slice on these — a
+  // raw Date would crash. Overriding after * keeps the last-wins cast.
+  const res = await db.query(
+    `SELECT *,
+            birthday::text   AS birthday,
+            start_date::text AS start_date
+       FROM hr_employees WHERE id = $1 LIMIT 1`,
+    [id],
+  )
   return res.rows[0] || null
 }
 
@@ -3984,21 +3994,29 @@ export async function finalizeHrOnboarding(
         throw new HrOnboardingFinalizeError(`An employee with email ${email} already exists.`, 409)
       }
 
+      // ⚠️ FULL field set — mirror createHrEmployee so a finalize-created
+      // row isn't thinner than an Add-Employee row. onboarding_type comes
+      // from the onboarding record; is_new_hire is true (finalize is
+      // creating a brand-new employee with no prior Add-Employee row).
+      // active defaults true; photo_url/employment_status take their
+      // column defaults (createHrEmployee also leaves those to defaults).
+      const insOnboardingType = normalizeOnboardingType(current.onboarding_type)
       const ins = await client.query(
         `INSERT INTO hr_employees (
            first_name, last_name, full_legal_name, email,
            mobile, office_phone, title, department, office,
            birthday, start_date,
-           active, vcard_employee_id, staff_member_id,
+           active, onboarding_type, is_new_hire, vcard_employee_id, staff_member_id,
            created_by, updated_by
          ) VALUES (
-           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,true,NULL,NULL,$12,$12
+           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,true,$12,true,NULL,NULL,$13,$13
          )
          RETURNING id`,
         [
           first, last, fields.full_legal_name, email,
           fields.mobile, fields.office_phone, fields.title, fields.department, fields.office,
           birthday, startDate,
+          insOnboardingType,
           actor?.trim() || null,
         ],
       )
@@ -4019,10 +4037,25 @@ export async function finalizeHrOnboarding(
         throw new HrOnboardingFinalizeError(`An employee with email ${email} already exists.`, 409)
       }
 
+      // ⚠️ PRESERVE-IF-BLANK: finalize FILLS from the wizard, it must
+      // NEVER ERASE existing employee data with a blank/absent payload
+      // value. first_name/last_name/email are wizard-collected + already
+      // validated non-blank above, so they update normally. Everything
+      // else — full_legal_name, mobile, office_phone, and especially
+      // title/department/office (which the wizard NEVER collects) — is
+      // COALESCE(NULLIF(new,''), existing): a real value updates, a
+      // blank/null preserves the current column. (fields.* are already
+      // blank→null, and NULLIF(NULL,'')=NULL, so COALESCE keeps existing.)
       const upd = await client.query(
         `UPDATE hr_employees SET
-           first_name = $2, last_name = $3, full_legal_name = $4, email = $5,
-           mobile = $6, office_phone = $7, title = $8, department = $9, office = $10,
+           first_name = $2, last_name = $3,
+           full_legal_name = COALESCE(NULLIF($4, ''), full_legal_name),
+           email = $5,
+           mobile = COALESCE(NULLIF($6, ''), mobile),
+           office_phone = COALESCE(NULLIF($7, ''), office_phone),
+           title = COALESCE(NULLIF($8, ''), title),
+           department = COALESCE(NULLIF($9, ''), department),
+           office = COALESCE(NULLIF($10, ''), office),
            birthday = COALESCE($11, birthday), start_date = COALESCE($12, start_date),
            updated_by = $13, updated_at = NOW()
          WHERE id = $1
