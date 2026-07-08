@@ -12,7 +12,12 @@ import {
   Loader2,
   UserX,
   RotateCcw,
+  Share2,
 } from 'lucide-react'
+
+// ⚠️ Testing recipient (display only — the server holds the authoritative
+// override HR_ROSTER_SHARE_TEST_EMAIL || ghernandez@pct.com).
+const SHARE_TEST_RECIPIENT = 'ghernandez@pct.com'
 
 interface HrRosterRow {
   id:                 number
@@ -41,6 +46,34 @@ export default function HrRosterClient({
   const [flaggedOnly, setFlaggedOnly] = useState(dedupOnly)
   const [pendingId, setPendingId] = useState<number | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [sharing, setSharing] = useState(false)
+  const [shareResult, setShareResult] = useState<string | null>(null)
+
+  async function shareRoster() {
+    const ok = window.confirm(
+      `Send roster directory email to the test recipient (${SHARE_TEST_RECIPIENT})?\n\n` +
+        `This is the TEST recipient only — it is NOT sent to all staff.`,
+    )
+    if (!ok) return
+    setShareResult(null)
+    setActionError(null)
+    setSharing(true)
+    try {
+      const res = await fetch('/api/admin/hr/roster/share', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.ok) {
+        setActionError(data?.error || 'Failed to send the roster email.')
+        return
+      }
+      setShareResult(
+        `Sent directory of ${data.row_count} employee${data.row_count === 1 ? '' : 's'} to ${data.sent_to}`,
+      )
+    } catch {
+      setActionError('Network error — please try again.')
+    } finally {
+      setSharing(false)
+    }
+  }
 
   async function toggleActive(emp: HrRosterRow) {
     const next = !emp.active
@@ -116,6 +149,16 @@ export default function HrRosterClient({
             <LayoutDashboard className="w-4 h-4" />
             <span className="hidden sm:inline">Dashboard</span>
           </Link>
+          <button
+            type="button"
+            onClick={shareRoster}
+            disabled={sharing}
+            title={`Email the directory to the test recipient (${SHARE_TEST_RECIPIENT})`}
+            className="h-10 px-4 inline-flex items-center gap-2 rounded-xl bg-white border border-gray-200 text-[#03374f] text-sm font-semibold hover:border-[#f26b2b]/40 hover:text-[#f26b2b] transition-colors disabled:opacity-60"
+          >
+            {sharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+            <span className="hidden sm:inline">Share roster</span>
+          </button>
           <Link
             href="/admin/team/hr/new"
             className="h-10 px-4 inline-flex items-center gap-2 rounded-xl bg-[#f26b2b] text-white text-sm font-semibold hover:bg-[#d85c1f] transition-colors"
@@ -131,6 +174,13 @@ export default function HrRosterClient({
         <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <span>{actionError}</span>
+        </div>
+      )}
+
+      {shareResult && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <Share2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <span>{shareResult}</span>
         </div>
       )}
 
