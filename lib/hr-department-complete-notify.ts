@@ -12,6 +12,7 @@ import {
   claimHrDepartmentCompletedNotification,
   clearHrDepartmentCompletedNotification,
   getHrDepartmentCategoryProgress,
+  getHrDepartmentNote,
   getHrOnboardingById,
   type HrOnboardingChecklistCategory,
 } from '@/lib/admin-db'
@@ -85,12 +86,17 @@ export async function maybeNotifyDepartmentComplete(
         return false
       }
 
+      // Include the department's note (if any) — dept-authored context,
+      // not hire PII.
+      const note = await getHrDepartmentNote(onboardingId, category)
+
       const html = renderHrDepartmentCompleteNotify({
         subject,
         hire_name:  name,
         department,
         item_count: progress.total,
         review_url: reviewUrl,
+        note,
       })
 
       await sg.send({

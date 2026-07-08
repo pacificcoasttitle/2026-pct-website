@@ -24,16 +24,50 @@ function formatDate(value: string | null): string {
 
 export default function DepartmentChecklistClient({
   token,
+  label,
   initialItems,
+  initialNote,
   locked,
 }: {
   token:        string
+  label:        string
   initialItems: DepartmentItem[]
+  initialNote:  string
   locked:       boolean
 }) {
   const [items, setItems] = useState(initialItems)
   const [busyId, setBusyId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Notes-to-HR state (Part G). Save on blur when the value changed.
+  const [note, setNote] = useState(initialNote)
+  const [savedNote, setSavedNote] = useState(initialNote)
+  const [noteSaving, setNoteSaving] = useState(false)
+  const [noteStatus, setNoteStatus] = useState<'idle' | 'saved' | 'error'>('idle')
+
+  async function saveNote() {
+    if (note === savedNote) return
+    setNoteSaving(true)
+    setNoteStatus('idle')
+    try {
+      const res = await fetch(`/api/hr-onboarding/department/${token}/note`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setNoteStatus('error')
+        return
+      }
+      setSavedNote(note)
+      setNoteStatus('saved')
+    } catch {
+      setNoteStatus('error')
+    } finally {
+      setNoteSaving(false)
+    }
+  }
 
   async function toggle(item: DepartmentItem) {
     const next = item.status === 'complete' ? 'pending' : 'complete'
@@ -70,10 +104,26 @@ export default function DepartmentChecklistClient({
   // DB-backed done-state: every item complete. Reflects the current DB
   // truth on load and updates live after each toggle. Reopening the link
   // later while still all-complete shows the done screen again.
-  const allDone = items.every((row) => row.status === 'complete')
+  const completeCount = items.filter((row) => row.status === 'complete').length
+  const allDone = completeCount === items.length
 
   return (
     <div className="space-y-4">
+      {/* Live progress counter — derived from client `items` state so it
+          updates as items are toggled (previously server-rendered/stale). */}
+      <div className="rounded-2xl border border-border bg-card px-5 py-4 shadow-sm">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="text-sm font-semibold text-foreground">{label}</div>
+            <div className="text-xs text-muted-foreground">Task-only department checklist</div>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold" style={{ color: NAVY }}>{completeCount}/{items.length}</div>
+            <div className="text-xs text-muted-foreground">complete</div>
+          </div>
+        </div>
+      </div>
+
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -135,6 +185,39 @@ export default function DepartmentChecklistClient({
           )
         })}
       </ul>
+
+      {/* Notes back to HR — token-gated save (save on blur). */}
+      <div className="rounded-2xl border border-border bg-card px-5 py-4 shadow-sm">
+        <label htmlFor="dept-note" className="text-sm font-semibold text-foreground">
+          Notes for HR
+        </label>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Optional — e.g. what you completed, or anything HR should know.
+        </p>
+        <textarea
+          id="dept-note"
+          value={note}
+          onChange={(e) => { setNote(e.target.value); setNoteStatus('idle') }}
+          onBlur={saveNote}
+          disabled={locked || noteSaving}
+          rows={4}
+          maxLength={2000}
+          placeholder="Notes for HR…"
+          className="mt-2 w-full rounded-lg border border-input bg-card px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/25 disabled:opacity-60"
+        />
+        <div className="mt-1 flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">{note.length}/2000</span>
+          <span className="text-xs">
+            {noteSaving ? (
+              <span className="text-muted-foreground">Saving…</span>
+            ) : noteStatus === 'saved' ? (
+              <span className="text-[var(--success)]">Saved</span>
+            ) : noteStatus === 'error' ? (
+              <span className="text-red-600">Couldn&apos;t save — try again</span>
+            ) : null}
+          </span>
+        </div>
+      </div>
 
       {locked && (
         <p className="text-center text-xs text-muted-foreground">

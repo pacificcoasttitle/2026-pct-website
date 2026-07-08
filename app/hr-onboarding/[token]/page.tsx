@@ -130,9 +130,15 @@ export default async function HrOnboardingTokenPage({
   // ⚠️ DISPLAY-ONLY: this writes NOTHING. A saved draft (payload) OVERLAYS
   // the HR seed below (draft wins), preserving stage-and-finalize.
   const hrSeed: Record<string, string> = {}
+  // The proposed PCT email (hr_employees.email) is shown READ-ONLY in the
+  // wizard so the new hire sees what their PCT address will be. It is
+  // DISTINCT from personal_email (below) and never seeded as an editable
+  // value.
+  let proposedPctEmail = ''
   if (record.hr_employee_id != null) {
     const emp = await getHrEmployeeById(record.hr_employee_id)
     if (emp) {
+      proposedPctEmail = (emp.email ?? '').trim()
       const seed = (v: string | null | undefined) => (v == null ? '' : String(v).trim())
       // DATE columns may arrive as a Date object OR an ISO string depending
       // on the driver; normalize to YYYY-MM-DD (what the form date input
@@ -163,12 +169,21 @@ export default async function HrOnboardingTokenPage({
     if (p.trim() !== '') return p
     return hrSeed[k] ?? ''
   }
+  // #1: personal_email defaults to the invite recipient (invited_email —
+  // most likely their personal address), but ONLY when the user hasn't
+  // already entered/saved one (payload wins; don't clobber). Editable
+  // default, not locked.
+  const personalEmailInitial = (() => {
+    const saved = val('personal_email')
+    if (saved.trim() !== '') return saved
+    return (record.invited_email ?? '').trim()
+  })()
   const initial = {
     first_name:                     val('first_name'),
     last_name:                      val('last_name'),
     full_legal_name:                val('full_legal_name'),
     preferred_name:                 val('preferred_name'),
-    personal_email:                 val('personal_email'),
+    personal_email:                 personalEmailInitial,
     mobile:                         val('mobile'),
     birthday:                       val('birthday'),
     start_date:                     val('start_date'),
@@ -212,7 +227,7 @@ export default async function HrOnboardingTokenPage({
         </p>
       </div>
 
-      <HrOnboardingForm token={token} initial={initial} mode={isExisting ? 'existing' : 'new'} onboardingType={onboardingType} />
+      <HrOnboardingForm token={token} initial={initial} mode={isExisting ? 'existing' : 'new'} onboardingType={onboardingType} proposedPctEmail={proposedPctEmail} />
 
       <p className="mt-6 text-center text-xs text-muted-foreground">
         Questions? Contact Pacific Coast Title HR at{' '}

@@ -32,6 +32,7 @@ import {
   resolveHrOnboardingByToken,
   mergeHrOnboardingPayload,
   markHrOnboardingSubmitted,
+  getHrEmployeeById,
   type HrOnboardingRecord,
 } from '@/lib/admin-db'
 import { rateLimit } from '@/lib/rate-limit'
@@ -75,7 +76,15 @@ async function notifyOnboardingSubmitted(record: HrOnboardingRecord): Promise<vo
     const first = String(payload.first_name ?? '').trim()
     const last = String(payload.last_name ?? '').trim()
     const name = `${first} ${last}`.trim() || `Onboarding #${record.id}`
-    const hireType = record.hr_employee_id != null ? 'Existing employee' : 'New hire'
+    // New vs existing is driven by the linked employee's explicit
+    // is_new_hire flag (same fix as the invite email). The old
+    // hr_employee_id proxy always read "existing" post single-path-flow.
+    // Safe default: New hire when no employee/flag.
+    const employee = record.hr_employee_id != null
+      ? await getHrEmployeeById(record.hr_employee_id)
+      : null
+    const isNewHire = employee ? employee.is_new_hire !== false : true
+    const hireType = isNewHire ? 'New' : 'Existing Employee'
     const reviewUrl = `${SITE_BASE}/admin/team/hr/onboarding/${record.id}`
     const submittedWhen = record.submitted_at
       ? new Date(record.submitted_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })

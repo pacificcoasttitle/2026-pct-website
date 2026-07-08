@@ -32,7 +32,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
     <div className="pct-wizard min-h-screen bg-background font-sans">
       <header className="px-6 py-5" style={{ backgroundColor: NAVY }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://www.pct.com/logo2-dark.png" alt="Pacific Coast Title Company" width={150} className="block border-0" />
+        <img src="https://www.pct.com/logo2.png" alt="Pacific Coast Title Company" width={150} className="block border-0" />
       </header>
       <main className="mx-auto flex max-w-3xl flex-col px-5 py-10">
         {children}
@@ -69,7 +69,6 @@ export default async function DepartmentOnboardingPage({
   if (!view) return <InvalidLink />
 
   const label = CATEGORY_LABELS[view.category] ?? view.category
-  const complete = view.items.filter((item) => item.status === 'complete').length
   const locked = !['submitted', 'finalized'].includes(view.status)
 
   return (
@@ -86,20 +85,15 @@ export default async function DepartmentOnboardingPage({
         </p>
       </div>
 
-      <div className="mb-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <div className="text-sm font-semibold text-foreground">{label}</div>
-            <div className="text-xs text-muted-foreground">Task-only department checklist</div>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold" style={{ color: NAVY }}>{complete}/{view.items.length}</div>
-            <div className="text-xs text-muted-foreground">complete</div>
-          </div>
-        </div>
-      </div>
-
-      <DepartmentChecklistClient token={token} initialItems={view.items} locked={locked} />
+      {/* The progress counter lives in the client so it updates live as
+          items are toggled (it was previously server-rendered → stale). */}
+      <DepartmentChecklistClient
+        token={token}
+        label={label}
+        initialItems={view.items}
+        initialNote={view.department_note ?? ''}
+        locked={locked}
+      />
     </PageShell>
   )
 }

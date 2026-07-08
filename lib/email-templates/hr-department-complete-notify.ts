@@ -23,6 +23,7 @@ export interface HrDepartmentCompleteNotifyContext {
   department:  string
   item_count:  number
   review_url:  string
+  note?:       string | null   // optional dept-authored note (not hire PII)
 }
 
 export const HR_DEPARTMENT_COMPLETE_NOTIFY_TEMPLATE = `
@@ -66,6 +67,20 @@ export const HR_DEPARTMENT_COMPLETE_NOTIFY_TEMPLATE = `
               </p>
             </td>
           </tr>
+          {{#note}}
+          <tr>
+            <td style="padding:18px 40px 0 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${PCT_BRAND.warmNeutral}; border-radius:8px;">
+                <tr>
+                  <td style="padding:14px 18px;">
+                    <div style="color:${PCT_BRAND.textMuted}; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:6px;">Note from {{department}}</div>
+                    <div style="color:${PCT_BRAND.textDark}; font-size:14px; line-height:21px; white-space:pre-wrap;">{{note}}</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {{/note}}
           <tr>
             <td align="center" style="padding:30px 40px 8px 40px;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0">

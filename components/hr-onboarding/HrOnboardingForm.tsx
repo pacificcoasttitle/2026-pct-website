@@ -55,7 +55,7 @@ export interface HrOnboardingFormData {
 
 type FieldKey = keyof HrOnboardingFormData
 
-const STEPS = ['Basics', 'Personal', 'Emergency', 'Documents', 'Review'] as const
+const STEPS = ['Basics', 'Personal', 'Confirm your contact information', 'Documents', 'Review'] as const
 
 // Standard document uploads (government ID, tax form, direct deposit) were
 // removed from onboarding — HR collects those separately. Only sales-rep
@@ -115,11 +115,13 @@ export default function HrOnboardingForm({
   initial,
   mode = 'new',
   onboardingType = 'sales_rep',
+  proposedPctEmail = '',
 }: {
   token: string
   initial: HrOnboardingFormData
   mode?: 'new' | 'existing'
   onboardingType?: 'sales_rep' | 'employee'
+  proposedPctEmail?: string
 }) {
   const isSalesRep = onboardingType === 'sales_rep'
   const [step, setStep] = useState(0)
@@ -321,7 +323,7 @@ export default function HrOnboardingForm({
 
           <div key={step} className="animate-in fade-in slide-in-from-right-2 duration-300">
             {step === 0 && <BasicsStep form={form} set={set} />}
-            {step === 1 && <PersonalStep form={form} set={set} />}
+            {step === 1 && <PersonalStep form={form} set={set} proposedPctEmail={proposedPctEmail} />}
             {step === 2 && <EmergencyStep form={form} set={set} />}
             {step === 3 && (
               <DocumentsStep
@@ -437,12 +439,21 @@ function BasicsStep({ form, set }: StepProps) {
   )
 }
 
-function PersonalStep({ form, set }: StepProps) {
+function PersonalStep({ form, set, proposedPctEmail }: StepProps & { proposedPctEmail?: string }) {
   // Render a fallback option if a legacy home_state value isn't a known
   // 2-letter code (e.g. a stored full name) so it doesn't silently blank.
   const stateKnown = US_STATES.some((s) => s.value === form.home_state)
   return (
     <div className="grid gap-5 sm:grid-cols-2">
+      {proposedPctEmail && (
+        <div className="sm:col-span-2">
+          <FieldShell label="Your proposed PCT email" helper="This will be your Pacific Coast Title work email once IT sets it up. It's shown here for reference — you don't need to do anything with it.">
+            <div className="flex h-11 w-full items-center rounded-lg border border-input bg-muted/40 px-3.5 text-sm text-muted-foreground">
+              {proposedPctEmail}
+            </div>
+          </FieldShell>
+        </div>
+      )}
       <FieldShell label="Personal Email" required>
         <TextInput type="email" value={form.personal_email} onChange={(e) => set('personal_email', e.target.value)} autoComplete="email" placeholder="jane@example.com" />
       </FieldShell>
@@ -724,7 +735,7 @@ function ReviewStep({
         <SummaryRow label="City / State / ZIP" value={[form.home_city, form.home_state, form.home_zip].filter(Boolean).join(', ')} />
         <SummaryRow label="PCT Swag T-Shirt Size" value={form.t_shirt_size} />
       </SummarySection>
-      <SummarySection title="Emergency Contact" step={2} onEdit={onEdit}>
+      <SummarySection title="Confirm your contact information" step={2} onEdit={onEdit}>
         <SummaryRow label="Contact Name" value={form.emergency_contact_name} />
         <SummaryRow label="Contact Phone" value={form.emergency_contact_phone} />
         <SummaryRow label="Relationship" value={form.emergency_contact_relationship} />

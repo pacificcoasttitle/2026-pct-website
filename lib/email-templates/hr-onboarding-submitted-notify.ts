@@ -28,7 +28,7 @@ export interface HrOnboardingSubmittedNotifyContext {
   employee_name:  string
   submitted_when: string   // human-readable timestamp
   review_url:     string   // /admin/team/hr/onboarding/[id]
-  hire_type:      string   // "New hire" | "Existing employee"
+  hire_type:      string   // "New" | "Existing Employee" (from is_new_hire)
 }
 
 export const HR_ONBOARDING_SUBMITTED_NOTIFY_TEMPLATE = `

@@ -19,6 +19,7 @@ interface DepartmentKickoffRow {
   sent_to: string | null
   sent_at: string | null
   sent_by: string | null
+  department_note: string | null
 }
 
 interface DepartmentKickoffResult {
@@ -269,14 +270,22 @@ export default function HrOnboardingReviewClient(props: Props) {
           Sends one task-only checklist link to each department with items. Re-send replaces the department links and the previous links stop working, so teams must use the new email.
         </p>
         {departmentKickoff.map((row) => (
-          <div key={row.category} style={{ display: 'flex', gap: 12, padding: '8px 0', borderTop: '1px solid #f3f4f6', fontSize: 14, alignItems: 'center' }}>
-            <div style={{ width: 150, color: NAVY, fontWeight: 700 }}>{DEPARTMENT_LABEL[row.category] || row.category}</div>
-            <div style={{ width: 80, color: '#6b7280' }}>{row.item_count} item{row.item_count === 1 ? '' : 's'}</div>
-            <div style={{ flex: 1, color: row.sent_at ? '#047857' : '#9ca3af' }}>
-              {row.sent_at
-                ? `Sent ${fmt(row.sent_at)} to ${row.sent_to || '—'}${row.sent_by ? ` by ${row.sent_by}` : ''}`
-                : row.item_count > 0 ? 'Not sent yet' : 'Skipped — no items'}
+          <div key={row.category} style={{ padding: '8px 0', borderTop: '1px solid #f3f4f6', fontSize: 14 }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ width: 150, color: NAVY, fontWeight: 700 }}>{DEPARTMENT_LABEL[row.category] || row.category}</div>
+              <div style={{ width: 80, color: '#6b7280' }}>{row.item_count} item{row.item_count === 1 ? '' : 's'}</div>
+              <div style={{ flex: 1, color: row.sent_at ? '#047857' : '#9ca3af' }}>
+                {row.sent_at
+                  ? `Sent ${fmt(row.sent_at)} to ${row.sent_to || '—'}${row.sent_by ? ` by ${row.sent_by}` : ''}`
+                  : row.item_count > 0 ? 'Not sent yet' : 'Skipped — no items'}
+              </div>
             </div>
+            {row.department_note && (
+              <div style={{ marginTop: 6, marginLeft: 150, padding: '8px 12px', borderRadius: 8, backgroundColor: '#f9fafb', border: '1px solid #eef0f2' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 3 }}>Note from {DEPARTMENT_LABEL[row.category] || row.category}</div>
+                <div style={{ fontSize: 13, color: '#374151', whiteSpace: 'pre-wrap' }}>{row.department_note}</div>
+              </div>
+            )}
           </div>
         ))}
         {kickoffResult && (

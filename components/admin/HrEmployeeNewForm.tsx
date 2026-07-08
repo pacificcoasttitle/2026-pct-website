@@ -159,8 +159,11 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
         </div>
 
         <div>
-          <label className={LABEL}>Email *</label>
+          <label className={LABEL}>Proposed PCT email *</label>
           <input type="email" className={INPUT} value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="name@pct.com" />
+          <p className="text-xs text-gray-400 mt-1.5">
+            The employee&rsquo;s Pacific Coast Title work email (shown to them read-only during onboarding). Distinct from any personal email they provide.
+          </p>
         </div>
 
         <div>

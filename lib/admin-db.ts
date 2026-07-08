@@ -3196,19 +3196,21 @@ export interface HrDepartmentChecklistItem {
 }
 
 export interface HrDepartmentChecklistView {
-  onboarding_id: number
-  category:      HrOnboardingChecklistCategory
-  hire_name:     string
-  status:        string
-  items:         HrDepartmentChecklistItem[]
+  onboarding_id:   number
+  category:        HrOnboardingChecklistCategory
+  hire_name:       string
+  status:          string
+  items:           HrDepartmentChecklistItem[]
+  department_note: string | null
 }
 
 export interface HrDepartmentKickoffState {
-  category:   HrOnboardingChecklistCategory
-  item_count: number
-  sent_to:    string | null
-  sent_at:    string | null
-  sent_by:    string | null
+  category:        HrOnboardingChecklistCategory
+  item_count:      number
+  sent_to:         string | null
+  sent_at:         string | null
+  sent_by:         string | null
+  department_note: string | null
 }
 
 /** HR-facing visibility into which departments have tasks and prior sends. */
@@ -3230,7 +3232,8 @@ export async function getHrDepartmentKickoffState(
             COALESCE(ic.item_count, 0)::int AS item_count,
             t.sent_to,
             t.sent_at::text AS sent_at,
-            t.sent_by
+            t.sent_by,
+            t.department_note
        FROM categories c
        LEFT JOIN item_counts ic ON ic.category = c.category
        LEFT JOIN hr_onboarding_department_tokens t
@@ -3302,13 +3305,62 @@ export async function getHrDepartmentChecklistView(
     [onboardingId, category],
   )
 
+  const noteRow = await db.query(
+    `SELECT department_note
+       FROM hr_onboarding_department_tokens
+      WHERE onboarding_id = $1 AND category = $2
+      LIMIT 1`,
+    [onboardingId, category],
+  )
+
   return {
     onboarding_id: row.id,
     category,
     hire_name: row.hire_name || 'New hire',
     status: row.status,
     items: items.rows as HrDepartmentChecklistItem[],
+    department_note: (noteRow.rows[0]?.department_note ?? null) as string | null,
   }
+}
+
+/**
+ * Save a department's free-text note back to HR. Token-gated at the route;
+ * here we just write ONLY the (onboarding, category) row's note + stamp.
+ * The note is trimmed/capped by the caller. Returns the stored note (or
+ * null if no such department-token row exists).
+ */
+export async function setHrDepartmentNote(
+  onboardingId: number,
+  category: HrOnboardingChecklistCategory,
+  note: string | null,
+): Promise<{ department_note: string | null; department_note_updated_at: string | null } | null> {
+  const db = getPool()
+  const value = note && note.trim() !== '' ? note.trim() : null
+  const res = await db.query(
+    `UPDATE hr_onboarding_department_tokens
+        SET department_note = $3,
+            department_note_updated_at = NOW(),
+            updated_at = NOW()
+      WHERE onboarding_id = $1 AND category = $2
+      RETURNING department_note,
+                department_note_updated_at::text AS department_note_updated_at`,
+    [onboardingId, category, value],
+  )
+  return res.rows[0] || null
+}
+
+/** Fetch just the stored note for one (onboarding, category). */
+export async function getHrDepartmentNote(
+  onboardingId: number,
+  category: HrOnboardingChecklistCategory,
+): Promise<string | null> {
+  const db = getPool()
+  const res = await db.query(
+    `SELECT department_note FROM hr_onboarding_department_tokens
+      WHERE onboarding_id = $1 AND category = $2 LIMIT 1`,
+    [onboardingId, category],
+  )
+  return (res.rows[0]?.department_note ?? null) as string | null
 }
 
 export async function setHrDepartmentChecklistItemStatus(
