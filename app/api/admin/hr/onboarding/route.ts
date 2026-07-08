@@ -19,6 +19,7 @@ import {
   createHrOnboardingForExisting,
   createHrOnboardingShell,
   findActiveHrOnboarding,
+  HrOnboardingOpenConflictError,
 } from '@/lib/admin-db'
 
 export const runtime = 'nodejs'
@@ -62,12 +63,28 @@ export async function POST(req: Request) {
       // Type is ALWAYS inherited from the employee record — the body's
       // onboarding_type is intentionally NOT forwarded here, so inheritance
       // is enforced server-side (not just a UI convention).
-      const onboarding = await createHrOnboardingForExisting({
-        hr_employee_id: hrEmployeeId,
-        created_by:     createdBy,
-      })
-      revalidatePath('/admin/team/hr/onboarding')
-      return NextResponse.json({ success: true, onboarding }, { status: 201 })
+      try {
+        const onboarding = await createHrOnboardingForExisting({
+          hr_employee_id: hrEmployeeId,
+          created_by:     createdBy,
+        })
+        revalidatePath('/admin/team/hr/onboarding')
+        return NextResponse.json({ success: true, onboarding }, { status: 201 })
+      } catch (err) {
+        // Concurrent-race: the partial unique index rejected a 2nd open
+        // onboarding. Return the existing one deduped (200) — clean
+        // "already invited", never a 500.
+        if (err instanceof HrOnboardingOpenConflictError) {
+          const raced = await findActiveHrOnboarding({ hrEmployeeId })
+          if (raced) {
+            return NextResponse.json(
+              { success: true, deduped: true, onboarding: raced },
+              { status: 200 },
+            )
+          }
+        }
+        throw err
+      }
     }
 
     // Path 2 — new shell

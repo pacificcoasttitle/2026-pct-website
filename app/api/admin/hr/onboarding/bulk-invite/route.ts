@@ -31,6 +31,7 @@ import {
   issueHrOnboardingToken,
   markHrOnboardingInvited,
   getHrEmployeeById,
+  HrOnboardingOpenConflictError,
   type BulkInviteEligibleRow,
 } from '@/lib/admin-db'
 import { renderHrOnboardingInvite } from '@/lib/email-templates/hr-onboarding-invite'
@@ -185,6 +186,12 @@ export async function POST(request: Request) {
         // Onboarding created, but no email sent (test mode, one already sent).
         return { employee_id: emp.id, name: emp.name, status: 'created_no_email', detail: 'Onboarding created (test mode — no email sent).' }
       } catch (err) {
+        // Concurrent-race: the partial unique index rejected a 2nd open
+        // onboarding. Funnel to `skipped` (same as the check-guard), NOT
+        // `failed` — the employee already has an open onboarding.
+        if (err instanceof HrOnboardingOpenConflictError) {
+          return { employee_id: emp.id, name: emp.name, status: 'skipped', detail: 'Already has an open onboarding (race).' }
+        }
         console.error(`[hr-bulk-invite] employee ${emp.id} failed:`, err)
         return {
           employee_id: emp.id,

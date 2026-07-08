@@ -2576,9 +2576,35 @@ export async function findActiveHrOnboarding(opts: {
 }
 
 /**
+ * Thrown when an employee ALREADY has an open onboarding and a second
+ * create is attempted. Distinct from a generic failure so callers can
+ * treat it as a clean "skip" (same outcome as the findActiveHrOnboarding
+ * check-guard) instead of surfacing a 500. Raised when the partial unique
+ * index hr_onboarding_one_open_per_employee rejects a concurrent insert
+ * (Postgres 23505).
+ */
+export class HrOnboardingOpenConflictError extends Error {
+  constructor(message = 'Employee already has an open onboarding.') {
+    super(message)
+    this.name = 'HrOnboardingOpenConflictError'
+  }
+}
+
+// Name of the partial unique index (migration 2026-07-09) enforcing
+// "at most one open onboarding per employee-linked onboarding".
+const HR_ONBOARDING_OPEN_INDEX = 'hr_onboarding_one_open_per_employee'
+
+/**
  * Create an onboarding for an EXISTING employee. Sets hr_employee_id,
  * defaults invited_email from the employee, status='draft'. Validates
  * the employee exists. Writes only hr_onboarding.
+ *
+ * ⚠️ ATOMIC dup-guard: a partial unique index makes two OPEN onboardings
+ * for the same employee structurally impossible. The check-then-insert in
+ * callers handles the common case; here we CATCH the unique-violation
+ * (23505 on that index) from the concurrent-race case and re-throw a
+ * typed HrOnboardingOpenConflictError so callers funnel it to "skipped",
+ * not a 500. (Belt + suspenders.)
  */
 export async function createHrOnboardingForExisting(
   input: CreateHrOnboardingExisting,
@@ -2603,12 +2629,24 @@ export async function createHrOnboardingForExisting(
   // here, not merely a UI convention.
   const onboardingType = normalizeOnboardingType(e.onboarding_type)
 
-  const res = await db.query(
-    `INSERT INTO hr_onboarding (hr_employee_id, status, onboarding_type, invited_email, payload, created_by)
-     VALUES ($1, 'draft', $2, $3, $4::jsonb, $5)
-     RETURNING ${HR_ONBOARDING_COLS}`,
-    [input.hr_employee_id, onboardingType, e.email?.trim().toLowerCase() || null, JSON.stringify(payload), input.created_by?.trim() || null],
-  )
+  let res
+  try {
+    res = await db.query(
+      `INSERT INTO hr_onboarding (hr_employee_id, status, onboarding_type, invited_email, payload, created_by)
+       VALUES ($1, 'draft', $2, $3, $4::jsonb, $5)
+       RETURNING ${HR_ONBOARDING_COLS}`,
+      [input.hr_employee_id, onboardingType, e.email?.trim().toLowerCase() || null, JSON.stringify(payload), input.created_by?.trim() || null],
+    )
+  } catch (err) {
+    // 23505 on the partial unique index = a concurrent open onboarding
+    // already won the race. Treat as a clean conflict (caller → skip).
+    const code = (err as { code?: string })?.code
+    const constraint = (err as { constraint?: string })?.constraint
+    if (code === '23505' && (constraint === HR_ONBOARDING_OPEN_INDEX || constraint == null)) {
+      throw new HrOnboardingOpenConflictError()
+    }
+    throw err
+  }
   const row = res.rows[0] as HrOnboardingRecord
   // Seed the checklist (idempotent) from the explicitly-written type.
   await seedHrOnboardingItems(row.id, row.onboarding_type)
