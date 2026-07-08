@@ -193,7 +193,7 @@ async function run() {
     VALUES
       (1, 'Glendale Office',       '516 Burchett St.',                          'Glendale', 'CA', '91203', '(818) 543-2130', 'GL'),
       (2, 'Orange County Office',  '1111 E. Katella Ave. Ste. 120',             'Orange',   'CA', '92867', '(714) 516-6700', 'OC'),
-      (3, 'Inland Empire Branch',  '3200 Inland Empire Blvd. Suite #235',       'Ontario',  'CA', '91764', '(951) 528-5915', 'IE')
+      (3, 'Inland Empire Branch',  '3200 Inland Empire Blvd. Ste. 235',         'Ontario',  'CA', '91764', '(951) 528-5915', 'IE')
     ON CONFLICT (id) DO NOTHING;
   `)
   // Reset sequence

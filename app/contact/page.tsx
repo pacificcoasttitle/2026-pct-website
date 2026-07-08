@@ -48,13 +48,13 @@ const locations = [
   },
   {
     name: "Inland Empire",
-    address: "3200 Inland Empire Blvd. Suite #235",
+    address: "3200 Inland Empire Blvd. Ste. 235",
     city: "Ontario, CA 91764",
     phone: "(909) 476-9600",
     fax: "(909) 476-9610",
     email: "ontario@pct.com",
     hours: "Mon-Fri 8:00 AM - 5:00 PM",
-    mapUrl: "https://www.google.com/maps/search/?api=1&query=3200+Inland+Empire+Blvd+Suite+235+Ontario+CA+91764",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=3200+Inland+Empire+Blvd+Ste+235+Ontario+CA+91764",
   },
 ]
 

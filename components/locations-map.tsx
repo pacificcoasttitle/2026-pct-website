@@ -43,8 +43,8 @@ const locations = [
   {
     id: "inland-empire",
     name: "Inland Empire",
-    address: "3281 E. Guasti Road, Suite 700",
-    city: "Ontario, CA 91761",
+    address: "3200 Inland Empire Blvd. Ste. 235",
+    city: "Ontario, CA 91764",
     phone: "(909) 483-1850",
     fax: "(909) 483-1860",
     email: "ie@pct.com",
