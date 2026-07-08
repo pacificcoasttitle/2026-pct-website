@@ -89,6 +89,7 @@ const DEPARTMENT_LABEL: Record<string, string> = {
   administrative: 'Administrative',
   marketing: 'Marketing',
   'customer-service': 'Customer Service',
+  it: 'IT',
 }
 
 function str(payload: Record<string, unknown>, key: string): string {

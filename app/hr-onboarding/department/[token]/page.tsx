@@ -24,6 +24,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   administrative:     'Administrative',
   marketing:          'Marketing',
   'customer-service': 'Customer Service',
+  it:                 'IT',
 }
 
 function PageShell({ children }: { children: React.ReactNode }) {

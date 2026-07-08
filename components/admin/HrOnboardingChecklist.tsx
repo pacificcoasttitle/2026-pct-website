@@ -16,11 +16,12 @@ import { Check, Circle, RefreshCw } from 'lucide-react'
 
 const NAVY = '#03374f'
 
-const CATEGORY_ORDER = ['administrative', 'marketing', 'customer-service'] as const
+const CATEGORY_ORDER = ['administrative', 'marketing', 'customer-service', 'it'] as const
 const CATEGORY_LABELS: Record<string, string> = {
   'administrative':   'Administrative',
   'marketing':        'Marketing',
   'customer-service': 'Customer Service',
+  'it':               'IT',
 }
 
 export interface ChecklistItem {

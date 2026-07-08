@@ -28,6 +28,7 @@ const CATEGORY_LABELS: Record<HrOnboardingChecklistCategory, string> = {
   administrative:     'Administrative',
   marketing:          'Marketing',
   'customer-service': 'Customer Service',
+  it:                 'IT',
 }
 
 let sgInitialized = false

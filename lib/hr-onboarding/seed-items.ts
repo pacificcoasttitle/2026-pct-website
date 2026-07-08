@@ -18,7 +18,7 @@
  */
 
 export type HrOnboardingType = 'employee' | 'sales_rep'
-export type HrOnboardingItemCategory = 'administrative' | 'marketing' | 'customer-service'
+export type HrOnboardingItemCategory = 'administrative' | 'marketing' | 'customer-service' | 'it'
 
 export interface HrOnboardingSeedItem {
   item_key: string
@@ -77,11 +77,12 @@ export function seedItemsForType(type: string | null | undefined): HrOnboardingS
 
 /** Display order for category groupings in the HR panel. */
 export const HR_ONBOARDING_CATEGORY_ORDER: HrOnboardingItemCategory[] = [
-  'administrative', 'marketing', 'customer-service',
+  'administrative', 'marketing', 'customer-service', 'it',
 ]
 
 export const HR_ONBOARDING_CATEGORY_LABELS: Record<HrOnboardingItemCategory, string> = {
   'administrative':   'Administrative',
   'marketing':        'Marketing',
   'customer-service': 'Customer Service',
+  'it':               'IT',
 }

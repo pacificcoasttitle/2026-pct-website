@@ -32,7 +32,7 @@ const PURPOSE = 'hr_onboarding'
 const DEPARTMENT_PURPOSE = 'hr_onboarding_department'
 const EXPIRES = '14d'
 
-const DEPARTMENT_CATEGORIES = ['administrative', 'marketing', 'customer-service'] as const
+const DEPARTMENT_CATEGORIES = ['administrative', 'marketing', 'customer-service', 'it'] as const
 export type HrOnboardingDepartmentCategory = (typeof DEPARTMENT_CATEGORIES)[number]
 
 let _deptTokenPool: Pool | null = null

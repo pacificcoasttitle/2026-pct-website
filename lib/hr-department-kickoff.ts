@@ -28,12 +28,14 @@ const CATEGORY_LABELS: Record<HrOnboardingChecklistCategory, string> = {
   administrative:     'Administrative',
   marketing:          'Marketing',
   'customer-service': 'Customer Service',
+  it:                 'IT',
 }
 
 const CATEGORY_ENV: Record<HrOnboardingChecklistCategory, string> = {
   administrative:     'DEPT_ADMINISTRATIVE_EMAIL',
   marketing:          'DEPT_MARKETING_EMAIL',
   'customer-service': 'DEPT_CUSTOMER_SERVICE_EMAIL',
+  it:                 'DEPT_IT_EMAIL',
 }
 
 let sgInitialized = false

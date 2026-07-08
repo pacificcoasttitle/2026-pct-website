@@ -2728,6 +2728,7 @@ export const HR_ONBOARDING_CHECKLIST_CATEGORIES = [
   'administrative',
   'marketing',
   'customer-service',
+  'it',
 ] as const
 export type HrOnboardingChecklistCategory = (typeof HR_ONBOARDING_CHECKLIST_CATEGORIES)[number]
 
@@ -3217,7 +3218,7 @@ export async function getHrDepartmentKickoffState(
   const db = getPool()
   const res = await db.query(
     `WITH categories(category) AS (
-       VALUES ('administrative'), ('marketing'), ('customer-service')
+       VALUES ('administrative'), ('marketing'), ('customer-service'), ('it')
      ),
      item_counts AS (
        SELECT category, COUNT(*)::int AS item_count
@@ -3238,6 +3239,7 @@ export async function getHrDepartmentKickoffState(
         WHEN 'administrative' THEN 1
         WHEN 'marketing' THEN 2
         WHEN 'customer-service' THEN 3
+        WHEN 'it' THEN 4
         ELSE 99
       END`,
     [onboardingId],
