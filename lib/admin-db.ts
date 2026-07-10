@@ -2373,7 +2373,8 @@ export async function issueHrOnboardingToken(onboardingId: number): Promise<stri
 
   const token  = await signHrOnboardingToken(onboardingId)
   const hash   = hashHrOnboardingToken(token)
-  const expIso = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+  // 30-day TTL — MUST match the JWT exp in lib/hr-onboarding-token.ts (EXPIRES).
+  const expIso = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
 
   const res = await db.query(
     `UPDATE hr_onboarding

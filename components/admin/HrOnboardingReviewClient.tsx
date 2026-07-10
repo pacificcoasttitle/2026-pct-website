@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 const NAVY = '#03374f'
@@ -148,6 +148,45 @@ export default function HrOnboardingReviewClient(props: Props) {
   const [departmentKickoff, setDepartmentKickoff] = useState(props.departmentKickoff)
   const [kickoffResult, setKickoffResult] = useState<DepartmentKickoffResult | null>(null)
   const [introEmailSentAt, setIntroEmailSentAt] = useState<string | null>(props.introEmailSentAt)
+
+  // Refetch department kickoff state on focus. Department notes and item
+  // completions are written from a SEPARATE (token-gated) session, so this
+  // open HR page can go stale; refetching on focus picks them up without a
+  // manual reload. Mirrors the Batch-A checklist refetch discipline: event
+  // driven (NOT polling), busy-guarded so it never clobbers a mid-flight
+  // HR action (finalize/changes/cancel/kickoff), and silent on failure.
+  const busyRef = useRef<typeof busy>(null)
+  busyRef.current = busy
+
+  const refetchKickoff = useCallback(async () => {
+    if (busyRef.current !== null) return
+    try {
+      const res = await fetch(`/api/admin/hr/onboarding/${props.id}/kickoff/state`, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      })
+      if (!res.ok) return
+      const data = await res.json().catch(() => null)
+      if (!data?.departmentKickoff || busyRef.current !== null) return
+      setDepartmentKickoff(data.departmentKickoff as DepartmentKickoffRow[])
+    } catch {
+      // Silent — focus-refetch is a freshness convenience, not critical.
+    }
+  }, [props.id])
+
+  useEffect(() => {
+    const onFocus = () => { void refetchKickoff() }
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') void refetchKickoff()
+    }
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [refetchKickoff])
 
   const isSubmitted = status === 'submitted'
   const isFinalized = status === 'finalized'

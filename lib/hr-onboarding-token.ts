@@ -12,7 +12,7 @@
 //     REJECTED, and (by symmetry) an HR token won't verify in the rep
 //     resolver. This closes the cross-flow token-confusion class.
 //
-// Tokens are reusable-until-expiry (14 days). Statefulness/revocation
+// Tokens are reusable-until-expiry (30 days). Statefulness/revocation
 // lives in the DB layer: only sha256(token) is stored on the row, and
 // resolveHrOnboardingByToken (admin-db.ts) requires the stored hash +
 // stored expiry to match in addition to a valid signature (default-deny).
@@ -30,7 +30,9 @@ import { Pool } from 'pg'
 
 const PURPOSE = 'hr_onboarding'
 const DEPARTMENT_PURPOSE = 'hr_onboarding_department'
-const EXPIRES = '14d'
+// 30-day TTL — MUST match the DB token_expires_at in admin-db.ts
+// issueHrOnboardingToken (both the JWT exp and the stored expiry).
+const EXPIRES = '30d'
 
 const DEPARTMENT_CATEGORIES = ['administrative', 'marketing', 'customer-service', 'it'] as const
 export type HrOnboardingDepartmentCategory = (typeof DEPARTMENT_CATEGORIES)[number]
@@ -126,7 +128,9 @@ export async function issueDepartmentToken(
     .sign(hrOnboardingSecret())
 
   const hash = hashHrOnboardingToken(token)
-  const expIso = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+  // 30-day TTL — matches the shared JWT EXPIRES above (keep JWT exp + DB
+  // token_expires_at in sync).
+  const expIso = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
   const db = getDeptTokenPool()
   const res = await db.query(
     `INSERT INTO hr_onboarding_department_tokens

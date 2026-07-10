@@ -71,6 +71,32 @@ function InvalidLink() {
   )
 }
 
+// The dry-run bulk preview emails a KNOWN inert sentinel instead of a real
+// token (no onboarding exists). Detecting it lets us show honest "this is a
+// preview" copy rather than the generic expired/invalid screen — which
+// looked like a broken token. ⚠️ Only this exact sentinel gets the friendly
+// message; every real token that fails still gets the generic InvalidLink
+// (never revealing WHY is a security property).
+const PREVIEW_SENTINEL = 'preview-only-inert-link'
+
+function PreviewLink() {
+  return (
+    <PageShell>
+      <div className="w-full max-w-[480px] rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-wide text-accent">Preview</p>
+        <h1 className="mt-1 text-balance text-xl font-semibold text-foreground">
+          This is a preview link
+        </h1>
+        <p className="mt-3 text-pretty text-sm leading-relaxed text-muted-foreground">
+          This isn&apos;t an active onboarding — it&apos;s a sample used to preview the invite
+          email. Real invites sent to employees contain a working link and will open their
+          onboarding normally.
+        </p>
+      </div>
+    </PageShell>
+  )
+}
+
 function AlreadySubmitted({ first }: { first: string }) {
   return (
     <PageShell>
@@ -96,6 +122,10 @@ export default async function HrOnboardingTokenPage({
   params: Promise<{ token: string }>
 }) {
   const { token } = await params
+
+  // Known inert dry-run preview sentinel → honest "this is a preview" copy.
+  // Checked BEFORE the resolver so it never runs token validation on it.
+  if (token === PREVIEW_SENTINEL) return <PreviewLink />
 
   // SOLE gate. Never throws; null = invalid/expired/wrong-purpose/hash-mismatch.
   const record = await resolveHrOnboardingByToken(token)

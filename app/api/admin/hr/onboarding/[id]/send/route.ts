@@ -115,7 +115,7 @@ export async function POST(
     subject,
     first_name:           firstName,
     onboarding_url:       onboardingUrl,
-    expiry_label:         '14 days',
+    expiry_label:         '30 days',
     is_existing_employee: isExisting,
   })
 

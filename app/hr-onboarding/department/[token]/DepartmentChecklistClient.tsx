@@ -45,8 +45,13 @@ export default function DepartmentChecklistClient({
   const [noteSaving, setNoteSaving] = useState(false)
   const [noteStatus, setNoteStatus] = useState<'idle' | 'saved' | 'error'>('idle')
 
-  async function saveNote() {
-    if (note === savedNote) return
+  // Persist the note if it changed since the last successful save. Returns
+  // true if the note is now in sync with the server (either it was already
+  // saved, or this call saved it). Used both by the blur handler and — to
+  // close the note-vs-complete race — synchronously before completing the
+  // department's LAST item.
+  async function flushNote(): Promise<boolean> {
+    if (note === savedNote) return true
     setNoteSaving(true)
     setNoteStatus('idle')
     try {
@@ -58,19 +63,42 @@ export default function DepartmentChecklistClient({
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
         setNoteStatus('error')
-        return
+        return false
       }
       setSavedNote(note)
       setNoteStatus('saved')
+      return true
     } catch {
       setNoteStatus('error')
+      return false
     } finally {
       setNoteSaving(false)
     }
   }
 
+  async function saveNote() {
+    await flushNote()
+  }
+
   async function toggle(item: DepartmentItem) {
     const next = item.status === 'complete' ? 'pending' : 'complete'
+
+    // ⚠️ Note-vs-complete race: completing the LAST pending item triggers the
+    // "department done" email (maybeNotifyDepartmentComplete), which includes
+    // the department note. If HR typed a note and clicked complete before the
+    // blur-save landed, the email could fire without it. Flush the note FIRST
+    // when this toggle completes the final item. Notes are optional, so a
+    // flush failure does NOT block completion — it just means the (unsaved)
+    // note may not make the email, which is the same as no note.
+    if (next === 'complete') {
+      const remaining = items.filter(
+        (row) => row.id !== item.id && row.status !== 'complete',
+      ).length
+      if (remaining === 0) {
+        await flushNote()
+      }
+    }
+
     setBusyId(item.id)
     setError(null)
     try {

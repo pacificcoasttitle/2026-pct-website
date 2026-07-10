@@ -101,7 +101,7 @@ async function sendInviteForOnboarding(
     subject,
     first_name:           firstName || 'there',
     onboarding_url:       `${SITE_BASE}/hr-onboarding/${token}`,
-    expiry_label:         '14 days',
+    expiry_label:         '30 days',
     is_existing_employee: isExisting,
   })
 
@@ -129,9 +129,12 @@ async function sendPreviewSample(
     subject,
     first_name:           firstName,
     // ⚠️ Inert link — dry-run mints NO real token for a non-existent
-    // onboarding. This is a preview of the layout/copy only.
+    // onboarding. This is a preview of the layout/copy only. The token
+    // segment 'preview-only-inert-link' is a KNOWN sentinel detected by
+    // app/hr-onboarding/[token]/page.tsx (PREVIEW_SENTINEL) to show honest
+    // "this is a preview" copy — keep the two in sync.
     onboarding_url:       `${SITE_BASE}/hr-onboarding/preview-only-inert-link`,
-    expiry_label:         '14 days',
+    expiry_label:         '30 days',
     is_existing_employee: true,
   })
   await sg.send({
