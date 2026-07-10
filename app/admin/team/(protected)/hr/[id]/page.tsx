@@ -16,9 +16,11 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { getHrEmployeeById, getAllHrEmployees, getHrEmployeeDocuments } from '@/lib/admin-db'
-import { requirePageRole } from '@/lib/auth/guards'
+import { requirePageRole, getAdminSession } from '@/lib/auth/guards'
+import { canViewAllNotes, canWriteNotes } from '@/lib/hr-employee-notes'
 import HrEmployeeEditForm from '@/components/admin/HrEmployeeEditForm'
 import HrEmployeeDocuments from '@/components/admin/HrEmployeeDocuments'
+import HrEmployeeNotesSection from '@/components/admin/HrEmployeeNotesSection'
 
 export const metadata = { title: 'Employee Detail | PCT Team Admin' }
 export const dynamic = 'force-dynamic'
@@ -36,6 +38,15 @@ export default async function HrEmployeeDetailPage({
 
   const employee = await getHrEmployeeById(idNum)
   if (!employee) notFound()
+
+  // Notes authorization derives from the SESSION (not the hr-tools gate that
+  // let us onto this page — manager='all' passes that but must NOT see all
+  // notes). HR/top_level see all authors; an allowlisted manager sees only
+  // their own; everyone else doesn't get the section at all.
+  const session = await getAdminSession()
+  const notesShowsAllAuthors = session ? canViewAllNotes(session) : false
+  const notesCanWrite = session ? await canWriteNotes(session) : false
+  const notesCanView = notesCanWrite // view set == write set (own-only or all)
 
   // T7 — onboarding documents (metadata + ids only; bytes via gated route).
   const documents = await getHrEmployeeDocuments(idNum)
@@ -110,6 +121,16 @@ export default async function HrEmployeeDetailPage({
         departments={departments}
         offices={offices}
       />
+
+      {/* Accomplishment notes — only rendered for authorized users; the
+          API independently enforces scope (all vs own-only). */}
+      {notesCanView && (
+        <HrEmployeeNotesSection
+          employeeId={employee.id}
+          canWrite={notesCanWrite}
+          showsAllAuthors={notesShowsAllAuthors}
+        />
+      )}
 
       {/* T7 — onboarding documents (read-only; view via gated 4d route) */}
       <HrEmployeeDocuments documents={documents} />
