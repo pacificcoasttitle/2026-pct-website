@@ -32,7 +32,7 @@ const locations = [
   {
     id: "downey",
     name: "Downey",
-    address: "8141 E. 2nd St, Suite 400",
+    address: "8255 Firestone Boulevard, Suite 100",
     city: "Downey, CA 90241",
     phone: "(562) 869-5550",
     fax: "(562) 869-5560",

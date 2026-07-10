@@ -60,8 +60,8 @@ export const locations: Location[] = [
     name: "Downey",
     isHQ: false,
     address: {
-      street: "8141 E. 2nd St",
-      suite: "Suite 300",
+      street: "8255 Firestone Boulevard",
+      suite: "Suite 100",
       city: "Downey",
       state: "CA",
       zip: "90241",
@@ -73,7 +73,7 @@ export const locations: Location[] = [
     hours: "Monday - Friday: 8:00 AM - 5:00 PM",
     coordinates: { lat: 33.9425, lng: -118.1320 },
     googleMapsUrl:
-      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3316.5!2d-118.1320!3d33.9425!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2s8141%20E%202nd%20St%20%23300%2C%20Downey%2C%20CA%2090241!5e0!3m2!1sen!2sus!4v1234567890",
+      "https://www.google.com/maps?q=8255%20Firestone%20Boulevard%20Suite%20100%2C%20Downey%2C%20CA%2090241&output=embed",
     services: [
       "Residential Title Insurance",
       "Commercial Title Insurance",
