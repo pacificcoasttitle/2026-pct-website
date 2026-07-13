@@ -115,9 +115,6 @@ function roleLabel(role: string) {
 
 function canSeeNavItem(role: string, item: NavItem): boolean {
   if (item.hideForRoles?.includes(role)) return false
-  // HR role keeps its existing groups unchanged but also gets the Notes
-  // nav link (same notes policy they already reach via employee detail).
-  if (item.group === 'notes' && role === 'hr') return true
   return roleCanAccess(role, item.group)
 }
 
