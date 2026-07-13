@@ -13,8 +13,8 @@
 // yet, so it changes no existing behavior. Enforcement lands later.
 // ============================================================
 
-/** Known admin roles. `manager` is typed but not yet granted groups. */
-export type AdminRole = 'top_level' | 'hr' | 'manager'
+/** Known admin roles. `notes_author` is a narrowly-scoped notes-only role. */
+export type AdminRole = 'top_level' | 'hr' | 'manager' | 'notes_author'
 
 /** Distinct admin capability areas, derived from the route map. */
 export type CapabilityGroup =
@@ -29,6 +29,7 @@ export type CapabilityGroup =
   | 'farms'
   | 'assessments'
   | 'fees'
+  | 'notes'
 
 /** Every capability group — used to resolve the `'all'` sentinel. */
 export const ALL_GROUPS: CapabilityGroup[] = [
@@ -43,6 +44,7 @@ export const ALL_GROUPS: CapabilityGroup[] = [
   'farms',
   'assessments',
   'fees',
+  'notes',
 ]
 
 /**
@@ -58,11 +60,14 @@ export const ALL_GROUPS: CapabilityGroup[] = [
  *   have role='manager'; full access preserves the status quo (today
  *   every logged-in admin has full access). Scoping the manager role
  *   is a separate, deliberate future decision.
+ * - `notes_author` → `['notes']` ONLY — the dedicated notes workspace;
+ *   no dashboard, HR record, marketing, or any other admin surface.
  */
 const ROLE_GROUPS: Record<AdminRole, CapabilityGroup[] | 'all'> = {
   top_level: 'all',
   hr: ['dashboard', 'onboarding', 'hr-tools'],
   manager: 'all', // 3 active admins are 'manager'; full access (status quo). Scope later if desired.
+  notes_author: ['notes'],
 }
 
 /**

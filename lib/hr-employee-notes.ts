@@ -237,3 +237,46 @@ export async function createEmployeeNote(
   const res = await db.query(`${NOTE_SELECT} WHERE n.id = $1`, [newId])
   return res.rows[0] as EmployeeNote
 }
+
+// ── Minimal employee identity (notes surface ONLY) ──────────────
+//
+// The dedicated /admin/team/notes pages must NEVER load the full HR
+// record, documents, or roster. These helpers select ONLY id + name
+// (+ active for the directory filter) — a mini-directory, not HR data.
+
+export interface MinimalEmployeeDirectoryRow {
+  id:         number
+  first_name: string
+  last_name:  string
+}
+
+export interface MinimalEmployeeIdentity extends MinimalEmployeeDirectoryRow {
+  active: boolean
+}
+
+/** Active employees only — id + name for the notes picker (no PII). */
+export async function getMinimalEmployeeDirectoryForNotes(): Promise<MinimalEmployeeDirectoryRow[]> {
+  const db = getPool()
+  const res = await db.query(
+    `SELECT id, first_name, last_name
+       FROM hr_employees
+      WHERE active = TRUE
+      ORDER BY first_name, last_name, id`,
+  )
+  return res.rows as MinimalEmployeeDirectoryRow[]
+}
+
+/** One employee's minimal identity for the notes detail page header. */
+export async function getMinimalEmployeeIdentity(
+  employeeId: number,
+): Promise<MinimalEmployeeIdentity | null> {
+  const db = getPool()
+  const res = await db.query(
+    `SELECT id, first_name, last_name, active
+       FROM hr_employees
+      WHERE id = $1
+      LIMIT 1`,
+    [employeeId],
+  )
+  return (res.rows[0] as MinimalEmployeeIdentity | undefined) ?? null
+}

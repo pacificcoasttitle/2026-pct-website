@@ -21,18 +21,17 @@ import {
 } from '@/lib/admin-auth'
 import { roleCanAccess, type CapabilityGroup } from '@/lib/auth/permissions'
 
-/** Where a logged-in-but-unauthorized rep lands (safe, friendly). */
-const PAGE_DENIED_REDIRECT = '/admin/team'
-
 /** The default landing for a logged-in user with no explicit destination. */
 export const ADMIN_DEFAULT_LANDING = '/admin/team'
 const HR_DEFAULT_LANDING = '/admin/team/hr/dashboard'
+export const NOTES_AUTHOR_LANDING = '/admin/team/notes'
 
 /**
  * Role-aware default landing — the single source for "where does this
  * user go when they have no explicit destination (deep-link/returnTo)?"
  *
  * - The scoped `hr` role → the HR dashboard (their workspace).
+ * - The scoped `notes_author` role → the notes workspace (their ONLY surface).
  * - Everyone else (top_level / manager / unknown) → the existing
  *   /admin/team default — UNCHANGED.
  *
@@ -44,7 +43,18 @@ const HR_DEFAULT_LANDING = '/admin/team/hr/dashboard'
 export function getDefaultLandingForRole(
   session: AdminSession | null,
 ): string {
-  return session?.role === 'hr' ? HR_DEFAULT_LANDING : ADMIN_DEFAULT_LANDING
+  if (session?.role === 'hr') return HR_DEFAULT_LANDING
+  if (session?.role === 'notes_author') return NOTES_AUTHOR_LANDING
+  return ADMIN_DEFAULT_LANDING
+}
+
+/**
+ * Where to send a logged-in user who lacks the capability for the page
+ * they requested. MUST be role-aware so notes_author never bounces to
+ * /admin/team (dashboard-gated) — that would loop forever.
+ */
+export function getDeniedRedirectForRole(session: AdminSession): string {
+  return getDefaultLandingForRole(session)
 }
 
 /**
@@ -99,9 +109,11 @@ export async function requireApiRole(
  *   // reaching here means authorized
  *
  * - No session           → redirect('/admin/login')
- * - Role lacks the group  → redirect(PAGE_DENIED_REDIRECT) — a soft,
- *                           friendly bounce to the admin landing rather
- *                           than a hard error.
+ * - Role lacks the group  → redirect(getDeniedRedirectForRole(session)) —
+ *                           a soft, friendly bounce to the role's home
+ *                           rather than a hard error. Role-aware so
+ *                           notes_author lands on /admin/team/notes, not
+ *                           dashboard-gated /admin/team (which would loop).
  * - Otherwise             → returns the authorized session.
  *
  * Authorization delegates to 1a roleCanAccess (default-deny).
@@ -111,6 +123,6 @@ export async function requirePageRole(
 ): Promise<AdminSession> {
   const session = await getAdminSession()
   if (!session) redirect('/admin/login')
-  if (!roleCanAccess(session.role, group)) redirect(PAGE_DENIED_REDIRECT)
+  if (!roleCanAccess(session.role, group)) redirect(getDeniedRedirectForRole(session))
   return session
 }

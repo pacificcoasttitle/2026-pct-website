@@ -24,6 +24,7 @@ import {
   ClipboardList,
   Calculator,
   IdCard,
+  StickyNote,
   type LucideIcon,
 } from 'lucide-react'
 import { roleCanAccess, type CapabilityGroup } from '@/lib/auth/permissions'
@@ -60,6 +61,7 @@ const NAV_GROUPS: NavGroup[] = [
       // so for them this entry and "HR Dashboard" point at the SAME place —
       // a duplicate. Full-access admins (top_level/manager) keep it.
       { href: '/admin/team',                          label: 'Dashboard',        icon: LayoutDashboard, group: 'dashboard', hideForRoles: ['hr'] },
+      { href: '/admin/team/notes',                    label: 'Employee Notes',   icon: StickyNote,      group: 'notes' },
     ],
   },
   {
@@ -105,7 +107,18 @@ const NAV_GROUPS: NavGroup[] = [
 const ALL_HREFS = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href))
 
 function roleLabel(role: string) {
-  return role === 'top_level' ? 'Super Admin' : role === 'manager' ? 'Manager' : role
+  if (role === 'top_level') return 'Super Admin'
+  if (role === 'manager') return 'Manager'
+  if (role === 'notes_author') return 'Notes Author'
+  return role
+}
+
+function canSeeNavItem(role: string, item: NavItem): boolean {
+  if (item.hideForRoles?.includes(role)) return false
+  // HR role keeps its existing groups unchanged but also gets the Notes
+  // nav link (same notes policy they already reach via employee detail).
+  if (item.group === 'notes' && role === 'hr') return true
+  return roleCanAccess(role, item.group)
 }
 
 export default function AdminSidebar({
@@ -161,9 +174,7 @@ export default function AdminSidebar({
   const visibleGroups = NAV_GROUPS
     .map((group) => ({
       ...group,
-      items: group.items.filter(
-        (item) => roleCanAccess(role, item.group) && !item.hideForRoles?.includes(role),
-      ),
+      items: group.items.filter((item) => canSeeNavItem(role, item)),
     }))
     .filter((group) => group.items.length > 0)
 
