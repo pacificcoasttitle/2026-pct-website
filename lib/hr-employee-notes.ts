@@ -261,7 +261,7 @@ export async function getMinimalEmployeeDirectoryForNotes(): Promise<MinimalEmpl
     `SELECT id, first_name, last_name
        FROM hr_employees
       WHERE active = TRUE
-      ORDER BY first_name, last_name, id`,
+      ORDER BY last_name, first_name, id`,
   )
   return res.rows as MinimalEmployeeDirectoryRow[]
 }

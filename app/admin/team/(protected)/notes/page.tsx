@@ -6,12 +6,11 @@
  * documents, never the full roster, never email/phone/title/dept.
  *
  * Gate: requirePageRole('notes') — notes_author's home; top_level/manager
- * via 'all'; hr via sidebar special-case.
+ * via 'all'.
  */
-import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
 import { requirePageRole } from '@/lib/auth/guards'
 import { getMinimalEmployeeDirectoryForNotes } from '@/lib/hr-employee-notes'
+import NotesEmployeePicker from '@/components/admin/NotesEmployeePicker'
 
 export const metadata = { title: 'Employee Notes | PCT Team Admin' }
 export const dynamic = 'force-dynamic'
@@ -35,21 +34,7 @@ export default async function NotesLandingPage() {
           No active employees found.
         </div>
       ) : (
-        <ul className="divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-          {employees.map((emp) => (
-            <li key={emp.id}>
-              <Link
-                href={`/admin/team/notes/${emp.id}`}
-                className="flex items-center justify-between gap-4 px-5 py-4 text-sm transition hover:bg-gray-50"
-              >
-                <span className="font-medium text-[#03374f]">
-                  {emp.first_name} {emp.last_name}
-                </span>
-                <ArrowRight className="h-4 w-4 shrink-0 text-gray-300" aria-hidden="true" />
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <NotesEmployeePicker employees={employees} />
       )}
     </div>
   )
