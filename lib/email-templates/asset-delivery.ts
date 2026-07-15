@@ -25,18 +25,13 @@ import Mustache from 'mustache'
 //   {{rep_first_name}}        — "Jerry"
 //   {{campaign_name}}         — "February Marketing Toolkit"
 //   {{ai_intro_paragraph}}    — 2-3 sentence AI-generated personalised intro
-//   {{asset_preview_cards}}   — HTML for all attached files, built server-side
-//                                via renderAssetPreviewCard() below
 //   {{questions_callout}}     — optional callout text override
 //
 // The send endpoint should:
-//   1. Build {{asset_preview_cards}} by mapping attachments through
-//      renderAssetPreviewCard()
-//   2. Apply Mustache (or equivalent) to ASSET_DELIVERY_HTML with the
+//   1. Apply Mustache (or equivalent) to ASSET_DELIVERY_HTML with the
 //      placeholders above
-//   3. SendGrid the result as the HTML body with the actual files as
-//      attachments (the preview cards are visual aids — the real files
-//      go in the MIME attachment list)
+//   2. SendGrid the result as the HTML body with the actual files as
+//      attachments in the MIME attachment list
 
 /**
  * CANONICAL SOURCE — DO NOT BUILD UI EDITORS WITHOUT GUARD
@@ -58,9 +53,7 @@ import Mustache from 'mustache'
  * Until then: edit this file → deploy → DB syncs automatically.
  *
  * RENDERER: Uses mustache npm package (canonical). All {{var}} fields
- * are HTML-escaped by default. {{{asset_preview_cards}}} uses triple-
- * stash to inject server-rendered card HTML — the renderAssetPreviewCard
- * helper must ensure its output is safe HTML.
+ * are HTML-escaped by default.
  */
 
 // ── Brand constants (mirror PCT_BRAND from v0/email-components.tsx) ─
@@ -75,71 +68,6 @@ const ORANGE_TINT   = '#fcefe7' // solid hex stand-in for V0's rgba(242,107,43,0
 
 const FONT_STACK = "Arial, Helvetica, sans-serif"
 
-// ── Asset preview card helper ────────────────────────────────────
-//
-// Server-side renderer for one attachment row. Output is a complete
-// table-cell block matching the spec's Outlook-safe AssetPreviewCard
-// translation. The send endpoint maps over its attachments and joins
-// the strings to produce {{asset_preview_cards}}.
-
-export type AssetIconType = 'pdf' | 'image' | 'text' | 'other'
-
-interface AssetPreviewCardInput {
-  title:     string
-  iconType:  AssetIconType
-  /**
-   * Human-readable type label shown beneath the title.
-   * Defaults derived from iconType: PDF DOCUMENT / PNG IMAGE / TEXT FILE / FILE.
-   */
-  typeLabel?: string
-}
-
-const ICON_LETTER: Record<AssetIconType, string> = {
-  pdf:   'P',
-  image: 'I',
-  text:  'T',
-  other: 'F',
-}
-
-const DEFAULT_TYPE_LABEL: Record<AssetIconType, string> = {
-  pdf:   'PDF DOCUMENT',
-  image: 'PNG IMAGE',
-  text:  'TEXT FILE',
-  other: 'FILE',
-}
-
-// Minimal HTML escaping for user-supplied strings that land inside HTML
-// text nodes (filenames, AI intros). Attribute contexts are not used
-// here; the template is fully static apart from text content.
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
-
-export function renderAssetPreviewCard(input: AssetPreviewCardInput): string {
-  const letter    = ICON_LETTER[input.iconType]
-  const typeLabel = input.typeLabel ?? DEFAULT_TYPE_LABEL[input.iconType]
-  const title     = escapeHtml(input.title)
-  const label     = escapeHtml(typeLabel)
-  return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;background-color:${WARM_NEUTRAL};border:1px solid ${BORDER};border-radius:8px;margin-bottom:12px;">
-  <tr>
-    <td width="64" valign="middle" align="center" bgcolor="${WHITE}" style="padding:16px;background-color:${WHITE};border-right:1px solid ${BORDER};border-radius:8px 0 0 8px;">
-      <span style="font-family:${FONT_STACK};font-size:24px;color:${ORANGE};font-weight:bold;line-height:1;">${letter}</span>
-    </td>
-    <td valign="middle" style="padding:16px;font-family:${FONT_STACK};">
-      <p style="font-size:14px;font-weight:bold;color:${TEXT_DARK};margin:0 0 4px 0;line-height:1.3;">${title}</p>
-      <p style="font-size:12px;color:${TEXT_MUTED};margin:0;text-transform:uppercase;letter-spacing:0.5px;line-height:1.3;">${label}</p>
-    </td>
-    <td width="56" valign="middle" align="center" style="padding:16px;">
-      <span style="display:inline-block;width:36px;height:36px;line-height:36px;text-align:center;background-color:${NAVY};color:${WHITE};font-family:${FONT_STACK};font-size:16px;font-weight:bold;border-radius:6px;">&darr;</span>
-    </td>
-  </tr>
-</table>`
-}
-
 // ── Master template HTML ─────────────────────────────────────────
 //
 // Single Mustache document. The send pipeline:
@@ -147,7 +75,6 @@ export function renderAssetPreviewCard(input: AssetPreviewCardInput): string {
 //     rep_first_name:       rep.first_name,
 //     campaign_name:        batch.campaign_name,
 //     ai_intro_paragraph:   aiIntroHtmlSafe,
-//     asset_preview_cards:  attachments.map(renderAssetPreviewCard).join(''),
 //     questions_callout:    'Need changes? Reply to this email.',
 //   })
 
@@ -203,16 +130,6 @@ td    { mso-line-height-rule: exactly; }
             <p style="font-family:${FONT_STACK};font-size:15px;color:${TEXT_DARK};line-height:1.7;margin:0 0 28px 0;">
               {{ai_intro_paragraph}}
             </p>
-
-            <!-- "Your Personalized Assets" subhead -->
-            <p style="font-family:${FONT_STACK};font-size:13px;font-weight:bold;color:${NAVY};text-transform:uppercase;letter-spacing:0.1em;margin:0 0 16px 0;line-height:1.3;">
-              Your Personalized Assets
-            </p>
-
-            <!-- Asset preview cards (server-rendered) -->
-            <div style="margin-bottom:28px;">
-              {{{asset_preview_cards}}}
-            </div>
 
             <!-- Orange callout: "Questions?" -->
             <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%" bgcolor="${ORANGE_TINT}" style="background-color:${ORANGE_TINT};border-left:4px solid ${ORANGE};border-radius:0 6px 6px 0;margin:24px 0;">
@@ -280,26 +197,10 @@ export const ASSET_DELIVERY_DEFAULTS = {
   questions_callout: 'Need changes or a different version? Reply to this email and the marketing team will help.',
 } as const
 
-// Helper that maps a MIME type to one of the four icon buckets the
-// renderer understands. Used by the send pipeline.
-export function iconTypeForMime(mime: string | null | undefined): AssetIconType {
-  if (!mime) return 'other'
-  const m = mime.toLowerCase()
-  if (m === 'application/pdf' || m.endsWith('/pdf')) return 'pdf'
-  if (m.startsWith('image/')) return 'image'
-  if (m.startsWith('text/'))  return 'text'
-  return 'other'
-}
-
-// Re-export the escaper for the send pipeline so user-supplied text
-// (AI intro, filenames) gets the same treatment.
-export { escapeHtml as escapeAssetDeliveryText }
-
 /**
  * Renders ASSET_DELIVERY_HTML via the canonical Mustache implementation
  * (mustache npm package). Supports:
  *   - {{var}}            — HTML-escaped
- *   - {{{var}}}          — raw HTML (used for {{{asset_preview_cards}}})
  *   - {{#sec}}…{{/sec}}  — section, kept when value is truthy/non-empty
  *
  * Mustache treats empty strings, null, undefined, false, and empty

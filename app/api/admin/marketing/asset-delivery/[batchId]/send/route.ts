@@ -41,8 +41,6 @@ import {
 import {
   ASSET_DELIVERY_DEFAULTS,
   renderAssetDeliveryHtml,
-  renderAssetPreviewCard,
-  iconTypeForMime,
 } from '@/lib/email-templates/asset-delivery'
 
 export const runtime = 'nodejs'
@@ -288,21 +286,11 @@ async function sendOneRep(
       })),
     )
 
-    /* 3. Render the email body. */
-    const cardsHtml = files
-      .map((f) =>
-        renderAssetPreviewCard({
-          title:    f.original_filename,
-          iconType: iconTypeForMime(f.mime_type),
-        }),
-      )
-      .join('\n')
-
+    /* 3. Render the email body. File delivery happens via SendGrid attachments below. */
     const html = renderAssetDeliveryHtml(ctx.htmlTemplate, {
       rep_first_name:      rep.first_name || rep.full_name.split(' ')[0] || 'there',
       campaign_name:       ctx.campaignName,
       ai_intro_paragraph:  intro,
-      asset_preview_cards: cardsHtml,
       questions_callout:   ASSET_DELIVERY_DEFAULTS.questions_callout,
     })
 
