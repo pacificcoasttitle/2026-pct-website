@@ -198,6 +198,10 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
           website_meta_description: emp.website_meta_description,
           mailchimp_audience_id:    mcParsed?.audienceId ?? emp.mailchimp_audience_id,
           mailchimp_form_code:      mailchimpFormCode,
+          // Sales/marketing routing key — not HR-shared identity.
+          sms_code:                 emp.sms_code?.trim()
+            ? emp.sms_code.trim().toUpperCase()
+            : null,
         }),
       })
 
@@ -472,6 +476,18 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
             placeholder="https://linkedin.com/in/..."
             className={INPUT}
           />
+        </Field>
+        <Field label="SMS code (optional)">
+          <input
+            type="text"
+            value={emp.sms_code ?? ''}
+            onChange={(e) => update('sms_code', e.target.value.toUpperCase())}
+            placeholder="C-23"
+            className={INPUT}
+          />
+          <p className="text-[11px] text-gray-400 mt-1">
+            Used to route MMS replies and prefix uploaded image filenames. Team codes (e.g. C-4) are allowed.
+          </p>
         </Field>
       </Section>
 

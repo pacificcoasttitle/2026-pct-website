@@ -213,7 +213,7 @@ export async function getAllEmployeesAdmin(): Promise<AdminEmployee[]> {
     FROM vcard_employees e
     LEFT JOIN vcard_offices o ON o.id = e.office_id
     LEFT JOIN vcard_departments d ON d.id = e.department_id
-    ORDER BY e.active DESC, e.last_name ASC
+    ORDER BY e.active DESC, e.first_name ASC, e.last_name ASC
   `)
   return res.rows
 }
@@ -310,6 +310,9 @@ export interface EmployeeUpdatePayload {
   website_meta_description?: string
   mailchimp_audience_id?:   string
   mailchimp_form_code?:     string
+  // Sales/marketing routing key (C-<n>). Not HR-shared identity.
+  // Blank/null allowed; NO uniqueness check on update (team codes OK).
+  sms_code?:                string | null
 }
 
 export async function updateEmployee(slug: string, data: EmployeeUpdatePayload): Promise<AdminEmployee | null> {
