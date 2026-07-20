@@ -11,10 +11,12 @@
  *   4. Existing vcard linked to someone else   → SKIP + flag (no hijack)
  *   5. No vcard                                → CREATE draft + LINK
  *
- * Idempotent: SELECT-before-insert; on unique-violation (23505) re-select
- * and link the winner. Draft = website_active=false. vcard only — never
- * creates staff_members. Non-blocking: failures are logged, never throw
- * upward (HR write stays successful) — same discipline as Layer 1.
+ * Idempotent: SELECT-before-insert for the common case; the partial unique
+ * index vcard_employees_email_lower_unique (LOWER(TRIM(email)), non-blank)
+ * + catch 23505 closes the race (re-fetch by same normalized key → LINK
+ * the winner). Draft = website_active=false. vcard only — never creates
+ * staff_members. Non-blocking: failures are logged, never throw upward
+ * (HR write stays successful) — same discipline as Layer 1.
  */
 import type { HrEmployee } from '@/lib/admin-db'
 import {
@@ -166,12 +168,12 @@ export async function ensureVcardForRep(hr: HrEmployee): Promise<EnsureVcardResu
       vcardEmployeeId: vcardId,
     }
   } catch (err) {
-    // Race: another writer inserted the same email. Re-select and LINK
-    // (same pattern as open-onboarding conflict → reuse). Works when a
-    // UNIQUE(email) constraint exists; without it the SELECT-before-insert
-    // still covers the common non-race path.
-    const code = (err as { code?: string })?.code
-    if (code === '23505') {
+    // Race: another writer won vcard_employees_email_lower_unique.
+    // Re-select by the SAME normalized key (LOWER(TRIM)) and LINK the
+    // winner — same pattern as open-onboarding conflict → reuse.
+    // Do NOT surface 23505 as a 500 or create a duplicate.
+    const pgErr = err as { code?: string; constraint?: string }
+    if (pgErr.code === '23505') {
       const winner = await db.query<{ id: number }>(
         `SELECT id FROM vcard_employees
           WHERE email IS NOT NULL AND LOWER(TRIM(email)) = $1
@@ -193,6 +195,7 @@ export async function ensureVcardForRep(hr: HrEmployee): Promise<EnsureVcardResu
               hrEmployeeId: hr.id,
               vcardEmployeeId: vcardId,
               linkedToHrEmployeeId: owner.rows[0].id,
+              constraint: pgErr.constraint ?? 'vcard_employees_email_lower_unique',
             }),
           )
           return {
@@ -206,9 +209,11 @@ export async function ensureVcardForRep(hr: HrEmployee): Promise<EnsureVcardResu
           ...base,
           action: 'linked-existing',
           vcardEmployeeId: vcardId,
-          detail: 'linked after unique-violation race',
+          detail: 'linked after vcard_employees_email_lower_unique race',
         }
       }
+      // 23505 on a different constraint (e.g. slug) with no email winner —
+      // rethrow so the outer maybeEnsure swallows/logs it.
     }
     throw err
   }
