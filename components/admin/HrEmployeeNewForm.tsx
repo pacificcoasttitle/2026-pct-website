@@ -19,8 +19,12 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState<string | null>(null)
-  const [ok,     setOk]     = useState<string | null>(null)
-  const [createdEmployee, setCreatedEmployee] = useState<{ id: number } | null>(null)
+  const [ok,     setOk]     = useState(false)
+  const [createdEmployee, setCreatedEmployee] = useState<{
+    id: number
+    onboarding_type: 'sales_rep' | 'employee'
+    vcard_slug: string | null
+  } | null>(null)
 
   const [form, setForm] = useState({
     first_name:      '',
@@ -45,7 +49,7 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    setOk(null)
+    setOk(false)
     setCreatedEmployee(null)
 
     if (!form.first_name.trim() || !form.last_name.trim()) {
@@ -75,8 +79,18 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
         return
       }
       const employeeId = Number(data?.employee?.id)
-      setOk('Added to roster.')
-      setCreatedEmployee(Number.isInteger(employeeId) && employeeId > 0 ? { id: employeeId } : null)
+      const createdType =
+        data?.employee?.onboarding_type === 'employee' ? 'employee' as const : 'sales_rep' as const
+      const vcardSlug =
+        typeof data?.vcard_slug === 'string' && data.vcard_slug.trim()
+          ? data.vcard_slug.trim()
+          : null
+      setOk(true)
+      setCreatedEmployee(
+        Number.isInteger(employeeId) && employeeId > 0
+          ? { id: employeeId, onboarding_type: createdType, vcard_slug: vcardSlug }
+          : null,
+      )
       router.refresh()
     } catch {
       setError('Network error — please try again.')
@@ -84,6 +98,8 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
       setSaving(false)
     }
   }
+
+  const isSalesRep = form.onboarding_type === 'sales_rep'
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pt-2 lg:pt-0">
@@ -96,9 +112,9 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
         </Link>
         <h1 className="text-2xl font-bold text-[#03374f]">Add Employee</h1>
         <p className="text-gray-500 text-sm mt-1">
-          Creates a canonical HR roster record only. It does not start onboarding,
-          send an invite, or change anyone&apos;s marketing or signature presence.
-          To onboard someone, use the Onboarding screen.
+          {isSalesRep
+            ? 'Creates an HR roster record and a draft Sales profile (not public until Sales adds photo/bio/SMS code and publishes). Does not start onboarding — use the Onboarding screen for that.'
+            : 'Creates a canonical HR roster record only. It does not start onboarding, send an invite, or create a Sales profile. To onboard someone, use the Onboarding screen.'}
         </p>
       </div>
 
@@ -113,13 +129,29 @@ export default function HrEmployeeNewForm({ departments, offices }: Props) {
           <div className="flex items-start gap-2.5">
             <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <div>
-              <div className="font-semibold">{ok}</div>
+              <div className="font-semibold">Added to roster.</div>
               <div className="mt-0.5 text-emerald-700/80">
-                This created a roster record only. Start onboarding from the Onboarding screen when you&apos;re ready.
+                {createdEmployee?.onboarding_type === 'sales_rep' ? (
+                  <>
+                    A draft Sales profile was created. Finish photo, bio, and SMS code on the Sales side, then publish when ready. Start onboarding from the Onboarding screen when you&apos;re ready.
+                  </>
+                ) : (
+                  <>
+                    This created a roster record only — no Sales profile. Start onboarding from the Onboarding screen when you&apos;re ready.
+                  </>
+                )}
               </div>
             </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-2 pl-6">
+            {createdEmployee?.onboarding_type === 'sales_rep' && createdEmployee.vcard_slug && (
+              <Link
+                href={`/admin/team/employees/${createdEmployee.vcard_slug}`}
+                className="inline-flex h-9 items-center rounded-lg bg-[#f26b2b] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#d85c1f]"
+              >
+                Open Sales profile to add photo, bio, SMS code, and publish →
+              </Link>
+            )}
             {createdEmployee && (
               <Link
                 href={`/admin/team/hr/onboarding?employee=${createdEmployee.id}`}

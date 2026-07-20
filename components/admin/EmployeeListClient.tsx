@@ -7,10 +7,8 @@ import {
   Search,
   Globe,
   Eye,
-  Pencil,
   ChevronRight,
   Users,
-  UserPlus,
 } from 'lucide-react'
 
 interface EmployeeRow {
@@ -56,20 +54,22 @@ export default function EmployeeListClient({ employees }: { employees: EmployeeR
   return (
     <div className="max-w-5xl mx-auto space-y-6 pt-2 lg:pt-0">
 
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4">
+      {/* Header — create lives in HR (Layer 2 drafts the Sales profile for reps).
+          /admin/team/employees/new is kept as break-glass but not linked here. */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[#03374f]">Employees</h1>
           <p className="text-gray-500 text-sm mt-1">{filtered.length} of {employees.length} shown</p>
         </div>
-        <Link
-          href="/admin/team/employees/new"
-          className="h-10 px-4 inline-flex items-center gap-2 rounded-xl bg-[#f26b2b] text-white text-sm font-semibold hover:bg-[#d85c1f] transition-colors flex-shrink-0"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span className="hidden sm:inline">Add Employee</span>
-          <span className="sm:hidden">Add</span>
-        </Link>
+        <p className="text-sm text-gray-500 sm:text-right">
+          Add employees and sales reps in{' '}
+          <Link
+            href="/admin/team/hr/new"
+            className="font-semibold text-[#03374f] underline decoration-[#03374f]/30 underline-offset-2 hover:text-[#f26b2b] hover:decoration-[#f26b2b]/50 transition-colors"
+          >
+            HR
+          </Link>
+        </p>
       </div>
 
       {/* Filters */}

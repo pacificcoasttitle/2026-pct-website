@@ -14,7 +14,7 @@
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { requireApiRole } from '@/lib/auth/guards'
-import { createHrEmployee } from '@/lib/admin-db'
+import { createHrEmployee, getPool } from '@/lib/admin-db'
 
 export const runtime = 'nodejs'
 
@@ -90,8 +90,24 @@ export async function POST(req: Request) {
 
     revalidatePath('/admin/team/hr')
     revalidatePath('/admin/team/hr/dashboard')
+    if (created.vcard_employee_id != null) {
+      revalidatePath('/admin/team/employees')
+    }
 
-    return NextResponse.json({ success: true, employee: created }, { status: 201 })
+    // Handoff: Sales edit needs the vcard slug (Layer 2 link/create sets the FK).
+    let vcard_slug: string | null = null
+    if (created.vcard_employee_id != null) {
+      const slugRes = await getPool().query<{ slug: string }>(
+        `SELECT slug FROM vcard_employees WHERE id = $1 LIMIT 1`,
+        [created.vcard_employee_id],
+      )
+      vcard_slug = slugRes.rows[0]?.slug ?? null
+    }
+
+    return NextResponse.json(
+      { success: true, employee: created, vcard_slug },
+      { status: 201 },
+    )
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to create employee'
     const status  = /already/i.test(message) ? 409 : 500
