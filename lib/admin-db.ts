@@ -332,7 +332,8 @@ export async function updateEmployee(slug: string, data: EmployeeUpdatePayload):
 
 // ── Create a new employee ─────────────────────────────────────
 
-function slugify(input: string): string {
+/** Slugify a display name for vcard_employees.slug (exported for Layer 2). */
+export function slugify(input: string): string {
   return input
     .toLowerCase()
     .normalize('NFKD')
@@ -342,7 +343,8 @@ function slugify(input: string): string {
     .slice(0, 60) || 'employee'
 }
 
-async function ensureUniqueSlug(base: string): Promise<string> {
+/** Find a free vcard slug, appending -2/-3/… on collision (exported for Layer 2). */
+export async function ensureUniqueSlug(base: string): Promise<string> {
   const db = getPool()
   let slug = base
   let n    = 1
@@ -1937,13 +1939,16 @@ export interface CreateHrEmployeeInput {
 }
 
 /**
- * Create a decoupled "HR-only" employee: writes ONLY the canonical
- * hr_employees row with source FKs (vcard_employee_id, staff_member_id)
- * left NULL. Does NOT create/modify vcard_employees or staff_members.
+ * Create a canonical hr_employees row (source FKs start NULL).
  *
  * email is required + normalized (lower/trim) and the UNIQUE constraint
  * applies — a duplicate throws a friendly 'already' error (the route
  * maps it to 409, never a 500).
+ *
+ * Layer 2 (create-time, sales_rep only, HR_SYNC_ENABLED-gated): after the
+ * insert commits, maybeEnsureVcardForSalesRep links or creates a draft
+ * vcard facet. Regular employees are untouched. Failures are swallowed
+ * so the HR write never breaks (same discipline as Layer 1).
  */
 export async function createHrEmployee(input: CreateHrEmployeeInput): Promise<HrEmployee> {
   const db = getPool()
@@ -1961,6 +1966,7 @@ export async function createHrEmployee(input: CreateHrEmployeeInput): Promise<Hr
     throw new Error(`An employee with email ${email} already exists.`)
   }
 
+  let created: HrEmployee
   try {
     const res = await db.query(
       `INSERT INTO hr_employees (
@@ -1989,7 +1995,7 @@ export async function createHrEmployee(input: CreateHrEmployeeInput): Promise<Hr
         input.created_by?.trim() || null,
       ],
     )
-    return res.rows[0]
+    created = res.rows[0] as HrEmployee
   } catch (err) {
     // Unique-violation safety net (race between the pre-check + insert).
     const code = (err as { code?: string })?.code
@@ -1998,6 +2004,14 @@ export async function createHrEmployee(input: CreateHrEmployeeInput): Promise<Hr
     }
     throw err
   }
+
+  // Layer 2 — AFTER the HR insert has committed. Lazy import avoids a
+  // module cycle (ensure-vcard imports getPool/slug helpers from here).
+  const { maybeEnsureVcardForSalesRep } = await import('@/lib/hr-sync/ensure-vcard')
+  await maybeEnsureVcardForSalesRep(created, 'createHrEmployee')
+
+  // Re-load so the returned row reflects vcard_employee_id when Layer 2 linked.
+  return (await getHrEmployeeById(created.id)) ?? created
 }
 
 /**

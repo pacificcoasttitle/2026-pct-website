@@ -1,9 +1,11 @@
 /**
  * POST /api/admin/hr/employees
  *
- * HR adds a new employee. Creates ONLY the canonical hr_employees row
- * (vcard_employee_id + staff_member_id NULL — a decoupled "HR-only"
- * record). Does NOT create or modify vcard_employees / staff_members.
+ * HR adds a new employee (canonical hr_employees row). When
+ * onboarding_type='sales_rep' and HR_SYNC_ENABLED is on, Layer 2
+ * (createHrEmployee → maybeEnsureVcardForSalesRep) links or creates a
+ * draft vcard facet. Regular employees stay HR-only. staff_members is
+ * never created here.
  *
  * Gated requireApiRole('hr-tools'). created_by = actor username.
  * email required + normalized + UNIQUE — duplicates return 409, never a
