@@ -101,6 +101,12 @@ const nextConfig = {
         destination: "/:slug*",
         permanent: true,
       },
+      // Rep requested shorter public URL; keep old slug bookmarks/QR codes alive.
+      {
+        source: "/corey-velasquez",
+        destination: "/corey",
+        permanent: true,
+      },
     ]
   },
 }
