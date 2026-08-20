@@ -20,6 +20,20 @@ function defaultTestPhone() {
   return process.env.RENDER_SMS_TEST_PHONE || undefined
 }
 
+/** Match the SMS Studio phone preview: "Hi {first_name}! {message}". */
+function withRepGreeting(message: string, firstName: string | null | undefined): string {
+  const body = message.trim()
+  const name = (firstName || '').trim()
+  if (!body || !name) return body
+
+  // Avoid double-greeting if the admin already typed it.
+  const already =
+    new RegExp(`^hi\\s+${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[!,]?\\s*`, 'i')
+  if (already.test(body)) return body
+
+  return `Hi ${name}! ${body}`
+}
+
 export async function GET() {
   const auth = await requireApiRole('sms')
   if ('error' in auth) return auth.error
@@ -57,7 +71,9 @@ export async function POST(req: NextRequest) {
       if (!rep) return NextResponse.json({ error: 'Rep not found' }, { status: 404 })
       const phone = test_phone || rep.mobile
       if (!phone) return NextResponse.json({ error: `${rep.name} has no mobile on file. Add a Test Phone.` }, { status: 400 })
-      const data = await sendSingleSms({ phone, message, preview_mode })
+      // send-single does not prepend a greeting; match the Studio preview.
+      const personalized = withRepGreeting(message, rep.first_name)
+      const data = await sendSingleSms({ phone, message: personalized, preview_mode })
       const ok = Boolean(data.success)
 
       const log_id = await recordSmsSendLog({
@@ -65,7 +81,7 @@ export async function POST(req: NextRequest) {
         send_mode: sendModeRaw ?? 'single',
         preview_mode,
         test_phone: test_phone ?? null,
-        message,
+        message: personalized,
         image_urls: null,
         total: 1,
         successful: ok ? 1 : 0,

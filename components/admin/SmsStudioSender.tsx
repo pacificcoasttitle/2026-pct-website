@@ -559,7 +559,7 @@ export function SmsStudioSender({ repCount, reps, onSendComplete }: Props) {
                   placeholder="Type your message…"
                 />
                 <p className="mt-1.5 text-[11px] text-gray-500">
-                  The SMS service automatically prepends <code className="bg-gray-100 px-1 rounded">Hi {`{first_name}`}!</code> before your text.
+                  Outgoing SMS starts with <code className="bg-gray-100 px-1 rounded">Hi {`{first_name}`}!</code> automatically — you don&apos;t need to type it.
                 </p>
               </div>
 
