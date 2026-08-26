@@ -30,6 +30,7 @@ import {
   updateAssetDeliveryBatch,
   createAssetDeliverySend,
   updateAssetDeliverySend,
+  isRepMarketingEnabled,
   type AssetDeliveryFile,
 } from '@/lib/admin-db'
 import { downloadFromR2 } from '@/lib/r2-upload'
@@ -38,6 +39,12 @@ import {
   buildIntroUserMessage,
   stripHtmlTags,
 } from '@/lib/marketing-ai'
+import {
+  fileFormatLabel,
+  pieceLabel,
+  pieceSchedule,
+  pieceTip,
+} from '@/lib/asset-delivery-pieces'
 import {
   ASSET_DELIVERY_DEFAULTS,
   renderAssetDeliveryHtml,
@@ -123,7 +130,7 @@ async function generateIntroForRep(
     campaign_name:        campaignName,
     campaign_description: campaignDescription,
     asset_summary:        files.map((f) => ({
-      format: f.format,
+      format: fileFormatLabel(f.format),
       type:   f.mime_type || 'file',
     })),
   })
@@ -204,6 +211,9 @@ interface SendContext {
   campaignDescription: string | null
   emailSubject:        string
   htmlTemplate:        string
+  pieceLabel:          string
+  pieceSchedule:       string
+  pieceTip:            string
   openaiKey:           string | null
   sg:                  typeof sgMail
   isTest:              boolean
@@ -287,9 +297,15 @@ async function sendOneRep(
     )
 
     /* 3. Render the email body. File delivery happens via SendGrid attachments below. */
+    const attachmentCount = files.length
     const html = renderAssetDeliveryHtml(ctx.htmlTemplate, {
       rep_first_name:      rep.first_name || rep.full_name.split(' ')[0] || 'there',
       campaign_name:       ctx.campaignName,
+      piece_label:         ctx.pieceLabel,
+      piece_schedule:      ctx.pieceSchedule,
+      piece_tip:           ctx.pieceTip,
+      attachment_count:    attachmentCount,
+      attachment_plural:   attachmentCount !== 1,
       ai_intro_paragraph:  intro,
       questions_callout:   ASSET_DELIVERY_DEFAULTS.questions_callout,
     })
@@ -529,6 +545,34 @@ export async function POST(
       })
       continue
     }
+
+    if (rep.id !== null && !(await isRepMarketingEnabled(rep.id))) {
+      try {
+        const row = await createAssetDeliverySend({
+          batch_id:               batchId,
+          rep_id:                 rep.id,
+          rep_email:              rep.email,
+          rep_name:               rep.full_name,
+          send_status:            'skipped',
+          attachment_count:       filesByRep.get(email)?.length ?? 0,
+          attachment_total_bytes: (filesByRep.get(email) ?? []).reduce(
+            (a, f) => a + (f.file_size_bytes || 0), 0,
+          ),
+          is_test:                isTest,
+        })
+        await updateAssetDeliverySend(row.id, {
+          error_message: 'Rep is marked No Marketing',
+        })
+      } catch (dbErr) {
+        console.warn('[asset-delivery-send] could not record No Marketing skip:', dbErr)
+      }
+      upfrontFailures.push({
+        rep_email: rep.email,
+        status:    'skipped',
+        error:     'Rep is marked No Marketing',
+      })
+      continue
+    }
     resolved.push({ rep, files: filesByRep.get(email)! })
   }
 
@@ -540,6 +584,9 @@ export async function POST(
     campaignDescription: batch.description || null,
     emailSubject:        batch.email_subject,
     htmlTemplate:        template.html_template,
+    pieceLabel:          pieceLabel(batch.lane),
+    pieceSchedule:       pieceSchedule(batch.lane),
+    pieceTip:            pieceTip(batch.lane),
     openaiKey:           process.env.OPENAI_API_KEY || null,
     sg,
     isTest,
@@ -552,6 +599,7 @@ export async function POST(
   const allOutcomes = [...upfrontFailures, ...fanResults]
   const sentCount   = allOutcomes.filter((o) => o.status === 'sent').length
   const failedCount = allOutcomes.filter((o) => o.status === 'failed').length
+  const skippedCount = allOutcomes.filter((o) => o.status === 'skipped').length
 
   /* Finalize batch status (skip for test sends). */
   if (!isTest) {
@@ -573,7 +621,7 @@ export async function POST(
 
   const durationMs = Date.now() - startedAt
   console.log(
-    `[asset-delivery-send] admin=${adminEmail} batch=${batchId} total=${allOutcomes.length} sent=${sentCount} failed=${failedCount}${isTest ? ' (test)' : ''} duration_ms=${durationMs}`,
+    `[asset-delivery-send] admin=${adminEmail} batch=${batchId} total=${allOutcomes.length} sent=${sentCount} failed=${failedCount} skipped=${skippedCount}${isTest ? ' (test)' : ''} duration_ms=${durationMs}`,
   )
 
   return NextResponse.json({
@@ -581,6 +629,7 @@ export async function POST(
     total_recipients: allOutcomes.length,
     sent:             sentCount,
     failed:           failedCount,
+    skipped:          skippedCount,
     errors: allOutcomes
       .filter((o) => o.status === 'failed')
       .map((o) => ({ rep_email: o.rep_email, error: o.error || 'Unknown error' })),

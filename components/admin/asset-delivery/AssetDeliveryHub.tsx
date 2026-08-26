@@ -26,6 +26,7 @@ import {
 } from '@/components/admin/marketing/shared'
 import type { AssetDeliveryBatchStatus } from '@/lib/admin-db'
 import { formatBytes } from '@/lib/format-utils'
+import { pieceLabel } from '@/lib/asset-delivery-pieces'
 
 interface BatchListItem {
   id:               number
@@ -128,7 +129,7 @@ export function AssetDeliveryHub({ initialBatches }: Props) {
                         <StatusPill status={pillStatus(b.status)} />
                         {b.lane && (
                           <span className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">
-                            {b.lane}
+                            {pieceLabel(b.lane)}
                           </span>
                         )}
                       </div>

@@ -18,11 +18,10 @@
  * Filename contract enforced by the backend:
  *   C-<rep#>[-<firstname>].{ext}
  *
- * Format is DERIVED, not in the filename:
- *   .pdf                 → flyer (always)
- *   .png|.jpg|.jpeg      → image; the specific format (social /
- *                          social-story / email-insert) comes from the
- *                          single batch-level picker on the upload step.
+ * Format is DERIVED from the campaign piece type (lane) + extension:
+ *   IG Story (Wed)     → PNG/JPG → social-story
+ *   Flyer (Thu)        → PDF     → flyer
+ *   PDF Calendar (1st) → PDF     → calendar
  *
  * "Send Test" deviates from the spec a little: the spec said "send test to
  * current admin's email", but the backend's test_recipient_email validates
@@ -55,6 +54,24 @@ import {
 } from '@/components/ui/alert-dialog'
 import { InlineAlert } from '@/components/admin/marketing/shared'
 import { formatBytes } from '@/lib/format-utils'
+import {
+  PIECE_OPTIONS,
+  FILE_FORMATS,
+  FILE_FORMAT_LABELS,
+  normalizePieceType,
+  deriveFileFormat,
+  pieceLabel,
+  pieceSchedule,
+  pieceTip,
+  fileFormatLabel,
+  type PieceType,
+  type FileFormat,
+} from '@/lib/asset-delivery-pieces'
+import {
+  ASSET_DELIVERY_DEFAULTS,
+  ASSET_DELIVERY_HTML,
+  renderAssetDeliveryHtml,
+} from '@/lib/email-templates/asset-delivery'
 
 /* ─── Types ──────────────────────────────────────────────────── */
 
@@ -77,39 +94,9 @@ interface Props {
   adminEmail: string
 }
 
-type Lane =
-  | 'marketing-piece'
-  | 'social'
-  | 'weekly-email'
-  | 'other'
-
-const LANE_OPTIONS: Array<{ value: Lane; label: string }> = [
-  { value: 'marketing-piece', label: 'Marketing Piece' },
-  { value: 'social',          label: 'Social' },
-  { value: 'weekly-email',    label: 'Weekly Email' },
-  { value: 'other',           label: 'Other' },
-]
-
-// Upload-time formats. 'print' is retired — every PDF is a 'flyer'.
-const FORMATS = ['flyer', 'social', 'social-story', 'email-insert'] as const
-type FormatKey = typeof FORMATS[number]
-
-const FORMAT_LABELS: Record<FormatKey, string> = {
-  flyer:          'Flyer',
-  social:         'Social',
-  'social-story': 'Social Story',
-  'email-insert': 'Email Insert',
-}
-
-// The three image formats the single batch-level picker offers. PDFs
-// bypass the picker entirely (always 'flyer').
-type ImageFormatKey = 'social' | 'social-story' | 'email-insert'
-const IMAGE_FORMAT_OPTIONS: Array<{ value: ImageFormatKey; label: string }> = [
-  { value: 'social',       label: 'Social' },
-  { value: 'social-story', label: 'Social Story' },
-  { value: 'email-insert', label: 'Email Insert' },
-]
-const DEFAULT_IMAGE_FORMAT: ImageFormatKey = 'social-story'
+const FORMATS = FILE_FORMATS
+type FormatKey = FileFormat
+const FORMAT_LABELS = FILE_FORMAT_LABELS
 
 type UploadState =
   | { kind: 'pending';   filename: string }
@@ -169,13 +156,12 @@ function slugify(s: string): string {
 
 /**
  * Parse a filename (short grammar C-<n>[-<name>].ext) and classify it
- * against the rep roster. Mirrors the server's validation. Format is
- * DERIVED: PDF → 'flyer'; image → the batch-level picker value.
+ * against the rep roster. Format is DERIVED from the campaign piece type.
  */
 function classifyFile(
-  filename:    string,
-  reps:        RepRoster[],
-  imageFormat: ImageFormatKey,
+  filename:  string,
+  reps:      RepRoster[],
+  pieceType: PieceType,
 ): {
   ok:      boolean
   rep?:    RepRoster
@@ -186,8 +172,6 @@ function classifyFile(
   const ext  = extMatch ? extMatch[1].toLowerCase() : ''
   const base = extMatch ? filename.slice(0, -extMatch[0].length) : filename
 
-  // The whole basename IS the rep-code segment now. Same regex the
-  // server uses (upload/route.ts SMS_CODE_RE).
   const codeMatch = base.match(/^c-?(\d+)(?:-([a-z0-9-]+))?$/i)
   if (!codeMatch) {
     return { ok: false, error: 'Filename must be C-<rep#>.<ext> (e.g. C-28.pdf or C-28-jane.jpg)' }
@@ -198,17 +182,13 @@ function classifyFile(
     return { ok: false, error: `No active rep matches "${normalizedCode}"` }
   }
 
-  // Derive format from the extension. PDF is always a flyer; images take
-  // the batch-level picker value.
-  let format: FormatKey
-  if (ext === 'pdf') {
-    format = 'flyer'
-  } else if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
-    format = imageFormat
-  } else {
+  if (!(ext === 'pdf' || ext === 'png' || ext === 'jpg' || ext === 'jpeg')) {
     return { ok: false, error: `Unsupported file type: .${ext || 'unknown'}` }
   }
-  return { ok: true, rep, format }
+
+  const derived = deriveFileFormat(pieceType, ext)
+  if (!derived.ok) return { ok: false, error: derived.error }
+  return { ok: true, rep, format: derived.format }
 }
 
 /** Surface Zod field-level details from API errors when present. */
@@ -234,7 +214,7 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
   const [campaignName, setCampaignName] = useState('')
   const [campaignSlug, setCampaignSlug] = useState('')
   const [slugTouched,  setSlugTouched]  = useState(false)
-  const [lane,         setLane]         = useState<Lane>('marketing-piece')
+  const [lane,         setLane]         = useState<PieceType>('ig-story')
   const [description,  setDescription]  = useState('')
   const [emailSubject, setEmailSubject] = useState('')
   const [creatingBatch, setCreatingBatch] = useState(false)
@@ -260,14 +240,9 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
 
   /* ── Step 2 upload state ─────────────────────────────────── */
   const [uploads, setUploads] = useState<Record<string, UploadState>>({})
-  // Batch-level image format picker — one choice applies to every image
-  // uploaded in this session. PDFs ignore it (always 'flyer').
-  const [imageFormat, setImageFormat] = useState<ImageFormatKey>(DEFAULT_IMAGE_FORMAT)
-  // Mirror the picker into a ref so the queued uploadOne (captured by the
-  // memoized drainQueue) always reads the CURRENT choice, never a stale
-  // closure value from an earlier render.
-  const imageFormatRef = useRef<ImageFormatKey>(DEFAULT_IMAGE_FORMAT)
-  useEffect(() => { imageFormatRef.current = imageFormat }, [imageFormat])
+  const pieceType = normalizePieceType(lane)
+  const pieceTypeRef = useRef<PieceType>(pieceType)
+  useEffect(() => { pieceTypeRef.current = pieceType }, [pieceType])
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const dropAreaRef  = useRef<HTMLDivElement | null>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -298,7 +273,7 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
       if (data.batch) {
         setCampaignName(data.batch.campaign_name)
         setCampaignSlug(data.batch.campaign_slug)
-        if (data.batch.lane) setLane(data.batch.lane as Lane)
+        if (data.batch.lane) setLane(normalizePieceType(data.batch.lane))
         setEmailSubject(data.batch.email_subject)
         if (data.batch.description) setDescription(data.batch.description)
         setSlugTouched(true)
@@ -382,10 +357,9 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
       const form = new FormData()
       form.append('file', file)
       form.append('batchId', batchId)
-      // Batch-level image format (read from the ref to avoid a stale
-      // closure). The server ignores it for PDFs (always 'flyer') and
-      // requires it for images.
-      form.append('image_format', imageFormatRef.current)
+      // Piece type drives format server-side via batch.lane; kept for
+      // client-side classification / legacy callers.
+      form.append('piece_type', pieceTypeRef.current)
       const res = await fetch('/api/admin/marketing/asset-delivery/upload', {
         method: 'POST',
         body:   form,
@@ -425,7 +399,7 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
     const files = Array.from(fileList)
     const accepted: File[] = []
     for (const f of files) {
-      const cls = classifyFile(f.name, reps, imageFormat)
+      const cls = classifyFile(f.name, reps, pieceTypeRef.current)
       if (!cls.ok) {
         setUploadState(f.name, {
           kind: 'no-match', filename: f.name, error: cls.error || 'Invalid filename',
@@ -496,14 +470,14 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
     const inFlightEmails = new Set<string>()
     for (const u of Object.values(uploads)) {
       if (u.kind === 'pending' || u.kind === 'uploading' || u.kind === 'failed') {
-        const cls = classifyFile(u.filename, reps, imageFormat)
+        const cls = classifyFile(u.filename, reps, pieceType)
         if (cls.ok && cls.rep) inFlightEmails.add(cls.rep.email.toLowerCase())
       }
     }
     const baseEmails = new Set(repsWithFiles.map((r) => r.email.toLowerCase()))
     inFlightEmails.forEach((e) => baseEmails.add(e))
     return reps.filter((r) => baseEmails.has(r.email.toLowerCase()))
-  }, [repsWithFiles, uploads, reps, imageFormat])
+  }, [repsWithFiles, uploads, reps, pieceType])
 
   // Auto-select the first rep with files for the Step 3 preview.
   useEffect(() => {
@@ -544,7 +518,7 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
             campaign_name:        campaignName,
             campaign_description: description || undefined,
             asset_summary:        repFiles.map((f) => ({
-              format: f.format,
+              format: fileFormatLabel(f.format),
               type:   f.mime_type || 'file',
             })),
           }),
@@ -668,8 +642,7 @@ export function CampaignCreator({ reps, adminEmail }: Props) {
       {step === 2 && batchId && (
         <Step2
           reps={reps}
-          imageFormat={imageFormat}
-          setImageFormat={setImageFormat}
+          pieceType={pieceType}
           gridReps={gridReps}
           filesByRepAndFormat={filesByRepAndFormat}
           uploads={uploads}
@@ -794,7 +767,7 @@ function StepIndicator({ step, hasBatch }: { step: 1 | 2 | 3 | 4; hasBatch: bool
 function Step1(props: {
   campaignName: string;     setCampaignName: (v: string) => void
   campaignSlug: string;     setCampaignSlug: (v: string) => void
-  lane: Lane;               setLane: (v: Lane) => void
+  lane: PieceType;          setLane: (v: PieceType) => void
   description: string;      setDescription: (v: string) => void
   emailSubject: string;     setEmailSubject: (v: string) => void
   creating: boolean
@@ -838,17 +811,30 @@ function Step1(props: {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="campaign-lane">Lane</Label>
-        <Select value={props.lane} onValueChange={(v) => props.setLane(v as Lane)}>
-          <SelectTrigger id="campaign-lane">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {LANE_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Label>Piece type <span className="text-red-500">*</span></Label>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {PIECE_OPTIONS.map((o) => {
+            const active = props.lane === o.value
+            return (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => props.setLane(o.value)}
+                className={`rounded-xl border px-3 py-3 text-left transition-colors ${
+                  active
+                    ? 'border-[#f26b2b] bg-[#f26b2b]/10'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
+                }`}
+              >
+                <div className={`text-sm font-semibold ${active ? 'text-[#03374f]' : 'text-gray-700'}`}>
+                  {o.label}
+                </div>
+                <div className="text-[11px] text-gray-500 mt-0.5">{o.schedule}</div>
+                <div className="text-[11px] text-gray-400 mt-1">{o.fileHint}</div>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -872,7 +858,7 @@ function Step1(props: {
           id="email-subject"
           value={props.emailSubject}
           onChange={(e) => props.setEmailSubject(e.target.value)}
-          placeholder="Your Wire Fraud Prevention Toolkit is Ready, {{rep_first_name}}"
+          placeholder="Your Wire Fraud Prevention IG Story is ready, {{rep_first_name}}"
           maxLength={300}
         />
         <p className="text-[11px] text-gray-500 font-mono">
@@ -901,8 +887,7 @@ function Step1(props: {
 
 function Step2(props: {
   reps: RepRoster[]
-  imageFormat: ImageFormatKey
-  setImageFormat: (v: ImageFormatKey) => void
+  pieceType: PieceType
   gridReps: RepRoster[]
   filesByRepAndFormat: Map<string, Map<string, BatchFile>>
   uploads: Record<string, UploadState>
@@ -928,6 +913,12 @@ function Step2(props: {
     (u) => u.kind === 'failed' || u.kind === 'no-match',
   )
   const totalUploaded = props.totals.files
+  const pieceMeta = PIECE_OPTIONS.find((o) => o.value === props.pieceType) || PIECE_OPTIONS[0]
+  const activeFormat = deriveFileFormat(
+    props.pieceType,
+    props.pieceType === 'ig-story' ? 'jpg' : 'pdf',
+  )
+  const gridFormats: FormatKey[] = activeFormat.ok ? [activeFormat.format] : [...FORMATS]
 
   return (
     <div className="space-y-5">
@@ -953,7 +944,8 @@ function Step2(props: {
             Example: <span className="font-mono text-[#03374f]">C-28.pdf</span> or <span className="font-mono text-[#03374f]">C-28-jane.jpg</span> · Team codes (e.g.&nbsp;C-4) route to the team&apos;s shared email automatically.
           </p>
           <p className="text-xs text-gray-500 mb-4">
-            PDFs are delivered as flyers. PNG/JPG images use the image format selected below.
+            This campaign is <span className="font-semibold text-[#03374f]">{pieceMeta.label}</span>
+            {' '}({pieceMeta.schedule}) — upload {pieceMeta.fileHint}.
           </p>
           <Button variant="outline" size="sm" onClick={props.onPickClick}>
             <Upload className="w-3.5 h-3.5 mr-1" /> or browse for files
@@ -963,39 +955,27 @@ function Step2(props: {
             type="file"
             multiple
             className="hidden"
-            accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+            accept={
+              props.pieceType === 'ig-story'
+                ? '.png,.jpg,.jpeg,image/png,image/jpeg'
+                : '.pdf,application/pdf'
+            }
             onChange={props.onPickFiles}
           />
         </div>
       </Card>
 
-      {/* Batch-level image format picker — applies to ALL images in this
-          upload session. PDFs ignore it (always flyer). */}
-      <Card className="p-4">
-        <Label className="text-xs font-semibold text-[#03374f]">
-          Image format (applies to all images in this upload)
-        </Label>
-        <p className="text-[11px] text-gray-500 mb-2">
-          PDFs are always flyers. This choice applies to every PNG/JPG you upload.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {IMAGE_FORMAT_OPTIONS.map((opt) => {
-            const active = props.imageFormat === opt.value
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => props.setImageFormat(opt.value)}
-                className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
-                  active
-                    ? 'border-[#f26b2b] bg-[#f26b2b]/10 text-[#03374f] font-semibold'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                }`}
-              >
-                {opt.label}
-              </button>
-            )
-          })}
+      <Card className="p-4 flex items-start gap-3">
+        <div className="rounded-lg bg-[#03374f] text-white text-xs font-bold px-2.5 py-1.5">
+          {pieceMeta.label}
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-[#03374f]">
+            {pieceMeta.schedule} · {pieceMeta.fileHint}
+          </p>
+          <p className="text-[11px] text-gray-500 mt-0.5">
+            Piece type was chosen in Step 1. Go back to change it before uploading.
+          </p>
         </div>
       </Card>
 
@@ -1024,7 +1004,7 @@ function Step2(props: {
               <thead>
                 <tr className="bg-gray-50 text-left">
                   <th className="px-5 py-2.5 text-xs font-semibold text-gray-500">Rep</th>
-                  {FORMATS.map((f) => (
+                  {gridFormats.map((f) => (
                     <th key={f} className="px-3 py-2.5 text-xs font-semibold text-gray-500 text-center">
                       {FORMAT_LABELS[f]}
                     </th>
@@ -1040,14 +1020,10 @@ function Step2(props: {
                         <div className="font-medium text-[#03374f]">{rep.name}</div>
                         <div className="text-[11px] text-gray-400 font-mono">{rep.sms_code || rep.email_prefix}</div>
                       </td>
-                      {FORMATS.map((fmt) => {
+                      {gridFormats.map((fmt) => {
                         const existing = inner?.get(fmt)
-                        // Match in-flight uploads by re-deriving each file's
-                        // rep + format from its filename (same logic as
-                        // classifyFile): the rep must match this row and the
-                        // derived format must match this column.
                         const pending = Object.values(props.uploads).find((u) => {
-                          const cls = classifyFile(u.filename, props.reps, props.imageFormat)
+                          const cls = classifyFile(u.filename, props.reps, props.pieceType)
                           return (
                             cls.ok &&
                             cls.rep?.email.toLowerCase() === rep.email.toLowerCase() &&
@@ -1163,60 +1139,23 @@ function Step3(props: {
 
   const intro = props.introsByRep[props.previewRepEmail] || ''
 
-  // Render a brand-consistent preview client-side. The real template is
-  // applied server-side at send time; this preview shows what the rep
-  // will see in their email shell with their personalized intro and
-  // attachment list.
+  // Same Mustache template as send — keeps preview byte-aligned with production.
   const previewHtml = useMemo(() => {
     if (!previewRep) return ''
-    const subjectPreview = (props.batchData?.email_subject || '').replace(
-      /\{\{rep_first_name\}\}/g,
-      previewRep.first_name || previewRep.name.split(' ')[0],
-    )
-    const introHtml = intro
-      ? escapeHtml(intro)
-      : '<em style="color:#9ca3af;">Generating personalized intro…</em>'
-    const cardsHtml = previewFiles.map((f) => `
-      <tr><td style="padding:6px 0;">
-        <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%" style="background:#f0ede9;border:1px solid #e5e7eb;border-radius:8px;">
-          <tr>
-            <td width="56" align="center" style="padding:14px 12px;background:#ffffff;border-right:1px solid #e5e7eb;border-radius:8px 0 0 8px;">
-              <span style="font-family:Arial,sans-serif;font-size:18px;color:#f26b2b;font-weight:bold;">${iconLetter(f.mime_type)}</span>
-            </td>
-            <td style="padding:12px;font-family:Arial,sans-serif;">
-              <div style="font-size:13px;font-weight:bold;color:#1f2937;">${escapeHtml(f.original_filename)}</div>
-              <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">${escapeHtml(f.format)} · ${formatBytes(f.file_size_bytes)}</div>
-            </td>
-          </tr>
-        </table>
-      </td></tr>
-    `).join('')
-    return `
-      <html><head><meta charset="utf-8"><style>body{margin:0;background:#f0ede9;font-family:Arial,sans-serif;}</style></head>
-      <body>
-        <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%" bgcolor="#f0ede9" style="background:#f0ede9;">
-          <tr><td align="center" style="padding:20px 12px;">
-            <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="600" bgcolor="#ffffff" style="background:#ffffff;border-radius:8px;width:600px;max-width:600px;">
-              <tr><td bgcolor="#03374f" style="background:#03374f;padding:20px 28px;border-radius:8px 8px 0 0;">
-                <div style="color:#ffffff;font-weight:bold;font-size:15px;">Pacific Coast Title</div>
-                <div style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:2px;">${escapeHtml(subjectPreview)}</div>
-              </td></tr>
-              <tr><td style="padding:28px;font-family:Arial,sans-serif;">
-                <span style="display:inline-block;background:#03374f;color:#fff;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;padding:5px 10px;border-radius:4px;margin-bottom:12px;">Marketing Toolkit</span>
-                <h1 style="color:#03374f;font-size:22px;font-weight:bold;margin:0 0 6px 0;">Your ${escapeHtml(props.campaignName)} is Ready, ${escapeHtml(previewRep.first_name || previewRep.name.split(' ')[0])}</h1>
-                <p style="color:#1f2937;font-size:14px;line-height:1.7;margin:12px 0 22px 0;">${introHtml}</p>
-                <div style="font-size:12px;font-weight:bold;color:#03374f;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 10px 0;">Your Personalized Assets (${previewFiles.length})</div>
-                <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="100%">${cardsHtml}</table>
-                <div style="margin-top:24px;padding:16px 20px;background:#fcefe7;border-left:4px solid #f26b2b;border-radius:0 6px 6px 0;">
-                  <div style="font-size:11px;font-weight:bold;color:#f26b2b;text-transform:uppercase;letter-spacing:0.05em;">Questions?</div>
-                  <div style="font-size:13px;color:#1f2937;margin-top:4px;">Reply to this email and the marketing team will help.</div>
-                </div>
-              </td></tr>
-            </table>
-          </td></tr>
-        </table>
-      </body></html>`
-  }, [previewRep, previewFiles, intro, props.batchData, props.campaignName])
+    const firstName = previewRep.first_name || previewRep.name.split(' ')[0] || 'there'
+    const lane = props.batchData?.lane
+    return renderAssetDeliveryHtml(ASSET_DELIVERY_HTML, {
+      rep_first_name:     firstName,
+      campaign_name:      props.campaignName || props.batchData?.campaign_name || 'Your campaign',
+      piece_label:        pieceLabel(lane),
+      piece_schedule:     pieceSchedule(lane),
+      piece_tip:          pieceTip(lane),
+      attachment_count:   previewFiles.length,
+      attachment_plural:  previewFiles.length !== 1,
+      ai_intro_paragraph: intro || 'Generating personalized intro…',
+      questions_callout:  ASSET_DELIVERY_DEFAULTS.questions_callout,
+    })
+  }, [previewRep, previewFiles.length, intro, props.batchData, props.campaignName])
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -1324,23 +1263,6 @@ function Step3(props: {
   )
 }
 
-/* ─── Local helpers used by the preview iframe ───────────────── */
+/* ─── Step helpers ───────────────────────────────────────────── */
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
-
-function iconLetter(mime: string | null): string {
-  if (!mime) return 'F'
-  const m = mime.toLowerCase()
-  if (m === 'application/pdf' || m.endsWith('/pdf')) return 'P'
-  if (m.startsWith('image/')) return 'I'
-  if (m.startsWith('text/'))  return 'T'
-  return 'F'
-}
-
-export type { Lane }
+export type { PieceType as Lane }

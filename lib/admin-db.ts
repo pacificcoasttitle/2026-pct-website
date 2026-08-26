@@ -138,6 +138,62 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
 // ── Employees (admin view — includes inactive) ────────────────
 
+let _marketingRepPreferencesReady = false
+
+/**
+ * Marketing-owned rep eligibility. This deliberately lives outside the
+ * HR-owned employee fields so HR sync can never turn marketing back on.
+ * A missing row means enabled, preserving existing behavior.
+ */
+export async function ensureMarketingRepPreferences(): Promise<void> {
+  if (_marketingRepPreferencesReady) return
+  await getPool().query(`
+    CREATE TABLE IF NOT EXISTS marketing_rep_preferences (
+      employee_id       INTEGER PRIMARY KEY REFERENCES vcard_employees(id) ON DELETE CASCADE,
+      marketing_enabled BOOLEAN NOT NULL DEFAULT true,
+      updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_by        TEXT
+    )
+  `)
+  _marketingRepPreferencesReady = true
+}
+
+export async function setRepMarketingEnabled(
+  employeeId: number,
+  enabled: boolean,
+  actor?: string | null,
+): Promise<boolean | null> {
+  await ensureMarketingRepPreferences()
+  const res = await getPool().query(
+    `INSERT INTO marketing_rep_preferences (
+       employee_id, marketing_enabled, updated_at, updated_by
+     )
+     SELECT id, $2, NOW(), $3
+       FROM vcard_employees
+      WHERE id = $1
+     ON CONFLICT (employee_id) DO UPDATE
+       SET marketing_enabled = EXCLUDED.marketing_enabled,
+           updated_at        = NOW(),
+           updated_by        = EXCLUDED.updated_by
+     RETURNING marketing_enabled`,
+    [employeeId, enabled, actor || null],
+  )
+  return res.rows[0]?.marketing_enabled ?? null
+}
+
+export async function isRepMarketingEnabled(employeeId: number): Promise<boolean> {
+  await ensureMarketingRepPreferences()
+  const res = await getPool().query(
+    `SELECT COALESCE(p.marketing_enabled, true) AS marketing_enabled
+       FROM vcard_employees e
+       LEFT JOIN marketing_rep_preferences p ON p.employee_id = e.id
+      WHERE e.id = $1
+      LIMIT 1`,
+    [employeeId],
+  )
+  return res.rows[0]?.marketing_enabled !== false
+}
+
 const ADMIN_COLS = `
   e.id, e.slug, e.first_name, e.last_name,
   e.first_name || ' ' || e.last_name AS name,
@@ -151,6 +207,7 @@ const ADMIN_COLS = `
   e.website_hero_image, e.website_custom_title, e.website_meta_description,
   e.view_count, e.save_count,
   e.facebook, e.instagram, e.twitter, e.website,
+  COALESCE(mp.marketing_enabled, true) AS marketing_enabled,
   e.created_at, e.updated_at,
   o.name AS office_name,
   d.name AS dept_name, d.color AS dept_color
@@ -199,6 +256,7 @@ export interface AdminEmployee {
   instagram:               string | null
   twitter:                 string | null
   website:                 string | null
+  marketing_enabled:       boolean
   created_at:              string
   updated_at:              string
   office_name:             string | null
@@ -207,36 +265,42 @@ export interface AdminEmployee {
 }
 
 export async function getAllEmployeesAdmin(): Promise<AdminEmployee[]> {
+  await ensureMarketingRepPreferences()
   const db = getPool()
   const res = await db.query(`
     SELECT ${ADMIN_COLS}
     FROM vcard_employees e
     LEFT JOIN vcard_offices o ON o.id = e.office_id
     LEFT JOIN vcard_departments d ON d.id = e.department_id
+    LEFT JOIN marketing_rep_preferences mp ON mp.employee_id = e.id
     ORDER BY e.active DESC, e.first_name ASC, e.last_name ASC
   `)
   return res.rows
 }
 
 export async function getEmployeeAdminBySlug(slug: string): Promise<AdminEmployee | null> {
+  await ensureMarketingRepPreferences()
   const db = getPool()
   const res = await db.query(`
     SELECT ${ADMIN_COLS}
     FROM vcard_employees e
     LEFT JOIN vcard_offices o ON o.id = e.office_id
     LEFT JOIN vcard_departments d ON d.id = e.department_id
+    LEFT JOIN marketing_rep_preferences mp ON mp.employee_id = e.id
     WHERE e.slug = $1 LIMIT 1
   `, [slug])
   return res.rows[0] ?? null
 }
 
 export async function getEmployeeAdminById(id: number): Promise<AdminEmployee | null> {
+  await ensureMarketingRepPreferences()
   const db = getPool()
   const res = await db.query(`
     SELECT ${ADMIN_COLS}
     FROM vcard_employees e
     LEFT JOIN vcard_offices o ON o.id = e.office_id
     LEFT JOIN vcard_departments d ON d.id = e.department_id
+    LEFT JOIN marketing_rep_preferences mp ON mp.employee_id = e.id
     WHERE e.id = $1 LIMIT 1
   `, [id])
   return res.rows[0] ?? null
@@ -252,26 +316,38 @@ export interface PreviewRecipientRep {
  * Sales Reps admin page (/admin/team/employees), whose default view shows
  * `active = true` employees (the status toggle defaults to 'active', no
  * sales_manager / website_active requirement). We additionally require a
- * usable email — reps the page would show but can't be emailed are
- * partitioned out and counted as `skippedNoEmail` so the caller can report
- * them.
+ * usable email and exclude anyone marked No Marketing. Skips are partitioned
+ * by reason so callers can report them.
  */
 export async function getPreviewRecipientReps(): Promise<{
-  recipients:     PreviewRecipientRep[]
-  skippedNoEmail: number
+  recipients:          PreviewRecipientRep[]
+  skippedNoEmail:      number
+  skippedNoMarketing:  number
 }> {
+  await ensureMarketingRepPreferences()
   const db = getPool()
   const res = await db.query(`
     SELECT
       TRIM(COALESCE(e.email, ''))                        AS email,
-      TRIM(e.first_name || ' ' || e.last_name)           AS name
+      TRIM(e.first_name || ' ' || e.last_name)           AS name,
+      COALESCE(mp.marketing_enabled, true)                AS marketing_enabled
     FROM vcard_employees e
+    LEFT JOIN marketing_rep_preferences mp ON mp.employee_id = e.id
     WHERE e.active = true
     ORDER BY e.last_name ASC, e.first_name ASC
   `)
   const recipients: PreviewRecipientRep[] = []
   let skippedNoEmail = 0
-  for (const row of res.rows as Array<{ email: string; name: string }>) {
+  let skippedNoMarketing = 0
+  for (const row of res.rows as Array<{
+    email: string
+    name: string
+    marketing_enabled: boolean
+  }>) {
+    if (!row.marketing_enabled) {
+      skippedNoMarketing++
+      continue
+    }
     const email = (row.email || '').trim()
     if (!email) {
       skippedNoEmail++
@@ -279,7 +355,7 @@ export async function getPreviewRecipientReps(): Promise<{
     }
     recipients.push({ email, name: (row.name || '').trim() || email })
   }
-  return { recipients, skippedNoEmail }
+  return { recipients, skippedNoEmail, skippedNoMarketing }
 }
 
 export interface EmployeeUpdatePayload {
@@ -1701,7 +1777,6 @@ async function seedOfficeLocations(db: Pool): Promise<void> {
       zip:           '92867',
       main_phone:    '714.516.6700',
       toll_free:     '877.338.1108',
-      fax:           '714.516.6681',
       display_order: 1,
     },
     {
@@ -1713,7 +1788,6 @@ async function seedOfficeLocations(db: Pool): Promise<void> {
       zip:           '91203',
       main_phone:    '818.662.6700',
       toll_free:     '866.724.1050',
-      fax:           '818.662.6780',
       display_order: 2,
     },
     {

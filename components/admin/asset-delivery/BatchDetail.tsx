@@ -29,6 +29,7 @@ import {
 } from '@/components/admin/marketing/shared'
 import type { AssetDeliveryBatchStatus, AssetDeliverySendStatus } from '@/lib/admin-db'
 import { formatBytes } from '@/lib/format-utils'
+import { fileFormatLabel, pieceLabel } from '@/lib/asset-delivery-pieces'
 
 interface BatchData {
   id:               number
@@ -168,7 +169,7 @@ export function BatchDetail({ initialBatch, initialFiles, initialSends, repCodeB
               <StatusPill status={pillStatus(batch.status)} />
               {batch.lane && (
                 <span className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">
-                  {batch.lane}
+                  {pieceLabel(batch.lane)}
                 </span>
               )}
               <span>·</span>
@@ -389,7 +390,7 @@ function FragmentRows({
                         <ExternalLink className="w-3 h-3 flex-shrink-0" />
                       </a>
                       <span className="text-[11px] text-gray-400 flex-shrink-0">
-                        {f.format} · {formatBytes(f.file_size_bytes)}
+                        {fileFormatLabel(f.format)} · {formatBytes(f.file_size_bytes)}
                       </span>
                     </li>
                   ))}

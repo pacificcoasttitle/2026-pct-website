@@ -40,7 +40,7 @@ export default async function NewAssetDeliveryCampaignPage() {
   }
 
   const reps: RepRoster[] = employees
-    .filter((e) => e.active && e.email)
+    .filter((e) => e.active && e.marketing_enabled && e.email)
     .map((e) => ({
       id:           e.id,
       slug:         e.slug,

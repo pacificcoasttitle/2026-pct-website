@@ -21,11 +21,13 @@
  *                       log a structured warning but ACCEPT the upload.
  *                       Hyphens allowed in the name suffix for compound
  *                       names (-mary-jane).
- *   - {ext}             .pdf → always classified 'flyer'. .png/.jpg/.jpeg
- *                       → image; the specific format (social /
- *                       social-story / email-insert) is DERIVED from a
- *                       single batch-level picker the client sends as the
- *                       `image_format` field (not read from the filename).
+ *   - {ext}             Format is DERIVED from the batch piece type (lane)
+ *                       + extension:
+ *                         ig-story  → PNG/JPG → social-story
+ *                         flyer     → PDF     → flyer
+ *                         calendar  → PDF     → calendar
+ *                       Legacy image_format form field is still accepted
+ *                       as a fallback when batch.lane is blank/legacy.
  *
  * The old long grammar ({slug}__C-<n>__{format}.ext) is RETIRED — there
  * is no backward-compat path. The campaign_slug was vestigial in the
@@ -46,8 +48,13 @@ import {
   deleteAssetDeliveryFile,
   incrementBatchCounts,
   getEmployeeBySmsCode,
+  isRepMarketingEnabled,
 } from '@/lib/admin-db'
 import { uploadToR2, deleteFromR2, R2ConfigError } from '@/lib/r2-upload'
+import {
+  normalizePieceType,
+  deriveFileFormat,
+} from '@/lib/asset-delivery-pieces'
 
 export const runtime = 'nodejs'
 
@@ -55,11 +62,9 @@ export const runtime = 'nodejs'
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20 MB
 const ALLOWED_MIME  = new Set(['application/pdf', 'image/png', 'image/jpeg'])
-// Image extensions and the three image formats the batch-level picker
-// offers. PDFs are always 'flyer' (no picker, no ambiguity) — we no
-// longer distinguish flyer vs print on upload.
 const IMAGE_EXTS     = new Set(['png', 'jpg', 'jpeg'])
-const IMAGE_FORMATS  = new Set(['social', 'social-story', 'email-insert'])
+// Legacy image_format values still accepted when batch.lane is blank.
+const LEGACY_IMAGE_FORMATS = new Set(['social', 'social-story', 'email-insert'])
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -156,30 +161,24 @@ export async function POST(req: NextRequest) {
   }
   const { code: normalizedCode, nameSuffix } = parsed
 
-  /* 4b. Derive format from the extension (+ batch-level picker for
-     images). PDF is always a flyer; PNG/JPG/JPEG take the image_format
-     the client sends from the single batch-level picker. */
+  /* 4b. Derive format from batch piece type (lane) + extension.
+     Optional piece_type / image_format form fields are fallbacks for
+     legacy drafts whose lane is blank or pre-dates the piece-type model. */
+  const pieceFromForm = String(form.get('piece_type') || '').trim()
+  const piece = normalizePieceType(pieceFromForm || batch.lane)
   let format: string
-  if (ext === 'pdf') {
-    format = 'flyer'
+  const derived = deriveFileFormat(piece, ext)
+  if (derived.ok) {
+    format = derived.format
   } else if (IMAGE_EXTS.has(ext)) {
+    // Legacy fallback: honor image_format when piece typing rejects the file.
     const imageFormat = String(form.get('image_format') || '').trim()
-    if (!IMAGE_FORMATS.has(imageFormat)) {
-      return NextResponse.json(
-        {
-          error:
-            `Image uploads require an image_format of 'social', 'social-story', or ` +
-            `'email-insert' (got '${imageFormat || 'none'}').`,
-        },
-        { status: 400 },
-      )
+    if (!LEGACY_IMAGE_FORMATS.has(imageFormat)) {
+      return NextResponse.json({ error: derived.error }, { status: 400 })
     }
     format = imageFormat
   } else {
-    return NextResponse.json(
-      { error: `Unsupported file type: .${ext || 'unknown'}` },
-      { status: 400 },
-    )
+    return NextResponse.json({ error: derived.error }, { status: 400 })
   }
 
   /* 5. Look up rep by sms_code (resolution UNCHANGED). */
@@ -193,6 +192,7 @@ export async function POST(req: NextRequest) {
         email:      string
         slug:       string
         sms_code:   string
+        marketing_enabled: boolean
       }
     | null = null
   try {
@@ -206,6 +206,7 @@ export async function POST(req: NextRequest) {
         email:      found.email,
         slug:       found.slug,
         sms_code:   found.sms_code,
+        marketing_enabled: await isRepMarketingEnabled(found.id),
       }
     }
   } catch (err) {
@@ -222,6 +223,17 @@ export async function POST(req: NextRequest) {
           `sms_code assigned.`,
       },
       { status: 400 },
+    )
+  }
+
+  if (!rep.marketing_enabled) {
+    return NextResponse.json(
+      {
+        error:
+          `${rep.name} is marked No Marketing. ${normalizedCode} was not uploaded ` +
+          `and will not be sent.`,
+      },
+      { status: 409 },
     )
   }
 
