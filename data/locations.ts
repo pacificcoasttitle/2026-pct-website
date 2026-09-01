@@ -18,7 +18,6 @@ export interface Location {
   address: LocationAddress
   phone: string
   tollFree: string
-  fax: string
   email: string
   hours: string
   coordinates: LocationCoordinates
@@ -40,7 +39,6 @@ export const locations: Location[] = [
     },
     phone: "(714) 516-6700",
     tollFree: "(866) 724-1050",
-    fax: "(714) 516-6799",
     email: "orange@pct.com",
     hours: "Monday - Friday: 8:00 AM - 5:00 PM",
     coordinates: { lat: 33.7879, lng: -117.8531 },
@@ -68,7 +66,6 @@ export const locations: Location[] = [
     },
     phone: "(562) 862-4242",
     tollFree: "(866) 724-1050",
-    fax: "(562) 862-4243",
     email: "downey@pct.com",
     hours: "Monday - Friday: 8:00 AM - 5:00 PM",
     coordinates: { lat: 33.9425, lng: -118.1320 },
@@ -95,7 +92,6 @@ export const locations: Location[] = [
     },
     phone: "(559) 436-2600",
     tollFree: "(866) 724-1050",
-    fax: "(559) 436-2601",
     email: "fresno@pct.com",
     hours: "Monday - Friday: 8:00 AM - 5:00 PM",
     coordinates: { lat: 36.8281, lng: -119.8050 },
@@ -113,20 +109,18 @@ export const locations: Location[] = [
     name: "Glendale",
     isHQ: false,
     address: {
-      street: "655 N. Central Ave",
-      suite: "Suite 1700",
+      street: "516 Burchett St.",
       city: "Glendale",
       state: "CA",
       zip: "91203",
     },
     phone: "(818) 662-6700",
     tollFree: "(866) 724-1050",
-    fax: "(818) 507-5051",
     email: "glendale@pct.com",
     hours: "Monday - Friday: 8:00 AM - 5:00 PM",
-    coordinates: { lat: 34.1477, lng: -118.2551 },
+    coordinates: { lat: 34.15673, lng: -118.26547 },
     googleMapsUrl:
-      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3316.5!2d-118.2551!3d34.1477!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2s655%20N%20Central%20Ave%20%231700%2C%20Glendale%2C%20CA%2091203!5e0!3m2!1sen!2sus!4v1234567890",
+      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3316.5!2d-118.26547!3d34.15673!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2s516%20Burchett%20St.%2C%20Glendale%2C%20CA%2091203!5e0!3m2!1sen!2sus!4v1234567890",
     services: [
       "Residential Title Insurance",
       "Commercial Title Insurance",
@@ -148,7 +142,6 @@ export const locations: Location[] = [
     },
     phone: "(909) 483-4700",
     tollFree: "(866) 724-1050",
-    fax: "(909) 483-4701",
     email: "inlandempire@pct.com",
     hours: "Monday - Friday: 8:00 AM - 5:00 PM",
     coordinates: { lat: 34.0695, lng: -117.5807 },
@@ -176,7 +169,6 @@ export const locations: Location[] = [
     },
     phone: "(619) 236-0612",
     tollFree: "(866) 724-1050",
-    fax: "(619) 236-0613",
     email: "sandiego@pct.com",
     hours: "Monday - Friday: 8:00 AM - 5:00 PM",
     coordinates: { lat: 32.7157, lng: -117.1611 },

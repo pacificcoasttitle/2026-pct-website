@@ -34,6 +34,7 @@ const SYSTEM_PROMPT = `You are TESSA™ (Title & Escrow Smart Support Assistant)
 ABOUT PACIFIC COAST TITLE:
 - Full-service title and escrow company serving California since 2006
 - Headquarters: 1111 E. Katella Ave, Suite 120, Orange, CA 92867
+- Glendale: 516 Burchett St., Glendale, CA 91203
 - Phone: (714) 516-6700 | Toll-free: (866) 724-1050
 - 5 offices: Orange (HQ), Downey, Fresno, Glendale, Inland Empire
 - Website: pct.com

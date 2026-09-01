@@ -1,7 +1,7 @@
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import Link from "next/link"
-import { MapPin, Phone, Mail, Clock, Printer, ChevronRight, ArrowRight } from "lucide-react"
+import { MapPin, Phone, Mail, Clock, ChevronRight, ArrowRight } from "lucide-react"
 import { locations, getLocationBySlug, getAllLocationSlugs, formatAddress, getDirectionsUrl } from "@/data/locations"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
@@ -127,16 +127,6 @@ export default async function LocationPage({ params }: { params: Promise<{ slug:
                         Toll-free: <a href={`tel:+1${location.tollFree.replace(/\D/g, '')}`} className="hover:text-primary">{location.tollFree}</a>
                       </p>
                     )}
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Printer className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Fax</h3>
-                    <p className="text-gray-600">{location.fax}</p>
                   </div>
                 </div>
 

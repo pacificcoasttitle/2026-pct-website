@@ -13,7 +13,6 @@ const locations = [
     city: "Orange, CA 92867",
     phone: "(714) 516-6700",
     tollFree: "(866) 724-1050",
-    fax: "(714) 516-6799",
     email: "orange@pct.com",
     hours: "Mon-Fri: 8:00 AM - 5:00 PM",
     position: { top: "68%", left: "72%" },
@@ -21,10 +20,10 @@ const locations = [
   {
     id: "glendale",
     name: "Glendale",
-    address: "655 N. Central Ave, Suite 1550",
+    address: "516 Burchett St.",
     city: "Glendale, CA 91203",
-    phone: "(818) 649-0930",
-    fax: "(818) 649-0931",
+    phone: "(818) 662-6700",
+    tollFree: "(866) 724-1050",
     email: "glendale@pct.com",
     hours: "Mon-Fri: 8:00 AM - 5:00 PM",
     position: { top: "62%", left: "68%" },
@@ -35,7 +34,6 @@ const locations = [
     address: "8255 Firestone Boulevard, Suite 100",
     city: "Downey, CA 90241",
     phone: "(562) 869-5550",
-    fax: "(562) 869-5560",
     email: "downey@pct.com",
     hours: "Mon-Fri: 8:00 AM - 5:00 PM",
     position: { top: "66%", left: "66%" },
@@ -46,7 +44,6 @@ const locations = [
     address: "3200 Inland Empire Blvd. Ste. 235",
     city: "Ontario, CA 91764",
     phone: "(909) 483-1850",
-    fax: "(909) 483-1860",
     email: "ie@pct.com",
     hours: "Mon-Fri: 8:00 AM - 5:00 PM",
     position: { top: "64%", left: "78%" },
@@ -57,7 +54,6 @@ const locations = [
     address: "7433 N. First St, Suite 104",
     city: "Fresno, CA 93720",
     phone: "(559) 435-0520",
-    fax: "(559) 435-0525",
     email: "fresno@pct.com",
     hours: "Mon-Fri: 8:00 AM - 5:00 PM",
     position: { top: "38%", left: "58%" },
@@ -179,7 +175,6 @@ export function LocationsMap() {
                   {selectedLocation.tollFree && (
                     <p className="text-gray-600">Toll-free: {selectedLocation.tollFree}</p>
                   )}
-                  <p className="text-gray-500 text-sm">Fax: {selectedLocation.fax}</p>
                 </div>
               </div>
 
