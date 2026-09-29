@@ -1,6 +1,13 @@
 /**
  * PCT Rate Calculator Engine
- * Uses real PCT rate tables parsed from SQL dumps.
+ *
+ * Title premiums come from data/calculator/title-rates.json, which is built from
+ * the current underwriter rate manuals:
+ *   - Purchases:  Commonwealth Land Title (CLTIC) CA Rate Manual, eff. 9/4/2026,
+ *                 Part II Insurance Rate Table "R" Residential Owner's / Lender's Concurrent.
+ *   - Refinances: Westcor CA Rate Manual, Section 3.17 Residential Refinance Rate.
+ *   - basicRate:  Westcor Section 11.2 Basic Rate, used only as the base for
+ *                 percentage-priced refinance endorsements.
  * All rates are in whole dollars (stored as integers in the data).
  */
 
@@ -16,7 +23,13 @@ import countiesData from '@/data/calculator/counties.json'
 
 export type TransactionType = 'purchase' | 'refinance'
 export type OwnerPolicyType = 'clta' | 'alta' // CLTA Standard vs ALTA Homeowner's
-export type LenderPolicyType = 'clta' | 'alta' // CLTA Concurrent/Resi vs ALTA Concurrent
+export type LenderPolicyType = 'clta' | 'alta' // Kept for API compatibility; purchases always price the concurrent lender column
+
+export const PURCHASE_UNDERWRITER = 'Commonwealth Land Title Insurance Company'
+export const REFINANCE_UNDERWRITER = 'Westcor Land Title Insurance Company'
+
+/** Highest amount the bracket table covers. Above this we ask the user to call. */
+const MAX_RATED_AMOUNT = 5_000_000
 
 export interface CalculatorInput {
   transactionType: TransactionType
@@ -25,17 +38,26 @@ export interface CalculatorInput {
   salesPrice: number          // Purchase: property sale price; Refinance: 0
   loanAmount: number          // Loan/mortgage amount
   ownerPolicyType?: OwnerPolicyType    // Purchase only
-  lenderPolicyType?: LenderPolicyType  // Which lender policy
+  lenderPolicyType?: LenderPolicyType  // Accepted but not used for pricing (see note above)
   selectedEndorsementIds?: number[]    // Optional endorsements
   includeOwnerPolicy?: boolean         // Purchase: usually true
 }
 
+export interface EndorsementLine {
+  id: number
+  code: string
+  name: string
+  fee: number
+  isDefault: boolean
+}
+
 export interface TitleFees {
+  underwriter: string
   ownerPolicy: number
   ownerPolicyLabel: string
   lenderPolicy: number
   lenderPolicyLabel: string
-  endorsements: { name: string; fee: number }[]
+  endorsements: EndorsementLine[]
   endorsementTotal: number
   total: number
 }
@@ -61,7 +83,7 @@ export interface CalculatorResult {
   additionalFees: { name: string; fee: number; category: string }[]
   additionalFeesTotal: number
   grandTotal: number
-  callForQuote: boolean   // true if property value > $3M
+  callForQuote: boolean   // true if the amount is above the rated range
   disclaimer: string
 }
 
@@ -70,11 +92,11 @@ export interface CalculatorResult {
 interface TitleRateRow {
   minRange: number
   maxRange: number
-  ownerRate: number
-  homeOwnerRate: number
-  conLoanRate: number
-  resiLoanRate: number
-  conFullLoanRate: number
+  ownerRate: number        // CLTIC Table R Residential Owner's — CLTA Standard owner's policy
+  homeOwnerRate: number    // ALTA Homeowner's — Table R + 20% surcharge, min $480 (CLTIC 2.1.B.1)
+  conLoanRate: number      // CLTIC Table R Lender's Concurrent
+  resiLoanRate: number     // Westcor 3.17 Residential Refinance Rate
+  basicRate: number        // Westcor 11.2 Basic Rate (base for % endorsements on refinances)
 }
 
 const titleRates = titleRatesData as TitleRateRow[]
@@ -85,78 +107,121 @@ function lookupTitleRate(amount: number): TitleRateRow | null {
   return row || null
 }
 
+// ── Endorsement Pricing ─────────────────────────────────────────────────────
+
+/**
+ * Endorsement rows are flat so the admin JSON editor can render them.
+ *   fee      — flat dollar charge (0 = no charge unless percent is set)
+ *   percent  — percentage of the base rate (0 = not percentage priced)
+ *   minFee / maxFee — clamps applied to a percentage charge (0 = none)
+ *   basis    — which rate the percentage applies to:
+ *              'owner'  → Table R Residential Owner's rate at the sales price (CLTIC)
+ *              'lender' → Lender's Concurrent rate at the loan amount (CLTIC)
+ *              'basic'  → Westcor Basic Rate at the loan amount (refinance)
+ *   policy   — 'owner' endorsements only attach when an owner's policy is issued;
+ *              'lender' endorsements only attach when there is a loan.
+ */
+interface EndorsementRow {
+  id: number
+  code: string
+  name: string
+  transactionType: 'Resale' | 'Re-finance'
+  policy: 'owner' | 'lender'
+  isDefault: boolean
+  fee: number
+  percent: number
+  minFee: number
+  maxFee: number
+  basis: 'owner' | 'lender' | 'basic'
+  source?: string
+  note?: string
+}
+
+const endorsements = endorsementsData as EndorsementRow[]
+
+function priceEndorsement(e: EndorsementRow, salesPrice: number, loanAmount: number): number {
+  if (!e.percent || e.percent <= 0) return e.fee || 0
+
+  let base = 0
+  if (e.basis === 'owner') {
+    base = lookupTitleRate(salesPrice)?.ownerRate ?? 0
+  } else if (e.basis === 'lender') {
+    base = lookupTitleRate(loanAmount)?.conLoanRate ?? 0
+  } else {
+    base = lookupTitleRate(loanAmount)?.basicRate ?? 0
+  }
+
+  let fee = Math.round(base * (e.percent / 100))
+  if (e.minFee > 0 && fee < e.minFee) fee = e.minFee
+  if (e.maxFee > 0 && fee > e.maxFee) fee = e.maxFee
+  return fee
+}
+
 export function calculateTitleFees(input: CalculatorInput): TitleFees {
   const {
     transactionType,
     salesPrice,
     loanAmount,
-    ownerPolicyType = 'alta',   // Default: ALTA Homeowner's Policy (Column 3)
-    lenderPolicyType = 'alta',  // Default: ALTA Concurrent (Column 4) when concurrent
+    ownerPolicyType = 'alta',   // Default: ALTA Homeowner's Policy
     selectedEndorsementIds = [],
     includeOwnerPolicy = true,
   } = input
 
   const isPurchase = transactionType === 'purchase'
+  const underwriter = isPurchase ? PURCHASE_UNDERWRITER : REFINANCE_UNDERWRITER
+  const ownerIssued = isPurchase && includeOwnerPolicy && salesPrice > 0
 
-  // ── Owner's Policy (Purchase only) ──
+  // ── Owner's Policy (Purchase only — CLTIC Table R) ──
   let ownerPolicy = 0
   let ownerPolicyLabel = ''
-  if (isPurchase && includeOwnerPolicy && salesPrice > 0) {
+  if (ownerIssued) {
     const row = lookupTitleRate(salesPrice)
     if (row) {
-      if (row.ownerRate === 0) {
-        // Call for quote range
-        ownerPolicy = 0
-      } else {
-        ownerPolicy = ownerPolicyType === 'alta'
-          ? row.homeOwnerRate
-          : row.ownerRate
-      }
+      ownerPolicy = ownerPolicyType === 'alta' ? row.homeOwnerRate : row.ownerRate
     }
     ownerPolicyLabel = ownerPolicyType === 'alta'
       ? 'ALTA Homeowner\'s Policy'
-      : 'CLTA Owner\'s Policy'
+      : 'CLTA Standard Owner\'s Policy'
   }
 
   // ── Lender's Policy ──
   let lenderPolicy = 0
   let lenderPolicyLabel = ''
-    if (loanAmount > 0) {
+  if (loanAmount > 0) {
     const row = lookupTitleRate(loanAmount)
-    if (row) {
-      if (isPurchase && includeOwnerPolicy) {
-        // Concurrent issue (issued simultaneously with owner's policy)
-        // Always use Column 4 — ALTA Lenders Concurrent Loan Rate (conLoanRate)
-        // conFullLoanRate (Column 6) is the NON-concurrent rate — never use it here
-        lenderPolicy = row.conLoanRate
-        lenderPolicyLabel = 'ALTA Lender\'s Policy (Concurrent)'
-      } else {
-        // Standalone: refinance or purchase without owner's policy
-        // Column 5 — Residential Loan Rate
-        lenderPolicy = row.resiLoanRate
-        lenderPolicyLabel = 'Lender\'s Policy (Standalone)'
-      }
+    if (isPurchase) {
+      // Purchase: CLTIC Lender's Concurrent rate. If no owner's policy is issued
+      // the concurrent rate does not apply and the quote should be handled manually.
+      lenderPolicy = row && ownerIssued ? row.conLoanRate : 0
+      lenderPolicyLabel = 'ALTA Lender\'s Policy (Concurrent)'
+    } else {
+      // Refinance: Westcor 3.17 Residential Refinance Rate
+      lenderPolicy = row ? row.resiLoanRate : 0
+      lenderPolicyLabel = 'ALTA Loan Policy (Residential Refinance Rate)'
     }
   }
 
   // ── Endorsements ──
   const txnType = isPurchase ? 'Resale' : 'Re-finance'
-  const availableEndorsements = endorsementsData.filter(
-    e => typeof e.id === 'number' && e.transactionType === txnType
-  )
-  // Auto-include defaults plus any user-selected
-  const activeEndorsements = availableEndorsements.filter(
-    e => e.isDefault || selectedEndorsementIds.includes(e.id as number)
-  )
-  const endorsementItems = activeEndorsements.map(e => ({
+  const activeEndorsements = endorsements.filter(e => {
+    if (e.transactionType !== txnType) return false
+    if (e.policy === 'owner' && !ownerIssued) return false
+    if (e.policy === 'lender' && loanAmount <= 0) return false
+    return e.isDefault || selectedEndorsementIds.includes(e.id)
+  })
+  const endorsementItems: EndorsementLine[] = activeEndorsements.map(e => ({
+    id: e.id,
+    code: e.code,
     name: e.name,
-    fee: e.fee,
+    fee: priceEndorsement(e, salesPrice, loanAmount),
+    isDefault: e.isDefault,
   }))
   const endorsementTotal = endorsementItems.reduce((sum, e) => sum + e.fee, 0)
 
   const total = ownerPolicy + lenderPolicy + endorsementTotal
 
   return {
+    underwriter,
     ownerPolicy,
     ownerPolicyLabel,
     lenderPolicy,
@@ -184,14 +249,6 @@ interface EscrowRefiRow {
   minRange: number
   maxRange: number | null
   escrowRate: number
-}
-
-function matchCountyKey(zone: string, txnType: TransactionType): string {
-  // Escrow data uses "ZoneName__TransactionType" format
-  // "All" = both purchase and refinance
-  // "Re-Finance" = refinance only
-  const txnSuffix = txnType === 'refinance' ? 'Re-Finance' : 'All'
-  return `${zone}__${txnSuffix}`
 }
 
 function findEscrowResaleRate(zone: string, amount: number): number {
@@ -375,10 +432,9 @@ export function getAdditionalFees(transactionType: TransactionType) {
 export function calculate(input: CalculatorInput): CalculatorResult {
   const isPurchase = input.transactionType === 'purchase'
 
-  // Check if this is in the "call for quote" range (>$3M)
-  const checkAmount = isPurchase ? input.salesPrice : input.loanAmount
-  const rateRow = lookupTitleRate(checkAmount)
-  const callForQuote = !rateRow || (rateRow.ownerRate === 0 && rateRow.conLoanRate === 0)
+  // "Call for quote" when any rated amount is above the bracket table
+  const amounts = isPurchase ? [input.salesPrice, input.loanAmount] : [input.loanAmount]
+  const callForQuote = amounts.some(a => a > MAX_RATED_AMOUNT)
 
   const titleFees = calculateTitleFees(input)
   const escrowFees = calculateEscrowFees(input)
@@ -446,14 +502,19 @@ export function getCitiesForCounty(
 
 // ── Endorsements Utility ────────────────────────────────────────────────────
 
+/** List of endorsements available for a transaction type (for building a picker UI). */
 export function getEndorsements(transactionType: TransactionType) {
   const txnType = transactionType === 'purchase' ? 'Resale' : 'Re-finance'
-  return endorsementsData
-    .filter(e => typeof e.id === 'number' && e.transactionType === txnType)
+  return endorsements
+    .filter(e => e.transactionType === txnType)
     .map(e => ({
-      id: e.id as number,
+      id: e.id,
+      code: e.code,
       name: e.name,
+      policy: e.policy,
       fee: e.fee,
+      percent: e.percent,
       isDefault: e.isDefault,
+      note: e.note ?? '',
     }))
 }
