@@ -60,6 +60,7 @@ interface FeeLine {
 }
 
 interface EscrowFees {
+  included: boolean
   baseFee: number
   baseFeeAvailable: boolean
   additionalFees: FeeLine[]
@@ -142,6 +143,7 @@ export function RateCalculator() {
   const [salesPrice, setSalesPrice] = useState('')
   const [loanAmount, setLoanAmount] = useState('')
   const [includeOwnerPolicy] = useState(true)
+  const [includeEscrow, setIncludeEscrow] = useState(false)
   const [feeOptions, setFeeOptions] = useState<FeeOption[]>([])
   const [selectedFeeIds, setSelectedFeeIds] = useState<number[]>([])
 
@@ -220,7 +222,7 @@ export function RateCalculator() {
   useEffect(() => {
     setResults(null)
     setError(null)
-  }, [transactionType, selectedCounty, selectedCity, salesPrice, loanAmount, selectedFeeIds])
+  }, [transactionType, selectedCounty, selectedCity, salesPrice, loanAmount, selectedFeeIds, includeEscrow])
 
   // ── Calculation ───────────────────────────────────────────────────────────
 
@@ -247,6 +249,7 @@ export function RateCalculator() {
           lenderPolicyType: 'alta',  // ALTA Lenders Concurrent (Column 4) when concurrent
           includeOwnerPolicy: transactionType === 'purchase' ? includeOwnerPolicy : false,
           selectedFeeIds,
+          includeEscrow,
         }),
       })
       if (!res.ok) throw new Error('Calculation failed')
@@ -262,7 +265,7 @@ export function RateCalculator() {
     } finally {
       setIsCalculating(false)
     }
-  }, [transactionType, selectedCounty, selectedCity, salesPrice, loanAmount, includeOwnerPolicy, selectedFeeIds])
+  }, [transactionType, selectedCounty, selectedCity, salesPrice, loanAmount, includeOwnerPolicy, selectedFeeIds, includeEscrow])
 
   const toggleFeeOption = useCallback((id: number) => {
     setSelectedFeeIds(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]))
@@ -305,6 +308,7 @@ export function RateCalculator() {
           <div><strong>County:</strong> ${selectedCounty} · <strong>City:</strong> ${selectedCity}</div>
           ${isPurchase ? `<div><strong>Sales Price:</strong> ${formatCurrency(parseNumberInput(salesPrice))}</div>` : ''}
           <div><strong>Loan Amount:</strong> ${formatCurrency(parseNumberInput(loanAmount))}</div>
+          <div><strong>Escrow:</strong> ${results.escrowFees.included ? 'Pacific Coast Title' : 'Independent escrow (not included)'}</div>
           <div><strong>Date:</strong> ${new Date().toLocaleDateString()}</div>
         </div>
 
@@ -314,10 +318,12 @@ export function RateCalculator() {
         ${results.titleFees.endorsements.map(e => `<div class="row"><span style="font-size:12px;color:#666">${e.name}</span><span>${formatCurrency(e.fee)}</span></div>`).join('')}
         <div class="row" style="font-weight:600"><span>Title Subtotal</span><span>${formatCurrency(results.titleFees.total)}</span></div>
 
+        ${results.escrowFees.included ? `
         <h2>Escrow Fees</h2>
         <div class="row"><span>Escrow Fee</span><span>${results.escrowFees.baseFeeAvailable ? formatCurrency(results.escrowFees.baseFee) : 'Call for quote'}</span></div>
         ${results.escrowFees.additionalFees.map(f => `<div class="row"><span>${f.name}</span><span>${formatCurrency(f.fee)}</span></div>`).join('')}
         <div class="row" style="font-weight:600"><span>Escrow Subtotal</span><span>${formatCurrency(results.escrowFees.total)}</span></div>
+        ` : `<div class="info">Escrow: independent escrow company (not included in this estimate)</div>`}
 
         ${isPurchase ? `
         <h2>Transfer Taxes</h2>
@@ -354,6 +360,8 @@ export function RateCalculator() {
     selectedCity &&
     loanAmount &&
     (transactionType === 'refinance' || salesPrice)
+
+  const visibleFeeOptions = feeOptions.filter(o => includeEscrow || o.category !== 'escrow')
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -470,15 +478,36 @@ export function RateCalculator() {
           </div>
         </div>
 
+        {/* PCT Escrow toggle */}
+        <label
+          className={cn(
+            'flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all',
+            includeEscrow ? 'bg-white border-[#03374f]/40 shadow-sm' : 'bg-[#f8f6f3]/60 border-gray-100 hover:border-gray-200'
+          )}
+        >
+          <input
+            type="checkbox"
+            checked={includeEscrow}
+            onChange={(e) => setIncludeEscrow(e.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-[#03374f]"
+          />
+          <span className="flex-1 min-w-0">
+            <span className="block text-sm font-medium text-gray-700">Include Pacific Coast Title escrow services</span>
+            <span className="block text-xs text-gray-400 mt-0.5">
+              Leave unchecked if you are using an independent escrow company — only title and recording fees will be quoted.
+            </span>
+          </span>
+        </label>
+
         {/* Optional Fees */}
-        {feeOptions.length > 0 && (
+        {visibleFeeOptions.length > 0 && (
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-2.5">
               Optional Services
               <span className="ml-2 text-xs font-normal text-gray-400">check what applies to this transaction</span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {feeOptions.map(opt => {
+              {visibleFeeOptions.map(opt => {
                 const checked = selectedFeeIds.includes(opt.id)
                 return (
                   <label
@@ -547,7 +576,7 @@ export function RateCalculator() {
 
         const filteredTotal =
           (showTitle ? results.titleFees.total : 0) +
-          (showEscrow ? results.escrowFees.total : 0) +
+          (showEscrow && results.escrowFees.included ? results.escrowFees.total : 0) +
           (showTransfer && transactionType === 'purchase' ? results.transferTaxes.total : 0) +
           (showRecording ? results.additionalFeesTotal : 0)
 
@@ -561,7 +590,7 @@ export function RateCalculator() {
 
         const feeFilters: { key: string; label: string; icon: React.ReactNode; alwaysShow: boolean }[] = [
           { key: 'title',     label: 'Title',          icon: <Shield className="w-3.5 h-3.5" />,   alwaysShow: true },
-          { key: 'escrow',    label: 'Escrow',         icon: <Building2 className="w-3.5 h-3.5" />, alwaysShow: true },
+          { key: 'escrow',    label: 'Escrow',         icon: <Building2 className="w-3.5 h-3.5" />, alwaysShow: results.escrowFees.included },
           { key: 'transfer',  label: 'Transfer Taxes', icon: <Receipt className="w-3.5 h-3.5" />,   alwaysShow: transactionType === 'purchase' && results.transferTaxes.total > 0 },
           { key: 'recording', label: 'Recording & Other', icon: <FileText className="w-3.5 h-3.5" />, alwaysShow: results.additionalFees.length > 0 },
         ]
@@ -648,7 +677,7 @@ export function RateCalculator() {
                 )}
 
                 {/* Escrow Fees */}
-                {showEscrow && (
+                {showEscrow && results.escrowFees.included && (
                   <FeeSection
                     icon={<Building2 className="w-4 h-4" />}
                     title="Escrow Fees"

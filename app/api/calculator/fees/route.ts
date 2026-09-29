@@ -19,6 +19,7 @@ interface FeeRequest {
   selectedEndorsementIds?: number[]
   selectedFeeIds?: number[]
   includeOwnerPolicy?: boolean
+  includeEscrow?: boolean
 }
 
 // GET /api/calculator/fees?type=purchase|refinance
@@ -52,6 +53,8 @@ export async function POST(request: NextRequest) {
       selectedEndorsementIds: body.selectedEndorsementIds || [],
       selectedFeeIds: Array.isArray(body.selectedFeeIds) ? body.selectedFeeIds : undefined,
       includeOwnerPolicy: body.includeOwnerPolicy !== false,
+      // Most customers use an independent escrow, so PCT escrow is opt-in.
+      includeEscrow: body.includeEscrow === true,
     }
 
     const result = calculate(input)

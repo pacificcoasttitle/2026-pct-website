@@ -170,6 +170,26 @@ test('Zone with no escrow schedule → not available + call for quote', () => {
   assert.equal(r.callForQuote, true)
 })
 
+test('Independent escrow (includeEscrow=false): no escrow fee, no escrow add-ons, recording fees stay', () => {
+  const r = purchase({ salesPrice: 800_000, loanAmount: 640_000, includeEscrow: false })
+  assert.equal(r.escrowFees.included, false)
+  assert.equal(r.escrowFees.total, 0)
+  assert.equal(r.escrowFees.additionalFees.length, 0)
+  assert.equal(r.callForQuote, false)
+  assert.ok(r.additionalFees.length > 0)
+  assert.equal(r.grandTotal, r.titleFees.total + r.transferTaxes.total + r.additionalFeesTotal)
+})
+
+test('Independent escrow in a zone with no escrow schedule is not call-for-quote', () => {
+  const r = purchase({ salesPrice: 800_000, loanAmount: 640_000, countyZone: 'Fresno', cityName: 'All Cities', includeEscrow: false })
+  assert.equal(r.callForQuote, false)
+})
+
+test('Fee options hide escrow-category fees when escrow is not included', () => {
+  assert.equal(getFeeOptions('purchase', false).some(o => o.category === 'escrow'), false)
+  assert.equal(getFeeOptions('purchase', true).some(o => o.category === 'escrow'), true)
+})
+
 console.log('\nOptional fees')
 
 test('Optional fees are off unless selected', () => {

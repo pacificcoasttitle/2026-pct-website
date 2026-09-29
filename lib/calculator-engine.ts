@@ -49,6 +49,7 @@ export interface CalculatorInput {
   selectedEndorsementIds?: number[]    // Optional endorsements
   selectedFeeIds?: number[]            // Optional fees (fees.json rows with optional: true)
   includeOwnerPolicy?: boolean         // Purchase: usually true
+  includeEscrow?: boolean              // false = independent escrow; PCT escrow fee and escrow add-ons are omitted
 }
 
 export interface EndorsementLine {
@@ -80,6 +81,7 @@ export interface FeeLine {
 }
 
 export interface EscrowFees {
+  included: boolean           // false = customer is using an independent escrow; nothing is charged
   baseFee: number
   baseFeeAvailable: boolean   // false = no escrow schedule for this zone; show "call for quote"
   additionalFees: FeeLine[]
@@ -310,10 +312,11 @@ function toFeeLine(f: FeeRow): FeeLine {
 }
 
 /** Optional fees the UI should offer as checkboxes for this transaction type. */
-export function getFeeOptions(transactionType: TransactionType) {
+export function getFeeOptions(transactionType: TransactionType, includeEscrow = true) {
   const txnKey = transactionType === 'purchase' ? 'resale' : 'refinance'
   return fees
     .filter(f => f.active && f.transactionType === txnKey && f.optional)
+    .filter(f => includeEscrow || f.category !== 'escrow')
     .map(f => ({ id: f.id, name: f.name, fee: f.value, category: f.category, party: f.party ?? '', defaultOn: !!f.defaultOn }))
 }
 
@@ -388,9 +391,13 @@ function findEscrowRefiRate(zone: string, amount: number): number | null {
 }
 
 export function calculateEscrowFees(input: CalculatorInput): EscrowFees {
-  const { transactionType, countyZone, salesPrice, loanAmount, selectedFeeIds } = input
+  const { transactionType, countyZone, salesPrice, loanAmount, selectedFeeIds, includeEscrow = true } = input
   const isPurchase = transactionType === 'purchase'
   const amount = isPurchase ? salesPrice : loanAmount
+
+  if (!includeEscrow) {
+    return { included: false, baseFee: 0, baseFeeAvailable: true, additionalFees: [], total: 0 }
+  }
 
   const found = isPurchase
     ? findEscrowResaleRate(countyZone, amount)
@@ -404,6 +411,7 @@ export function calculateEscrowFees(input: CalculatorInput): EscrowFees {
   const additionalTotal = additionalFees.reduce((sum, f) => sum + f.fee, 0)
 
   return {
+    included: true,
     baseFee,
     baseFeeAvailable,
     additionalFees,
@@ -564,7 +572,7 @@ export function calculate(input: CalculatorInput): CalculatorResult {
   const additionalFees = getAdditionalFees(input.transactionType, input.selectedFeeIds)
   const additionalFeesTotal = additionalFees.reduce((sum, f) => sum + f.fee, 0)
 
-  if (!escrowFees.baseFeeAvailable) {
+  if (escrowFees.included && !escrowFees.baseFeeAvailable) {
     callForQuote = true
     callForQuoteReason = callForQuoteReason
       ? `${callForQuoteReason} Escrow fees for this county are quoted on request.`
