@@ -136,6 +136,8 @@ function FeesTab() {
   const [editing, setEditing] = useState<Fee | null>(null)
   const [adding, setAdding] = useState(false)
   const [filter, setFilter] = useState<string>("all")
+  const [readOnly, setReadOnly] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const loadFees = useCallback(async () => {
     setLoading(true)
@@ -144,6 +146,7 @@ function FeesTab() {
       if (res.ok) {
         const data = await res.json()
         setFees(data)
+        setReadOnly(res.headers.get("X-Rates-Read-Only") === "1")
       }
     } catch (err) {
       console.error("Failed to load fees:", err)
@@ -165,12 +168,17 @@ function FeesTab() {
         body: JSON.stringify(data),
       })
       if (res.ok) {
+        setSaveError(null)
         setEditing(null)
         setAdding(false)
         loadFees()
+      } else {
+        const json = await res.json().catch(() => ({}))
+        setSaveError(json.error || "Failed to save fee")
       }
     } catch (err) {
       console.error("Failed to save fee:", err)
+      setSaveError("Failed to save fee")
     }
   }
 
@@ -178,9 +186,16 @@ function FeesTab() {
     if (!confirm("Are you sure you want to delete this fee?")) return
     try {
       const res = await fetch(`/api/admin/fees?id=${id}`, { method: "DELETE" })
-      if (res.ok) loadFees()
+      if (res.ok) {
+        setSaveError(null)
+        loadFees()
+      } else {
+        const json = await res.json().catch(() => ({}))
+        setSaveError(json.error || "Failed to delete fee")
+      }
     } catch (err) {
       console.error("Failed to delete fee:", err)
+      setSaveError("Failed to delete fee")
     }
   }
 
@@ -188,6 +203,11 @@ function FeesTab() {
 
   return (
     <div className="space-y-6">
+      {(readOnly || saveError) && (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+          {saveError ?? "Production rate tables are read-only here. They are versioned in git — edit data/calculator/*.json in the repo and deploy."}
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -305,7 +325,11 @@ function RatesTab() {
     { value: "escrow-resale", label: "Escrow (Resale)" },
     { value: "escrow-refinance", label: "Escrow (Refinance)" },
     { value: "endorsements", label: "Endorsements" },
+    { value: "transfer-taxes", label: "Transfer Taxes" },
   ]
+
+  const [readOnly, setReadOnly] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const loadRates = useCallback(async () => {
     setLoading(true)
@@ -314,6 +338,7 @@ function RatesTab() {
       if (res.ok) {
         const json = await res.json()
         setRates(json.data)
+        setReadOnly(!!json.readOnly)
       }
     } catch (err) {
       console.error("Failed to load rates:", err)
@@ -334,11 +359,16 @@ function RatesTab() {
         body: JSON.stringify({ type: rateType, index, data }),
       })
       if (res.ok) {
+        setSaveError(null)
         setEditIndex(null)
         loadRates()
+      } else {
+        const json = await res.json().catch(() => ({}))
+        setSaveError(json.error || "Failed to update rate")
       }
     } catch (err) {
       console.error("Failed to update rate:", err)
+      setSaveError("Failed to update rate")
     }
   }
 
@@ -348,9 +378,16 @@ function RatesTab() {
       const res = await fetch(`/api/admin/rates?type=${rateType}&index=${index}`, {
         method: "DELETE",
       })
-      if (res.ok) loadRates()
+      if (res.ok) {
+        setSaveError(null)
+        loadRates()
+      } else {
+        const json = await res.json().catch(() => ({}))
+        setSaveError(json.error || "Failed to delete rate")
+      }
     } catch (err) {
       console.error("Failed to delete rate:", err)
+      setSaveError("Failed to delete rate")
     }
   }
 
@@ -370,6 +407,11 @@ function RatesTab() {
 
   return (
     <div className="space-y-6">
+      {(readOnly || saveError) && (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+          {saveError ?? "Production rate tables are read-only here. They are versioned in git — edit data/calculator/*.json in the repo and deploy."}
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

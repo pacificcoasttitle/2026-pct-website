@@ -1,0 +1,18 @@
+{
+  "purchase": {
+    "underwriter": "Commonwealth Land Title Insurance Company",
+    "manual": "California Title Rate Manual",
+    "effectiveDate": "2026-09-04",
+    "tables": "Part II Table R (Residential Owner's / Lender's Concurrent); Part VIII Endorsements"
+  },
+  "refinance": {
+    "underwriter": "Westcor Land Title Insurance Company",
+    "manual": "California Rate Manual",
+    "effectiveDate": "",
+    "tables": "\u00a73.17 Residential Refinance Rate; \u00a711.2 Basic Rate; Section X Endorsements"
+  },
+  "transferTaxes": {
+    "source": "California City Finance \u2014 City Documentary & Property Transfer Tax Rates (Dec 2025); LA Office of Finance Measure ULA thresholds eff. 7/1/2026",
+    "lastReviewed": "2026-09-29"
+  }
+}

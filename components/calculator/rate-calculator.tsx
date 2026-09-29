@@ -50,9 +50,19 @@ interface TitleFees {
   total: number
 }
 
+interface FeeLine {
+  id: number
+  name: string
+  fee: number
+  category: string
+  party: string
+  optional: boolean
+}
+
 interface EscrowFees {
   baseFee: number
-  additionalFees: { name: string; fee: number }[]
+  baseFeeAvailable: boolean
+  additionalFees: FeeLine[]
   total: number
 }
 
@@ -61,18 +71,44 @@ interface TransferTaxResult {
   cityTax: number
   countyRate: number
   cityRate: number
+  cityRateLabel: string
+  note: string
   total: number
+}
+
+interface RateBasis {
+  underwriter: string
+  manual: string
+  effectiveDate: string
+  label: string
 }
 
 interface CalculatorResult {
   titleFees: TitleFees
   escrowFees: EscrowFees
   transferTaxes: TransferTaxResult
-  additionalFees: { name: string; fee: number; category: string }[]
+  additionalFees: FeeLine[]
   additionalFeesTotal: number
   grandTotal: number
   callForQuote: boolean
+  callForQuoteReason: string
+  rateBasis: RateBasis
   disclaimer: string
+}
+
+interface FeeOption {
+  id: number
+  name: string
+  fee: number
+  category: string
+  party: string
+  defaultOn: boolean
+}
+
+const PARTY_LABEL: Record<string, string> = {
+  buyer: 'usually buyer',
+  seller: 'usually seller',
+  borrower: 'borrower',
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -106,6 +142,8 @@ export function RateCalculator() {
   const [salesPrice, setSalesPrice] = useState('')
   const [loanAmount, setLoanAmount] = useState('')
   const [includeOwnerPolicy] = useState(true)
+  const [feeOptions, setFeeOptions] = useState<FeeOption[]>([])
+  const [selectedFeeIds, setSelectedFeeIds] = useState<number[]>([])
 
   // UI state
   // Fee visibility filters (shown after results load)
@@ -140,6 +178,21 @@ export function RateCalculator() {
   }, [transactionType])
 
   useEffect(() => {
+    async function fetchOptions() {
+      try {
+        const res = await fetch(`/api/calculator/fees?type=${transactionType}`)
+        const data = await res.json()
+        const options: FeeOption[] = data.feeOptions || []
+        setFeeOptions(options)
+        setSelectedFeeIds(options.filter(o => o.defaultOn).map(o => o.id))
+      } catch {
+        console.error('Failed to load fee options')
+      }
+    }
+    fetchOptions()
+  }, [transactionType])
+
+  useEffect(() => {
     if (!selectedCounty) {
       setCities([])
       setSelectedCity('')
@@ -167,7 +220,7 @@ export function RateCalculator() {
   useEffect(() => {
     setResults(null)
     setError(null)
-  }, [transactionType, selectedCounty, selectedCity, salesPrice, loanAmount])
+  }, [transactionType, selectedCounty, selectedCity, salesPrice, loanAmount, selectedFeeIds])
 
   // ── Calculation ───────────────────────────────────────────────────────────
 
@@ -193,6 +246,7 @@ export function RateCalculator() {
           ownerPolicyType: 'alta',   // ALTA Homeowner's Policy (Column 3) — default per PCT
           lenderPolicyType: 'alta',  // ALTA Lenders Concurrent (Column 4) when concurrent
           includeOwnerPolicy: transactionType === 'purchase' ? includeOwnerPolicy : false,
+          selectedFeeIds,
         }),
       })
       if (!res.ok) throw new Error('Calculation failed')
@@ -208,7 +262,11 @@ export function RateCalculator() {
     } finally {
       setIsCalculating(false)
     }
-  }, [transactionType, selectedCounty, selectedCity, salesPrice, loanAmount, includeOwnerPolicy])
+  }, [transactionType, selectedCounty, selectedCity, salesPrice, loanAmount, includeOwnerPolicy, selectedFeeIds])
+
+  const toggleFeeOption = useCallback((id: number) => {
+    setSelectedFeeIds(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]))
+  }, [])
 
   // ── Print ─────────────────────────────────────────────────────────────────
 
@@ -257,14 +315,15 @@ export function RateCalculator() {
         <div class="row" style="font-weight:600"><span>Title Subtotal</span><span>${formatCurrency(results.titleFees.total)}</span></div>
 
         <h2>Escrow Fees</h2>
-        <div class="row"><span>Escrow Fee</span><span>${formatCurrency(results.escrowFees.baseFee)}</span></div>
+        <div class="row"><span>Escrow Fee</span><span>${results.escrowFees.baseFeeAvailable ? formatCurrency(results.escrowFees.baseFee) : 'Call for quote'}</span></div>
         ${results.escrowFees.additionalFees.map(f => `<div class="row"><span>${f.name}</span><span>${formatCurrency(f.fee)}</span></div>`).join('')}
         <div class="row" style="font-weight:600"><span>Escrow Subtotal</span><span>${formatCurrency(results.escrowFees.total)}</span></div>
 
         ${isPurchase ? `
         <h2>Transfer Taxes</h2>
         <div class="row"><span>County Transfer Tax ($${results.transferTaxes.countyRate.toFixed(2)}/1,000)</span><span>${formatCurrency(results.transferTaxes.countyTax)}</span></div>
-        ${results.transferTaxes.cityTax > 0 ? `<div class="row"><span>City Transfer Tax ($${results.transferTaxes.cityRate.toFixed(2)}/1,000)</span><span>${formatCurrency(results.transferTaxes.cityTax)}</span></div>` : ''}
+        ${results.transferTaxes.cityTax > 0 ? `<div class="row"><span>City Transfer Tax (${results.transferTaxes.cityRateLabel})</span><span>${formatCurrency(results.transferTaxes.cityTax)}</span></div>` : ''}
+        ${results.transferTaxes.note ? `<div class="info">${results.transferTaxes.note}</div>` : ''}
         <div class="row" style="font-weight:600"><span>Transfer Tax Subtotal</span><span>${formatCurrency(results.transferTaxes.total)}</span></div>
         ` : ''}
 
@@ -278,6 +337,7 @@ export function RateCalculator() {
           <div class="row"><span>Estimated Total</span><span>${formatCurrency(results.grandTotal)}</span></div>
         </div>
 
+        <div class="disclaimer">${results.rateBasis.label}</div>
         <div class="disclaimer">${results.disclaimer}</div>
         <div class="disclaimer">Pacific Coast Title Company · (714) 516-6700 · pct.com</div>
       </body>
@@ -410,6 +470,44 @@ export function RateCalculator() {
           </div>
         </div>
 
+        {/* Optional Fees */}
+        {feeOptions.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-2.5">
+              Optional Services
+              <span className="ml-2 text-xs font-normal text-gray-400">check what applies to this transaction</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {feeOptions.map(opt => {
+                const checked = selectedFeeIds.includes(opt.id)
+                return (
+                  <label
+                    key={opt.id}
+                    className={cn(
+                      'flex items-start gap-2.5 p-3 rounded-xl border text-sm cursor-pointer transition-all',
+                      checked ? 'bg-white border-[#03374f]/40 shadow-sm' : 'bg-[#f8f6f3]/60 border-gray-100 hover:border-gray-200'
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleFeeOption(opt.id)}
+                      className="mt-0.5 h-4 w-4 accent-[#03374f]"
+                    />
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-gray-700">{opt.name}</span>
+                      <span className="block text-xs text-gray-400">
+                        {formatCurrency(opt.fee)}
+                        {PARTY_LABEL[opt.party] ? ` · ${PARTY_LABEL[opt.party]}` : ''}
+                      </span>
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Error */}
         {error && (
           <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
@@ -478,7 +576,7 @@ export function RateCalculator() {
                   <div>
                     <p className="text-sm font-medium text-amber-800">Call for Quote</p>
                     <p className="text-xs text-amber-700 mt-0.5">
-                      Properties over $3,000,000 require a custom quote. Please call us at{' '}
+                      {results.callForQuoteReason || 'This transaction requires a custom quote.'} Please call us at{' '}
                       <a href="tel:+18667241050" className="underline font-medium">(866) 724-1050</a>.
                     </p>
                   </div>
@@ -556,7 +654,9 @@ export function RateCalculator() {
                     title="Escrow Fees"
                     total={results.escrowFees.total}
                     items={[
-                      { label: 'Escrow Fee', amount: results.escrowFees.baseFee },
+                      results.escrowFees.baseFeeAvailable
+                        ? { label: 'Escrow Fee', amount: results.escrowFees.baseFee }
+                        : { label: 'Escrow Fee', amount: 0, display: 'Call for quote' },
                       ...results.escrowFees.additionalFees.map(f => ({ label: f.name, amount: f.fee })),
                     ]}
                   />
@@ -575,11 +675,12 @@ export function RateCalculator() {
                       },
                       ...(results.transferTaxes.cityTax > 0
                         ? [{
-                          label: `City Transfer Tax ($${results.transferTaxes.cityRate.toFixed(2)}/1,000)`,
+                          label: `City Transfer Tax (${results.transferTaxes.cityRateLabel})`,
                           amount: results.transferTaxes.cityTax,
                         }]
                         : []),
                     ]}
+                    note={results.transferTaxes.note || undefined}
                   />
                 )}
 
@@ -608,12 +709,13 @@ export function RateCalculator() {
                   </div>
                 </div>
 
-                {/* Disclaimer */}
+                {/* Rate basis + Disclaimer */}
                 <div className="flex items-start gap-2 mt-4 p-3 bg-gray-50 rounded-xl">
                   <Info className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-gray-500 leading-relaxed">
-                    {results.disclaimer}
-                  </p>
+                  <div className="text-xs text-gray-500 leading-relaxed space-y-1">
+                    <p className="text-gray-600">{results.rateBasis.label}</p>
+                    <p>{results.disclaimer}</p>
+                  </div>
                 </div>
 
                 {/* Action Buttons */}
@@ -650,11 +752,13 @@ function FeeSection({
   title,
   total,
   items,
+  note,
 }: {
   icon: React.ReactNode
   title: string
   total: number
-  items: { label: string; amount: number }[]
+  items: { label: string; amount: number; display?: string }[]
+  note?: string
 }) {
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -685,9 +789,10 @@ function FeeSection({
           {items.map((item, index) => (
             <div key={index} className="flex justify-between text-sm pl-7">
               <span className="text-gray-500">{item.label}</span>
-              <span className="text-gray-600">{formatCurrency(item.amount)}</span>
+              <span className="text-gray-600">{item.display ?? formatCurrency(item.amount)}</span>
             </div>
           ))}
+          {note && <p className="text-[11px] text-gray-400 pl-7 pt-1">{note}</p>}
         </div>
       )}
     </div>

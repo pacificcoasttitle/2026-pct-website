@@ -5,7 +5,6 @@
     "ownerRate": 609,
     "homeOwnerRate": 731,
     "conLoanRate": 463,
-    "resiLoanRate": 450,
     "basicRate": 677
   },
   {
@@ -14,7 +13,6 @@
     "ownerRate": 609,
     "homeOwnerRate": 731,
     "conLoanRate": 463,
-    "resiLoanRate": 450,
     "basicRate": 677
   },
   {
@@ -23,7 +21,6 @@
     "ownerRate": 609,
     "homeOwnerRate": 731,
     "conLoanRate": 463,
-    "resiLoanRate": 450,
     "basicRate": 677
   },
   {
@@ -32,7 +29,6 @@
     "ownerRate": 609,
     "homeOwnerRate": 731,
     "conLoanRate": 463,
-    "resiLoanRate": 450,
     "basicRate": 677
   },
   {
@@ -41,7 +37,6 @@
     "ownerRate": 609,
     "homeOwnerRate": 731,
     "conLoanRate": 463,
-    "resiLoanRate": 450,
     "basicRate": 677
   },
   {
@@ -50,7 +45,6 @@
     "ownerRate": 648,
     "homeOwnerRate": 778,
     "conLoanRate": 475,
-    "resiLoanRate": 450,
     "basicRate": 677
   },
   {
@@ -59,7 +53,6 @@
     "ownerRate": 685,
     "homeOwnerRate": 822,
     "conLoanRate": 486,
-    "resiLoanRate": 450,
     "basicRate": 677
   },
   {
@@ -68,7 +61,6 @@
     "ownerRate": 729,
     "homeOwnerRate": 875,
     "conLoanRate": 498,
-    "resiLoanRate": 450,
     "basicRate": 677
   },
   {
@@ -77,7 +69,6 @@
     "ownerRate": 753,
     "homeOwnerRate": 904,
     "conLoanRate": 508,
-    "resiLoanRate": 450,
     "basicRate": 703
   },
   {
@@ -86,7 +77,6 @@
     "ownerRate": 777,
     "homeOwnerRate": 932,
     "conLoanRate": 519,
-    "resiLoanRate": 450,
     "basicRate": 729
   },
   {
@@ -95,7 +85,6 @@
     "ownerRate": 802,
     "homeOwnerRate": 962,
     "conLoanRate": 529,
-    "resiLoanRate": 450,
     "basicRate": 756
   },
   {
@@ -104,7 +93,6 @@
     "ownerRate": 826,
     "homeOwnerRate": 991,
     "conLoanRate": 540,
-    "resiLoanRate": 450,
     "basicRate": 781
   },
   {
@@ -113,7 +101,6 @@
     "ownerRate": 851,
     "homeOwnerRate": 1021,
     "conLoanRate": 550,
-    "resiLoanRate": 450,
     "basicRate": 807
   },
   {
@@ -122,7 +109,6 @@
     "ownerRate": 875,
     "homeOwnerRate": 1050,
     "conLoanRate": 561,
-    "resiLoanRate": 450,
     "basicRate": 834
   },
   {
@@ -131,7 +117,6 @@
     "ownerRate": 899,
     "homeOwnerRate": 1079,
     "conLoanRate": 571,
-    "resiLoanRate": 450,
     "basicRate": 860
   },
   {
@@ -140,7 +125,6 @@
     "ownerRate": 924,
     "homeOwnerRate": 1109,
     "conLoanRate": 581,
-    "resiLoanRate": 450,
     "basicRate": 887
   },
   {
@@ -149,7 +133,6 @@
     "ownerRate": 947,
     "homeOwnerRate": 1136,
     "conLoanRate": 592,
-    "resiLoanRate": 450,
     "basicRate": 911
   },
   {
@@ -158,7 +141,6 @@
     "ownerRate": 982,
     "homeOwnerRate": 1178,
     "conLoanRate": 603,
-    "resiLoanRate": 450,
     "basicRate": 943
   },
   {
@@ -167,7 +149,6 @@
     "ownerRate": 998,
     "homeOwnerRate": 1198,
     "conLoanRate": 613,
-    "resiLoanRate": 450,
     "basicRate": 964
   },
   {
@@ -176,7 +157,6 @@
     "ownerRate": 1022,
     "homeOwnerRate": 1226,
     "conLoanRate": 624,
-    "resiLoanRate": 450,
     "basicRate": 991
   },
   {
@@ -185,7 +165,6 @@
     "ownerRate": 1045,
     "homeOwnerRate": 1254,
     "conLoanRate": 634,
-    "resiLoanRate": 450,
     "basicRate": 1016
   },
   {
@@ -194,7 +173,6 @@
     "ownerRate": 1069,
     "homeOwnerRate": 1283,
     "conLoanRate": 645,
-    "resiLoanRate": 450,
     "basicRate": 1041
   },
   {
@@ -203,7 +181,6 @@
     "ownerRate": 1092,
     "homeOwnerRate": 1310,
     "conLoanRate": 657,
-    "resiLoanRate": 450,
     "basicRate": 1066
   },
   {
@@ -212,7 +189,6 @@
     "ownerRate": 1115,
     "homeOwnerRate": 1338,
     "conLoanRate": 669,
-    "resiLoanRate": 660,
     "basicRate": 1091
   },
   {
@@ -221,7 +197,6 @@
     "ownerRate": 1139,
     "homeOwnerRate": 1367,
     "conLoanRate": 680,
-    "resiLoanRate": 660,
     "basicRate": 1117
   },
   {
@@ -230,7 +205,6 @@
     "ownerRate": 1162,
     "homeOwnerRate": 1394,
     "conLoanRate": 693,
-    "resiLoanRate": 660,
     "basicRate": 1141
   },
   {
@@ -239,7 +213,6 @@
     "ownerRate": 1187,
     "homeOwnerRate": 1424,
     "conLoanRate": 705,
-    "resiLoanRate": 660,
     "basicRate": 1167
   },
   {
@@ -248,7 +221,6 @@
     "ownerRate": 1210,
     "homeOwnerRate": 1452,
     "conLoanRate": 716,
-    "resiLoanRate": 660,
     "basicRate": 1192
   },
   {
@@ -257,7 +229,6 @@
     "ownerRate": 1211,
     "homeOwnerRate": 1453,
     "conLoanRate": 730,
-    "resiLoanRate": 660,
     "basicRate": 1203
   },
   {
@@ -266,7 +237,6 @@
     "ownerRate": 1229,
     "homeOwnerRate": 1475,
     "conLoanRate": 744,
-    "resiLoanRate": 660,
     "basicRate": 1222
   },
   {
@@ -275,7 +245,6 @@
     "ownerRate": 1246,
     "homeOwnerRate": 1495,
     "conLoanRate": 758,
-    "resiLoanRate": 660,
     "basicRate": 1241
   },
   {
@@ -284,7 +253,6 @@
     "ownerRate": 1264,
     "homeOwnerRate": 1517,
     "conLoanRate": 773,
-    "resiLoanRate": 660,
     "basicRate": 1260
   },
   {
@@ -293,7 +261,6 @@
     "ownerRate": 1282,
     "homeOwnerRate": 1538,
     "conLoanRate": 786,
-    "resiLoanRate": 660,
     "basicRate": 1279
   },
   {
@@ -302,7 +269,6 @@
     "ownerRate": 1300,
     "homeOwnerRate": 1560,
     "conLoanRate": 800,
-    "resiLoanRate": 660,
     "basicRate": 1298
   },
   {
@@ -311,7 +277,6 @@
     "ownerRate": 1318,
     "homeOwnerRate": 1582,
     "conLoanRate": 815,
-    "resiLoanRate": 660,
     "basicRate": 1318
   },
   {
@@ -320,7 +285,6 @@
     "ownerRate": 1337,
     "homeOwnerRate": 1604,
     "conLoanRate": 828,
-    "resiLoanRate": 660,
     "basicRate": 1338
   },
   {
@@ -329,7 +293,6 @@
     "ownerRate": 1355,
     "homeOwnerRate": 1626,
     "conLoanRate": 842,
-    "resiLoanRate": 660,
     "basicRate": 1358
   },
   {
@@ -338,7 +301,6 @@
     "ownerRate": 1372,
     "homeOwnerRate": 1646,
     "conLoanRate": 856,
-    "resiLoanRate": 660,
     "basicRate": 1377
   },
   {
@@ -347,7 +309,6 @@
     "ownerRate": 1411,
     "homeOwnerRate": 1693,
     "conLoanRate": 870,
-    "resiLoanRate": 660,
     "basicRate": 1407
   },
   {
@@ -356,7 +317,6 @@
     "ownerRate": 1428,
     "homeOwnerRate": 1714,
     "conLoanRate": 885,
-    "resiLoanRate": 660,
     "basicRate": 1425
   },
   {
@@ -365,7 +325,6 @@
     "ownerRate": 1446,
     "homeOwnerRate": 1735,
     "conLoanRate": 899,
-    "resiLoanRate": 660,
     "basicRate": 1445
   },
   {
@@ -374,7 +333,6 @@
     "ownerRate": 1464,
     "homeOwnerRate": 1757,
     "conLoanRate": 912,
-    "resiLoanRate": 660,
     "basicRate": 1463
   },
   {
@@ -383,7 +341,6 @@
     "ownerRate": 1482,
     "homeOwnerRate": 1778,
     "conLoanRate": 927,
-    "resiLoanRate": 660,
     "basicRate": 1482
   },
   {
@@ -392,7 +349,6 @@
     "ownerRate": 1499,
     "homeOwnerRate": 1799,
     "conLoanRate": 941,
-    "resiLoanRate": 660,
     "basicRate": 1502
   },
   {
@@ -401,7 +357,6 @@
     "ownerRate": 1517,
     "homeOwnerRate": 1820,
     "conLoanRate": 954,
-    "resiLoanRate": 660,
     "basicRate": 1521
   },
   {
@@ -410,7 +365,6 @@
     "ownerRate": 1535,
     "homeOwnerRate": 1842,
     "conLoanRate": 969,
-    "resiLoanRate": 660,
     "basicRate": 1540
   },
   {
@@ -419,7 +373,6 @@
     "ownerRate": 1553,
     "homeOwnerRate": 1864,
     "conLoanRate": 983,
-    "resiLoanRate": 660,
     "basicRate": 1560
   },
   {
@@ -428,7 +381,6 @@
     "ownerRate": 1571,
     "homeOwnerRate": 1885,
     "conLoanRate": 996,
-    "resiLoanRate": 660,
     "basicRate": 1579
   },
   {
@@ -437,7 +389,6 @@
     "ownerRate": 1582,
     "homeOwnerRate": 1898,
     "conLoanRate": 1007,
-    "resiLoanRate": 840,
     "basicRate": 1593
   },
   {
@@ -446,7 +397,6 @@
     "ownerRate": 1599,
     "homeOwnerRate": 1919,
     "conLoanRate": 1017,
-    "resiLoanRate": 840,
     "basicRate": 1611
   },
   {
@@ -455,7 +405,6 @@
     "ownerRate": 1616,
     "homeOwnerRate": 1939,
     "conLoanRate": 1028,
-    "resiLoanRate": 840,
     "basicRate": 1629
   },
   {
@@ -464,7 +413,6 @@
     "ownerRate": 1633,
     "homeOwnerRate": 1960,
     "conLoanRate": 1038,
-    "resiLoanRate": 840,
     "basicRate": 1648
   },
   {
@@ -473,7 +421,6 @@
     "ownerRate": 1650,
     "homeOwnerRate": 1980,
     "conLoanRate": 1049,
-    "resiLoanRate": 840,
     "basicRate": 1665
   },
   {
@@ -482,7 +429,6 @@
     "ownerRate": 1666,
     "homeOwnerRate": 1999,
     "conLoanRate": 1059,
-    "resiLoanRate": 840,
     "basicRate": 1683
   },
   {
@@ -491,7 +437,6 @@
     "ownerRate": 1682,
     "homeOwnerRate": 2018,
     "conLoanRate": 1070,
-    "resiLoanRate": 840,
     "basicRate": 1700
   },
   {
@@ -500,7 +445,6 @@
     "ownerRate": 1699,
     "homeOwnerRate": 2039,
     "conLoanRate": 1080,
-    "resiLoanRate": 840,
     "basicRate": 1719
   },
   {
@@ -509,7 +453,6 @@
     "ownerRate": 1716,
     "homeOwnerRate": 2059,
     "conLoanRate": 1091,
-    "resiLoanRate": 840,
     "basicRate": 1737
   },
   {
@@ -518,7 +461,6 @@
     "ownerRate": 1733,
     "homeOwnerRate": 2080,
     "conLoanRate": 1101,
-    "resiLoanRate": 840,
     "basicRate": 1754
   },
   {
@@ -527,7 +469,6 @@
     "ownerRate": 1745,
     "homeOwnerRate": 2094,
     "conLoanRate": 1112,
-    "resiLoanRate": 840,
     "basicRate": 1770
   },
   {
@@ -536,7 +477,6 @@
     "ownerRate": 1761,
     "homeOwnerRate": 2113,
     "conLoanRate": 1122,
-    "resiLoanRate": 840,
     "basicRate": 1788
   },
   {
@@ -545,7 +485,6 @@
     "ownerRate": 1778,
     "homeOwnerRate": 2134,
     "conLoanRate": 1133,
-    "resiLoanRate": 840,
     "basicRate": 1806
   },
   {
@@ -554,7 +493,6 @@
     "ownerRate": 1794,
     "homeOwnerRate": 2153,
     "conLoanRate": 1143,
-    "resiLoanRate": 840,
     "basicRate": 1823
   },
   {
@@ -563,7 +501,6 @@
     "ownerRate": 1811,
     "homeOwnerRate": 2173,
     "conLoanRate": 1154,
-    "resiLoanRate": 840,
     "basicRate": 1841
   },
   {
@@ -572,7 +509,6 @@
     "ownerRate": 1828,
     "homeOwnerRate": 2194,
     "conLoanRate": 1164,
-    "resiLoanRate": 840,
     "basicRate": 1860
   },
   {
@@ -581,7 +517,6 @@
     "ownerRate": 1845,
     "homeOwnerRate": 2214,
     "conLoanRate": 1175,
-    "resiLoanRate": 840,
     "basicRate": 1878
   },
   {
@@ -590,7 +525,6 @@
     "ownerRate": 1861,
     "homeOwnerRate": 2233,
     "conLoanRate": 1185,
-    "resiLoanRate": 840,
     "basicRate": 1895
   },
   {
@@ -599,7 +533,6 @@
     "ownerRate": 1877,
     "homeOwnerRate": 2252,
     "conLoanRate": 1196,
-    "resiLoanRate": 840,
     "basicRate": 1912
   },
   {
@@ -608,7 +541,6 @@
     "ownerRate": 1894,
     "homeOwnerRate": 2273,
     "conLoanRate": 1206,
-    "resiLoanRate": 840,
     "basicRate": 1930
   },
   {
@@ -617,7 +549,6 @@
     "ownerRate": 1907,
     "homeOwnerRate": 2288,
     "conLoanRate": 1217,
-    "resiLoanRate": 840,
     "basicRate": 1947
   },
   {
@@ -626,7 +557,6 @@
     "ownerRate": 1924,
     "homeOwnerRate": 2309,
     "conLoanRate": 1227,
-    "resiLoanRate": 840,
     "basicRate": 1965
   },
   {
@@ -635,7 +565,6 @@
     "ownerRate": 1939,
     "homeOwnerRate": 2327,
     "conLoanRate": 1238,
-    "resiLoanRate": 840,
     "basicRate": 1981
   },
   {
@@ -644,7 +573,6 @@
     "ownerRate": 1956,
     "homeOwnerRate": 2347,
     "conLoanRate": 1248,
-    "resiLoanRate": 840,
     "basicRate": 1999
   },
   {
@@ -653,7 +581,6 @@
     "ownerRate": 1973,
     "homeOwnerRate": 2368,
     "conLoanRate": 1259,
-    "resiLoanRate": 840,
     "basicRate": 2018
   },
   {
@@ -662,7 +589,6 @@
     "ownerRate": 1990,
     "homeOwnerRate": 2388,
     "conLoanRate": 1269,
-    "resiLoanRate": 1150,
     "basicRate": 2036
   },
   {
@@ -671,7 +597,6 @@
     "ownerRate": 2007,
     "homeOwnerRate": 2408,
     "conLoanRate": 1280,
-    "resiLoanRate": 1150,
     "basicRate": 2054
   },
   {
@@ -680,7 +605,6 @@
     "ownerRate": 2023,
     "homeOwnerRate": 2428,
     "conLoanRate": 1290,
-    "resiLoanRate": 1150,
     "basicRate": 2071
   },
   {
@@ -689,7 +613,6 @@
     "ownerRate": 2039,
     "homeOwnerRate": 2447,
     "conLoanRate": 1301,
-    "resiLoanRate": 1150,
     "basicRate": 2089
   },
   {
@@ -698,7 +621,6 @@
     "ownerRate": 2056,
     "homeOwnerRate": 2467,
     "conLoanRate": 1311,
-    "resiLoanRate": 1150,
     "basicRate": 2107
   },
   {
@@ -707,7 +629,6 @@
     "ownerRate": 2083,
     "homeOwnerRate": 2500,
     "conLoanRate": 1322,
-    "resiLoanRate": 1150,
     "basicRate": 2130
   },
   {
@@ -716,7 +637,6 @@
     "ownerRate": 2100,
     "homeOwnerRate": 2520,
     "conLoanRate": 1332,
-    "resiLoanRate": 1150,
     "basicRate": 2149
   },
   {
@@ -725,7 +645,6 @@
     "ownerRate": 2116,
     "homeOwnerRate": 2539,
     "conLoanRate": 1343,
-    "resiLoanRate": 1150,
     "basicRate": 2166
   },
   {
@@ -734,7 +653,6 @@
     "ownerRate": 2134,
     "homeOwnerRate": 2561,
     "conLoanRate": 1353,
-    "resiLoanRate": 1150,
     "basicRate": 2184
   },
   {
@@ -743,7 +661,6 @@
     "ownerRate": 2149,
     "homeOwnerRate": 2579,
     "conLoanRate": 1364,
-    "resiLoanRate": 1150,
     "basicRate": 2201
   },
   {
@@ -752,7 +669,6 @@
     "ownerRate": 2165,
     "homeOwnerRate": 2598,
     "conLoanRate": 1371,
-    "resiLoanRate": 1150,
     "basicRate": 2219
   },
   {
@@ -761,7 +677,6 @@
     "ownerRate": 2181,
     "homeOwnerRate": 2617,
     "conLoanRate": 1379,
-    "resiLoanRate": 1150,
     "basicRate": 2236
   },
   {
@@ -770,7 +685,6 @@
     "ownerRate": 2197,
     "homeOwnerRate": 2636,
     "conLoanRate": 1386,
-    "resiLoanRate": 1150,
     "basicRate": 2252
   },
   {
@@ -779,7 +693,6 @@
     "ownerRate": 2213,
     "homeOwnerRate": 2656,
     "conLoanRate": 1393,
-    "resiLoanRate": 1150,
     "basicRate": 2270
   },
   {
@@ -788,7 +701,6 @@
     "ownerRate": 2229,
     "homeOwnerRate": 2675,
     "conLoanRate": 1401,
-    "resiLoanRate": 1150,
     "basicRate": 2287
   },
   {
@@ -797,7 +709,6 @@
     "ownerRate": 2249,
     "homeOwnerRate": 2699,
     "conLoanRate": 1408,
-    "resiLoanRate": 1150,
     "basicRate": 2307
   },
   {
@@ -806,7 +717,6 @@
     "ownerRate": 2265,
     "homeOwnerRate": 2718,
     "conLoanRate": 1415,
-    "resiLoanRate": 1150,
     "basicRate": 2324
   },
   {
@@ -815,7 +725,6 @@
     "ownerRate": 2281,
     "homeOwnerRate": 2737,
     "conLoanRate": 1423,
-    "resiLoanRate": 1150,
     "basicRate": 2340
   },
   {
@@ -824,7 +733,6 @@
     "ownerRate": 2296,
     "homeOwnerRate": 2755,
     "conLoanRate": 1430,
-    "resiLoanRate": 1150,
     "basicRate": 2357
   },
   {
@@ -833,7 +741,6 @@
     "ownerRate": 2313,
     "homeOwnerRate": 2776,
     "conLoanRate": 1437,
-    "resiLoanRate": 1150,
     "basicRate": 2376
   },
   {
@@ -842,7 +749,6 @@
     "ownerRate": 2329,
     "homeOwnerRate": 2795,
     "conLoanRate": 1448,
-    "resiLoanRate": 1150,
     "basicRate": 2393
   },
   {
@@ -851,7 +757,6 @@
     "ownerRate": 2345,
     "homeOwnerRate": 2814,
     "conLoanRate": 1452,
-    "resiLoanRate": 1150,
     "basicRate": 2409
   },
   {
@@ -860,7 +765,6 @@
     "ownerRate": 2360,
     "homeOwnerRate": 2832,
     "conLoanRate": 1460,
-    "resiLoanRate": 1150,
     "basicRate": 2426
   },
   {
@@ -869,7 +773,6 @@
     "ownerRate": 2376,
     "homeOwnerRate": 2851,
     "conLoanRate": 1467,
-    "resiLoanRate": 1150,
     "basicRate": 2443
   },
   {
@@ -878,7 +781,6 @@
     "ownerRate": 2393,
     "homeOwnerRate": 2872,
     "conLoanRate": 1474,
-    "resiLoanRate": 1150,
     "basicRate": 2462
   },
   {
@@ -887,7 +789,6 @@
     "ownerRate": 2406,
     "homeOwnerRate": 2887,
     "conLoanRate": 1479,
-    "resiLoanRate": 1550,
     "basicRate": 2474
   },
   {
@@ -896,7 +797,6 @@
     "ownerRate": 2418,
     "homeOwnerRate": 2902,
     "conLoanRate": 1485,
-    "resiLoanRate": 1550,
     "basicRate": 2488
   },
   {
@@ -905,7 +805,6 @@
     "ownerRate": 2431,
     "homeOwnerRate": 2917,
     "conLoanRate": 1490,
-    "resiLoanRate": 1550,
     "basicRate": 2501
   },
   {
@@ -914,7 +813,6 @@
     "ownerRate": 2443,
     "homeOwnerRate": 2932,
     "conLoanRate": 1495,
-    "resiLoanRate": 1550,
     "basicRate": 2515
   },
   {
@@ -923,7 +821,6 @@
     "ownerRate": 2456,
     "homeOwnerRate": 2947,
     "conLoanRate": 1500,
-    "resiLoanRate": 1550,
     "basicRate": 2529
   },
   {
@@ -932,7 +829,6 @@
     "ownerRate": 2469,
     "homeOwnerRate": 2963,
     "conLoanRate": 1506,
-    "resiLoanRate": 1550,
     "basicRate": 2542
   },
   {
@@ -941,7 +837,6 @@
     "ownerRate": 2481,
     "homeOwnerRate": 2977,
     "conLoanRate": 1511,
-    "resiLoanRate": 1550,
     "basicRate": 2556
   },
   {
@@ -950,7 +845,6 @@
     "ownerRate": 2494,
     "homeOwnerRate": 2993,
     "conLoanRate": 1516,
-    "resiLoanRate": 1550,
     "basicRate": 2569
   },
   {
@@ -959,7 +853,6 @@
     "ownerRate": 2506,
     "homeOwnerRate": 3007,
     "conLoanRate": 1521,
-    "resiLoanRate": 1550,
     "basicRate": 2583
   },
   {
@@ -968,7 +861,6 @@
     "ownerRate": 2519,
     "homeOwnerRate": 3023,
     "conLoanRate": 1527,
-    "resiLoanRate": 1550,
     "basicRate": 2597
   },
   {
@@ -977,7 +869,6 @@
     "ownerRate": 2532,
     "homeOwnerRate": 3038,
     "conLoanRate": 1532,
-    "resiLoanRate": 1550,
     "basicRate": 2610
   },
   {
@@ -986,7 +877,6 @@
     "ownerRate": 2544,
     "homeOwnerRate": 3053,
     "conLoanRate": 1537,
-    "resiLoanRate": 1550,
     "basicRate": 2624
   },
   {
@@ -995,7 +885,6 @@
     "ownerRate": 2557,
     "homeOwnerRate": 3068,
     "conLoanRate": 1542,
-    "resiLoanRate": 1550,
     "basicRate": 2637
   },
   {
@@ -1004,7 +893,6 @@
     "ownerRate": 2569,
     "homeOwnerRate": 3083,
     "conLoanRate": 1548,
-    "resiLoanRate": 1550,
     "basicRate": 2651
   },
   {
@@ -1013,7 +901,6 @@
     "ownerRate": 2582,
     "homeOwnerRate": 3098,
     "conLoanRate": 1553,
-    "resiLoanRate": 1550,
     "basicRate": 2665
   },
   {
@@ -1022,7 +909,6 @@
     "ownerRate": 2595,
     "homeOwnerRate": 3114,
     "conLoanRate": 1558,
-    "resiLoanRate": 1550,
     "basicRate": 2678
   },
   {
@@ -1031,7 +917,6 @@
     "ownerRate": 2607,
     "homeOwnerRate": 3128,
     "conLoanRate": 1563,
-    "resiLoanRate": 1550,
     "basicRate": 2692
   },
   {
@@ -1040,7 +925,6 @@
     "ownerRate": 2620,
     "homeOwnerRate": 3144,
     "conLoanRate": 1569,
-    "resiLoanRate": 1550,
     "basicRate": 2704
   },
   {
@@ -1049,7 +933,6 @@
     "ownerRate": 2632,
     "homeOwnerRate": 3158,
     "conLoanRate": 1574,
-    "resiLoanRate": 1550,
     "basicRate": 2718
   },
   {
@@ -1058,7 +941,6 @@
     "ownerRate": 2645,
     "homeOwnerRate": 3174,
     "conLoanRate": 1579,
-    "resiLoanRate": 1550,
     "basicRate": 2732
   },
   {
@@ -1067,7 +949,6 @@
     "ownerRate": 2658,
     "homeOwnerRate": 3190,
     "conLoanRate": 1584,
-    "resiLoanRate": 1550,
     "basicRate": 2745
   },
   {
@@ -1076,7 +957,6 @@
     "ownerRate": 2670,
     "homeOwnerRate": 3204,
     "conLoanRate": 1590,
-    "resiLoanRate": 1550,
     "basicRate": 2759
   },
   {
@@ -1085,7 +965,6 @@
     "ownerRate": 2683,
     "homeOwnerRate": 3220,
     "conLoanRate": 1595,
-    "resiLoanRate": 1550,
     "basicRate": 2772
   },
   {
@@ -1094,7 +973,6 @@
     "ownerRate": 2695,
     "homeOwnerRate": 3234,
     "conLoanRate": 1600,
-    "resiLoanRate": 1550,
     "basicRate": 2786
   },
   {
@@ -1103,7 +981,6 @@
     "ownerRate": 2708,
     "homeOwnerRate": 3250,
     "conLoanRate": 1605,
-    "resiLoanRate": 1550,
     "basicRate": 2800
   },
   {
@@ -1112,7 +989,6 @@
     "ownerRate": 2721,
     "homeOwnerRate": 3265,
     "conLoanRate": 1611,
-    "resiLoanRate": 1550,
     "basicRate": 2813
   },
   {
@@ -1121,7 +997,6 @@
     "ownerRate": 2733,
     "homeOwnerRate": 3280,
     "conLoanRate": 1616,
-    "resiLoanRate": 1550,
     "basicRate": 2827
   },
   {
@@ -1130,7 +1005,6 @@
     "ownerRate": 2746,
     "homeOwnerRate": 3295,
     "conLoanRate": 1621,
-    "resiLoanRate": 1550,
     "basicRate": 2840
   },
   {
@@ -1139,7 +1013,6 @@
     "ownerRate": 2758,
     "homeOwnerRate": 3310,
     "conLoanRate": 1626,
-    "resiLoanRate": 1550,
     "basicRate": 2854
   },
   {
@@ -1148,7 +1021,6 @@
     "ownerRate": 2771,
     "homeOwnerRate": 3325,
     "conLoanRate": 1632,
-    "resiLoanRate": 1550,
     "basicRate": 2868
   },
   {
@@ -1157,7 +1029,6 @@
     "ownerRate": 2784,
     "homeOwnerRate": 3341,
     "conLoanRate": 1637,
-    "resiLoanRate": 1550,
     "basicRate": 2881
   },
   {
@@ -1166,7 +1037,6 @@
     "ownerRate": 2796,
     "homeOwnerRate": 3355,
     "conLoanRate": 1642,
-    "resiLoanRate": 1550,
     "basicRate": 2895
   },
   {
@@ -1175,7 +1045,6 @@
     "ownerRate": 2809,
     "homeOwnerRate": 3371,
     "conLoanRate": 1647,
-    "resiLoanRate": 1550,
     "basicRate": 2908
   },
   {
@@ -1184,7 +1053,6 @@
     "ownerRate": 2821,
     "homeOwnerRate": 3385,
     "conLoanRate": 1653,
-    "resiLoanRate": 1550,
     "basicRate": 2922
   },
   {
@@ -1193,7 +1061,6 @@
     "ownerRate": 2834,
     "homeOwnerRate": 3401,
     "conLoanRate": 1658,
-    "resiLoanRate": 1550,
     "basicRate": 2936
   },
   {
@@ -1202,7 +1069,6 @@
     "ownerRate": 2847,
     "homeOwnerRate": 3416,
     "conLoanRate": 1663,
-    "resiLoanRate": 1550,
     "basicRate": 2949
   },
   {
@@ -1211,7 +1077,6 @@
     "ownerRate": 2859,
     "homeOwnerRate": 3431,
     "conLoanRate": 1668,
-    "resiLoanRate": 1550,
     "basicRate": 2962
   },
   {
@@ -1220,7 +1085,6 @@
     "ownerRate": 2872,
     "homeOwnerRate": 3446,
     "conLoanRate": 1674,
-    "resiLoanRate": 1550,
     "basicRate": 2975
   },
   {
@@ -1229,7 +1093,6 @@
     "ownerRate": 2884,
     "homeOwnerRate": 3461,
     "conLoanRate": 1679,
-    "resiLoanRate": 1550,
     "basicRate": 2989
   },
   {
@@ -1238,7 +1101,6 @@
     "ownerRate": 2897,
     "homeOwnerRate": 3476,
     "conLoanRate": 1684,
-    "resiLoanRate": 1550,
     "basicRate": 3003
   },
   {
@@ -1247,7 +1109,6 @@
     "ownerRate": 2910,
     "homeOwnerRate": 3492,
     "conLoanRate": 1689,
-    "resiLoanRate": 1550,
     "basicRate": 3016
   },
   {
@@ -1256,7 +1117,6 @@
     "ownerRate": 2922,
     "homeOwnerRate": 3506,
     "conLoanRate": 1695,
-    "resiLoanRate": 1550,
     "basicRate": 3030
   },
   {
@@ -1265,7 +1125,6 @@
     "ownerRate": 2935,
     "homeOwnerRate": 3522,
     "conLoanRate": 1700,
-    "resiLoanRate": 1550,
     "basicRate": 3043
   },
   {
@@ -1274,7 +1133,6 @@
     "ownerRate": 2947,
     "homeOwnerRate": 3536,
     "conLoanRate": 1705,
-    "resiLoanRate": 1550,
     "basicRate": 3057
   },
   {
@@ -1283,7 +1141,6 @@
     "ownerRate": 2960,
     "homeOwnerRate": 3552,
     "conLoanRate": 1710,
-    "resiLoanRate": 1550,
     "basicRate": 3071
   },
   {
@@ -1292,7 +1149,6 @@
     "ownerRate": 2973,
     "homeOwnerRate": 3568,
     "conLoanRate": 1716,
-    "resiLoanRate": 1550,
     "basicRate": 3084
   },
   {
@@ -1301,7 +1157,6 @@
     "ownerRate": 2985,
     "homeOwnerRate": 3582,
     "conLoanRate": 1721,
-    "resiLoanRate": 1550,
     "basicRate": 3098
   },
   {
@@ -1310,7 +1165,6 @@
     "ownerRate": 2998,
     "homeOwnerRate": 3598,
     "conLoanRate": 1726,
-    "resiLoanRate": 1550,
     "basicRate": 3111
   },
   {
@@ -1319,7 +1173,6 @@
     "ownerRate": 3010,
     "homeOwnerRate": 3612,
     "conLoanRate": 1731,
-    "resiLoanRate": 1550,
     "basicRate": 3125
   },
   {
@@ -1328,7 +1181,6 @@
     "ownerRate": 3023,
     "homeOwnerRate": 3628,
     "conLoanRate": 1737,
-    "resiLoanRate": 1550,
     "basicRate": 3139
   },
   {
@@ -1337,7 +1189,6 @@
     "ownerRate": 3028,
     "homeOwnerRate": 3634,
     "conLoanRate": 1741,
-    "resiLoanRate": 2100,
     "basicRate": 3142
   },
   {
@@ -1346,7 +1197,6 @@
     "ownerRate": 3029,
     "homeOwnerRate": 3635,
     "conLoanRate": 1745,
-    "resiLoanRate": 2100,
     "basicRate": 3154
   },
   {
@@ -1355,7 +1205,6 @@
     "ownerRate": 3041,
     "homeOwnerRate": 3649,
     "conLoanRate": 1749,
-    "resiLoanRate": 2100,
     "basicRate": 3167
   },
   {
@@ -1364,7 +1213,6 @@
     "ownerRate": 3053,
     "homeOwnerRate": 3664,
     "conLoanRate": 1754,
-    "resiLoanRate": 2100,
     "basicRate": 3181
   },
   {
@@ -1373,7 +1221,6 @@
     "ownerRate": 3065,
     "homeOwnerRate": 3678,
     "conLoanRate": 1758,
-    "resiLoanRate": 2100,
     "basicRate": 3193
   },
   {
@@ -1382,7 +1229,6 @@
     "ownerRate": 3077,
     "homeOwnerRate": 3692,
     "conLoanRate": 1762,
-    "resiLoanRate": 2100,
     "basicRate": 3205
   },
   {
@@ -1391,7 +1237,6 @@
     "ownerRate": 3088,
     "homeOwnerRate": 3706,
     "conLoanRate": 1766,
-    "resiLoanRate": 2100,
     "basicRate": 3217
   },
   {
@@ -1400,7 +1245,6 @@
     "ownerRate": 3101,
     "homeOwnerRate": 3721,
     "conLoanRate": 1770,
-    "resiLoanRate": 2100,
     "basicRate": 3231
   },
   {
@@ -1409,7 +1253,6 @@
     "ownerRate": 3112,
     "homeOwnerRate": 3734,
     "conLoanRate": 1775,
-    "resiLoanRate": 2100,
     "basicRate": 3243
   },
   {
@@ -1418,7 +1261,6 @@
     "ownerRate": 3124,
     "homeOwnerRate": 3749,
     "conLoanRate": 1779,
-    "resiLoanRate": 2100,
     "basicRate": 3256
   },
   {
@@ -1427,7 +1269,6 @@
     "ownerRate": 3130,
     "homeOwnerRate": 3756,
     "conLoanRate": 1783,
-    "resiLoanRate": 2100,
     "basicRate": 3260
   },
   {
@@ -1436,7 +1277,6 @@
     "ownerRate": 3131,
     "homeOwnerRate": 3757,
     "conLoanRate": 1787,
-    "resiLoanRate": 2100,
     "basicRate": 3273
   },
   {
@@ -1445,7 +1285,6 @@
     "ownerRate": 3143,
     "homeOwnerRate": 3772,
     "conLoanRate": 1791,
-    "resiLoanRate": 2100,
     "basicRate": 3285
   },
   {
@@ -1454,7 +1293,6 @@
     "ownerRate": 3154,
     "homeOwnerRate": 3785,
     "conLoanRate": 1796,
-    "resiLoanRate": 2100,
     "basicRate": 3298
   },
   {
@@ -1463,7 +1301,6 @@
     "ownerRate": 3167,
     "homeOwnerRate": 3800,
     "conLoanRate": 1800,
-    "resiLoanRate": 2100,
     "basicRate": 3311
   },
   {
@@ -1472,7 +1309,6 @@
     "ownerRate": 3178,
     "homeOwnerRate": 3814,
     "conLoanRate": 1804,
-    "resiLoanRate": 2100,
     "basicRate": 3324
   },
   {
@@ -1481,7 +1317,6 @@
     "ownerRate": 3190,
     "homeOwnerRate": 3828,
     "conLoanRate": 1808,
-    "resiLoanRate": 2100,
     "basicRate": 3336
   },
   {
@@ -1490,7 +1325,6 @@
     "ownerRate": 3203,
     "homeOwnerRate": 3844,
     "conLoanRate": 1812,
-    "resiLoanRate": 2100,
     "basicRate": 3349
   },
   {
@@ -1499,7 +1333,6 @@
     "ownerRate": 3214,
     "homeOwnerRate": 3857,
     "conLoanRate": 1817,
-    "resiLoanRate": 2100,
     "basicRate": 3362
   },
   {
@@ -1508,7 +1341,6 @@
     "ownerRate": 3226,
     "homeOwnerRate": 3871,
     "conLoanRate": 1821,
-    "resiLoanRate": 2100,
     "basicRate": 3374
   },
   {
@@ -1517,7 +1349,6 @@
     "ownerRate": 3231,
     "homeOwnerRate": 3877,
     "conLoanRate": 1825,
-    "resiLoanRate": 2100,
     "basicRate": 3384
   },
   {
@@ -1526,7 +1357,6 @@
     "ownerRate": 3243,
     "homeOwnerRate": 3892,
     "conLoanRate": 1829,
-    "resiLoanRate": 2100,
     "basicRate": 3397
   },
   {
@@ -1535,7 +1365,6 @@
     "ownerRate": 3254,
     "homeOwnerRate": 3905,
     "conLoanRate": 1833,
-    "resiLoanRate": 2100,
     "basicRate": 3409
   },
   {
@@ -1544,7 +1373,6 @@
     "ownerRate": 3267,
     "homeOwnerRate": 3920,
     "conLoanRate": 1838,
-    "resiLoanRate": 2100,
     "basicRate": 3422
   },
   {
@@ -1553,7 +1381,6 @@
     "ownerRate": 3279,
     "homeOwnerRate": 3935,
     "conLoanRate": 1842,
-    "resiLoanRate": 2100,
     "basicRate": 3435
   },
   {
@@ -1562,7 +1389,6 @@
     "ownerRate": 3291,
     "homeOwnerRate": 3949,
     "conLoanRate": 1846,
-    "resiLoanRate": 2100,
     "basicRate": 3447
   },
   {
@@ -1571,7 +1397,6 @@
     "ownerRate": 3302,
     "homeOwnerRate": 3962,
     "conLoanRate": 1850,
-    "resiLoanRate": 2100,
     "basicRate": 3460
   },
   {
@@ -1580,7 +1405,6 @@
     "ownerRate": 3314,
     "homeOwnerRate": 3977,
     "conLoanRate": 1854,
-    "resiLoanRate": 2100,
     "basicRate": 3472
   },
   {
@@ -1589,7 +1413,6 @@
     "ownerRate": 3325,
     "homeOwnerRate": 3990,
     "conLoanRate": 1859,
-    "resiLoanRate": 2100,
     "basicRate": 3485
   },
   {
@@ -1598,7 +1421,6 @@
     "ownerRate": 3337,
     "homeOwnerRate": 4004,
     "conLoanRate": 1863,
-    "resiLoanRate": 2100,
     "basicRate": 3498
   },
   {
@@ -1607,7 +1429,6 @@
     "ownerRate": 3354,
     "homeOwnerRate": 4025,
     "conLoanRate": 1867,
-    "resiLoanRate": 2100,
     "basicRate": 3513
   },
   {
@@ -1616,7 +1437,6 @@
     "ownerRate": 3365,
     "homeOwnerRate": 4038,
     "conLoanRate": 1871,
-    "resiLoanRate": 2100,
     "basicRate": 3526
   },
   {
@@ -1625,7 +1445,6 @@
     "ownerRate": 3377,
     "homeOwnerRate": 4052,
     "conLoanRate": 1875,
-    "resiLoanRate": 2100,
     "basicRate": 3538
   },
   {
@@ -1634,7 +1453,6 @@
     "ownerRate": 3388,
     "homeOwnerRate": 4066,
     "conLoanRate": 1880,
-    "resiLoanRate": 2100,
     "basicRate": 3551
   },
   {
@@ -1643,7 +1461,6 @@
     "ownerRate": 3400,
     "homeOwnerRate": 4080,
     "conLoanRate": 1884,
-    "resiLoanRate": 2100,
     "basicRate": 3562
   },
   {
@@ -1652,7 +1469,6 @@
     "ownerRate": 3411,
     "homeOwnerRate": 4093,
     "conLoanRate": 1888,
-    "resiLoanRate": 2100,
     "basicRate": 3575
   },
   {
@@ -1661,7 +1477,6 @@
     "ownerRate": 3424,
     "homeOwnerRate": 4109,
     "conLoanRate": 1892,
-    "resiLoanRate": 2100,
     "basicRate": 3589
   },
   {
@@ -1670,7 +1485,6 @@
     "ownerRate": 3436,
     "homeOwnerRate": 4123,
     "conLoanRate": 1896,
-    "resiLoanRate": 2100,
     "basicRate": 3601
   },
   {
@@ -1679,7 +1493,6 @@
     "ownerRate": 3447,
     "homeOwnerRate": 4136,
     "conLoanRate": 1901,
-    "resiLoanRate": 2100,
     "basicRate": 3614
   },
   {
@@ -1688,7 +1501,6 @@
     "ownerRate": 3459,
     "homeOwnerRate": 4151,
     "conLoanRate": 1905,
-    "resiLoanRate": 2100,
     "basicRate": 3626
   },
   {
@@ -1697,7 +1509,6 @@
     "ownerRate": 3474,
     "homeOwnerRate": 4169,
     "conLoanRate": 1909,
-    "resiLoanRate": 2100,
     "basicRate": 3641
   },
   {
@@ -1706,7 +1517,6 @@
     "ownerRate": 3487,
     "homeOwnerRate": 4184,
     "conLoanRate": 1913,
-    "resiLoanRate": 2100,
     "basicRate": 3655
   },
   {
@@ -1715,7 +1525,6 @@
     "ownerRate": 3499,
     "homeOwnerRate": 4199,
     "conLoanRate": 1917,
-    "resiLoanRate": 2100,
     "basicRate": 3667
   },
   {
@@ -1724,7 +1533,6 @@
     "ownerRate": 3510,
     "homeOwnerRate": 4212,
     "conLoanRate": 1922,
-    "resiLoanRate": 2100,
     "basicRate": 3680
   },
   {
@@ -1733,7 +1541,6 @@
     "ownerRate": 3522,
     "homeOwnerRate": 4226,
     "conLoanRate": 1926,
-    "resiLoanRate": 2100,
     "basicRate": 3691
   },
   {
@@ -1742,7 +1549,6 @@
     "ownerRate": 3533,
     "homeOwnerRate": 4240,
     "conLoanRate": 1930,
-    "resiLoanRate": 2100,
     "basicRate": 3704
   },
   {
@@ -1751,7 +1557,6 @@
     "ownerRate": 3545,
     "homeOwnerRate": 4254,
     "conLoanRate": 1934,
-    "resiLoanRate": 2100,
     "basicRate": 3716
   },
   {
@@ -1760,7 +1565,6 @@
     "ownerRate": 3557,
     "homeOwnerRate": 4268,
     "conLoanRate": 1938,
-    "resiLoanRate": 2100,
     "basicRate": 3730
   },
   {
@@ -1769,7 +1573,6 @@
     "ownerRate": 3569,
     "homeOwnerRate": 4283,
     "conLoanRate": 1943,
-    "resiLoanRate": 2100,
     "basicRate": 3742
   },
   {
@@ -1778,7 +1581,6 @@
     "ownerRate": 3581,
     "homeOwnerRate": 4297,
     "conLoanRate": 1947,
-    "resiLoanRate": 2100,
     "basicRate": 3755
   },
   {
@@ -1787,7 +1589,6 @@
     "ownerRate": 3587,
     "homeOwnerRate": 4304,
     "conLoanRate": 1952,
-    "resiLoanRate": 2800,
     "basicRate": 3761
   },
   {
@@ -1796,7 +1597,6 @@
     "ownerRate": 3593,
     "homeOwnerRate": 4312,
     "conLoanRate": 1957,
-    "resiLoanRate": 2800,
     "basicRate": 3769
   },
   {
@@ -1805,7 +1605,6 @@
     "ownerRate": 3599,
     "homeOwnerRate": 4319,
     "conLoanRate": 1962,
-    "resiLoanRate": 2800,
     "basicRate": 3775
   },
   {
@@ -1814,7 +1613,6 @@
     "ownerRate": 3606,
     "homeOwnerRate": 4327,
     "conLoanRate": 1968,
-    "resiLoanRate": 2800,
     "basicRate": 3782
   },
   {
@@ -1823,7 +1621,6 @@
     "ownerRate": 3612,
     "homeOwnerRate": 4334,
     "conLoanRate": 1973,
-    "resiLoanRate": 2800,
     "basicRate": 3788
   },
   {
@@ -1832,7 +1629,6 @@
     "ownerRate": 3618,
     "homeOwnerRate": 4342,
     "conLoanRate": 1978,
-    "resiLoanRate": 2800,
     "basicRate": 3796
   },
   {
@@ -1841,7 +1637,6 @@
     "ownerRate": 3625,
     "homeOwnerRate": 4350,
     "conLoanRate": 1983,
-    "resiLoanRate": 2800,
     "basicRate": 3802
   },
   {
@@ -1850,7 +1645,6 @@
     "ownerRate": 3631,
     "homeOwnerRate": 4357,
     "conLoanRate": 1989,
-    "resiLoanRate": 2800,
     "basicRate": 3809
   },
   {
@@ -1859,7 +1653,6 @@
     "ownerRate": 3637,
     "homeOwnerRate": 4364,
     "conLoanRate": 1994,
-    "resiLoanRate": 2800,
     "basicRate": 3816
   },
   {
@@ -1868,7 +1661,6 @@
     "ownerRate": 3644,
     "homeOwnerRate": 4373,
     "conLoanRate": 1999,
-    "resiLoanRate": 2800,
     "basicRate": 3822
   },
   {
@@ -1877,7 +1669,6 @@
     "ownerRate": 3650,
     "homeOwnerRate": 4380,
     "conLoanRate": 2004,
-    "resiLoanRate": 2800,
     "basicRate": 3829
   },
   {
@@ -1886,7 +1677,6 @@
     "ownerRate": 3656,
     "homeOwnerRate": 4387,
     "conLoanRate": 2010,
-    "resiLoanRate": 2800,
     "basicRate": 3836
   },
   {
@@ -1895,7 +1685,6 @@
     "ownerRate": 3662,
     "homeOwnerRate": 4394,
     "conLoanRate": 2015,
-    "resiLoanRate": 2800,
     "basicRate": 3843
   },
   {
@@ -1904,7 +1693,6 @@
     "ownerRate": 3669,
     "homeOwnerRate": 4403,
     "conLoanRate": 2020,
-    "resiLoanRate": 2800,
     "basicRate": 3849
   },
   {
@@ -1913,7 +1701,6 @@
     "ownerRate": 3675,
     "homeOwnerRate": 4410,
     "conLoanRate": 2025,
-    "resiLoanRate": 2800,
     "basicRate": 3856
   },
   {
@@ -1922,7 +1709,6 @@
     "ownerRate": 3681,
     "homeOwnerRate": 4417,
     "conLoanRate": 2031,
-    "resiLoanRate": 2800,
     "basicRate": 3863
   },
   {
@@ -1931,7 +1717,6 @@
     "ownerRate": 3688,
     "homeOwnerRate": 4426,
     "conLoanRate": 2036,
-    "resiLoanRate": 2800,
     "basicRate": 3870
   },
   {
@@ -1940,7 +1725,6 @@
     "ownerRate": 3694,
     "homeOwnerRate": 4433,
     "conLoanRate": 2041,
-    "resiLoanRate": 2800,
     "basicRate": 3876
   },
   {
@@ -1949,7 +1733,6 @@
     "ownerRate": 3700,
     "homeOwnerRate": 4440,
     "conLoanRate": 2046,
-    "resiLoanRate": 2800,
     "basicRate": 3884
   },
   {
@@ -1958,7 +1741,6 @@
     "ownerRate": 3707,
     "homeOwnerRate": 4448,
     "conLoanRate": 2052,
-    "resiLoanRate": 2800,
     "basicRate": 3890
   },
   {
@@ -1967,7 +1749,6 @@
     "ownerRate": 3713,
     "homeOwnerRate": 4456,
     "conLoanRate": 2057,
-    "resiLoanRate": 2800,
     "basicRate": 3897
   },
   {
@@ -1976,7 +1757,6 @@
     "ownerRate": 3719,
     "homeOwnerRate": 4463,
     "conLoanRate": 2062,
-    "resiLoanRate": 2800,
     "basicRate": 3904
   },
   {
@@ -1985,7 +1765,6 @@
     "ownerRate": 3725,
     "homeOwnerRate": 4470,
     "conLoanRate": 2067,
-    "resiLoanRate": 2800,
     "basicRate": 3911
   },
   {
@@ -1994,7 +1773,6 @@
     "ownerRate": 3732,
     "homeOwnerRate": 4478,
     "conLoanRate": 2073,
-    "resiLoanRate": 2800,
     "basicRate": 3917
   },
   {
@@ -2003,7 +1781,6 @@
     "ownerRate": 3738,
     "homeOwnerRate": 4486,
     "conLoanRate": 2078,
-    "resiLoanRate": 2800,
     "basicRate": 3924
   },
   {
@@ -2012,7 +1789,6 @@
     "ownerRate": 3744,
     "homeOwnerRate": 4493,
     "conLoanRate": 2083,
-    "resiLoanRate": 2800,
     "basicRate": 3931
   },
   {
@@ -2021,7 +1797,6 @@
     "ownerRate": 3751,
     "homeOwnerRate": 4501,
     "conLoanRate": 2088,
-    "resiLoanRate": 2800,
     "basicRate": 3938
   },
   {
@@ -2030,7 +1805,6 @@
     "ownerRate": 3757,
     "homeOwnerRate": 4508,
     "conLoanRate": 2094,
-    "resiLoanRate": 2800,
     "basicRate": 3944
   },
   {
@@ -2039,7 +1813,6 @@
     "ownerRate": 3763,
     "homeOwnerRate": 4516,
     "conLoanRate": 2099,
-    "resiLoanRate": 2800,
     "basicRate": 3951
   },
   {
@@ -2048,7 +1821,6 @@
     "ownerRate": 3770,
     "homeOwnerRate": 4524,
     "conLoanRate": 2104,
-    "resiLoanRate": 2800,
     "basicRate": 3958
   },
   {
@@ -2057,7 +1829,6 @@
     "ownerRate": 3776,
     "homeOwnerRate": 4531,
     "conLoanRate": 2109,
-    "resiLoanRate": 2800,
     "basicRate": 3964
   },
   {
@@ -2066,7 +1837,6 @@
     "ownerRate": 3782,
     "homeOwnerRate": 4538,
     "conLoanRate": 2115,
-    "resiLoanRate": 2800,
     "basicRate": 3972
   },
   {
@@ -2075,7 +1845,6 @@
     "ownerRate": 3788,
     "homeOwnerRate": 4546,
     "conLoanRate": 2120,
-    "resiLoanRate": 2800,
     "basicRate": 3978
   },
   {
@@ -2084,7 +1853,6 @@
     "ownerRate": 3795,
     "homeOwnerRate": 4554,
     "conLoanRate": 2125,
-    "resiLoanRate": 2800,
     "basicRate": 3985
   },
   {
@@ -2093,7 +1861,6 @@
     "ownerRate": 3801,
     "homeOwnerRate": 4561,
     "conLoanRate": 2130,
-    "resiLoanRate": 2800,
     "basicRate": 3991
   },
   {
@@ -2102,7 +1869,6 @@
     "ownerRate": 3807,
     "homeOwnerRate": 4568,
     "conLoanRate": 2136,
-    "resiLoanRate": 2800,
     "basicRate": 3999
   },
   {
@@ -2111,7 +1877,6 @@
     "ownerRate": 3814,
     "homeOwnerRate": 4577,
     "conLoanRate": 2141,
-    "resiLoanRate": 2800,
     "basicRate": 4005
   },
   {
@@ -2120,7 +1885,6 @@
     "ownerRate": 3820,
     "homeOwnerRate": 4584,
     "conLoanRate": 2146,
-    "resiLoanRate": 2800,
     "basicRate": 4012
   },
   {
@@ -2129,7 +1893,6 @@
     "ownerRate": 3826,
     "homeOwnerRate": 4591,
     "conLoanRate": 2151,
-    "resiLoanRate": 2800,
     "basicRate": 4019
   },
   {
@@ -2138,7 +1901,6 @@
     "ownerRate": 3833,
     "homeOwnerRate": 4600,
     "conLoanRate": 2157,
-    "resiLoanRate": 2800,
     "basicRate": 4026
   },
   {
@@ -2147,7 +1909,6 @@
     "ownerRate": 3839,
     "homeOwnerRate": 4607,
     "conLoanRate": 2162,
-    "resiLoanRate": 2800,
     "basicRate": 4032
   },
   {
@@ -2156,7 +1917,6 @@
     "ownerRate": 3845,
     "homeOwnerRate": 4614,
     "conLoanRate": 2167,
-    "resiLoanRate": 2800,
     "basicRate": 4040
   },
   {
@@ -2165,7 +1925,6 @@
     "ownerRate": 3851,
     "homeOwnerRate": 4621,
     "conLoanRate": 2172,
-    "resiLoanRate": 2800,
     "basicRate": 4046
   },
   {
@@ -2174,7 +1933,6 @@
     "ownerRate": 3858,
     "homeOwnerRate": 4630,
     "conLoanRate": 2178,
-    "resiLoanRate": 2800,
     "basicRate": 4053
   },
   {
@@ -2183,7 +1941,6 @@
     "ownerRate": 3864,
     "homeOwnerRate": 4637,
     "conLoanRate": 2183,
-    "resiLoanRate": 2800,
     "basicRate": 4059
   },
   {
@@ -2192,7 +1949,6 @@
     "ownerRate": 3870,
     "homeOwnerRate": 4644,
     "conLoanRate": 2188,
-    "resiLoanRate": 2800,
     "basicRate": 4067
   },
   {
@@ -2201,7 +1957,6 @@
     "ownerRate": 3877,
     "homeOwnerRate": 4652,
     "conLoanRate": 2193,
-    "resiLoanRate": 2800,
     "basicRate": 4073
   },
   {
@@ -2210,7 +1965,6 @@
     "ownerRate": 3883,
     "homeOwnerRate": 4660,
     "conLoanRate": 2199,
-    "resiLoanRate": 2800,
     "basicRate": 4079
   },
   {
@@ -2219,7 +1973,6 @@
     "ownerRate": 3889,
     "homeOwnerRate": 4667,
     "conLoanRate": 2204,
-    "resiLoanRate": 2800,
     "basicRate": 4087
   },
   {
@@ -2228,7 +1981,6 @@
     "ownerRate": 3896,
     "homeOwnerRate": 4675,
     "conLoanRate": 2209,
-    "resiLoanRate": 2800,
     "basicRate": 4093
   },
   {
@@ -2237,7 +1989,6 @@
     "ownerRate": 3902,
     "homeOwnerRate": 4682,
     "conLoanRate": 2214,
-    "resiLoanRate": 2800,
     "basicRate": 4100
   },
   {
@@ -2246,7 +1997,6 @@
     "ownerRate": 3908,
     "homeOwnerRate": 4690,
     "conLoanRate": 2220,
-    "resiLoanRate": 2800,
     "basicRate": 4107
   },
   {
@@ -2255,7 +2005,6 @@
     "ownerRate": 3914,
     "homeOwnerRate": 4697,
     "conLoanRate": 2225,
-    "resiLoanRate": 2800,
     "basicRate": 4114
   },
   {
@@ -2264,7 +2013,6 @@
     "ownerRate": 3921,
     "homeOwnerRate": 4705,
     "conLoanRate": 2230,
-    "resiLoanRate": 2800,
     "basicRate": 4120
   },
   {
@@ -2273,7 +2021,6 @@
     "ownerRate": 3927,
     "homeOwnerRate": 4712,
     "conLoanRate": 2235,
-    "resiLoanRate": 2800,
     "basicRate": 4127
   },
   {
@@ -2282,7 +2029,6 @@
     "ownerRate": 3933,
     "homeOwnerRate": 4720,
     "conLoanRate": 2241,
-    "resiLoanRate": 2800,
     "basicRate": 4134
   },
   {
@@ -2291,7 +2037,6 @@
     "ownerRate": 3940,
     "homeOwnerRate": 4728,
     "conLoanRate": 2246,
-    "resiLoanRate": 2800,
     "basicRate": 4141
   },
   {
@@ -2300,7 +2045,6 @@
     "ownerRate": 3946,
     "homeOwnerRate": 4735,
     "conLoanRate": 2251,
-    "resiLoanRate": 2800,
     "basicRate": 4147
   },
   {
@@ -2309,7 +2053,6 @@
     "ownerRate": 3952,
     "homeOwnerRate": 4742,
     "conLoanRate": 2256,
-    "resiLoanRate": 2800,
     "basicRate": 4155
   },
   {
@@ -2318,7 +2061,6 @@
     "ownerRate": 3959,
     "homeOwnerRate": 4751,
     "conLoanRate": 2262,
-    "resiLoanRate": 2800,
     "basicRate": 4161
   },
   {
@@ -2327,7 +2069,6 @@
     "ownerRate": 3965,
     "homeOwnerRate": 4758,
     "conLoanRate": 2267,
-    "resiLoanRate": 2800,
     "basicRate": 4168
   },
   {
@@ -2336,7 +2077,6 @@
     "ownerRate": 3971,
     "homeOwnerRate": 4765,
     "conLoanRate": 2272,
-    "resiLoanRate": 2800,
     "basicRate": 4175
   },
   {
@@ -2345,7 +2085,6 @@
     "ownerRate": 3977,
     "homeOwnerRate": 4772,
     "conLoanRate": 2277,
-    "resiLoanRate": 2800,
     "basicRate": 4181
   },
   {
@@ -2354,7 +2093,6 @@
     "ownerRate": 3984,
     "homeOwnerRate": 4781,
     "conLoanRate": 2283,
-    "resiLoanRate": 2800,
     "basicRate": 4188
   },
   {
@@ -2363,7 +2101,6 @@
     "ownerRate": 3990,
     "homeOwnerRate": 4788,
     "conLoanRate": 2288,
-    "resiLoanRate": 2800,
     "basicRate": 4195
   },
   {
@@ -2372,7 +2109,6 @@
     "ownerRate": 3996,
     "homeOwnerRate": 4795,
     "conLoanRate": 2293,
-    "resiLoanRate": 2800,
     "basicRate": 4202
   },
   {
@@ -2381,7 +2117,6 @@
     "ownerRate": 4003,
     "homeOwnerRate": 4804,
     "conLoanRate": 2298,
-    "resiLoanRate": 2800,
     "basicRate": 4208
   },
   {
@@ -2390,7 +2125,6 @@
     "ownerRate": 4009,
     "homeOwnerRate": 4811,
     "conLoanRate": 2304,
-    "resiLoanRate": 2800,
     "basicRate": 4215
   },
   {
@@ -2399,7 +2133,6 @@
     "ownerRate": 4015,
     "homeOwnerRate": 4818,
     "conLoanRate": 2309,
-    "resiLoanRate": 2800,
     "basicRate": 4222
   },
   {
@@ -2408,7 +2141,6 @@
     "ownerRate": 4022,
     "homeOwnerRate": 4826,
     "conLoanRate": 2314,
-    "resiLoanRate": 2800,
     "basicRate": 4229
   },
   {
@@ -2417,7 +2149,6 @@
     "ownerRate": 4028,
     "homeOwnerRate": 4834,
     "conLoanRate": 2319,
-    "resiLoanRate": 2800,
     "basicRate": 4235
   },
   {
@@ -2426,7 +2157,6 @@
     "ownerRate": 4034,
     "homeOwnerRate": 4841,
     "conLoanRate": 2325,
-    "resiLoanRate": 2800,
     "basicRate": 4243
   },
   {
@@ -2435,7 +2165,6 @@
     "ownerRate": 4040,
     "homeOwnerRate": 4848,
     "conLoanRate": 2330,
-    "resiLoanRate": 2800,
     "basicRate": 4249
   },
   {
@@ -2444,7 +2173,6 @@
     "ownerRate": 4047,
     "homeOwnerRate": 4856,
     "conLoanRate": 2335,
-    "resiLoanRate": 2800,
     "basicRate": 4256
   },
   {
@@ -2453,7 +2181,6 @@
     "ownerRate": 4053,
     "homeOwnerRate": 4864,
     "conLoanRate": 2340,
-    "resiLoanRate": 2800,
     "basicRate": 4262
   },
   {
@@ -2462,7 +2189,6 @@
     "ownerRate": 4059,
     "homeOwnerRate": 4871,
     "conLoanRate": 2346,
-    "resiLoanRate": 2800,
     "basicRate": 4270
   },
   {
@@ -2471,7 +2197,6 @@
     "ownerRate": 4066,
     "homeOwnerRate": 4879,
     "conLoanRate": 2351,
-    "resiLoanRate": 2800,
     "basicRate": 4276
   },
   {
@@ -2480,7 +2205,6 @@
     "ownerRate": 4072,
     "homeOwnerRate": 4886,
     "conLoanRate": 2356,
-    "resiLoanRate": 2800,
     "basicRate": 4283
   },
   {
@@ -2489,7 +2213,6 @@
     "ownerRate": 4078,
     "homeOwnerRate": 4894,
     "conLoanRate": 2361,
-    "resiLoanRate": 2800,
     "basicRate": 4290
   },
   {
@@ -2498,7 +2221,6 @@
     "ownerRate": 4085,
     "homeOwnerRate": 4902,
     "conLoanRate": 2367,
-    "resiLoanRate": 2800,
     "basicRate": 4297
   },
   {
@@ -2507,7 +2229,6 @@
     "ownerRate": 4091,
     "homeOwnerRate": 4909,
     "conLoanRate": 2372,
-    "resiLoanRate": 2800,
     "basicRate": 4303
   },
   {
@@ -2516,7 +2237,6 @@
     "ownerRate": 4097,
     "homeOwnerRate": 4916,
     "conLoanRate": 2377,
-    "resiLoanRate": 2800,
     "basicRate": 4311
   },
   {
@@ -2525,7 +2245,6 @@
     "ownerRate": 4103,
     "homeOwnerRate": 4924,
     "conLoanRate": 2382,
-    "resiLoanRate": 2800,
     "basicRate": 4317
   },
   {
@@ -2534,7 +2253,6 @@
     "ownerRate": 4110,
     "homeOwnerRate": 4932,
     "conLoanRate": 2388,
-    "resiLoanRate": 2800,
     "basicRate": 4323
   },
   {
@@ -2543,7 +2261,6 @@
     "ownerRate": 4116,
     "homeOwnerRate": 4939,
     "conLoanRate": 2393,
-    "resiLoanRate": 2800,
     "basicRate": 4330
   },
   {
@@ -2552,7 +2269,6 @@
     "ownerRate": 4122,
     "homeOwnerRate": 4946,
     "conLoanRate": 2398,
-    "resiLoanRate": 2800,
     "basicRate": 4337
   },
   {
@@ -2561,7 +2277,6 @@
     "ownerRate": 4129,
     "homeOwnerRate": 4955,
     "conLoanRate": 2403,
-    "resiLoanRate": 2800,
     "basicRate": 4344
   },
   {
@@ -2570,7 +2285,6 @@
     "ownerRate": 4135,
     "homeOwnerRate": 4962,
     "conLoanRate": 2409,
-    "resiLoanRate": 2800,
     "basicRate": 4350
   },
   {
@@ -2579,7 +2293,6 @@
     "ownerRate": 4141,
     "homeOwnerRate": 4969,
     "conLoanRate": 2414,
-    "resiLoanRate": 2800,
     "basicRate": 4358
   },
   {
@@ -2588,7 +2301,6 @@
     "ownerRate": 4148,
     "homeOwnerRate": 4978,
     "conLoanRate": 2419,
-    "resiLoanRate": 2800,
     "basicRate": 4364
   },
   {
@@ -2597,7 +2309,6 @@
     "ownerRate": 4154,
     "homeOwnerRate": 4985,
     "conLoanRate": 2424,
-    "resiLoanRate": 2800,
     "basicRate": 4371
   },
   {
@@ -2606,7 +2317,6 @@
     "ownerRate": 4160,
     "homeOwnerRate": 4992,
     "conLoanRate": 2430,
-    "resiLoanRate": 2800,
     "basicRate": 4378
   },
   {
@@ -2615,7 +2325,6 @@
     "ownerRate": 4166,
     "homeOwnerRate": 4999,
     "conLoanRate": 2435,
-    "resiLoanRate": 2800,
     "basicRate": 4385
   },
   {
@@ -2624,7 +2333,6 @@
     "ownerRate": 4173,
     "homeOwnerRate": 5008,
     "conLoanRate": 2440,
-    "resiLoanRate": 2800,
     "basicRate": 4391
   },
   {
@@ -2633,7 +2341,6 @@
     "ownerRate": 4179,
     "homeOwnerRate": 5015,
     "conLoanRate": 2445,
-    "resiLoanRate": 2800,
     "basicRate": 4398
   },
   {
@@ -2642,7 +2349,6 @@
     "ownerRate": 4185,
     "homeOwnerRate": 5022,
     "conLoanRate": 2451,
-    "resiLoanRate": 2800,
     "basicRate": 4405
   },
   {
@@ -2651,7 +2357,6 @@
     "ownerRate": 4192,
     "homeOwnerRate": 5030,
     "conLoanRate": 2456,
-    "resiLoanRate": 2800,
     "basicRate": 4412
   },
   {
@@ -2660,7 +2365,6 @@
     "ownerRate": 4198,
     "homeOwnerRate": 5038,
     "conLoanRate": 2461,
-    "resiLoanRate": 2800,
     "basicRate": 4418
   },
   {
@@ -2669,7 +2373,6 @@
     "ownerRate": 4204,
     "homeOwnerRate": 5045,
     "conLoanRate": 2466,
-    "resiLoanRate": 2800,
     "basicRate": 4426
   },
   {
@@ -2678,7 +2381,6 @@
     "ownerRate": 4211,
     "homeOwnerRate": 5053,
     "conLoanRate": 2472,
-    "resiLoanRate": 2800,
     "basicRate": 4432
   },
   {
@@ -2687,7 +2389,6 @@
     "ownerRate": 4216,
     "homeOwnerRate": 5059,
     "conLoanRate": 2476,
-    "resiLoanRate": 3400,
     "basicRate": 4437
   },
   {
@@ -2696,7 +2397,6 @@
     "ownerRate": 4222,
     "homeOwnerRate": 5066,
     "conLoanRate": 2480,
-    "resiLoanRate": 3400,
     "basicRate": 4443
   },
   {
@@ -2705,7 +2405,6 @@
     "ownerRate": 4227,
     "homeOwnerRate": 5072,
     "conLoanRate": 2485,
-    "resiLoanRate": 3400,
     "basicRate": 4448
   },
   {
@@ -2714,7 +2413,6 @@
     "ownerRate": 4232,
     "homeOwnerRate": 5078,
     "conLoanRate": 2489,
-    "resiLoanRate": 3400,
     "basicRate": 4453
   },
   {
@@ -2723,7 +2421,6 @@
     "ownerRate": 4237,
     "homeOwnerRate": 5084,
     "conLoanRate": 2493,
-    "resiLoanRate": 3400,
     "basicRate": 4458
   },
   {
@@ -2732,7 +2429,6 @@
     "ownerRate": 4243,
     "homeOwnerRate": 5092,
     "conLoanRate": 2497,
-    "resiLoanRate": 3400,
     "basicRate": 4464
   },
   {
@@ -2741,7 +2437,6 @@
     "ownerRate": 4248,
     "homeOwnerRate": 5098,
     "conLoanRate": 2501,
-    "resiLoanRate": 3400,
     "basicRate": 4469
   },
   {
@@ -2750,7 +2445,6 @@
     "ownerRate": 4253,
     "homeOwnerRate": 5104,
     "conLoanRate": 2506,
-    "resiLoanRate": 3400,
     "basicRate": 4474
   },
   {
@@ -2759,7 +2453,6 @@
     "ownerRate": 4258,
     "homeOwnerRate": 5110,
     "conLoanRate": 2510,
-    "resiLoanRate": 3400,
     "basicRate": 4479
   },
   {
@@ -2768,7 +2461,6 @@
     "ownerRate": 4264,
     "homeOwnerRate": 5117,
     "conLoanRate": 2514,
-    "resiLoanRate": 3400,
     "basicRate": 4485
   },
   {
@@ -2777,7 +2469,6 @@
     "ownerRate": 4269,
     "homeOwnerRate": 5123,
     "conLoanRate": 2518,
-    "resiLoanRate": 3400,
     "basicRate": 4490
   },
   {
@@ -2786,7 +2477,6 @@
     "ownerRate": 4274,
     "homeOwnerRate": 5129,
     "conLoanRate": 2522,
-    "resiLoanRate": 3400,
     "basicRate": 4495
   },
   {
@@ -2795,7 +2485,6 @@
     "ownerRate": 4279,
     "homeOwnerRate": 5135,
     "conLoanRate": 2527,
-    "resiLoanRate": 3400,
     "basicRate": 4500
   },
   {
@@ -2804,7 +2493,6 @@
     "ownerRate": 4285,
     "homeOwnerRate": 5142,
     "conLoanRate": 2531,
-    "resiLoanRate": 3400,
     "basicRate": 4506
   },
   {
@@ -2813,7 +2501,6 @@
     "ownerRate": 4290,
     "homeOwnerRate": 5148,
     "conLoanRate": 2535,
-    "resiLoanRate": 3400,
     "basicRate": 4511
   },
   {
@@ -2822,7 +2509,6 @@
     "ownerRate": 4295,
     "homeOwnerRate": 5154,
     "conLoanRate": 2539,
-    "resiLoanRate": 3400,
     "basicRate": 4516
   },
   {
@@ -2831,7 +2517,6 @@
     "ownerRate": 4300,
     "homeOwnerRate": 5160,
     "conLoanRate": 2543,
-    "resiLoanRate": 3400,
     "basicRate": 4521
   },
   {
@@ -2840,7 +2525,6 @@
     "ownerRate": 4306,
     "homeOwnerRate": 5167,
     "conLoanRate": 2548,
-    "resiLoanRate": 3400,
     "basicRate": 4527
   },
   {
@@ -2849,7 +2533,6 @@
     "ownerRate": 4311,
     "homeOwnerRate": 5173,
     "conLoanRate": 2552,
-    "resiLoanRate": 3400,
     "basicRate": 4532
   },
   {
@@ -2858,7 +2541,6 @@
     "ownerRate": 4316,
     "homeOwnerRate": 5179,
     "conLoanRate": 2556,
-    "resiLoanRate": 3400,
     "basicRate": 4537
   },
   {
@@ -2867,7 +2549,6 @@
     "ownerRate": 4321,
     "homeOwnerRate": 5185,
     "conLoanRate": 2560,
-    "resiLoanRate": 3400,
     "basicRate": 4542
   },
   {
@@ -2876,7 +2557,6 @@
     "ownerRate": 4327,
     "homeOwnerRate": 5192,
     "conLoanRate": 2564,
-    "resiLoanRate": 3400,
     "basicRate": 4548
   },
   {
@@ -2885,7 +2565,6 @@
     "ownerRate": 4332,
     "homeOwnerRate": 5198,
     "conLoanRate": 2569,
-    "resiLoanRate": 3400,
     "basicRate": 4553
   },
   {
@@ -2894,7 +2573,6 @@
     "ownerRate": 4337,
     "homeOwnerRate": 5204,
     "conLoanRate": 2573,
-    "resiLoanRate": 3400,
     "basicRate": 4558
   },
   {
@@ -2903,7 +2581,6 @@
     "ownerRate": 4342,
     "homeOwnerRate": 5210,
     "conLoanRate": 2577,
-    "resiLoanRate": 3400,
     "basicRate": 4563
   },
   {
@@ -2912,7 +2589,6 @@
     "ownerRate": 4348,
     "homeOwnerRate": 5218,
     "conLoanRate": 2581,
-    "resiLoanRate": 3400,
     "basicRate": 4569
   },
   {
@@ -2921,7 +2597,6 @@
     "ownerRate": 4353,
     "homeOwnerRate": 5224,
     "conLoanRate": 2585,
-    "resiLoanRate": 3400,
     "basicRate": 4574
   },
   {
@@ -2930,7 +2605,6 @@
     "ownerRate": 4358,
     "homeOwnerRate": 5230,
     "conLoanRate": 2590,
-    "resiLoanRate": 3400,
     "basicRate": 4579
   },
   {
@@ -2939,7 +2613,6 @@
     "ownerRate": 4363,
     "homeOwnerRate": 5236,
     "conLoanRate": 2594,
-    "resiLoanRate": 3400,
     "basicRate": 4584
   },
   {
@@ -2948,7 +2621,6 @@
     "ownerRate": 4369,
     "homeOwnerRate": 5243,
     "conLoanRate": 2598,
-    "resiLoanRate": 3400,
     "basicRate": 4590
   },
   {
@@ -2957,7 +2629,6 @@
     "ownerRate": 4374,
     "homeOwnerRate": 5249,
     "conLoanRate": 2602,
-    "resiLoanRate": 3400,
     "basicRate": 4595
   },
   {
@@ -2966,7 +2637,6 @@
     "ownerRate": 4379,
     "homeOwnerRate": 5255,
     "conLoanRate": 2606,
-    "resiLoanRate": 3400,
     "basicRate": 4600
   },
   {
@@ -2975,7 +2645,6 @@
     "ownerRate": 4384,
     "homeOwnerRate": 5261,
     "conLoanRate": 2611,
-    "resiLoanRate": 3400,
     "basicRate": 4605
   },
   {
@@ -2984,7 +2653,6 @@
     "ownerRate": 4390,
     "homeOwnerRate": 5268,
     "conLoanRate": 2615,
-    "resiLoanRate": 3400,
     "basicRate": 4611
   },
   {
@@ -2993,7 +2661,6 @@
     "ownerRate": 4395,
     "homeOwnerRate": 5274,
     "conLoanRate": 2619,
-    "resiLoanRate": 3400,
     "basicRate": 4616
   },
   {
@@ -3002,7 +2669,6 @@
     "ownerRate": 4400,
     "homeOwnerRate": 5280,
     "conLoanRate": 2623,
-    "resiLoanRate": 3400,
     "basicRate": 4621
   },
   {
@@ -3011,7 +2677,6 @@
     "ownerRate": 4405,
     "homeOwnerRate": 5286,
     "conLoanRate": 2627,
-    "resiLoanRate": 3400,
     "basicRate": 4626
   },
   {
@@ -3020,7 +2685,6 @@
     "ownerRate": 4411,
     "homeOwnerRate": 5293,
     "conLoanRate": 2632,
-    "resiLoanRate": 3400,
     "basicRate": 4632
   },
   {
@@ -3029,7 +2693,6 @@
     "ownerRate": 4416,
     "homeOwnerRate": 5299,
     "conLoanRate": 2636,
-    "resiLoanRate": 3400,
     "basicRate": 4637
   },
   {
@@ -3038,7 +2701,6 @@
     "ownerRate": 4421,
     "homeOwnerRate": 5305,
     "conLoanRate": 2640,
-    "resiLoanRate": 3400,
     "basicRate": 4642
   },
   {
@@ -3047,7 +2709,6 @@
     "ownerRate": 4426,
     "homeOwnerRate": 5311,
     "conLoanRate": 2644,
-    "resiLoanRate": 3400,
     "basicRate": 4647
   },
   {
@@ -3056,7 +2717,6 @@
     "ownerRate": 4432,
     "homeOwnerRate": 5318,
     "conLoanRate": 2648,
-    "resiLoanRate": 3400,
     "basicRate": 4653
   },
   {
@@ -3065,7 +2725,6 @@
     "ownerRate": 4437,
     "homeOwnerRate": 5324,
     "conLoanRate": 2653,
-    "resiLoanRate": 3400,
     "basicRate": 4658
   },
   {
@@ -3074,7 +2733,6 @@
     "ownerRate": 4442,
     "homeOwnerRate": 5330,
     "conLoanRate": 2657,
-    "resiLoanRate": 3400,
     "basicRate": 4663
   },
   {
@@ -3083,7 +2741,6 @@
     "ownerRate": 4447,
     "homeOwnerRate": 5336,
     "conLoanRate": 2661,
-    "resiLoanRate": 3400,
     "basicRate": 4668
   },
   {
@@ -3092,7 +2749,6 @@
     "ownerRate": 4453,
     "homeOwnerRate": 5344,
     "conLoanRate": 2665,
-    "resiLoanRate": 3400,
     "basicRate": 4674
   },
   {
@@ -3101,7 +2757,6 @@
     "ownerRate": 4458,
     "homeOwnerRate": 5350,
     "conLoanRate": 2669,
-    "resiLoanRate": 3400,
     "basicRate": 4679
   },
   {
@@ -3110,7 +2765,6 @@
     "ownerRate": 4463,
     "homeOwnerRate": 5356,
     "conLoanRate": 2674,
-    "resiLoanRate": 3400,
     "basicRate": 4684
   },
   {
@@ -3119,7 +2773,6 @@
     "ownerRate": 4468,
     "homeOwnerRate": 5362,
     "conLoanRate": 2678,
-    "resiLoanRate": 3400,
     "basicRate": 4689
   },
   {
@@ -3128,7 +2781,6 @@
     "ownerRate": 4474,
     "homeOwnerRate": 5369,
     "conLoanRate": 2682,
-    "resiLoanRate": 3400,
     "basicRate": 4695
   },
   {
@@ -3137,7 +2789,6 @@
     "ownerRate": 4479,
     "homeOwnerRate": 5375,
     "conLoanRate": 2686,
-    "resiLoanRate": 3400,
     "basicRate": 4700
   },
   {
@@ -3146,7 +2797,6 @@
     "ownerRate": 4484,
     "homeOwnerRate": 5381,
     "conLoanRate": 2690,
-    "resiLoanRate": 3400,
     "basicRate": 4705
   },
   {
@@ -3155,7 +2805,6 @@
     "ownerRate": 4489,
     "homeOwnerRate": 5387,
     "conLoanRate": 2695,
-    "resiLoanRate": 3400,
     "basicRate": 4710
   },
   {
@@ -3164,7 +2813,6 @@
     "ownerRate": 4495,
     "homeOwnerRate": 5394,
     "conLoanRate": 2699,
-    "resiLoanRate": 3400,
     "basicRate": 4716
   },
   {
@@ -3173,7 +2821,6 @@
     "ownerRate": 4500,
     "homeOwnerRate": 5400,
     "conLoanRate": 2703,
-    "resiLoanRate": 3400,
     "basicRate": 4721
   },
   {
@@ -3182,7 +2829,6 @@
     "ownerRate": 4505,
     "homeOwnerRate": 5406,
     "conLoanRate": 2707,
-    "resiLoanRate": 3400,
     "basicRate": 4726
   },
   {
@@ -3191,7 +2837,6 @@
     "ownerRate": 4510,
     "homeOwnerRate": 5412,
     "conLoanRate": 2711,
-    "resiLoanRate": 3400,
     "basicRate": 4731
   },
   {
@@ -3200,7 +2845,6 @@
     "ownerRate": 4516,
     "homeOwnerRate": 5419,
     "conLoanRate": 2716,
-    "resiLoanRate": 3400,
     "basicRate": 4737
   },
   {
@@ -3209,7 +2853,6 @@
     "ownerRate": 4521,
     "homeOwnerRate": 5425,
     "conLoanRate": 2720,
-    "resiLoanRate": 3400,
     "basicRate": 4742
   },
   {
@@ -3218,7 +2861,6 @@
     "ownerRate": 4526,
     "homeOwnerRate": 5431,
     "conLoanRate": 2724,
-    "resiLoanRate": 3400,
     "basicRate": 4747
   },
   {
@@ -3227,7 +2869,6 @@
     "ownerRate": 4531,
     "homeOwnerRate": 5437,
     "conLoanRate": 2728,
-    "resiLoanRate": 3400,
     "basicRate": 4752
   },
   {
@@ -3236,7 +2877,6 @@
     "ownerRate": 4537,
     "homeOwnerRate": 5444,
     "conLoanRate": 2732,
-    "resiLoanRate": 3400,
     "basicRate": 4758
   },
   {
@@ -3245,7 +2885,6 @@
     "ownerRate": 4542,
     "homeOwnerRate": 5450,
     "conLoanRate": 2737,
-    "resiLoanRate": 3400,
     "basicRate": 4763
   },
   {
@@ -3254,7 +2893,6 @@
     "ownerRate": 4547,
     "homeOwnerRate": 5456,
     "conLoanRate": 2741,
-    "resiLoanRate": 3400,
     "basicRate": 4768
   },
   {
@@ -3263,7 +2901,6 @@
     "ownerRate": 4552,
     "homeOwnerRate": 5462,
     "conLoanRate": 2745,
-    "resiLoanRate": 3400,
     "basicRate": 4773
   },
   {
@@ -3272,7 +2909,6 @@
     "ownerRate": 4558,
     "homeOwnerRate": 5470,
     "conLoanRate": 2749,
-    "resiLoanRate": 3400,
     "basicRate": 4779
   },
   {
@@ -3281,7 +2917,6 @@
     "ownerRate": 4563,
     "homeOwnerRate": 5476,
     "conLoanRate": 2753,
-    "resiLoanRate": 3400,
     "basicRate": 4784
   },
   {
@@ -3290,7 +2925,6 @@
     "ownerRate": 4568,
     "homeOwnerRate": 5482,
     "conLoanRate": 2758,
-    "resiLoanRate": 3400,
     "basicRate": 4789
   },
   {
@@ -3299,7 +2933,6 @@
     "ownerRate": 4573,
     "homeOwnerRate": 5488,
     "conLoanRate": 2762,
-    "resiLoanRate": 3400,
     "basicRate": 4794
   },
   {
@@ -3308,7 +2941,6 @@
     "ownerRate": 4579,
     "homeOwnerRate": 5495,
     "conLoanRate": 2766,
-    "resiLoanRate": 3400,
     "basicRate": 4800
   },
   {
@@ -3317,7 +2949,6 @@
     "ownerRate": 4584,
     "homeOwnerRate": 5501,
     "conLoanRate": 2770,
-    "resiLoanRate": 3400,
     "basicRate": 4805
   },
   {
@@ -3326,7 +2957,6 @@
     "ownerRate": 4589,
     "homeOwnerRate": 5507,
     "conLoanRate": 2774,
-    "resiLoanRate": 3400,
     "basicRate": 4810
   },
   {
@@ -3335,7 +2965,6 @@
     "ownerRate": 4594,
     "homeOwnerRate": 5513,
     "conLoanRate": 2779,
-    "resiLoanRate": 3400,
     "basicRate": 4815
   },
   {
@@ -3344,7 +2973,6 @@
     "ownerRate": 4600,
     "homeOwnerRate": 5520,
     "conLoanRate": 2783,
-    "resiLoanRate": 3400,
     "basicRate": 4821
   },
   {
@@ -3353,7 +2981,6 @@
     "ownerRate": 4605,
     "homeOwnerRate": 5526,
     "conLoanRate": 2787,
-    "resiLoanRate": 3400,
     "basicRate": 4826
   },
   {
@@ -3362,7 +2989,6 @@
     "ownerRate": 4610,
     "homeOwnerRate": 5532,
     "conLoanRate": 2791,
-    "resiLoanRate": 3400,
     "basicRate": 4831
   },
   {
@@ -3371,7 +2997,6 @@
     "ownerRate": 4615,
     "homeOwnerRate": 5538,
     "conLoanRate": 2795,
-    "resiLoanRate": 3400,
     "basicRate": 4836
   },
   {
@@ -3380,7 +3005,6 @@
     "ownerRate": 4621,
     "homeOwnerRate": 5545,
     "conLoanRate": 2800,
-    "resiLoanRate": 3400,
     "basicRate": 4842
   },
   {
@@ -3389,7 +3013,6 @@
     "ownerRate": 4626,
     "homeOwnerRate": 5551,
     "conLoanRate": 2804,
-    "resiLoanRate": 3400,
     "basicRate": 4847
   },
   {
@@ -3398,7 +3021,6 @@
     "ownerRate": 4631,
     "homeOwnerRate": 5557,
     "conLoanRate": 2808,
-    "resiLoanRate": 3400,
     "basicRate": 4852
   },
   {
@@ -3407,7 +3029,6 @@
     "ownerRate": 4636,
     "homeOwnerRate": 5563,
     "conLoanRate": 2812,
-    "resiLoanRate": 3400,
     "basicRate": 4857
   },
   {
@@ -3416,7 +3037,6 @@
     "ownerRate": 4642,
     "homeOwnerRate": 5570,
     "conLoanRate": 2816,
-    "resiLoanRate": 3400,
     "basicRate": 4863
   },
   {
@@ -3425,7 +3045,6 @@
     "ownerRate": 4647,
     "homeOwnerRate": 5576,
     "conLoanRate": 2821,
-    "resiLoanRate": 3400,
     "basicRate": 4868
   },
   {
@@ -3434,7 +3053,6 @@
     "ownerRate": 4652,
     "homeOwnerRate": 5582,
     "conLoanRate": 2825,
-    "resiLoanRate": 3400,
     "basicRate": 4873
   },
   {
@@ -3443,7 +3061,6 @@
     "ownerRate": 4657,
     "homeOwnerRate": 5588,
     "conLoanRate": 2829,
-    "resiLoanRate": 3400,
     "basicRate": 4878
   },
   {
@@ -3452,7 +3069,6 @@
     "ownerRate": 4663,
     "homeOwnerRate": 5596,
     "conLoanRate": 2833,
-    "resiLoanRate": 3400,
     "basicRate": 4884
   },
   {
@@ -3461,7 +3077,6 @@
     "ownerRate": 4668,
     "homeOwnerRate": 5602,
     "conLoanRate": 2837,
-    "resiLoanRate": 3400,
     "basicRate": 4889
   },
   {
@@ -3470,7 +3085,6 @@
     "ownerRate": 4673,
     "homeOwnerRate": 5608,
     "conLoanRate": 2842,
-    "resiLoanRate": 3400,
     "basicRate": 4894
   },
   {
@@ -3479,7 +3093,6 @@
     "ownerRate": 4678,
     "homeOwnerRate": 5614,
     "conLoanRate": 2846,
-    "resiLoanRate": 3400,
     "basicRate": 4899
   },
   {
@@ -3488,7 +3101,6 @@
     "ownerRate": 4684,
     "homeOwnerRate": 5621,
     "conLoanRate": 2850,
-    "resiLoanRate": 3400,
     "basicRate": 4905
   },
   {
@@ -3497,7 +3109,6 @@
     "ownerRate": 4689,
     "homeOwnerRate": 5627,
     "conLoanRate": 2854,
-    "resiLoanRate": 3400,
     "basicRate": 4910
   },
   {
@@ -3506,7 +3117,6 @@
     "ownerRate": 4694,
     "homeOwnerRate": 5633,
     "conLoanRate": 2858,
-    "resiLoanRate": 3400,
     "basicRate": 4915
   },
   {
@@ -3515,7 +3125,6 @@
     "ownerRate": 4699,
     "homeOwnerRate": 5639,
     "conLoanRate": 2863,
-    "resiLoanRate": 3400,
     "basicRate": 4920
   },
   {
@@ -3524,7 +3133,6 @@
     "ownerRate": 4705,
     "homeOwnerRate": 5646,
     "conLoanRate": 2867,
-    "resiLoanRate": 3400,
     "basicRate": 4926
   },
   {
@@ -3533,7 +3141,6 @@
     "ownerRate": 4710,
     "homeOwnerRate": 5652,
     "conLoanRate": 2871,
-    "resiLoanRate": 3400,
     "basicRate": 4931
   },
   {
@@ -3542,7 +3149,6 @@
     "ownerRate": 4715,
     "homeOwnerRate": 5658,
     "conLoanRate": 2875,
-    "resiLoanRate": 3400,
     "basicRate": 4936
   },
   {
@@ -3551,7 +3157,6 @@
     "ownerRate": 4720,
     "homeOwnerRate": 5664,
     "conLoanRate": 2879,
-    "resiLoanRate": 3400,
     "basicRate": 4941
   },
   {
@@ -3560,7 +3165,6 @@
     "ownerRate": 4726,
     "homeOwnerRate": 5671,
     "conLoanRate": 2884,
-    "resiLoanRate": 3400,
     "basicRate": 4947
   },
   {
@@ -3569,7 +3173,6 @@
     "ownerRate": 4731,
     "homeOwnerRate": 5677,
     "conLoanRate": 2888,
-    "resiLoanRate": 3400,
     "basicRate": 4952
   },
   {
@@ -3578,7 +3181,6 @@
     "ownerRate": 4736,
     "homeOwnerRate": 5683,
     "conLoanRate": 2892,
-    "resiLoanRate": 3400,
     "basicRate": 4957
   },
   {
@@ -3587,7 +3189,6 @@
     "ownerRate": 4741,
     "homeOwnerRate": 5689,
     "conLoanRate": 2896,
-    "resiLoanRate": 4100,
     "basicRate": 4962
   },
   {
@@ -3596,7 +3197,6 @@
     "ownerRate": 4747,
     "homeOwnerRate": 5696,
     "conLoanRate": 2900,
-    "resiLoanRate": 4100,
     "basicRate": 4968
   },
   {
@@ -3605,7 +3205,6 @@
     "ownerRate": 4752,
     "homeOwnerRate": 5702,
     "conLoanRate": 2905,
-    "resiLoanRate": 4100,
     "basicRate": 4973
   },
   {
@@ -3614,7 +3213,6 @@
     "ownerRate": 4757,
     "homeOwnerRate": 5708,
     "conLoanRate": 2909,
-    "resiLoanRate": 4100,
     "basicRate": 4978
   },
   {
@@ -3623,7 +3221,6 @@
     "ownerRate": 4762,
     "homeOwnerRate": 5714,
     "conLoanRate": 2913,
-    "resiLoanRate": 4100,
     "basicRate": 4983
   },
   {
@@ -3632,7 +3229,6 @@
     "ownerRate": 4768,
     "homeOwnerRate": 5722,
     "conLoanRate": 2917,
-    "resiLoanRate": 4100,
     "basicRate": 4989
   },
   {
@@ -3641,7 +3237,6 @@
     "ownerRate": 4773,
     "homeOwnerRate": 5728,
     "conLoanRate": 2921,
-    "resiLoanRate": 4100,
     "basicRate": 4994
   },
   {
@@ -3650,7 +3245,6 @@
     "ownerRate": 4778,
     "homeOwnerRate": 5734,
     "conLoanRate": 2926,
-    "resiLoanRate": 4100,
     "basicRate": 4999
   },
   {
@@ -3659,7 +3253,6 @@
     "ownerRate": 4783,
     "homeOwnerRate": 5740,
     "conLoanRate": 2930,
-    "resiLoanRate": 4100,
     "basicRate": 5004
   },
   {
@@ -3668,7 +3261,6 @@
     "ownerRate": 4789,
     "homeOwnerRate": 5747,
     "conLoanRate": 2934,
-    "resiLoanRate": 4100,
     "basicRate": 5010
   },
   {
@@ -3677,7 +3269,6 @@
     "ownerRate": 4794,
     "homeOwnerRate": 5753,
     "conLoanRate": 2938,
-    "resiLoanRate": 4100,
     "basicRate": 5015
   },
   {
@@ -3686,7 +3277,6 @@
     "ownerRate": 4799,
     "homeOwnerRate": 5759,
     "conLoanRate": 2942,
-    "resiLoanRate": 4100,
     "basicRate": 5020
   },
   {
@@ -3695,7 +3285,6 @@
     "ownerRate": 4804,
     "homeOwnerRate": 5765,
     "conLoanRate": 2947,
-    "resiLoanRate": 4100,
     "basicRate": 5025
   },
   {
@@ -3704,7 +3293,6 @@
     "ownerRate": 4810,
     "homeOwnerRate": 5772,
     "conLoanRate": 2951,
-    "resiLoanRate": 4100,
     "basicRate": 5031
   },
   {
@@ -3713,7 +3301,6 @@
     "ownerRate": 4815,
     "homeOwnerRate": 5778,
     "conLoanRate": 2955,
-    "resiLoanRate": 4100,
     "basicRate": 5036
   },
   {
@@ -3722,7 +3309,6 @@
     "ownerRate": 4820,
     "homeOwnerRate": 5784,
     "conLoanRate": 2959,
-    "resiLoanRate": 4100,
     "basicRate": 5041
   },
   {
@@ -3731,7 +3317,6 @@
     "ownerRate": 4825,
     "homeOwnerRate": 5790,
     "conLoanRate": 2963,
-    "resiLoanRate": 4100,
     "basicRate": 5046
   },
   {
@@ -3740,7 +3325,6 @@
     "ownerRate": 4831,
     "homeOwnerRate": 5797,
     "conLoanRate": 2968,
-    "resiLoanRate": 4100,
     "basicRate": 5052
   },
   {
@@ -3749,7 +3333,6 @@
     "ownerRate": 4836,
     "homeOwnerRate": 5803,
     "conLoanRate": 2972,
-    "resiLoanRate": 4100,
     "basicRate": 5057
   },
   {
@@ -3758,7 +3341,6 @@
     "ownerRate": 4841,
     "homeOwnerRate": 5809,
     "conLoanRate": 2976,
-    "resiLoanRate": 4100,
     "basicRate": 5062
   },
   {
@@ -3767,7 +3349,6 @@
     "ownerRate": 4846,
     "homeOwnerRate": 5815,
     "conLoanRate": 2980,
-    "resiLoanRate": 4100,
     "basicRate": 5067
   },
   {
@@ -3776,7 +3357,6 @@
     "ownerRate": 4852,
     "homeOwnerRate": 5822,
     "conLoanRate": 2984,
-    "resiLoanRate": 4100,
     "basicRate": 5073
   },
   {
@@ -3785,7 +3365,6 @@
     "ownerRate": 4857,
     "homeOwnerRate": 5828,
     "conLoanRate": 2989,
-    "resiLoanRate": 4100,
     "basicRate": 5078
   },
   {
@@ -3794,7 +3373,6 @@
     "ownerRate": 4862,
     "homeOwnerRate": 5834,
     "conLoanRate": 2993,
-    "resiLoanRate": 4100,
     "basicRate": 5083
   },
   {
@@ -3803,7 +3381,6 @@
     "ownerRate": 4867,
     "homeOwnerRate": 5840,
     "conLoanRate": 2997,
-    "resiLoanRate": 4100,
     "basicRate": 5088
   },
   {
@@ -3812,7 +3389,6 @@
     "ownerRate": 4873,
     "homeOwnerRate": 5848,
     "conLoanRate": 3001,
-    "resiLoanRate": 4100,
     "basicRate": 5094
   },
   {
@@ -3821,7 +3397,6 @@
     "ownerRate": 4878,
     "homeOwnerRate": 5854,
     "conLoanRate": 3005,
-    "resiLoanRate": 4100,
     "basicRate": 5099
   },
   {
@@ -3830,7 +3405,6 @@
     "ownerRate": 4883,
     "homeOwnerRate": 5860,
     "conLoanRate": 3010,
-    "resiLoanRate": 4100,
     "basicRate": 5104
   },
   {
@@ -3839,7 +3413,6 @@
     "ownerRate": 4888,
     "homeOwnerRate": 5866,
     "conLoanRate": 3014,
-    "resiLoanRate": 4100,
     "basicRate": 5109
   },
   {
@@ -3848,7 +3421,6 @@
     "ownerRate": 4894,
     "homeOwnerRate": 5873,
     "conLoanRate": 3018,
-    "resiLoanRate": 4100,
     "basicRate": 5115
   },
   {
@@ -3857,7 +3429,6 @@
     "ownerRate": 4899,
     "homeOwnerRate": 5879,
     "conLoanRate": 3022,
-    "resiLoanRate": 4100,
     "basicRate": 5120
   },
   {
@@ -3866,7 +3437,6 @@
     "ownerRate": 4904,
     "homeOwnerRate": 5885,
     "conLoanRate": 3026,
-    "resiLoanRate": 4100,
     "basicRate": 5125
   },
   {
@@ -3875,7 +3445,6 @@
     "ownerRate": 4909,
     "homeOwnerRate": 5891,
     "conLoanRate": 3031,
-    "resiLoanRate": 4100,
     "basicRate": 5130
   },
   {
@@ -3884,7 +3453,6 @@
     "ownerRate": 4915,
     "homeOwnerRate": 5898,
     "conLoanRate": 3035,
-    "resiLoanRate": 4100,
     "basicRate": 5136
   },
   {
@@ -3893,7 +3461,6 @@
     "ownerRate": 4920,
     "homeOwnerRate": 5904,
     "conLoanRate": 3039,
-    "resiLoanRate": 4100,
     "basicRate": 5141
   },
   {
@@ -3902,7 +3469,6 @@
     "ownerRate": 4925,
     "homeOwnerRate": 5910,
     "conLoanRate": 3043,
-    "resiLoanRate": 4100,
     "basicRate": 5146
   },
   {
@@ -3911,7 +3477,6 @@
     "ownerRate": 4930,
     "homeOwnerRate": 5916,
     "conLoanRate": 3047,
-    "resiLoanRate": 4100,
     "basicRate": 5151
   },
   {
@@ -3920,7 +3485,6 @@
     "ownerRate": 4936,
     "homeOwnerRate": 5923,
     "conLoanRate": 3052,
-    "resiLoanRate": 4100,
     "basicRate": 5157
   },
   {
@@ -3929,7 +3493,6 @@
     "ownerRate": 4941,
     "homeOwnerRate": 5929,
     "conLoanRate": 3056,
-    "resiLoanRate": 4100,
     "basicRate": 5162
   },
   {
@@ -3938,7 +3501,6 @@
     "ownerRate": 4946,
     "homeOwnerRate": 5935,
     "conLoanRate": 3060,
-    "resiLoanRate": 4100,
     "basicRate": 5167
   },
   {
@@ -3947,7 +3509,6 @@
     "ownerRate": 4951,
     "homeOwnerRate": 5941,
     "conLoanRate": 3064,
-    "resiLoanRate": 4100,
     "basicRate": 5172
   },
   {
@@ -3956,7 +3517,6 @@
     "ownerRate": 4957,
     "homeOwnerRate": 5948,
     "conLoanRate": 3068,
-    "resiLoanRate": 4100,
     "basicRate": 5178
   },
   {
@@ -3965,7 +3525,6 @@
     "ownerRate": 4962,
     "homeOwnerRate": 5954,
     "conLoanRate": 3073,
-    "resiLoanRate": 4100,
     "basicRate": 5183
   },
   {
@@ -3974,7 +3533,6 @@
     "ownerRate": 4967,
     "homeOwnerRate": 5960,
     "conLoanRate": 3077,
-    "resiLoanRate": 4100,
     "basicRate": 5188
   },
   {
@@ -3983,7 +3541,6 @@
     "ownerRate": 4972,
     "homeOwnerRate": 5966,
     "conLoanRate": 3081,
-    "resiLoanRate": 4100,
     "basicRate": 5193
   },
   {
@@ -3992,7 +3549,6 @@
     "ownerRate": 4978,
     "homeOwnerRate": 5974,
     "conLoanRate": 3085,
-    "resiLoanRate": 4100,
     "basicRate": 5199
   },
   {
@@ -4001,7 +3557,6 @@
     "ownerRate": 4983,
     "homeOwnerRate": 5980,
     "conLoanRate": 3089,
-    "resiLoanRate": 4100,
     "basicRate": 5204
   },
   {
@@ -4010,7 +3565,6 @@
     "ownerRate": 4988,
     "homeOwnerRate": 5986,
     "conLoanRate": 3094,
-    "resiLoanRate": 4100,
     "basicRate": 5209
   },
   {
@@ -4019,7 +3573,6 @@
     "ownerRate": 4993,
     "homeOwnerRate": 5992,
     "conLoanRate": 3098,
-    "resiLoanRate": 4100,
     "basicRate": 5214
   },
   {
@@ -4028,7 +3581,6 @@
     "ownerRate": 4999,
     "homeOwnerRate": 5999,
     "conLoanRate": 3102,
-    "resiLoanRate": 4100,
     "basicRate": 5220
   },
   {
@@ -4037,7 +3589,6 @@
     "ownerRate": 5004,
     "homeOwnerRate": 6005,
     "conLoanRate": 3106,
-    "resiLoanRate": 4100,
     "basicRate": 5225
   },
   {
@@ -4046,7 +3597,6 @@
     "ownerRate": 5009,
     "homeOwnerRate": 6011,
     "conLoanRate": 3110,
-    "resiLoanRate": 4100,
     "basicRate": 5230
   },
   {
@@ -4055,7 +3605,6 @@
     "ownerRate": 5014,
     "homeOwnerRate": 6017,
     "conLoanRate": 3115,
-    "resiLoanRate": 4100,
     "basicRate": 5235
   },
   {
@@ -4064,7 +3613,6 @@
     "ownerRate": 5020,
     "homeOwnerRate": 6024,
     "conLoanRate": 3119,
-    "resiLoanRate": 4100,
     "basicRate": 5241
   },
   {
@@ -4073,7 +3621,6 @@
     "ownerRate": 5025,
     "homeOwnerRate": 6030,
     "conLoanRate": 3123,
-    "resiLoanRate": 4100,
     "basicRate": 5246
   },
   {
@@ -4082,7 +3629,6 @@
     "ownerRate": 5030,
     "homeOwnerRate": 6036,
     "conLoanRate": 3127,
-    "resiLoanRate": 4100,
     "basicRate": 5251
   },
   {
@@ -4091,7 +3637,6 @@
     "ownerRate": 5035,
     "homeOwnerRate": 6042,
     "conLoanRate": 3131,
-    "resiLoanRate": 4100,
     "basicRate": 5256
   },
   {
@@ -4100,7 +3645,6 @@
     "ownerRate": 5041,
     "homeOwnerRate": 6049,
     "conLoanRate": 3136,
-    "resiLoanRate": 4100,
     "basicRate": 5262
   },
   {
@@ -4109,7 +3653,6 @@
     "ownerRate": 5046,
     "homeOwnerRate": 6055,
     "conLoanRate": 3140,
-    "resiLoanRate": 4100,
     "basicRate": 5267
   },
   {
@@ -4118,7 +3661,6 @@
     "ownerRate": 5051,
     "homeOwnerRate": 6061,
     "conLoanRate": 3144,
-    "resiLoanRate": 4100,
     "basicRate": 5272
   },
   {
@@ -4127,7 +3669,6 @@
     "ownerRate": 5056,
     "homeOwnerRate": 6067,
     "conLoanRate": 3148,
-    "resiLoanRate": 4100,
     "basicRate": 5277
   },
   {
@@ -4136,7 +3677,6 @@
     "ownerRate": 5062,
     "homeOwnerRate": 6074,
     "conLoanRate": 3152,
-    "resiLoanRate": 4100,
     "basicRate": 5283
   },
   {
@@ -4145,7 +3685,6 @@
     "ownerRate": 5067,
     "homeOwnerRate": 6080,
     "conLoanRate": 3157,
-    "resiLoanRate": 4100,
     "basicRate": 5288
   },
   {
@@ -4154,7 +3693,6 @@
     "ownerRate": 5072,
     "homeOwnerRate": 6086,
     "conLoanRate": 3161,
-    "resiLoanRate": 4100,
     "basicRate": 5293
   },
   {
@@ -4163,7 +3701,6 @@
     "ownerRate": 5077,
     "homeOwnerRate": 6092,
     "conLoanRate": 3165,
-    "resiLoanRate": 4100,
     "basicRate": 5298
   },
   {
@@ -4172,7 +3709,6 @@
     "ownerRate": 5083,
     "homeOwnerRate": 6100,
     "conLoanRate": 3169,
-    "resiLoanRate": 4100,
     "basicRate": 5304
   },
   {
@@ -4181,7 +3717,6 @@
     "ownerRate": 5088,
     "homeOwnerRate": 6106,
     "conLoanRate": 3173,
-    "resiLoanRate": 4100,
     "basicRate": 5309
   },
   {
@@ -4190,7 +3725,6 @@
     "ownerRate": 5093,
     "homeOwnerRate": 6112,
     "conLoanRate": 3178,
-    "resiLoanRate": 4100,
     "basicRate": 5314
   },
   {
@@ -4199,7 +3733,6 @@
     "ownerRate": 5098,
     "homeOwnerRate": 6118,
     "conLoanRate": 3182,
-    "resiLoanRate": 4100,
     "basicRate": 5319
   },
   {
@@ -4208,7 +3741,6 @@
     "ownerRate": 5104,
     "homeOwnerRate": 6125,
     "conLoanRate": 3186,
-    "resiLoanRate": 4100,
     "basicRate": 5325
   },
   {
@@ -4217,7 +3749,6 @@
     "ownerRate": 5109,
     "homeOwnerRate": 6131,
     "conLoanRate": 3190,
-    "resiLoanRate": 4100,
     "basicRate": 5330
   },
   {
@@ -4226,7 +3757,6 @@
     "ownerRate": 5114,
     "homeOwnerRate": 6137,
     "conLoanRate": 3194,
-    "resiLoanRate": 4100,
     "basicRate": 5335
   },
   {
@@ -4235,7 +3765,6 @@
     "ownerRate": 5119,
     "homeOwnerRate": 6143,
     "conLoanRate": 3199,
-    "resiLoanRate": 4100,
     "basicRate": 5340
   },
   {
@@ -4244,7 +3773,6 @@
     "ownerRate": 5125,
     "homeOwnerRate": 6150,
     "conLoanRate": 3203,
-    "resiLoanRate": 4100,
     "basicRate": 5346
   },
   {
@@ -4253,7 +3781,6 @@
     "ownerRate": 5130,
     "homeOwnerRate": 6156,
     "conLoanRate": 3207,
-    "resiLoanRate": 4100,
     "basicRate": 5351
   },
   {
@@ -4262,7 +3789,6 @@
     "ownerRate": 5135,
     "homeOwnerRate": 6162,
     "conLoanRate": 3211,
-    "resiLoanRate": 4100,
     "basicRate": 5356
   },
   {
@@ -4271,7 +3797,6 @@
     "ownerRate": 5140,
     "homeOwnerRate": 6168,
     "conLoanRate": 3215,
-    "resiLoanRate": 4100,
     "basicRate": 5361
   },
   {
@@ -4280,7 +3805,6 @@
     "ownerRate": 5146,
     "homeOwnerRate": 6175,
     "conLoanRate": 3220,
-    "resiLoanRate": 4100,
     "basicRate": 5367
   },
   {
@@ -4289,7 +3813,6 @@
     "ownerRate": 5151,
     "homeOwnerRate": 6181,
     "conLoanRate": 3224,
-    "resiLoanRate": 4100,
     "basicRate": 5372
   },
   {
@@ -4298,7 +3821,6 @@
     "ownerRate": 5156,
     "homeOwnerRate": 6187,
     "conLoanRate": 3228,
-    "resiLoanRate": 4100,
     "basicRate": 5377
   },
   {
@@ -4307,7 +3829,6 @@
     "ownerRate": 5161,
     "homeOwnerRate": 6193,
     "conLoanRate": 3232,
-    "resiLoanRate": 4100,
     "basicRate": 5382
   },
   {
@@ -4316,7 +3837,6 @@
     "ownerRate": 5167,
     "homeOwnerRate": 6200,
     "conLoanRate": 3236,
-    "resiLoanRate": 4100,
     "basicRate": 5388
   },
   {
@@ -4325,7 +3845,6 @@
     "ownerRate": 5172,
     "homeOwnerRate": 6206,
     "conLoanRate": 3241,
-    "resiLoanRate": 4100,
     "basicRate": 5393
   },
   {
@@ -4334,7 +3853,6 @@
     "ownerRate": 5177,
     "homeOwnerRate": 6212,
     "conLoanRate": 3245,
-    "resiLoanRate": 4100,
     "basicRate": 5398
   },
   {
@@ -4343,7 +3861,6 @@
     "ownerRate": 5182,
     "homeOwnerRate": 6218,
     "conLoanRate": 3249,
-    "resiLoanRate": 4100,
     "basicRate": 5403
   },
   {
@@ -4352,7 +3869,6 @@
     "ownerRate": 5188,
     "homeOwnerRate": 6226,
     "conLoanRate": 3253,
-    "resiLoanRate": 4100,
     "basicRate": 5409
   },
   {
@@ -4361,7 +3877,6 @@
     "ownerRate": 5193,
     "homeOwnerRate": 6232,
     "conLoanRate": 3257,
-    "resiLoanRate": 4100,
     "basicRate": 5414
   },
   {
@@ -4370,7 +3885,6 @@
     "ownerRate": 5198,
     "homeOwnerRate": 6238,
     "conLoanRate": 3262,
-    "resiLoanRate": 4100,
     "basicRate": 5419
   },
   {
@@ -4379,7 +3893,6 @@
     "ownerRate": 5203,
     "homeOwnerRate": 6244,
     "conLoanRate": 3266,
-    "resiLoanRate": 4100,
     "basicRate": 5424
   },
   {
@@ -4388,7 +3901,6 @@
     "ownerRate": 5209,
     "homeOwnerRate": 6251,
     "conLoanRate": 3270,
-    "resiLoanRate": 4100,
     "basicRate": 5430
   },
   {
@@ -4397,7 +3909,6 @@
     "ownerRate": 5214,
     "homeOwnerRate": 6257,
     "conLoanRate": 3274,
-    "resiLoanRate": 4100,
     "basicRate": 5435
   },
   {
@@ -4406,7 +3917,6 @@
     "ownerRate": 5219,
     "homeOwnerRate": 6263,
     "conLoanRate": 3278,
-    "resiLoanRate": 4100,
     "basicRate": 5440
   },
   {
@@ -4415,7 +3925,6 @@
     "ownerRate": 5224,
     "homeOwnerRate": 6269,
     "conLoanRate": 3283,
-    "resiLoanRate": 4100,
     "basicRate": 5445
   },
   {
@@ -4424,7 +3933,6 @@
     "ownerRate": 5230,
     "homeOwnerRate": 6276,
     "conLoanRate": 3287,
-    "resiLoanRate": 4100,
     "basicRate": 5451
   },
   {
@@ -4433,7 +3941,6 @@
     "ownerRate": 5235,
     "homeOwnerRate": 6282,
     "conLoanRate": 3291,
-    "resiLoanRate": 4100,
     "basicRate": 5456
   },
   {
@@ -4442,7 +3949,6 @@
     "ownerRate": 5240,
     "homeOwnerRate": 6288,
     "conLoanRate": 3295,
-    "resiLoanRate": 4100,
     "basicRate": 5461
   },
   {
@@ -4451,7 +3957,6 @@
     "ownerRate": 5245,
     "homeOwnerRate": 6294,
     "conLoanRate": 3299,
-    "resiLoanRate": 4100,
     "basicRate": 5466
   },
   {
@@ -4460,7 +3965,6 @@
     "ownerRate": 5251,
     "homeOwnerRate": 6301,
     "conLoanRate": 3304,
-    "resiLoanRate": 4100,
     "basicRate": 5472
   },
   {
@@ -4469,7 +3973,6 @@
     "ownerRate": 5256,
     "homeOwnerRate": 6307,
     "conLoanRate": 3308,
-    "resiLoanRate": 4100,
     "basicRate": 5477
   },
   {
@@ -4478,7 +3981,6 @@
     "ownerRate": 5261,
     "homeOwnerRate": 6313,
     "conLoanRate": 3312,
-    "resiLoanRate": 4100,
     "basicRate": 5482
   }
 ]

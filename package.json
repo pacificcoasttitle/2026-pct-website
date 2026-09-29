@@ -6,6 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
+    "test:calculator": "tsx scripts/test-calculator.ts",
     "start": "next start",
     "verify:marketing": "tsx scripts/verify-marketing.ts",
     "backfill:audiences": "tsx scripts/backfill-team-audiences.ts",

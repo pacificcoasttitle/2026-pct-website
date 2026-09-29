@@ -5,6 +5,20 @@ import path from "path"
 
 const DATA_DIR = path.join(process.cwd(), "data", "calculator")
 
+/**
+ * Rate tables live in data/calculator/*.json and are versioned in git. On Vercel the
+ * filesystem is read-only (writes look like they succeed and vanish on the next deploy),
+ * so the write endpoints refuse there and point at the repo instead.
+ */
+const READ_ONLY_MESSAGE =
+  "Rate tables are versioned in git and read-only in production. Edit data/calculator/*.json in the repo and deploy."
+
+function readOnlyResponse() {
+  return process.env.VERCEL
+    ? NextResponse.json({ error: READ_ONLY_MESSAGE, readOnly: true }, { status: 409 })
+    : null
+}
+
 function readJsonFile(filename: string) {
   const data = fs.readFileSync(path.join(DATA_DIR, filename), "utf-8")
   return JSON.parse(data)
@@ -37,7 +51,7 @@ export async function GET(request: NextRequest) {
     }
 
     const data = readJsonFile(filename)
-    return NextResponse.json({ type, data })
+    return NextResponse.json({ type, data, readOnly: !!process.env.VERCEL })
   } catch {
     return NextResponse.json({ error: "Failed to read rates" }, { status: 500 })
   }
@@ -47,6 +61,9 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const auth = await requireApiRole('fees')
   if ('error' in auth) return auth.error
+
+  const readOnly = readOnlyResponse()
+  if (readOnly) return readOnly
 
   try {
     const body = await request.json()
@@ -84,6 +101,9 @@ export async function POST(request: NextRequest) {
   const auth = await requireApiRole('fees')
   if ('error' in auth) return auth.error
 
+  const readOnly = readOnlyResponse()
+  if (readOnly) return readOnly
+
   try {
     const body = await request.json()
     const { type, data } = body
@@ -115,6 +135,9 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const auth = await requireApiRole('fees')
   if ('error' in auth) return auth.error
+
+  const readOnly = readOnlyResponse()
+  if (readOnly) return readOnly
 
   try {
     const { searchParams } = new URL(request.url)

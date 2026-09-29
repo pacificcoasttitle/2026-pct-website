@@ -144,7 +144,7 @@
     "escrowRate": 475
   },
   {
-    "county": "Contra County__All",
+    "county": "Contra Costa County__All",
     "minRange": 0,
     "maxRange": 750000,
     "escrowRate": 475
@@ -162,7 +162,7 @@
     "escrowRate": 575
   },
   {
-    "county": "Contra County__All",
+    "county": "Contra Costa County__All",
     "minRange": 750001,
     "maxRange": 1200000,
     "escrowRate": 575
@@ -180,7 +180,7 @@
     "escrowRate": 675
   },
   {
-    "county": "Contra County__All",
+    "county": "Contra Costa County__All",
     "minRange": 1200001,
     "maxRange": 2000000,
     "escrowRate": 675
@@ -204,7 +204,7 @@
     "escrowRate": 775
   },
   {
-    "county": "Contra County__All",
+    "county": "Contra Costa County__All",
     "minRange": 2000001,
     "maxRange": null,
     "escrowRate": 775

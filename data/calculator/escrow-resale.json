@@ -126,7 +126,7 @@
     "minimumRate": 0
   },
   {
-    "county": "Contra County__All",
+    "county": "Contra Costa County__All",
     "minRange": 0,
     "maxRange": 100000,
     "baseAmount": 0,
@@ -153,7 +153,7 @@
     "minimumRate": 0
   },
   {
-    "county": "Contra County__All",
+    "county": "Contra Costa County__All",
     "minRange": 100001,
     "maxRange": 200000,
     "baseAmount": 450,
@@ -180,7 +180,7 @@
     "minimumRate": 0
   },
   {
-    "county": "Contra County__All",
+    "county": "Contra Costa County__All",
     "minRange": 200001,
     "maxRange": 600000,
     "baseAmount": 600,
@@ -207,7 +207,7 @@
     "minimumRate": null
   },
   {
-    "county": "Contra County__All",
+    "county": "Contra Costa County__All",
     "minRange": 600001,
     "maxRange": 800000,
     "baseAmount": 1000,
@@ -234,7 +234,7 @@
     "minimumRate": null
   },
   {
-    "county": "Contra County__All",
+    "county": "Contra Costa County__All",
     "minRange": 800001,
     "maxRange": 900000,
     "baseAmount": null,
@@ -261,7 +261,7 @@
     "minimumRate": null
   },
   {
-    "county": "Contra County__All",
+    "county": "Contra Costa County__All",
     "minRange": 900001,
     "maxRange": 1000000,
     "baseAmount": null,
@@ -288,7 +288,7 @@
     "minimumRate": null
   },
   {
-    "county": "Contra County__All",
+    "county": "Contra Costa County__All",
     "minRange": 1000001,
     "maxRange": 1250000,
     "baseAmount": null,
@@ -315,7 +315,7 @@
     "minimumRate": null
   },
   {
-    "county": "Contra County__All",
+    "county": "Contra Costa County__All",
     "minRange": 1250001,
     "maxRange": 1500000,
     "baseAmount": null,
@@ -333,7 +333,7 @@
     "minimumRate": null
   },
   {
-    "county": "Contra County__All",
+    "county": "Contra Costa County__All",
     "minRange": 1500001,
     "maxRange": 2000000,
     "baseAmount": null,
@@ -369,7 +369,7 @@
     "minimumRate": 1700
   },
   {
-    "county": "Contra County__All",
+    "county": "Contra Costa County__All",
     "minRange": 2000001,
     "maxRange": null,
     "baseAmount": null,

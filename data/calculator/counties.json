@@ -528,7 +528,7 @@
     ]
   },
   {
-    "zoneName": "Contra County",
+    "zoneName": "Contra Costa County",
     "zoneId": 7,
     "transactionType": "All",
     "cities": [
@@ -1448,7 +1448,7 @@
     ]
   },
   {
-    "zoneName": "Syskiyou",
+    "zoneName": "Siskiyou",
     "zoneId": 0,
     "transactionType": "Re-Finance",
     "cities": [
@@ -1460,7 +1460,7 @@
     ]
   },
   {
-    "zoneName": "Calayeras",
+    "zoneName": "Calaveras",
     "zoneId": 0,
     "transactionType": "Re-Finance",
     "cities": [
@@ -1640,18 +1640,6 @@
     ]
   },
   {
-    "zoneName": "Contra Costa",
-    "zoneId": 0,
-    "transactionType": "All",
-    "cities": [
-      {
-        "id": 278,
-        "name": "Contra Costa",
-        "transactionType": "All"
-      }
-    ]
-  },
-  {
     "zoneName": "Fresno",
     "zoneId": 0,
     "transactionType": "All",
@@ -1671,18 +1659,6 @@
       {
         "id": 280,
         "name": "San Francisco",
-        "transactionType": "All"
-      }
-    ]
-  },
-  {
-    "zoneName": "Ventura",
-    "zoneId": 0,
-    "transactionType": "All",
-    "cities": [
-      {
-        "id": 281,
-        "name": "Ventura",
         "transactionType": "All"
       }
     ]
@@ -1988,7 +1964,7 @@
     ]
   },
   {
-    "zoneName": "MendocIno",
+    "zoneName": "Mendocino",
     "zoneId": 0,
     "transactionType": "Re-Finance",
     "cities": [

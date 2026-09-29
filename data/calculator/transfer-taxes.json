@@ -1,68 +1,279 @@
 [
   {
-    "countyId": 188,
     "zoneName": "Los Angeles County",
-    "countyTaxPerThousand": 1.1,
-    "cityTaxPerThousand": 4.5
+    "cityName": "Los Angeles",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 4.5,
+    "tierMode": "additional",
+    "tiers": [
+      {
+        "upTo": 5400000,
+        "perThousand": 0
+      },
+      {
+        "upTo": 10900000,
+        "perThousand": 40
+      },
+      {
+        "upTo": null,
+        "perThousand": 55
+      }
+    ],
+    "note": "Base $4.50/1,000 plus Measure ULA 4% ($5.4M-$10.9M) or 5.5% (over $10.9M) on the full price; thresholds adjust each July 1 (current: eff. 7/1/2026)"
   },
   {
-    "countyId": 161,
     "zoneName": "Los Angeles County",
-    "countyTaxPerThousand": 1.1,
-    "cityTaxPerThousand": 4.5
+    "cityName": "Culver City",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 0.0,
+    "tierMode": "marginal",
+    "tiers": [
+      {
+        "upTo": 1500000,
+        "perThousand": 4.5
+      },
+      {
+        "upTo": 3000000,
+        "perThousand": 15
+      },
+      {
+        "upTo": 10000000,
+        "perThousand": 30
+      },
+      {
+        "upTo": null,
+        "perThousand": 40
+      }
+    ],
+    "note": "Graduated: 0.45% to $1.5M, 1.5% of the portion $1.5M-$3M, 3% of $3M-$10M, 4% above $10M"
   },
   {
-    "countyId": 202,
     "zoneName": "Los Angeles County",
-    "countyTaxPerThousand": 1.1,
-    "cityTaxPerThousand": 2.2
+    "cityName": "Pomona",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 2.2,
+    "tierMode": "none",
+    "tiers": [],
+    "note": ""
   },
   {
-    "countyId": 204,
     "zoneName": "Los Angeles County",
-    "countyTaxPerThousand": 1.1,
-    "cityTaxPerThousand": 2.2
+    "cityName": "Redondo Beach",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 2.2,
+    "tierMode": "none",
+    "tiers": [],
+    "note": ""
   },
   {
-    "countyId": 214,
     "zoneName": "Los Angeles County",
-    "countyTaxPerThousand": 1.1,
-    "cityTaxPerThousand": 3
+    "cityName": "Santa Monica",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 0.0,
+    "tierMode": "full",
+    "tiers": [
+      {
+        "upTo": 5000000,
+        "perThousand": 3
+      },
+      {
+        "upTo": 8000000,
+        "perThousand": 6
+      },
+      {
+        "upTo": null,
+        "perThousand": 56
+      }
+    ],
+    "note": "Measure GS: $3/1,000 under $5M, $6/1,000 $5M-$8M, $56/1,000 at $8M+ (on full price)"
   },
   {
-    "countyId": 314,
-    "zoneName": "Los Angeles County",
-    "countyTaxPerThousand": 1.1,
-    "cityTaxPerThousand": 1.1
+    "zoneName": "Alameda County",
+    "cityName": "Alameda",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 12,
+    "tierMode": "none",
+    "tiers": [],
+    "note": ""
   },
   {
-    "countyId": 309,
-    "zoneName": "Orange",
-    "countyTaxPerThousand": 1.1,
-    "cityTaxPerThousand": 0
+    "zoneName": "Alameda County",
+    "cityName": "Albany",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 15,
+    "tierMode": "none",
+    "tiers": [],
+    "note": ""
   },
   {
-    "countyId": 313,
-    "zoneName": "San Bernardino",
-    "countyTaxPerThousand": 1.1,
-    "cityTaxPerThousand": 0
+    "zoneName": "Alameda County",
+    "cityName": "Berkeley",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 0.0,
+    "tierMode": "full",
+    "tiers": [
+      {
+        "upTo": 1600000,
+        "perThousand": 15
+      },
+      {
+        "upTo": null,
+        "perThousand": 25
+      }
+    ],
+    "note": "$15/1,000 up to $1.6M; $25/1,000 above (on full price)"
   },
   {
-    "countyId": 74,
+    "zoneName": "Alameda County",
+    "cityName": "Emeryville",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 0.0,
+    "tierMode": "full",
+    "tiers": [
+      {
+        "upTo": 1000000,
+        "perThousand": 12
+      },
+      {
+        "upTo": 2000000,
+        "perThousand": 15
+      },
+      {
+        "upTo": null,
+        "perThousand": 25
+      }
+    ],
+    "note": "$12/1,000 to $1M; $15/1,000 $1M-$2M; $25/1,000 above $2M (on full price)"
+  },
+  {
+    "zoneName": "Alameda County",
+    "cityName": "Hayward",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 8.5,
+    "tierMode": "none",
+    "tiers": [],
+    "note": ""
+  },
+  {
+    "zoneName": "Alameda County",
+    "cityName": "Oakland",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 0.0,
+    "tierMode": "full",
+    "tiers": [
+      {
+        "upTo": 300000,
+        "perThousand": 10
+      },
+      {
+        "upTo": 2000000,
+        "perThousand": 15
+      },
+      {
+        "upTo": 5000000,
+        "perThousand": 17.5
+      },
+      {
+        "upTo": null,
+        "perThousand": 25
+      }
+    ],
+    "note": "$10/1,000 to $300K; $15/1,000 $300K-$2M; $17.50/1,000 $2M-$5M; $25/1,000 above $5M (on full price)"
+  },
+  {
+    "zoneName": "Alameda County",
+    "cityName": "Piedmont",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 13,
+    "tierMode": "none",
+    "tiers": [],
+    "note": ""
+  },
+  {
+    "zoneName": "Alameda County",
+    "cityName": "San Leandro",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 11,
+    "tierMode": "none",
+    "tiers": [],
+    "note": ""
+  },
+  {
+    "zoneName": "Contra Costa County",
+    "cityName": "Richmond",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 0.0,
+    "tierMode": "full",
+    "tiers": [
+      {
+        "upTo": 1000000,
+        "perThousand": 7
+      },
+      {
+        "upTo": 3000000,
+        "perThousand": 12.5
+      },
+      {
+        "upTo": 10000000,
+        "perThousand": 25
+      },
+      {
+        "upTo": null,
+        "perThousand": 30
+      }
+    ],
+    "note": "$7/1,000 to $1M; 1.25% $1M-$3M; 2.5% $3M-$10M; 3% above $10M (on full price)"
+  },
+  {
+    "zoneName": "Contra Costa County",
+    "cityName": "El Cerrito",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 12,
+    "tierMode": "none",
+    "tiers": [],
+    "note": ""
+  },
+  {
     "zoneName": "Riverside",
-    "countyTaxPerThousand": 1.1,
-    "cityTaxPerThousand": 1.1
+    "cityName": "Riverside",
+    "countyPerThousand": 1.1,
+    "cityPerThousand": 1.1,
+    "tierMode": "none",
+    "tiers": [],
+    "note": ""
   },
   {
-    "countyId": 316,
-    "zoneName": "San Diego",
-    "countyTaxPerThousand": 1.1,
-    "cityTaxPerThousand": 0
-  },
-  {
-    "countyId": 281,
-    "zoneName": "Ventura",
-    "countyTaxPerThousand": 1.1,
-    "cityTaxPerThousand": 0
+    "zoneName": "San Francisco",
+    "cityName": "All Cities",
+    "countyPerThousand": 0,
+    "cityPerThousand": 0.0,
+    "tierMode": "full",
+    "tiers": [
+      {
+        "upTo": 250000,
+        "perThousand": 5
+      },
+      {
+        "upTo": 1000000,
+        "perThousand": 6.8
+      },
+      {
+        "upTo": 5000000,
+        "perThousand": 7.5
+      },
+      {
+        "upTo": 10000000,
+        "perThousand": 22.5
+      },
+      {
+        "upTo": 25000000,
+        "perThousand": 55
+      },
+      {
+        "upTo": null,
+        "perThousand": 60
+      }
+    ],
+    "note": "City & County of San Francisco combined rate (no separate $1.10 county tax)"
   }
 ]

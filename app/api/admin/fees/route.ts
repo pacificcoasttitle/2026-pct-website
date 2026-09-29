@@ -5,6 +5,20 @@ import path from "path"
 
 const FEES_PATH = path.join(process.cwd(), "data", "calculator", "fees.json")
 
+/**
+ * Rate tables live in data/calculator/*.json and are versioned in git. On Vercel the
+ * filesystem is read-only (writes look like they succeed and vanish on the next deploy),
+ * so the write endpoints refuse there and point at the repo instead.
+ */
+const READ_ONLY_MESSAGE =
+  "Rate tables are versioned in git and read-only in production. Edit data/calculator/*.json in the repo and deploy."
+
+function readOnlyResponse() {
+  return process.env.VERCEL
+    ? NextResponse.json({ error: READ_ONLY_MESSAGE, readOnly: true }, { status: 409 })
+    : null
+}
+
 function readFees() {
   const data = fs.readFileSync(FEES_PATH, "utf-8")
   return JSON.parse(data)
@@ -21,7 +35,7 @@ export async function GET() {
 
   try {
     const fees = readFees()
-    return NextResponse.json(fees)
+    return NextResponse.json(fees, { headers: { "X-Rates-Read-Only": process.env.VERCEL ? "1" : "0" } })
   } catch {
     return NextResponse.json({ error: "Failed to read fees" }, { status: 500 })
   }
@@ -31,6 +45,9 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const auth = await requireApiRole('fees')
   if ('error' in auth) return auth.error
+
+  const readOnly = readOnlyResponse()
+  if (readOnly) return readOnly
 
   try {
     const body = await request.json()
@@ -65,6 +82,9 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const auth = await requireApiRole('fees')
   if ('error' in auth) return auth.error
+
+  const readOnly = readOnlyResponse()
+  if (readOnly) return readOnly
 
   try {
     const body = await request.json()
@@ -102,6 +122,9 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const auth = await requireApiRole('fees')
   if ('error' in auth) return auth.error
+
+  const readOnly = readOnlyResponse()
+  if (readOnly) return readOnly
 
   try {
     const { searchParams } = new URL(request.url)

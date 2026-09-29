@@ -1,0 +1,222 @@
+{
+  "standard": {
+    "label": "Residential Refinance Rate",
+    "manualSection": "Westcor CA Rate Manual \u00a73.17",
+    "maxAmount": 10000000,
+    "brackets": [
+      {
+        "minRange": 0,
+        "maxRange": 50000,
+        "rate": 450
+      },
+      {
+        "minRange": 50001,
+        "maxRange": 100000,
+        "rate": 450
+      },
+      {
+        "minRange": 100001,
+        "maxRange": 150000,
+        "rate": 450
+      },
+      {
+        "minRange": 150001,
+        "maxRange": 200000,
+        "rate": 450
+      },
+      {
+        "minRange": 200001,
+        "maxRange": 250000,
+        "rate": 450
+      },
+      {
+        "minRange": 250001,
+        "maxRange": 300000,
+        "rate": 660
+      },
+      {
+        "minRange": 300001,
+        "maxRange": 350000,
+        "rate": 660
+      },
+      {
+        "minRange": 350001,
+        "maxRange": 400000,
+        "rate": 660
+      },
+      {
+        "minRange": 400001,
+        "maxRange": 450000,
+        "rate": 660
+      },
+      {
+        "minRange": 450001,
+        "maxRange": 500000,
+        "rate": 660
+      },
+      {
+        "minRange": 500001,
+        "maxRange": 550000,
+        "rate": 840
+      },
+      {
+        "minRange": 550001,
+        "maxRange": 600000,
+        "rate": 840
+      },
+      {
+        "minRange": 600001,
+        "maxRange": 650000,
+        "rate": 840
+      },
+      {
+        "minRange": 650001,
+        "maxRange": 700000,
+        "rate": 840
+      },
+      {
+        "minRange": 700001,
+        "maxRange": 750000,
+        "rate": 840
+      },
+      {
+        "minRange": 750001,
+        "maxRange": 800000,
+        "rate": 1150
+      },
+      {
+        "minRange": 800001,
+        "maxRange": 850000,
+        "rate": 1150
+      },
+      {
+        "minRange": 850001,
+        "maxRange": 900000,
+        "rate": 1150
+      },
+      {
+        "minRange": 900001,
+        "maxRange": 950000,
+        "rate": 1150
+      },
+      {
+        "minRange": 950001,
+        "maxRange": 1000000,
+        "rate": 1150
+      },
+      {
+        "minRange": 1000001,
+        "maxRange": 1250000,
+        "rate": 1550
+      },
+      {
+        "minRange": 1250001,
+        "maxRange": 1500000,
+        "rate": 1550
+      },
+      {
+        "minRange": 1500001,
+        "maxRange": 1750000,
+        "rate": 2100
+      },
+      {
+        "minRange": 1750001,
+        "maxRange": 2000000,
+        "rate": 2100
+      },
+      {
+        "minRange": 2000001,
+        "maxRange": 3000000,
+        "rate": 2800
+      },
+      {
+        "minRange": 3000001,
+        "maxRange": 4000000,
+        "rate": 3400
+      },
+      {
+        "minRange": 4000001,
+        "maxRange": 5000000,
+        "rate": 4100
+      },
+      {
+        "minRange": 5000001,
+        "maxRange": 6000000,
+        "rate": 4700
+      },
+      {
+        "minRange": 6000001,
+        "maxRange": 7000000,
+        "rate": 5300
+      },
+      {
+        "minRange": 7000001,
+        "maxRange": 8000000,
+        "rate": 5900
+      },
+      {
+        "minRange": 8000001,
+        "maxRange": 9000000,
+        "rate": 6600
+      },
+      {
+        "minRange": 9000001,
+        "maxRange": 10000000,
+        "rate": 7100
+      }
+    ]
+  },
+  "centralized": {
+    "label": "Centralized Residential Refinance Rate (Statewide)",
+    "manualSection": "Westcor CA Rate Manual \u00a73.18",
+    "maxAmount": 5000000,
+    "brackets": [
+      {
+        "minRange": 0,
+        "maxRange": 250000,
+        "rate": 360
+      },
+      {
+        "minRange": 250001,
+        "maxRange": 500000,
+        "rate": 550
+      },
+      {
+        "minRange": 500001,
+        "maxRange": 750000,
+        "rate": 680
+      },
+      {
+        "minRange": 750001,
+        "maxRange": 1000000,
+        "rate": 850
+      },
+      {
+        "minRange": 1000001,
+        "maxRange": 1500000,
+        "rate": 1300
+      },
+      {
+        "minRange": 1500001,
+        "maxRange": 2000000,
+        "rate": 1700
+      },
+      {
+        "minRange": 2000001,
+        "maxRange": 3000000,
+        "rate": 2800
+      },
+      {
+        "minRange": 3000001,
+        "maxRange": 4000000,
+        "rate": 3400
+      },
+      {
+        "minRange": 4000001,
+        "maxRange": 5000000,
+        "rate": 4100
+      }
+    ],
+    "eligibility": "Institutional lender; order opened and delivered electronically; prelim delivered electronically; ALTA Loan or ALTA Short Form Residential Loan Policy with streamlined search. Not for construction loans or concurrent with an owner's policy."
+  }
+}

@@ -1,35 +1,41 @@
 /**
  * PCT Rate Calculator Engine
  *
- * Title premiums come from data/calculator/title-rates.json, which is built from
- * the current underwriter rate manuals:
- *   - Purchases:  Commonwealth Land Title (CLTIC) CA Rate Manual, eff. 9/4/2026,
- *                 Part II Insurance Rate Table "R" Residential Owner's / Lender's Concurrent.
- *   - Refinances: Westcor CA Rate Manual, Section 3.17 Residential Refinance Rate.
- *   - basicRate:  Westcor Section 11.2 Basic Rate, used only as the base for
- *                 percentage-priced refinance endorsements.
+ * Everything here is a lookup against the JSON tables in data/calculator/.
+ * Those files are versioned in git and are the production source of truth.
+ *
+ *   title-rates.json          CLTIC Table R (purchase owner's / concurrent lender) + Westcor Basic Rate
+ *   refinance-programs.json   Westcor §3.17 Residential Refinance Rate (and §3.18 Centralized)
+ *   endorsements.json         CLTIC Part VIII (purchase) / Westcor Section X (refinance)
+ *   escrow-resale.json        Purchase escrow by county zone
+ *   escrow-refinance.json     Refinance escrow by county zone
+ *   fees.json                 Recording / other fees, with optional + defaultOn flags
+ *   transfer-taxes.json       County + city documentary transfer tax (flat or tiered)
+ *   counties.json             County zone / city dropdowns
+ *   rate-sources.json         Which manual each side of the calculator is priced on
+ *
  * All rates are in whole dollars (stored as integers in the data).
  */
 
 import titleRatesData from '@/data/calculator/title-rates.json'
+import refinanceProgramsData from '@/data/calculator/refinance-programs.json'
 import escrowResaleData from '@/data/calculator/escrow-resale.json'
 import escrowRefinanceData from '@/data/calculator/escrow-refinance.json'
 import feesData from '@/data/calculator/fees.json'
 import endorsementsData from '@/data/calculator/endorsements.json'
 import transferTaxesData from '@/data/calculator/transfer-taxes.json'
 import countiesData from '@/data/calculator/counties.json'
+import rateSourcesData from '@/data/calculator/rate-sources.json'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
 export type TransactionType = 'purchase' | 'refinance'
 export type OwnerPolicyType = 'clta' | 'alta' // CLTA Standard vs ALTA Homeowner's
 export type LenderPolicyType = 'clta' | 'alta' // Kept for API compatibility; purchases always price the concurrent lender column
+export type RefinanceProgram = 'standard' | 'centralized'
 
-export const PURCHASE_UNDERWRITER = 'Commonwealth Land Title Insurance Company'
-export const REFINANCE_UNDERWRITER = 'Westcor Land Title Insurance Company'
-
-/** Highest amount the bracket table covers. Above this we ask the user to call. */
-const MAX_RATED_AMOUNT = 5_000_000
+/** Highest purchase amount the bracket table covers. Above this we ask the user to call. */
+export const MAX_RATED_PURCHASE_AMOUNT = 5_000_000
 
 export interface CalculatorInput {
   transactionType: TransactionType
@@ -37,9 +43,11 @@ export interface CalculatorInput {
   cityName: string            // e.g. "Irvine"
   salesPrice: number          // Purchase: property sale price; Refinance: 0
   loanAmount: number          // Loan/mortgage amount
-  ownerPolicyType?: OwnerPolicyType    // Purchase only
+  ownerPolicyType?: OwnerPolicyType    // Purchase only. PCT quotes ALTA Homeowner's by default.
   lenderPolicyType?: LenderPolicyType  // Accepted but not used for pricing (see note above)
+  refinanceProgram?: RefinanceProgram  // Refinance only. 'centralized' has eligibility rules — not exposed publicly.
   selectedEndorsementIds?: number[]    // Optional endorsements
+  selectedFeeIds?: number[]            // Optional fees (fees.json rows with optional: true)
   includeOwnerPolicy?: boolean         // Purchase: usually true
 }
 
@@ -62,28 +70,49 @@ export interface TitleFees {
   total: number
 }
 
+export interface FeeLine {
+  id: number
+  name: string
+  fee: number
+  category: string
+  party: string
+  optional: boolean
+}
+
 export interface EscrowFees {
   baseFee: number
-  additionalFees: { name: string; fee: number }[]
+  baseFeeAvailable: boolean   // false = no escrow schedule for this zone; show "call for quote"
+  additionalFees: FeeLine[]
   total: number
 }
 
 export interface TransferTaxResult {
   countyTax: number
   cityTax: number
-  countyRate: number
-  cityRate: number
+  countyRate: number          // per $1,000
+  cityRate: number            // effective per $1,000 (cityTax / price * 1000)
+  cityRateLabel: string       // human label, e.g. "$4.50/1,000" or "tiered"
+  note: string
   total: number
+}
+
+export interface RateBasis {
+  underwriter: string
+  manual: string
+  effectiveDate: string
+  label: string
 }
 
 export interface CalculatorResult {
   titleFees: TitleFees
   escrowFees: EscrowFees
   transferTaxes: TransferTaxResult
-  additionalFees: { name: string; fee: number; category: string }[]
+  additionalFees: FeeLine[]
   additionalFeesTotal: number
   grandTotal: number
-  callForQuote: boolean   // true if the amount is above the rated range
+  callForQuote: boolean
+  callForQuoteReason: string
+  rateBasis: RateBasis
   disclaimer: string
 }
 
@@ -95,7 +124,6 @@ interface TitleRateRow {
   ownerRate: number        // CLTIC Table R Residential Owner's — CLTA Standard owner's policy
   homeOwnerRate: number    // ALTA Homeowner's — Table R + 20% surcharge, min $480 (CLTIC 2.1.B.1)
   conLoanRate: number      // CLTIC Table R Lender's Concurrent
-  resiLoanRate: number     // Westcor 3.17 Residential Refinance Rate
   basicRate: number        // Westcor 11.2 Basic Rate (base for % endorsements on refinances)
 }
 
@@ -103,14 +131,30 @@ const titleRates = titleRatesData as TitleRateRow[]
 
 function lookupTitleRate(amount: number): TitleRateRow | null {
   if (amount <= 0) return null
-  const row = titleRates.find(r => amount >= r.minRange && amount <= r.maxRange)
-  return row || null
+  return titleRates.find(r => amount >= r.minRange && amount <= r.maxRange) || null
+}
+
+// ── Refinance Rate Lookup (Westcor) ─────────────────────────────────────────
+
+interface RefinanceProgramDef {
+  label: string
+  manualSection: string
+  maxAmount: number
+  brackets: { minRange: number; maxRange: number; rate: number }[]
+}
+
+const refinancePrograms = refinanceProgramsData as Record<RefinanceProgram, RefinanceProgramDef>
+
+function lookupRefinanceRate(program: RefinanceProgram, loanAmount: number): { rate: number; def: RefinanceProgramDef } {
+  const def = refinancePrograms[program] ?? refinancePrograms.standard
+  const row = def.brackets.find(b => loanAmount >= b.minRange && loanAmount <= b.maxRange)
+  return { rate: row ? row.rate : 0, def }
 }
 
 // ── Endorsement Pricing ─────────────────────────────────────────────────────
 
 /**
- * Endorsement rows are flat so the admin JSON editor can render them.
+ * Endorsement rows are flat so the admin JSON viewer can render them.
  *   fee      — flat dollar charge (0 = no charge unless percent is set)
  *   percent  — percentage of the base rate (0 = not percentage priced)
  *   minFee / maxFee — clamps applied to a percentage charge (0 = none)
@@ -163,12 +207,13 @@ export function calculateTitleFees(input: CalculatorInput): TitleFees {
     salesPrice,
     loanAmount,
     ownerPolicyType = 'alta',   // Default: ALTA Homeowner's Policy
+    refinanceProgram = 'standard',
     selectedEndorsementIds = [],
     includeOwnerPolicy = true,
   } = input
 
   const isPurchase = transactionType === 'purchase'
-  const underwriter = isPurchase ? PURCHASE_UNDERWRITER : REFINANCE_UNDERWRITER
+  const underwriter = isPurchase ? rateSourcesData.purchase.underwriter : rateSourcesData.refinance.underwriter
   const ownerIssued = isPurchase && includeOwnerPolicy && salesPrice > 0
 
   // ── Owner's Policy (Purchase only — CLTIC Table R) ──
@@ -188,16 +233,16 @@ export function calculateTitleFees(input: CalculatorInput): TitleFees {
   let lenderPolicy = 0
   let lenderPolicyLabel = ''
   if (loanAmount > 0) {
-    const row = lookupTitleRate(loanAmount)
     if (isPurchase) {
       // Purchase: CLTIC Lender's Concurrent rate. If no owner's policy is issued
       // the concurrent rate does not apply and the quote should be handled manually.
+      const row = lookupTitleRate(loanAmount)
       lenderPolicy = row && ownerIssued ? row.conLoanRate : 0
       lenderPolicyLabel = 'ALTA Lender\'s Policy (Concurrent)'
     } else {
-      // Refinance: Westcor 3.17 Residential Refinance Rate
-      lenderPolicy = row ? row.resiLoanRate : 0
-      lenderPolicyLabel = 'ALTA Loan Policy (Residential Refinance Rate)'
+      const { rate, def } = lookupRefinanceRate(refinanceProgram, loanAmount)
+      lenderPolicy = rate
+      lenderPolicyLabel = `ALTA Loan Policy (${def.label})`
     }
   }
 
@@ -232,6 +277,46 @@ export function calculateTitleFees(input: CalculatorInput): TitleFees {
   }
 }
 
+// ── Fees (fees.json) ────────────────────────────────────────────────────────
+
+interface FeeRow {
+  id: number
+  transactionType: 'resale' | 'refinance'
+  category: string
+  name: string
+  value: number
+  active: boolean
+  optional?: boolean   // true = only charged when the user selects it
+  defaultOn?: boolean  // UI hint: pre-check the box
+  party?: string       // who customarily pays: buyer | seller | borrower
+}
+
+const fees = feesData as FeeRow[]
+
+function activeFees(transactionType: TransactionType, selectedFeeIds: number[] | undefined): FeeRow[] {
+  const txnKey = transactionType === 'purchase' ? 'resale' : 'refinance'
+  // When the caller does not send selectedFeeIds at all, fall back to the defaultOn set
+  // so older clients and the print view keep working.
+  const selected = selectedFeeIds ?? fees.filter(f => f.optional && f.defaultOn).map(f => f.id)
+  return fees.filter(f => {
+    if (!f.active || f.transactionType !== txnKey) return false
+    if (f.optional) return selected.includes(f.id)
+    return true
+  })
+}
+
+function toFeeLine(f: FeeRow): FeeLine {
+  return { id: f.id, name: f.name, fee: f.value, category: f.category, party: f.party ?? '', optional: !!f.optional }
+}
+
+/** Optional fees the UI should offer as checkboxes for this transaction type. */
+export function getFeeOptions(transactionType: TransactionType) {
+  const txnKey = transactionType === 'purchase' ? 'resale' : 'refinance'
+  return fees
+    .filter(f => f.active && f.transactionType === txnKey && f.optional)
+    .map(f => ({ id: f.id, name: f.name, fee: f.value, category: f.category, party: f.party ?? '', defaultOn: !!f.defaultOn }))
+}
+
 // ── Escrow Fee Calculation ──────────────────────────────────────────────────
 
 interface EscrowResaleRow {
@@ -251,7 +336,7 @@ interface EscrowRefiRow {
   escrowRate: number
 }
 
-function findEscrowResaleRate(zone: string, amount: number): number {
+function findEscrowResaleRate(zone: string, amount: number): number | null {
   const rows = (escrowResaleData as EscrowResaleRow[]).filter(
     r => r.county === `${zone}__All`
   )
@@ -262,7 +347,7 @@ function findEscrowResaleRate(zone: string, amount: number): number {
     return amount >= min && amount <= max
   })
 
-  if (!row) return 0
+  if (!row) return null
 
   // If baseRate is directly set, use it
   if (row.baseRate && row.baseRate > 0) {
@@ -288,18 +373,10 @@ function findEscrowResaleRate(zone: string, amount: number): number {
   return Math.round(fee * 100) / 100
 }
 
-function findEscrowRefiRate(zone: string, amount: number): number {
-  // Try zone-specific first
-  let rows = (escrowRefinanceData as EscrowRefiRow[]).filter(
+function findEscrowRefiRate(zone: string, amount: number): number | null {
+  const rows = (escrowRefinanceData as EscrowRefiRow[]).filter(
     r => r.county === `${zone}__All` || r.county === `${zone}__Re-Finance`
   )
-
-  if (rows.length === 0) {
-    // Fall back to zone-based matching
-    rows = (escrowRefinanceData as EscrowRefiRow[]).filter(
-      r => r.county.startsWith(zone)
-    )
-  }
 
   const row = rows.find(r => {
     const min = r.minRange
@@ -307,35 +384,28 @@ function findEscrowRefiRate(zone: string, amount: number): number {
     return amount >= min && amount <= max
   })
 
-  return row ? row.escrowRate : 0
+  return row ? row.escrowRate : null
 }
 
 export function calculateEscrowFees(input: CalculatorInput): EscrowFees {
-  const { transactionType, countyZone, salesPrice, loanAmount } = input
+  const { transactionType, countyZone, salesPrice, loanAmount, selectedFeeIds } = input
   const isPurchase = transactionType === 'purchase'
   const amount = isPurchase ? salesPrice : loanAmount
 
-  let baseFee = 0
-  if (isPurchase) {
-    baseFee = findEscrowResaleRate(countyZone, amount)
-  } else {
-    baseFee = findEscrowRefiRate(countyZone, amount)
-  }
+  const found = isPurchase
+    ? findEscrowResaleRate(countyZone, amount)
+    : findEscrowRefiRate(countyZone, amount)
+  const baseFeeAvailable = found !== null
+  const baseFee = found ?? 0
 
-  // Additional active fees from the fees table for this transaction type
-  const txnKey = isPurchase ? 'resale' : 'refinance'
-  const activeFees = feesData.filter(
-    f => f.active && f.transactionType === txnKey && f.category === 'escrow'
-  )
-  const additionalFees = activeFees.map(f => ({
-    name: f.name,
-    fee: f.value,
-  }))
-
+  const additionalFees = activeFees(transactionType, selectedFeeIds)
+    .filter(f => f.category === 'escrow')
+    .map(toFeeLine)
   const additionalTotal = additionalFees.reduce((sum, f) => sum + f.fee, 0)
 
   return {
     baseFee,
+    baseFeeAvailable,
     additionalFees,
     total: baseFee + additionalTotal,
   }
@@ -343,11 +413,64 @@ export function calculateEscrowFees(input: CalculatorInput): EscrowFees {
 
 // ── Transfer Tax Calculation ────────────────────────────────────────────────
 
+/**
+ * transfer-taxes.json rows are keyed by zoneName + cityName ("All Cities" = zone default).
+ *   countyPerThousand — county documentary transfer tax (normally $1.10)
+ *   cityPerThousand   — flat city rate
+ *   tierMode / tiers  — tiered city rates:
+ *       'full'       bracket rate applies to the entire price (Oakland, Berkeley, Santa Monica, SF, Richmond...)
+ *       'marginal'   graduated — each slice taxed at its own rate (Culver City)
+ *       'additional' cityPerThousand on the full price PLUS the bracket rate on the full price (LA Measure ULA)
+ * Cities without a row get the zone's "All Cities" row, or county-only $1.10 if there is none.
+ */
 interface TransferTaxRow {
-  countyId: number
   zoneName: string
-  countyTaxPerThousand: number
-  cityTaxPerThousand: number
+  cityName: string
+  countyPerThousand: number
+  cityPerThousand: number
+  tierMode: 'none' | 'full' | 'marginal' | 'additional'
+  tiers: { upTo: number | null; perThousand: number }[]
+  note: string
+}
+
+const transferTaxes = transferTaxesData as TransferTaxRow[]
+
+function cityTaxFor(row: TransferTaxRow, price: number): { tax: number; label: string } {
+  const perK = price / 1000
+  const money = (n: number) => Math.round(n * 100) / 100
+  const fmt = (r: number) => `$${r.toFixed(2)}/1,000`
+
+  if (row.tierMode === 'none' || row.tiers.length === 0) {
+    return { tax: money(perK * row.cityPerThousand), label: fmt(row.cityPerThousand) }
+  }
+
+  const bracket = row.tiers.find(t => t.upTo === null || price <= t.upTo) ?? row.tiers[row.tiers.length - 1]
+
+  if (row.tierMode === 'full') {
+    return { tax: money(perK * bracket.perThousand), label: fmt(bracket.perThousand) }
+  }
+
+  if (row.tierMode === 'additional') {
+    const tax = money(perK * row.cityPerThousand + perK * bracket.perThousand)
+    const label = bracket.perThousand > 0
+      ? `${fmt(row.cityPerThousand)} + ${fmt(bracket.perThousand)}`
+      : fmt(row.cityPerThousand)
+    return { tax, label }
+  }
+
+  // marginal
+  let tax = 0
+  let lower = 0
+  for (const t of row.tiers) {
+    const upper = t.upTo === null ? Infinity : t.upTo
+    if (price > lower) {
+      const slice = Math.min(price, upper) - lower
+      tax += (slice / 1000) * t.perThousand
+    }
+    if (price <= upper) break
+    lower = upper
+  }
+  return { tax: money(tax), label: 'graduated' }
 }
 
 export function calculateTransferTaxes(
@@ -357,84 +480,78 @@ export function calculateTransferTaxes(
   isPurchase: boolean
 ): TransferTaxResult {
   if (!isPurchase || salesPrice <= 0) {
-    return { countyTax: 0, cityTax: 0, countyRate: 0, cityRate: 0, total: 0 }
+    return { countyTax: 0, cityTax: 0, countyRate: 0, cityRate: 0, cityRateLabel: '', note: '', total: 0 }
   }
 
-  // Find the transfer tax row for this zone/city
-  const taxes = transferTaxesData as TransferTaxRow[]
+  const row =
+    transferTaxes.find(t => t.zoneName === countyZone && t.cityName === cityName) ??
+    transferTaxes.find(t => t.zoneName === countyZone && t.cityName === 'All Cities')
 
-  // Look up the city's specific tax rate first
-  // The county_id in transfer_taxes maps to county_id_pk in county_mst
-  // Find the city in countiesData to get its county_id
-  const countyData = countiesData.find(
-    (c: { zoneName: string }) => c.zoneName === countyZone
-  )
-  let cityEntry = null
-  if (countyData) {
-    cityEntry = (countyData as { cities: { id: number; name: string }[] }).cities.find(
-      (c: { name: string }) => c.name === cityName
-    )
-  }
-
-  // Try to find a specific tax row for this city's county_id
-  let taxRow: TransferTaxRow | undefined
-  if (cityEntry) {
-    taxRow = taxes.find(t => t.countyId === (cityEntry as { id: number }).id)
-  }
-
-  // Fall back to zone-level "All Cities" entry
-  if (!taxRow) {
-    // Find the "All Cities" entry for this zone
-    const allCitiesEntry = countiesData.find(
-      (c: { zoneName: string }) => c.zoneName === countyZone
-    )
-    if (allCitiesEntry) {
-      const allCities = (allCitiesEntry as { cities: { id: number; name: string }[] }).cities.find(
-        (c: { name: string }) => c.name === 'All Cities'
-      )
-      if (allCities) {
-        taxRow = taxes.find(t => t.countyId === (allCities as { id: number }).id)
-      }
-    }
-  }
-
-  // Default to standard county rate if no specific entry found
-  const countyRate = taxRow ? taxRow.countyTaxPerThousand : 1.10
-  const cityRate = taxRow ? taxRow.cityTaxPerThousand : 0
-
+  const countyRate = row ? row.countyPerThousand : 1.10
   const countyTax = Math.round((salesPrice / 1000) * countyRate * 100) / 100
-  const cityTax = Math.round((salesPrice / 1000) * cityRate * 100) / 100
+
+  const city = row ? cityTaxFor(row, salesPrice) : { tax: 0, label: '' }
+  const cityRate = salesPrice > 0 ? Math.round((city.tax / salesPrice) * 1000 * 100) / 100 : 0
 
   return {
     countyTax,
-    cityTax,
+    cityTax: city.tax,
     countyRate,
     cityRate,
-    total: countyTax + cityTax,
+    cityRateLabel: city.label,
+    note: row?.note ?? '',
+    total: Math.round((countyTax + city.tax) * 100) / 100,
   }
 }
 
 // ── Additional Fees (Recording, Other) ──────────────────────────────────────
 
-export function getAdditionalFees(transactionType: TransactionType) {
-  const txnKey = transactionType === 'purchase' ? 'resale' : 'refinance'
-  return feesData
-    .filter(f => f.active && f.transactionType === txnKey && f.category !== 'escrow')
-    .map(f => ({
-      name: f.name,
-      fee: f.value,
-      category: f.category,
-    }))
+export function getAdditionalFees(transactionType: TransactionType, selectedFeeIds?: number[]): FeeLine[] {
+  return activeFees(transactionType, selectedFeeIds)
+    .filter(f => f.category !== 'escrow')
+    .map(toFeeLine)
+}
+
+// ── Rate basis (what the quote is priced on) ────────────────────────────────
+
+export function getRateBasis(transactionType: TransactionType, refinanceProgram: RefinanceProgram = 'standard'): RateBasis {
+  if (transactionType === 'purchase') {
+    const s = rateSourcesData.purchase
+    const eff = s.effectiveDate ? ` (eff. ${formatDate(s.effectiveDate)})` : ''
+    return { underwriter: s.underwriter, manual: s.manual, effectiveDate: s.effectiveDate, label: `Title rates: ${s.underwriter}, ${s.manual}${eff}` }
+  }
+  const s = rateSourcesData.refinance
+  const def = refinancePrograms[refinanceProgram] ?? refinancePrograms.standard
+  return { underwriter: s.underwriter, manual: s.manual, effectiveDate: s.effectiveDate, label: `Title rates: ${s.underwriter}, ${def.label} (${def.manualSection})` }
+}
+
+function formatDate(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  if (!y || !m || !d) return iso
+  return `${m}/${d}/${y}`
 }
 
 // ── Main Calculator ─────────────────────────────────────────────────────────
 
 export function calculate(input: CalculatorInput): CalculatorResult {
   const isPurchase = input.transactionType === 'purchase'
+  const program = input.refinanceProgram ?? 'standard'
 
-  // "Call for quote" when any rated amount is above the bracket table
-  const amounts = isPurchase ? [input.salesPrice, input.loanAmount] : [input.loanAmount]
-  const callForQuote = amounts.some(a => a > MAX_RATED_AMOUNT)
+  // "Call for quote" when a rated amount is above the bracket tables
+  let callForQuote = false
+  let callForQuoteReason = ''
+  if (isPurchase) {
+    if (input.salesPrice > MAX_RATED_PURCHASE_AMOUNT || input.loanAmount > MAX_RATED_PURCHASE_AMOUNT) {
+      callForQuote = true
+      callForQuoteReason = `Purchases over $${MAX_RATED_PURCHASE_AMOUNT.toLocaleString()} require a custom quote.`
+    }
+  } else {
+    const max = (refinancePrograms[program] ?? refinancePrograms.standard).maxAmount
+    if (input.loanAmount > max) {
+      callForQuote = true
+      callForQuoteReason = `Refinance loans over $${max.toLocaleString()} require a custom quote.`
+    }
+  }
 
   const titleFees = calculateTitleFees(input)
   const escrowFees = calculateEscrowFees(input)
@@ -444,10 +561,17 @@ export function calculate(input: CalculatorInput): CalculatorResult {
     input.salesPrice,
     isPurchase
   )
-  const additionalFees = getAdditionalFees(input.transactionType)
+  const additionalFees = getAdditionalFees(input.transactionType, input.selectedFeeIds)
   const additionalFeesTotal = additionalFees.reduce((sum, f) => sum + f.fee, 0)
 
-  const grandTotal = titleFees.total + escrowFees.total + transferTaxes.total + additionalFeesTotal
+  if (!escrowFees.baseFeeAvailable) {
+    callForQuote = true
+    callForQuoteReason = callForQuoteReason
+      ? `${callForQuoteReason} Escrow fees for this county are quoted on request.`
+      : 'Escrow fees for this county are quoted on request; the total below does not include the base escrow fee.'
+  }
+
+  const grandTotal = Math.round((titleFees.total + escrowFees.total + transferTaxes.total + additionalFeesTotal) * 100) / 100
 
   return {
     titleFees,
@@ -457,6 +581,8 @@ export function calculate(input: CalculatorInput): CalculatorResult {
     additionalFeesTotal,
     grandTotal,
     callForQuote,
+    callForQuoteReason,
+    rateBasis: getRateBasis(input.transactionType, program),
     disclaimer: 'This is an estimate only. Actual fees may vary based on specific transaction details, property type, and lender requirements. Contact Pacific Coast Title for an official quote.',
   }
 }

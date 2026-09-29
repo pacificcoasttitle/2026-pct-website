@@ -5,7 +5,10 @@
     "category": "recording",
     "name": "Doc Recording Estimate",
     "value": 200,
-    "active": true
+    "active": true,
+    "optional": false,
+    "defaultOn": true,
+    "party": "borrower"
   },
   {
     "id": 3,
@@ -13,7 +16,10 @@
     "category": "escrow",
     "name": "Notary Fee Estimate",
     "value": 200,
-    "active": true
+    "active": true,
+    "optional": false,
+    "defaultOn": true,
+    "party": "borrower"
   },
   {
     "id": 5,
@@ -21,7 +27,10 @@
     "category": "recording",
     "name": "SB2 Recording Fee Charge",
     "value": 275,
-    "active": true
+    "active": true,
+    "optional": false,
+    "defaultOn": true,
+    "party": "borrower"
   },
   {
     "id": 10,
@@ -29,7 +38,10 @@
     "category": "escrow",
     "name": "New Loan Fee",
     "value": 280,
-    "active": true
+    "active": true,
+    "optional": false,
+    "defaultOn": true,
+    "party": "buyer"
   },
   {
     "id": 11,
@@ -37,7 +49,10 @@
     "category": "escrow",
     "name": "Mobile Signing Fee",
     "value": 200,
-    "active": true
+    "active": true,
+    "optional": true,
+    "defaultOn": false,
+    "party": "buyer"
   },
   {
     "id": 12,
@@ -45,7 +60,10 @@
     "category": "escrow",
     "name": "Document Processing Fee",
     "value": 250,
-    "active": true
+    "active": true,
+    "optional": false,
+    "defaultOn": true,
+    "party": "buyer"
   },
   {
     "id": 14,
@@ -53,7 +71,10 @@
     "category": "escrow",
     "name": "Wire Fee",
     "value": 30,
-    "active": true
+    "active": true,
+    "optional": false,
+    "defaultOn": true,
+    "party": "borrower"
   },
   {
     "id": 15,
@@ -61,7 +82,10 @@
     "category": "recording",
     "name": "Recording Service Fee",
     "value": 30,
-    "active": true
+    "active": true,
+    "optional": false,
+    "defaultOn": true,
+    "party": "borrower"
   },
   {
     "id": 16,
@@ -69,7 +93,10 @@
     "category": "other",
     "name": "Wire Fees",
     "value": 35,
-    "active": true
+    "active": true,
+    "optional": false,
+    "defaultOn": true,
+    "party": "buyer"
   },
   {
     "id": 17,
@@ -77,7 +104,10 @@
     "category": "other",
     "name": "Overnight Fee",
     "value": 50,
-    "active": true
+    "active": true,
+    "optional": true,
+    "defaultOn": false,
+    "party": "buyer"
   },
   {
     "id": 18,
@@ -85,7 +115,10 @@
     "category": "other",
     "name": "Demand Processing Fee",
     "value": 150,
-    "active": true
+    "active": true,
+    "optional": false,
+    "defaultOn": true,
+    "party": "seller"
   },
   {
     "id": 19,
@@ -93,7 +126,10 @@
     "category": "other",
     "name": "Home Warranty Fee",
     "value": 750,
-    "active": true
+    "active": true,
+    "optional": true,
+    "defaultOn": false,
+    "party": "seller"
   },
   {
     "id": 20,
@@ -101,7 +137,10 @@
     "category": "other",
     "name": "Natural Hazard Disclosure Report Fee",
     "value": 110,
-    "active": true
+    "active": true,
+    "optional": true,
+    "defaultOn": false,
+    "party": "seller"
   },
   {
     "id": 21,
@@ -109,7 +148,10 @@
     "category": "other",
     "name": "TC Fee",
     "value": 450,
-    "active": true
+    "active": true,
+    "optional": true,
+    "defaultOn": false,
+    "party": "buyer"
   },
   {
     "id": 22,
@@ -117,6 +159,9 @@
     "category": "escrow",
     "name": "Sub Escrow",
     "value": 45,
-    "active": true
+    "active": true,
+    "optional": false,
+    "defaultOn": true,
+    "party": "borrower"
   }
 ]
