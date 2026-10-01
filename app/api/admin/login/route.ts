@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { getAdminByUsername, updateLastLogin } from '@/lib/admin-db'
 import { createAdminToken, ADMIN_COOKIE } from '@/lib/admin-auth'
+import { getDefaultLandingForRole } from '@/lib/auth/guards'
 
 export async function POST(req: Request) {
   try {
-    const { username, password } = await req.json()
+    const body = await req.json().catch(() => null)
+    const { username, password } = body || {}
 
-    if (!username || !password) {
+    if (typeof username !== 'string' || typeof password !== 'string' || !username.trim() || !password || username.length > 200 || password.length > 1024) {
       return NextResponse.json({ error: 'Username and password required' }, { status: 400 })
     }
 
@@ -36,6 +38,7 @@ export async function POST(req: Request) {
 
     const response = NextResponse.json({
       ok:       true,
+      destination: getDefaultLandingForRole({ userId: user.id, username: user.username, role: user.role, officeId: user.office_id }),
       username: user.username,
       role:     user.role,
     })

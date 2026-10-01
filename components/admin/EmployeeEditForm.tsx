@@ -25,6 +25,7 @@ import {
   Lock,
 } from 'lucide-react'
 import type { AdminEmployee } from '@/lib/admin-db'
+import { AssetEmailPreference } from '@/components/admin/AssetEmailPreference'
 
 interface Office { id: number; name: string; city: string | null }
 interface Dept   { id: number; name: string; color: string }
@@ -489,6 +490,7 @@ export default function EmployeeEditForm({ employee: initial, offices, depts }: 
             Used to route MMS replies and prefix uploaded image filenames. Team codes (e.g. C-4) are allowed.
           </p>
         </Field>
+        <AssetEmailPreference slug={emp.slug} />
       </Section>
 
       {/* ── Bio & Specialties ── */}

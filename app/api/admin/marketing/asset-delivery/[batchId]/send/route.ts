@@ -31,6 +31,7 @@ import {
   createAssetDeliverySend,
   updateAssetDeliverySend,
   isRepMarketingEnabled,
+  getRepAssetEmailEnabled,
   type AssetDeliveryFile,
 } from '@/lib/admin-db'
 import { downloadFromR2 } from '@/lib/r2-upload'
@@ -269,6 +270,11 @@ async function sendOneRep(
 
   try {
     /* 1. AI intro. */
+    if (rep.id === null || (await getRepAssetEmailEnabled(rep.id)) !== true) {
+      const reason = 'Marketing-piece emails disabled'
+      await updateAssetDeliverySend(sendRow.id, { send_status: 'skipped', error_message: reason })
+      return { rep_email: rep.email, status: 'skipped', error: reason }
+    }
     let intro = ''
     if (ctx.openaiKey) {
       try {
@@ -311,6 +317,12 @@ async function sendOneRep(
     })
 
     /* 4. SendGrid. */
+    // Re-check after preparing attachments so a newly disabled rep is skipped.
+    if ((await getRepAssetEmailEnabled(rep.id!)) !== true) {
+      const reason = 'Marketing-piece emails disabled'
+      await updateAssetDeliverySend(sendRow.id, { send_status: 'skipped', error_message: reason })
+      return { rep_email: rep.email, status: 'skipped', error: reason }
+    }
     const attachments = attachmentBuffers.map(({ file, buffer }) => ({
       content:     buffer.toString('base64'),
       filename:    file.original_filename,

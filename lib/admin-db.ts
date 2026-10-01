@@ -158,6 +158,37 @@ export async function ensureMarketingRepPreferences(): Promise<void> {
   _marketingRepPreferencesReady = true
 }
 
+let _assetEmailPreferenceReady = false
+export async function ensureAssetEmailPreference(): Promise<void> {
+  if (_assetEmailPreferenceReady) return
+  await ensureMarketingRepPreferences()
+  await getPool().query(`ALTER TABLE marketing_rep_preferences
+    ADD COLUMN IF NOT EXISTS asset_email_enabled BOOLEAN NOT NULL DEFAULT true`)
+  _assetEmailPreferenceReady = true
+}
+
+export async function getRepAssetEmailEnabled(employeeId: number): Promise<boolean | null> {
+  await ensureAssetEmailPreference()
+  const result = await getPool().query(
+    `SELECT COALESCE(p.asset_email_enabled, true) AS enabled
+     FROM vcard_employees e LEFT JOIN marketing_rep_preferences p ON p.employee_id = e.id
+     WHERE e.id = $1`, [employeeId],
+  )
+  return result.rows[0]?.enabled ?? null
+}
+
+export async function setRepAssetEmailEnabled(employeeId: number, enabled: boolean, actor: string): Promise<boolean | null> {
+  await ensureAssetEmailPreference()
+  const result = await getPool().query(
+    `INSERT INTO marketing_rep_preferences (employee_id, asset_email_enabled, updated_by)
+     SELECT id, $2, $3 FROM vcard_employees WHERE id = $1
+     ON CONFLICT (employee_id) DO UPDATE SET asset_email_enabled = EXCLUDED.asset_email_enabled,
+       updated_at = NOW(), updated_by = EXCLUDED.updated_by
+     RETURNING asset_email_enabled`, [employeeId, enabled, actor],
+  )
+  return result.rows[0]?.asset_email_enabled ?? null
+}
+
 export async function setRepMarketingEnabled(
   employeeId: number,
   enabled: boolean,
