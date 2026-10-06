@@ -1,0 +1,53 @@
+/* Team-only foundation. Public pages and email iframe documents are unchanged.
+   Explicit legacy color aliases allow existing tools to adopt the same palette;
+   semantic success, warning and error colors intentionally remain untouched. */
+.pct-workspace {
+  color-scheme: light;
+  --background: #f3f5f7;
+  --foreground: #10213a;
+  --card: #ffffff;
+  --card-foreground: #10213a;
+  --primary: #10213a;
+  --primary-foreground: #ffffff;
+  --muted: #f3f5f7;
+  --muted-foreground: #586779;
+  --border: #e5eaf0;
+  --input: #d7dfe8;
+  --ring: #246271;
+  background: var(--background);
+  color: var(--foreground);
+}
+.pct-workspace-content { line-height: 1.6; }
+.pct-workspace-content h1 { letter-spacing: -.035em; }
+.pct-workspace-content h2 { letter-spacing: -.02em; }
+.pct-workspace-content [data-slot="card"],
+.pct-workspace-content .pct-panel {
+  border-color: transparent;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px -12px rgb(16 33 58 / 14%);
+}
+.pct-workspace-content .pct-panel { background: #fff; }
+.pct-workspace-content .pct-metric { font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
+.pct-workspace-nav { scrollbar-color: #61768c transparent; scrollbar-width: thin; }
+.pct-workspace-nav * { scrollbar-color: #61768c transparent; scrollbar-width: thin; }
+.pct-workspace-nav ::-webkit-scrollbar { width: 6px; }
+.pct-workspace-nav ::-webkit-scrollbar-thumb { background: #61768c; border-radius: 10px; }
+.pct-workspace-nav ::-webkit-scrollbar-track { background: transparent; }
+@media (prefers-reduced-motion: reduce) {
+  .pct-workspace :is(a,button) { transition-duration: 0s; }
+}
+.pct-workspace-content [class~="text-[#03374f]"] { color: #10213a; }
+.pct-workspace-content [class~="bg-[#f0ede9]"] { background-color: #f3f5f7; }
+.pct-workspace-content [class~="bg-[#03374f]"] { background-color: #10213a; }
+.pct-workspace-content [class~="text-gray-400"] { color: #66758a; }
+.pct-workspace-content a[class~="text-[#f26b2b]"] { color: #246271; }
+.pct-workspace-content :is(h1,h2) > svg[class~="text-[#f26b2b]"] { color: #246271; }
+.pct-workspace-content :is(a,button,input,select,textarea):focus-visible {
+  outline: 2px solid #246271;
+  outline-offset: 3px;
+}
+.pct-workspace-nav {
+  background: radial-gradient(ellipse at 0% 100%, #246271 0%, transparent 65%), #10213a;
+}
+.pct-workspace-nav a:focus-visible,
+.pct-workspace-nav button:focus-visible { outline: 2px solid #a9dddf; outline-offset: 2px; }

@@ -31,8 +31,8 @@ const STATUS_MAP: Record<string, PillCfg> = {
 
 export function StatusPill({ status, size = 'sm' }: { status: CampaignStatus; size?: 'sm' | 'xs' }) {
   const cfg = STATUS_MAP[status] ?? { label: status, cls: 'bg-gray-100 text-gray-600 border-gray-200', Icon: FileText }
-  const padding = size === 'xs' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-0.5 text-[11px]'
-  const iconSize = size === 'xs' ? 'w-2.5 h-2.5' : 'w-3 h-3'
+  const padding = size === 'xs' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs'
+  const iconSize = 'w-3 h-3'
   return (
     <span className={`inline-flex items-center gap-1 rounded-full border font-medium ${padding} ${cfg.cls}`}>
       <cfg.Icon className={iconSize} />

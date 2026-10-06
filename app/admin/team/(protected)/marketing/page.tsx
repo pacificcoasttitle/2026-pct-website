@@ -213,18 +213,18 @@ function NavCard({
 }) {
   return (
     <Link href={href} className="group block">
-      <Card className={`p-5 h-full transition-all hover:shadow-md hover:-translate-y-0.5 ${
-        accent ? 'border-[#f26b2b]/40 bg-gradient-to-br from-[#f26b2b]/5 to-transparent' : ''
+      <Card className={`p-6 h-full transition-shadow hover:shadow-md ${
+        accent ? 'bg-[#10213A] text-white' : 'bg-white'
       }`}>
         <div className={`inline-flex items-center justify-center w-11 h-11 rounded-xl mb-3 ${
-          accent ? 'bg-[#f26b2b] text-white' : 'bg-[#03374f]/5 text-[#03374f]'
+          accent ? 'bg-[#f26b2b] text-white' : 'bg-[#edf4f5] text-[#246271]'
         }`}>
           {icon}
         </div>
-        <h3 className="font-semibold text-[#03374f]">{title}</h3>
-        <p className="text-xs text-gray-500 mt-1 leading-relaxed">{desc}</p>
+        <h3 className={`font-semibold ${accent ? 'text-white' : 'text-[#10213A]'}`}>{title}</h3>
+        <p className={`text-sm mt-1 leading-relaxed ${accent ? 'text-white/75' : 'text-gray-500'}`}>{desc}</p>
         <div className={`mt-4 inline-flex items-center gap-1 text-xs font-semibold ${
-          accent ? 'text-[#f26b2b]' : 'text-[#03374f]'
+          accent ? 'text-[#FF8A4C]' : 'text-[#246271]'
         } group-hover:gap-2 transition-all`}>
           Go <ChevronRight className="w-3 h-3" />
         </div>

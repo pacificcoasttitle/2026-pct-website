@@ -40,7 +40,7 @@ export default async function AdminDashboard() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-[#03374f]">Dashboard</h1>
-        <p className="text-gray-500 text-sm mt-1">Pacific Coast Title — Team Admin Overview</p>
+        <p className="text-gray-500 text-sm mt-1">Your people, profiles, and activity at a glance.</p>
       </div>
 
       {/* ── Stat Cards ── */}
@@ -62,7 +62,7 @@ export default async function AdminDashboard() {
             label:  'Website Pages Live',
             value:  stats.websiteActive,
             icon:   Globe,
-            color:  'bg-[#f26b2b]/10 text-[#f26b2b]',
+            color:  'bg-[#edf4f5] text-[#246271]',
           },
           {
             label:  'Farm Requests',
@@ -71,11 +71,11 @@ export default async function AdminDashboard() {
             color:  stats.farmRequests > 0 ? 'bg-amber-50 text-amber-600' : 'bg-gray-50 text-gray-400',
           },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div key={s.label} className="pct-panel p-5 sm:p-6">
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${s.color}`}>
               <s.icon className="w-4.5 h-4.5" />
             </div>
-            <div className="text-2xl font-bold text-[#03374f]">{s.value}</div>
+            <div className="pct-metric text-3xl font-semibold text-[#10213A]">{s.value}</div>
             <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
           </div>
         ))}
@@ -85,9 +85,9 @@ export default async function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* By Office */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="pct-panel p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Building2 className="w-4 h-4 text-[#f26b2b]" />
+            <Building2 className="w-4 h-4 text-[#246271]" />
             <h2 className="font-semibold text-[#03374f] text-sm">Employees by Office</h2>
           </div>
           <div className="space-y-3">
@@ -101,9 +101,9 @@ export default async function AdminDashboard() {
         </div>
 
         {/* By Department */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="pct-panel p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Users className="w-4 h-4 text-[#f26b2b]" />
+            <Users className="w-4 h-4 text-[#246271]" />
             <h2 className="font-semibold text-[#03374f] text-sm">Employees by Department</h2>
           </div>
           <div className="space-y-3">
@@ -123,10 +123,10 @@ export default async function AdminDashboard() {
 
       {/* ── Top Viewed ── */}
       {stats.topViewed.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="pct-panel p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-[#f26b2b]" />
+              <TrendingUp className="w-4 h-4 text-[#246271]" />
               <h2 className="font-semibold text-[#03374f] text-sm">Most Viewed Profiles</h2>
             </div>
             <Link
@@ -139,7 +139,7 @@ export default async function AdminDashboard() {
           <div className="divide-y divide-gray-50">
             {stats.topViewed.map((e, i) => (
               <div key={e.slug} className="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
-                <span className="text-xs font-bold text-gray-300 w-4 text-right flex-shrink-0">
+                <span className="text-xs font-medium text-gray-500 w-4 text-right flex-shrink-0">
                   {i + 1}
                 </span>
                 <Link
@@ -162,7 +162,7 @@ export default async function AdminDashboard() {
       <div className="bg-[#03374f] rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h3 className="font-bold text-white">Manage Your Team</h3>
-          <p className="text-white/50 text-sm mt-0.5">Edit profiles, toggle pages live, update photos.</p>
+          <p className="text-white/75 text-sm mt-0.5">Edit profiles, toggle pages live, update photos.</p>
         </div>
         <Link
           href="/admin/team/employees"

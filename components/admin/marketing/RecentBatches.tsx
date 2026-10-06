@@ -38,11 +38,11 @@ export function RecentBatches({ limit = 5 }: { limit?: number }) {
   }, [limit])
 
   if (error) {
-    return <p className="text-xs text-red-600">{error}</p>
+    return <p role="alert" className="px-5 py-4 text-sm text-red-600">{error}</p>
   }
   if (items === null) {
     return (
-      <div className="space-y-2">
+      <div role="status" aria-label="Loading recent campaigns" className="space-y-2 p-5">
         {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="h-16 w-full rounded-xl bg-gray-200" />
         ))}
@@ -86,7 +86,7 @@ export function RecentBatches({ limit = 5 }: { limit?: number }) {
               </div>
             </div>
             {b.scheduled > 0 && b.next_send_time && (
-              <p className="text-[11px] text-blue-600 mt-1.5 flex items-center gap-1">
+              <p className="text-xs text-blue-600 mt-1.5 flex items-center gap-1">
                 <Loader2 className="w-3 h-3 animate-spin" />
                 Next send: {formatTime(b.next_send_time)}
               </p>

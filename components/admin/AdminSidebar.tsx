@@ -183,7 +183,7 @@ export default function AdminSidebar({
           className={gi === 0 ? 'pt-1' : 'pt-5'}
         >
           {group.label && (
-            <div className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/35">
+            <div className="px-3 pb-1.5 text-xs font-semibold uppercase tracking-wider text-white/60">
               {group.label}
             </div>
           )}
@@ -194,11 +194,12 @@ export default function AdminSidebar({
                 <Link
                   key={href}
                   href={href}
+                  aria-current={active ? 'page' : undefined}
                   onClick={() => setOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                     active
-                      ? 'bg-[#f26b2b] text-white shadow-sm'
-                      : 'text-white/60 hover:text-white hover:bg-white/8'
+                      ? 'bg-white/12 text-[#A9DDDF] shadow-sm'
+                      : 'text-white/75 hover:text-white hover:bg-white/8'
                   }`}
                 >
                   <Icon className="w-4 h-4 flex-shrink-0" />
@@ -221,8 +222,8 @@ export default function AdminSidebar({
           <Image src="/logo2.png" alt="PCT" width={130} height={33} className="opacity-85 group-hover:opacity-100 transition" />
           <ExternalLink className="w-3 h-3 text-white/30 group-hover:text-white/50 transition" />
         </Link>
-        <div className="mt-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#f26b2b]">
-          Team Admin
+        <div className="mt-3 text-xs font-medium uppercase tracking-[0.15em] text-white/60">
+          Team workspace
         </div>
       </div>
 
@@ -234,12 +235,12 @@ export default function AdminSidebar({
       {/* User + logout */}
       <div className="px-5 py-5 border-t border-white/10 flex-shrink-0 space-y-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#f26b2b]/20 flex items-center justify-center flex-shrink-0">
-            <Shield className="w-4 h-4 text-[#f26b2b]" />
+          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+            <Shield className="w-4 h-4 text-[#A9DDDF]" />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-white truncate">{username}</p>
-            <p className="text-[11px] text-white/40">{roleLabel(role)}</p>
+            <p className="text-xs text-white/65">{roleLabel(role)}</p>
           </div>
         </div>
 
@@ -259,16 +260,18 @@ export default function AdminSidebar({
   return (
     <>
       {/* ── Desktop sidebar ── */}
-      <aside className="hidden lg:flex lg:flex-col w-56 flex-shrink-0 bg-[#03374f] min-h-screen sticky top-0">
+      <aside className="pct-workspace-nav hidden lg:flex lg:flex-col w-60 flex-shrink-0 h-dvh sticky top-0">
         {sidebarContent}
       </aside>
 
       {/* ── Mobile top bar ── */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[#03374f] flex items-center justify-between px-4 h-14 border-b border-white/10">
+      <div className="pct-workspace-nav lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 border-b border-white/10">
         <Image src="/logo2.png" alt="PCT" width={110} height={28} className="opacity-90" />
         <button
           type="button"
           onClick={() => setOpen(!open)}
+          aria-label={open ? 'Close navigation' : 'Open navigation'}
+          aria-expanded={open}
           className="p-2 text-white/70 hover:text-white transition"
         >
           {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -280,7 +283,7 @@ export default function AdminSidebar({
         <div className="lg:hidden fixed inset-0 z-30" onClick={() => setOpen(false)}>
           <div className="absolute inset-0 bg-black/50" />
           <aside
-            className="absolute top-14 left-0 bottom-0 w-64 bg-[#03374f] flex flex-col"
+            className="pct-workspace-nav absolute top-14 left-0 bottom-0 w-64 flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {sidebarContent}
