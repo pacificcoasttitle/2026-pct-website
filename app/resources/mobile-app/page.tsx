@@ -29,8 +29,8 @@ export const metadata: Metadata = {
     "PCT Property Pro is a smart real estate prospecting and lead-generation app with Walking Farm®, Farm Alerts, and on-demand property reports across 3,000+ U.S. counties. Download for iOS, Android, or web.",
 }
 
-const APP_STORE_URL    = "https://apps.apple.com/us/app/smartdirect-mobile/id1054969088"
-const GOOGLE_PLAY_URL  = "https://play.google.com/store/apps/details?id=com.smartdirect.smartdirect"
+const APP_STORE_URL    = "https://apps.apple.com/us/app/smartdirect-mobile/id1516910124"
+const GOOGLE_PLAY_URL  = "https://play.google.com/store/apps/details?id=com.redshedtechnology.smartdirect"
 const WEB_VERSION_URL  = "https://smartdirectre.com/pctpropertypro"
 const SMART_DIRECT_URL = "https://smartdirectre.com/pctpropertypro"
 

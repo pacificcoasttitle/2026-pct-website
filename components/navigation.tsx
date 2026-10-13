@@ -53,6 +53,7 @@ export function Navigation({ variant = "transparent" }: NavigationProps) {
       href: "/resources",
       dropdown: [
         { label: "Agent Resource Center", href: "/resources" },
+        { label: "Apps & Downloads", href: "/resources/apps" },
         { label: "Rate Calculator", href: "/resources/rate-book" },
         { label: "Prop 19 Calculator", href: "/resources/prop-19-calculator" },
         { label: "Utilities Directory", href: "/utilities" },

@@ -56,9 +56,9 @@ export const pinnedTools: Resource[] = [
     icon: FileText,
   },
   {
-    title: "PCT Property Pro",
-    description: "Walking Farm® & lead gen",
-    href: "/resources/mobile-app",
+    title: "Apps & Downloads",
+    description: "All three PCT apps in one place",
+    href: "/resources/apps",
     isExternal: false,
     icon: Smartphone,
   },
@@ -174,6 +174,12 @@ export const resourceCategories: ResourceCategory[] = [
     description: "Online tools to streamline your workflow",
     icon: Wrench,
     items: [
+      {
+        title: "Apps & Downloads",
+        description: "Download Agent ONE, PCT Property Pro and Title Toolbox for Apple and Android",
+        href: "/resources/apps",
+        isExternal: false,
+      },
       {
         title: "PCT Property Pro Mobile App",
         description: "Smart prospecting & lead gen — Walking Farm®, Farm Alerts, and property reports across 3,000+ counties",
