@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { generateMarketingCopy, marketingAiFailureResponse, MARKETING_AI_MODEL } from '@/lib/marketing-ai-client'
 import { requireApiRole } from '@/lib/auth/guards'
 import {
   PCT_BRAND_VOICE_RULES,
@@ -40,7 +41,7 @@ const LENGTH_GUIDANCE: Record<'short' | 'medium' | 'long', string> = {
   long:   'Write 5-7 short paragraphs with clear structure (~400-600 words total). Use a heading and a bulleted list if natural.',
 }
 
-const MODEL = 'gpt-4o-mini' as const
+const MODEL = MARKETING_AI_MODEL
 
 // ── System prompt ───────────────────────────────────────────────
 //
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest) {
   const auth = await requireApiRole('marketing')
   if ('error' in auth) return auth.error
 
-  const apiKey = process.env.OPENAI_API_KEY
+  const apiKey = process.env.OPENAI_API_KEY?.trim()
   if (!apiKey) {
     console.error('[ai-gen] OPENAI_API_KEY not set in server environment')
     return NextResponse.json(
@@ -141,69 +142,16 @@ export async function POST(req: NextRequest) {
     { role: 'user'   as const, content: userParts.join('\n') },
   ]
 
-  // ── Call OpenAI ───────────────────────────────────────────────
-  let openaiRes: Response
+  let generated
   try {
-    openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model:       MODEL,
-        messages,
-        temperature: 0.7,
-        max_tokens:  MAX_TOKENS[length],
-      }),
-    })
-  } catch (netErr) {
-    console.error('[ai-gen] network error calling OpenAI:', netErr)
-    return NextResponse.json(
-      { error: 'AI service unreachable. Please try again in a moment.' },
-      { status: 503 },
-    )
+    generated = await generateMarketingCopy({ apiKey, messages, maxTokens: MAX_TOKENS[length] })
+  } catch (error) {
+    const failure = marketingAiFailureResponse(error)
+    return NextResponse.json(failure.body, { status: failure.status })
   }
-
-  if (openaiRes.status === 401) {
-    console.error('[ai-gen] OpenAI rejected credentials (401). Rotate OPENAI_API_KEY.')
-    return NextResponse.json(
-      { error: 'AI service unavailable. Please contact an administrator.' },
-      { status: 503 },
-    )
-  }
-  if (openaiRes.status === 429) {
-    return NextResponse.json(
-      { error: 'Rate limited, try again in a moment.' },
-      { status: 429 },
-    )
-  }
-  if (!openaiRes.ok) {
-    const errText = await openaiRes.text().catch(() => '')
-    console.error(`[ai-gen] OpenAI ${openaiRes.status} error:`, errText.slice(0, 500))
-    return NextResponse.json(
-      { error: 'AI service error. Please try again.' },
-      { status: 503 },
-    )
-  }
-
-  // ── Parse + sanitise ──────────────────────────────────────────
-  interface OpenAIResponse {
-    choices?: Array<{ message?: { content?: string } }>
-    usage?:   { total_tokens?: number }
-  }
-  const data = (await openaiRes.json().catch(() => null)) as OpenAIResponse | null
-  const rawContent = data?.choices?.[0]?.message?.content
-  if (!data || typeof rawContent !== 'string' || rawContent.trim() === '') {
-    console.error('[ai-gen] OpenAI returned no content:', JSON.stringify(data).slice(0, 400))
-    return NextResponse.json(
-      { error: 'AI service returned no content. Please try again.' },
-      { status: 503 },
-    )
-  }
-
-  const content    = sanitizeAiHtml(rawContent)
-  const tokensUsed = typeof data.usage?.total_tokens === 'number' ? data.usage.total_tokens : 0
+  const content = sanitizeAiHtml(generated.text)
+  if (!content) return NextResponse.json({ error: 'The AI service returned no usable copy.' }, { status: 503 })
+  const tokensUsed = generated.tokensUsed
 
   // Single-line log: shows up in Vercel logs without leaking the prompt body.
   console.log(`[ai-gen] admin=${adminEmail} tokens=${tokensUsed} model=${MODEL} chars=${prompt.length}`)

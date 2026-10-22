@@ -12,6 +12,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { generateMarketingCopy, marketingAiFailureResponse, MARKETING_AI_MODEL } from '@/lib/marketing-ai-client'
 import { requireApiRole } from '@/lib/auth/guards'
 import {
   ASSET_DELIVERY_INTRO_SYSTEM_PROMPT,
@@ -22,9 +23,8 @@ import {
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const MODEL = 'gpt-4o-mini' as const
-const MAX_TOKENS = 200
-const TEMPERATURE = 0.7
+const MODEL = MARKETING_AI_MODEL
+const MAX_TOKENS = 300
 const MIN_WORDS = 30
 const MAX_WORDS = 150
 
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
   const auth = await requireApiRole('asset-delivery')
   if ('error' in auth) return auth.error
 
-  const apiKey = process.env.OPENAI_API_KEY
+  const apiKey = process.env.OPENAI_API_KEY?.trim()
   if (!apiKey) {
     console.error('[asset-intro] OPENAI_API_KEY not set in server environment')
     return NextResponse.json(
@@ -115,76 +115,25 @@ export async function POST(req: NextRequest) {
     asset_summary,
   })
 
-  /* Call OpenAI. */
-  let openaiRes: Response
+  let generated
   try {
-    openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model:       MODEL,
-        messages: [
-          { role: 'system', content: ASSET_DELIVERY_INTRO_SYSTEM_PROMPT },
-          { role: 'user',   content: userMessage },
-        ],
-        temperature: TEMPERATURE,
-        max_tokens:  MAX_TOKENS,
-      }),
+    generated = await generateMarketingCopy({
+      apiKey,
+      messages: [
+        { role: 'system', content: ASSET_DELIVERY_INTRO_SYSTEM_PROMPT },
+        { role: 'user', content: userMessage },
+      ],
+      maxTokens: MAX_TOKENS,
     })
-  } catch (netErr) {
-    console.error('[asset-intro] network error calling OpenAI:', netErr)
-    return NextResponse.json(
-      { error: 'AI service unreachable. Please try again in a moment.' },
-      { status: 503 },
-    )
+  } catch (error) {
+    const failure = marketingAiFailureResponse(error)
+    return NextResponse.json(failure.body, { status: failure.status })
   }
-
-  if (openaiRes.status === 401) {
-    console.error('[asset-intro] OpenAI rejected credentials (401). Rotate OPENAI_API_KEY.')
-    return NextResponse.json(
-      { error: 'AI service unavailable. Please contact an administrator.' },
-      { status: 503 },
-    )
-  }
-  if (openaiRes.status === 429) {
-    return NextResponse.json(
-      { error: 'Rate limited, try again in a moment.' },
-      { status: 429 },
-    )
-  }
-  if (!openaiRes.ok) {
-    const errText = await openaiRes.text().catch(() => '')
-    console.error(`[asset-intro] OpenAI ${openaiRes.status} error:`, errText.slice(0, 500))
-    return NextResponse.json(
-      { error: 'AI service error. Please try again.' },
-      { status: 500 },
-    )
-  }
-
-  interface OpenAIResponse {
-    choices?: Array<{ message?: { content?: string } }>
-    usage?:   { total_tokens?: number }
-  }
-  const data = (await openaiRes.json().catch(() => null)) as OpenAIResponse | null
-  const rawContent = data?.choices?.[0]?.message?.content
-  if (!data || typeof rawContent !== 'string' || rawContent.trim() === '') {
-    console.error('[asset-intro] OpenAI returned no content:', JSON.stringify(data).slice(0, 400))
-    return NextResponse.json(
-      { error: 'AI service returned no content. Please try again.' },
-      { status: 500 },
-    )
-  }
-
-  /* Post-process: strip HTML, strip wrapping quotes, collapse whitespace. */
-  let intro = stripHtmlTags(rawContent)
-  intro = stripWrappingQuotes(intro)
+  let intro = stripWrappingQuotes(stripHtmlTags(generated.text))
   intro = intro.replace(/\s+/g, ' ').trim()
-
-  const wordCount  = countWords(intro)
-  const tokensUsed = typeof data.usage?.total_tokens === 'number' ? data.usage.total_tokens : 0
+  if (!intro) return NextResponse.json({ error: 'The AI service returned no usable copy.' }, { status: 503 })
+  const wordCount = countWords(intro)
+  const tokensUsed = generated.tokensUsed
 
   if (wordCount < MIN_WORDS || wordCount > MAX_WORDS) {
     console.warn(
